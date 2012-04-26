@@ -4,8 +4,8 @@
 
   <parent>
     <groupId>com.meltmedia</groupId>
-    <artifactId>meltmedia</artifactId>
-    <version>5</version>
+    <artifactId>meltmedia-oss</artifactId>
+    <version>1-SNAPSHOT</version>
   </parent>
 
   <groupId>com.meltmedia.cadmium</groupId>
