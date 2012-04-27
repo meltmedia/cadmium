@@ -40,8 +40,24 @@
         <artifactId>slf4j-simple</artifactId>
         <version>1.5.8</version>
       </dependency>  
-    </dependencies>
+      <dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>servlet-api</artifactId>
+		<version>2.5</version>
+	  </dependency>
+	  <dependency>
+        <groupId>org.apache.tomcat</groupId>
+        <artifactId>catalina</artifactId>
+        <version>6.0.13</version>
+      </dependency>
+      <dependency>
+        <groupId>tomcat</groupId>
+        <artifactId>servlets-default</artifactId>
+        <version>4.0.6</version>
+      </dependency>
+    </dependencies>    
   </dependencyManagement>
+  
   <build>
     <pluginManagement>
       <plugins>
