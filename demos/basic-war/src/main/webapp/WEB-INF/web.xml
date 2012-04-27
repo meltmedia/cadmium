@@ -7,7 +7,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns
     <filter>
       <display-name>Maintenance Filter</display-name>
       <filter-name>MaintenanceFilter</filter-name>
-      <filter-class>com.meltmedia.cadmium.servlet.MaintenanceFilter</filter-class>
+      <filter-class>com.meltmedia.cadmium.servlets.MaintenanceFilter</filter-class>
     </filter>
     
     <filter-mapping>
@@ -18,7 +18,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns
      <servlet>
       <display-name>The File System Servlet</display-name>
       <servlet-name>FileServlet</servlet-name>
-      <servlet-class>com.meltmedia.cadmium.servlet.FileServlet</servlet-class>
+      <servlet-class>com.meltmedia.cadmium.servlets.FileServlet</servlet-class>
       <init-param>
         <param-name>basepath</param-name>
         <param-value>./files</param-value>
@@ -27,7 +27,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns
     
     <servlet-mapping>
        <servlet-name>FileServlet</servlet-name>
-       <url-pattern>*</url-pattern>
+       <url-pattern>/</url-pattern>
     </servlet-mapping>
 
    
