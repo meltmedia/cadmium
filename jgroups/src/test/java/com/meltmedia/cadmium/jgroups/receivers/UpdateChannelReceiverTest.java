@@ -25,7 +25,7 @@ public class UpdateChannelReceiverTest {
     
     DummyCoordinatedWorker worker = new DummyCoordinatedWorker();
     
-    UpdateChannelReceiver receiver = new UpdateChannelReceiver(channel, worker);
+    UpdateChannelReceiver receiver = new UpdateChannelReceiver(channel, worker, worker);
     receiver.setMyState(UpdateChannelReceiver.UpdateState.IDLE);
     
     receiver.receive(new Message(null, null, "UPDATE branch=master;rev=head"));
@@ -40,7 +40,7 @@ public class UpdateChannelReceiverTest {
     assertTrue("Message not sent", channel.getLastMessage() != null && channel.getLastMessage().getObject().equals(UpdateChannelReceiver.UpdateState.UPDATING.name()));
     assertTrue("Status not updated", receiver.getMyState() == UpdateChannelReceiver.UpdateState.UPDATING);
     
-    receiver.workDone();
+    receiver.workDone(null);
     
     assertTrue("Receiver not waiting", receiver.getMyState() == UpdateChannelReceiver.UpdateState.WAITING);
     assertTrue("Update done message not sent", channel.getLastMessage() != null && channel.getLastMessage().getObject().equals(UpdateChannelReceiver.ProtocolMessage.UPDATE_DONE.name()));
