@@ -1,0 +1,108 @@
+INFO-JGroups version: 2.4.1
+DEBUG-mapping is:
+1:	class org.jgroups.stack.IpAddress
+2:	class org.jgroups.protocols.CAUSAL$CausalHeader
+3:	class org.jgroups.protocols.FD$FdHeader
+4:	class org.jgroups.protocols.FD_PID$FdHeader
+5:	class org.jgroups.protocols.FD_PROB$FdHeader
+6:	class org.jgroups.protocols.FD_SOCK$FdHeader
+7:	class org.jgroups.protocols.FragHeader
+8:	class org.jgroups.protocols.MERGE$MergeHeader
+9:	class org.jgroups.protocols.NakAckHeader
+10:	class org.jgroups.protocols.PARTITIONER$PartitionerHeader
+11:	class org.jgroups.protocols.PerfHeader
+12:	class org.jgroups.protocols.PIGGYBACK$PiggybackHeader
+13:	class org.jgroups.protocols.PingHeader
+14:	class org.jgroups.protocols.TcpHeader
+15:	class org.jgroups.protocols.TOTAL$Header
+16:	class org.jgroups.protocols.TOTAL_OLD$TotalHeader
+17:	class org.jgroups.protocols.TOTAL_TOKEN$TotalTokenHeader
+18:	class org.jgroups.protocols.TOTAL_TOKEN$RingTokenHeader
+19:	class org.jgroups.protocols.TunnelHeader
+20:	class org.jgroups.protocols.UdpHeader
+21:	class org.jgroups.protocols.UNICAST$UnicastHeader
+22:	class org.jgroups.protocols.VERIFY_SUSPECT$VerifyHeader
+23:	class org.jgroups.protocols.WANPIPE$WanPipeHeader
+24:	class org.jgroups.protocols.pbcast.GMS$GmsHeader
+25:	class org.jgroups.protocols.pbcast.NakAckHeader
+26:	class org.jgroups.protocols.pbcast.PbcastHeader
+27:	class org.jgroups.protocols.pbcast.STABLE$StableHeader
+28:	class org.jgroups.protocols.pbcast.STATE_TRANSFER$StateHeader
+29:	class org.jgroups.protocols.SMACK$SmackHeader
+30:	class org.jgroups.Message
+31:	class org.jgroups.View
+32:	class org.jgroups.ViewId
+33:	class org.jgroups.util.List
+34:	interface org.jgroups.Address
+35:	class org.jgroups.blocks.RequestCorrelator$Header
+36:	class org.jgroups.protocols.PingRsp
+38:	class java.util.Vector
+39:	class org.jgroups.protocols.pbcast.JoinRsp
+40:	class org.jgroups.protocols.pbcast.Digest
+41:	class java.util.Hashtable
+53:	class org.jgroups.protocols.COMPRESS$CompressHeader
+54:	class org.jgroups.protocols.FC$FcHeader
+55:	class org.jgroups.protocols.WanPipeAddress
+56:	class org.jgroups.protocols.TpHeader
+57:	class org.jgroups.protocols.ENCRYPT$EncryptHeader
+58:	class org.jgroups.protocols.SEQUENCER$SequencerHeader
+59:	class org.jgroups.protocols.FD_SIMPLE$FdHeader
+60:	class org.jgroups.protocols.VIEW_SYNC$ViewSyncHeader
+
+DEBUG-frag_size=64000
+DEBUG-changed role to org.jgroups.protocols.pbcast.ClientGmsImpl
+INFO-frag_size=60000, overhead=200, new frag_size=59800
+INFO-JGroups version: 2.4.1
+DEBUG-mapping is:
+1:	class org.jgroups.stack.IpAddress
+2:	class org.jgroups.protocols.CAUSAL$CausalHeader
+3:	class org.jgroups.protocols.FD$FdHeader
+4:	class org.jgroups.protocols.FD_PID$FdHeader
+5:	class org.jgroups.protocols.FD_PROB$FdHeader
+6:	class org.jgroups.protocols.FD_SOCK$FdHeader
+7:	class org.jgroups.protocols.FragHeader
+8:	class org.jgroups.protocols.MERGE$MergeHeader
+9:	class org.jgroups.protocols.NakAckHeader
+10:	class org.jgroups.protocols.PARTITIONER$PartitionerHeader
+11:	class org.jgroups.protocols.PerfHeader
+12:	class org.jgroups.protocols.PIGGYBACK$PiggybackHeader
+13:	class org.jgroups.protocols.PingHeader
+14:	class org.jgroups.protocols.TcpHeader
+15:	class org.jgroups.protocols.TOTAL$Header
+16:	class org.jgroups.protocols.TOTAL_OLD$TotalHeader
+17:	class org.jgroups.protocols.TOTAL_TOKEN$TotalTokenHeader
+18:	class org.jgroups.protocols.TOTAL_TOKEN$RingTokenHeader
+19:	class org.jgroups.protocols.TunnelHeader
+20:	class org.jgroups.protocols.UdpHeader
+21:	class org.jgroups.protocols.UNICAST$UnicastHeader
+22:	class org.jgroups.protocols.VERIFY_SUSPECT$VerifyHeader
+23:	class org.jgroups.protocols.WANPIPE$WanPipeHeader
+24:	class org.jgroups.protocols.pbcast.GMS$GmsHeader
+25:	class org.jgroups.protocols.pbcast.NakAckHeader
+26:	class org.jgroups.protocols.pbcast.PbcastHeader
+27:	class org.jgroups.protocols.pbcast.STABLE$StableHeader
+28:	class org.jgroups.protocols.pbcast.STATE_TRANSFER$StateHeader
+29:	class org.jgroups.protocols.SMACK$SmackHeader
+30:	class org.jgroups.Message
+31:	class org.jgroups.View
+32:	class org.jgroups.ViewId
+33:	class org.jgroups.util.List
+34:	interface org.jgroups.Address
+35:	class org.jgroups.blocks.RequestCorrelator$Header
+36:	class org.jgroups.protocols.PingRsp
+38:	class java.util.Vector
+39:	class org.jgroups.protocols.pbcast.JoinRsp
+40:	class org.jgroups.protocols.pbcast.Digest
+41:	class java.util.Hashtable
+53:	class org.jgroups.protocols.COMPRESS$CompressHeader
+54:	class org.jgroups.protocols.FC$FcHeader
+55:	class org.jgroups.protocols.WanPipeAddress
+56:	class org.jgroups.protocols.TpHeader
+57:	class org.jgroups.protocols.ENCRYPT$EncryptHeader
+58:	class org.jgroups.protocols.SEQUENCER$SequencerHeader
+59:	class org.jgroups.protocols.FD_SIMPLE$FdHeader
+60:	class org.jgroups.protocols.VIEW_SYNC$ViewSyncHeader
+
+DEBUG-frag_size=64000
+DEBUG-changed role to org.jgroups.protocols.pbcast.ClientGmsImpl
+INFO-frag_size=60000, overhead=200, new frag_size=59800

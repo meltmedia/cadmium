@@ -11,7 +11,7 @@
   
   <artifactId>jgit</artifactId>
   <packaging>jar</packaging>
-  <name>jgit</name>
+  <name>cadmium :: JGit</name>
   
   
   <dependencies>
