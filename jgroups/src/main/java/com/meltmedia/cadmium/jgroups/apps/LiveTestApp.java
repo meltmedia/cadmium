@@ -66,7 +66,7 @@ public class LiveTestApp implements CoordinatedWorker {
    * @throws Exception 
    */
   public static void main(String[] args) throws Exception {
-    URL propsUrl = LiveTestApp.class.getClassLoader().getResource("tcp.xml");
+    URL propsUrl = LiveTestApp.class.getClassLoader().getResource("udp.xml");
     String configFile = propsUrl.toString();
     System.out.println("Here is the configuration : {"+configFile+"}");
     JChannel cnl = new JChannel(propsUrl);
