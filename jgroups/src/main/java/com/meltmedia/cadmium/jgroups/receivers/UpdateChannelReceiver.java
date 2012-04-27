@@ -134,6 +134,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
     
     for(Address member : members) {
       if(!currentStates.containsKey(member.toString())) {
+        log.info("Discovered new member {}", member.toString());
         currentStates.put(member.toString(), UpdateState.IDLE);
         try {
           channel.send(new Message(member, null, ProtocolMessage.CURRENT_STATE.name()));
