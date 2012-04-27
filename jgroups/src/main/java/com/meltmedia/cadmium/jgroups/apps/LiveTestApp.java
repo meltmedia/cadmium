@@ -8,13 +8,16 @@ import org.jgroups.JChannel;
 import org.jgroups.Message;
 
 import com.meltmedia.cadmium.jgroups.ContentService;
+import com.meltmedia.cadmium.jgroups.ContentServiceListener;
 import com.meltmedia.cadmium.jgroups.CoordinatedWorker;
 import com.meltmedia.cadmium.jgroups.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.jgroups.SiteDownService;
 import com.meltmedia.cadmium.jgroups.receivers.UpdateChannelReceiver;
 
-public class LiveTestApp implements CoordinatedWorker, ContentService {
+public class LiveTestApp implements CoordinatedWorker, ContentService, SiteDownService {
   
   private CoordinatedWorkerListener listener;
+  private ContentServiceListener contentListener;
 
   @Override
   public void beginPullUpdates(Map<String, String> properties) {
@@ -40,6 +43,7 @@ public class LiveTestApp implements CoordinatedWorker, ContentService {
     new Thread(new Runnable() {
       public void run() {
         System.out.println("Switching content!!!!");
+        contentListener.doneSwitching();
       }
     }).start();
   }
@@ -51,6 +55,21 @@ public class LiveTestApp implements CoordinatedWorker, ContentService {
         System.out.println("Killing Update!!!!");
       }
     }).start();
+  }
+
+  @Override
+  public void takeSiteDown() {
+    System.out.println("Taking Site Down!!!!");
+  }
+
+  @Override
+  public void bringSiteUp() {
+    System.out.println("Bringing Site Up!!!!");
+  }
+
+  @Override
+  public void setListener(ContentServiceListener listener) {
+    this.contentListener = listener;
   }
 
   @Override
@@ -74,7 +93,7 @@ public class LiveTestApp implements CoordinatedWorker, ContentService {
     JChannel cnl = new JChannel(propsUrl);
     cnl.connect("JGroupsContentUpdateTestingChannel");
     LiveTestApp worker = new LiveTestApp();
-    UpdateChannelReceiver receiver = new UpdateChannelReceiver(cnl, worker, worker);
+    UpdateChannelReceiver receiver = new UpdateChannelReceiver(cnl, worker, worker, worker);
     if(receiver.getMyState() == UpdateChannelReceiver.UpdateState.IDLE){
       System.out.print("Hit enter to continue: ");
       worker.readLine();
