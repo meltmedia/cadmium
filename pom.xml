@@ -17,6 +17,7 @@
     <module>jgroups</module>
     <module>servlets</module>
     <module>demos</module>
+    <module>jgit</module>
   </modules>
 
   <name>cadmium</name>
