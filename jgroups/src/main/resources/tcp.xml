@@ -1,21 +1,15 @@
 <config>
     <TCP start_port="7800" loopback="true"></TCP>
-    <PING timeout="2000" num_initial_members="3"/>
-    <MERGE2 max_interval="100000" min_interval="20000"/>
-    <FD_SOCK/>
-    <FD timeout="6000" max_tries="5" shun="true"/>
-    <VERIFY_SUSPECT timeout="1500"/>
-    <pbcast.NAKACK use_mcast_xmit="true" gc_lag="0"
-            retransmit_timeout="300,600,1200,2400,4800"
-            discard_delivered_msgs="true"/>
-    <UNICAST timeout="300,600,1200,2400,3600"/>
-    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
-            max_bytes="400000"/>            
-    <VIEW_SYNC avg_send_interval="10000"/>
-    <pbcast.GMS print_local_addr="true" join_timeout="3000"
-            shun="true"
-            view_bundling="true"
-            view_ack_collection_timeout="5000"
-            resume_task_timeout="7500"/>
-    <FRAG2 frag_size="60000"/>
-  </config>
+    <MPING timeout="3000" num_initial_members="3"></MPING>
+    <MERGE2 min_interval="5000" max_interval="10000"></MERGE2>
+    <FD shun="true" timeout="2500" max_tries="5" up_thread="true" down_thread="true" ></FD>
+    <VERIFY_SUSPECT timeout="1500" down_thread="false" up_thread="false" ></VERIFY_SUSPECT>
+    <pbcast.NAKACK down_thread="true" up_thread="true" gc_lag="100" retransmit_timeout="3000" ></pbcast.NAKACK>
+    <pbcast.STABLE desired_avg_gossip="20000" down_thread="false" up_thread="false" ></pbcast.STABLE>
+    <pbcast.GMS join_timeout="5000"
+                join_retry_timeout="2000"
+                shun="false"
+                print_local_addr="false"
+                down_thread="true"
+                up_thread="true"></pbcast.GMS>
+</config>
