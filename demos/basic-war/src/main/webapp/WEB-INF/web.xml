@@ -2,11 +2,20 @@
 <web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
-
-<web-app>
-  <display-name>Cadmium Phase ! Demo</display-name>
-  
-  <servlet>
+  <display-name>Cadmium Phase ! Demo</display-name>  
+    
+    <filter>
+      <display-name>Maintenance Filter</display-name>
+      <filter-name>MaintenanceFilter</filter-name>
+      <filter-class>com.meltmedia.cadmium.servlet.MaintenanceFilter</filter-class>
+    </filter>
+    
+    <filter-mapping>
+      <filter-name>MaintenanceFilter</filter-name>
+      <servlet-name>*</servlet-name>
+   </filter-mapping>
+   
+     <servlet>
       <display-name>The File System Servlet</display-name>
       <servlet-name>FileServlet</servlet-name>
       <servlet-class>com.meltmedia.cadmium.servlet.FileServlet</servlet-class>
@@ -20,17 +29,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns
        <servlet-name>FileServlet</servlet-name>
        <url-pattern>*</url-pattern>
     </servlet-mapping>
-    
-    <filter>
-      <display-name>Maintenance Filter</display-name>
-      <filter-name>MaintenanceFilter</filter-name>
-      <filter-class>com.meltmedia.cadmium.servlet.MaintenanceFilter</filter-class>
-    </filter>
-    
-    <filter-mapping>
-      <filter-name>MaintenanceFilter</filter-name>
-      <servlet-name>*</servlet-name>
-   </filter-mapping>
+
    
    <welcome-file-list>
      <welcome-file>index.html</welcome-file>
