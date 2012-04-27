@@ -1,8 +1,9 @@
 package com.meltmedia.cadmium.jgroups;
 
+import java.io.File;
 import java.util.Map;
 
-public class DummyCoordinatedWorker implements CoordinatedWorker {
+public class DummyCoordinatedWorker implements CoordinatedWorker, ContentService {
   private boolean pulling = false;
 
   @Override
@@ -13,7 +14,7 @@ public class DummyCoordinatedWorker implements CoordinatedWorker {
   private boolean switched = false;
 
   @Override
-  public void switchContent() {
+  public void switchContent(File newDir) {
     switched = true;
   }
   
