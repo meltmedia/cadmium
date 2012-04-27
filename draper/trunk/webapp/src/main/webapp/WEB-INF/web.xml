@@ -7,16 +7,20 @@
  
  	<!-- Servlet Definitions -->
 
-	<!--<servlet>
+	<servlet>
 		<servlet-name>contentServlet</servlet-name>
-		<servlet-class>com.meltmedia.draper.whatever</servlet-class>
+		<servlet-class>com.meltmedia.draper.ContentServlet</servlet-class>
+		<init-param>
+          <param-name>pathPrefix</param-name>
+          <param-value>/static</param-value>
+        </init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 	
 	<servlet-mapping>
 		<servlet-name>contentServlet</servlet-name>
-		<url-pattern>*.html</url-pattern>
-	</servlet-mapping> -->
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
  	
 	<welcome-file-list>
 		<welcome-file>test.html</welcome-file>
