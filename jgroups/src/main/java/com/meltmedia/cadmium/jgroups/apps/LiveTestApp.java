@@ -1,5 +1,6 @@
 package com.meltmedia.cadmium.jgroups.apps;
 
+import java.net.URL;
 import java.util.Map;
 
 import org.jgroups.JChannel;
@@ -65,7 +66,10 @@ public class LiveTestApp implements CoordinatedWorker {
    * @throws Exception 
    */
   public static void main(String[] args) throws Exception {
-    JChannel cnl = new JChannel();
+    URL propsUrl = LiveTestApp.class.getClassLoader().getResource("tcp.xml");
+    String configFile = propsUrl.toString();
+    System.out.println("Here is the configuration : {"+configFile+"}");
+    JChannel cnl = new JChannel(propsUrl);
     cnl.connect("JGroupsContentUpdateTestingChannel");
     LiveTestApp worker = new LiveTestApp();
     UpdateChannelReceiver receiver = new UpdateChannelReceiver(cnl, worker);
