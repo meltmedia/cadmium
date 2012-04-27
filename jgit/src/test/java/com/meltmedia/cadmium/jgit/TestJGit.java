@@ -35,8 +35,6 @@ public class TestJGit {
 	private String basepath;
     private Repository repo, remoteRepo;
     private Git git;
- // private String name = "chrishaley42";
- // private String password = "April602";
     //TODO delete repo first
     
     
