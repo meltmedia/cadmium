@@ -14,14 +14,21 @@ import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.TimeoutException;
 import org.jgroups.View;
+import org.jgroups.ViewId;
 import org.jgroups.stack.ProtocolStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DummyJChannel extends JChannel {
+  private Logger log = LoggerFactory.getLogger(getClass());
   
-  private View testView = new View();
+  private View testView = null;
+  private Address localAddress = null;
   private Message testMessage;
 
-  public DummyJChannel() throws ChannelException {
+  public DummyJChannel(Address localAddress, Vector<Address> mems) throws ChannelException {
+    testView = new View(new ViewId(localAddress), mems);
+    this.localAddress = localAddress;
   }
 
   @Override
@@ -107,7 +114,11 @@ public class DummyJChannel extends JChannel {
 
   @Override
   public Address getLocalAddress() {
-    return null;
+    return this.localAddress;
+  }
+  
+  public void setLocalAddress(Address local) {
+    this.localAddress = local;
   }
 
   @Override
@@ -229,6 +240,10 @@ public class DummyJChannel extends JChannel {
   public void send(Message msg) throws ChannelNotConnectedException,
       ChannelClosedException {
     testMessage = msg;
+    if(testMessage != null) {
+      testMessage.setSrc(localAddress);
+      log.info("Sending a message");
+    }
   }
   
   public Message getLastMessage() {

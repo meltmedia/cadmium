@@ -36,6 +36,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   
   public UpdateChannelReceiver(JChannel channel, CoordinatedWorker worker) {
     this.channel = channel;
+    this.channel.setReceiver(this);
     this.worker = worker;
     this.worker.setListener(this);
     viewAccepted(channel.getView());
@@ -45,8 +46,9 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   @Override
   public void receive(Message msg) {
     String message = msg.getObject().toString();
-    log.debug("Received a message {}", msg);
+    log.debug("Received a message state {}, message {}, src {}",new Object[] { myState, message, msg.getSrc()});
     if(message.equals(ProtocolMessage.CURRENT_STATE.name())) {
+      log.debug("Responding with current state");
       Message reply = msg.makeReply();
       reply.setObject(myState.name());
       try {
@@ -57,6 +59,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
         log.error("The channel is closed", e);
       }
     } else if (myState == UpdateState.IDLE && message.startsWith(ProtocolMessage.UPDATE.name())) {
+      log.debug("Beginning an update");
       myState = UpdateState.UPDATING;
       
       try {
@@ -80,14 +83,15 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
       
       // Begin work 
       worker.beginPullUpdates(workProperties);
-    } else if (myState == UpdateState.UPDATING && message.equals(ProtocolMessage.UPDATE_DONE)) {
-      myState = UpdateState.WAITING;
+    } else if (message.equals(ProtocolMessage.UPDATE_DONE.name())) {
+      log.debug("Update is done");
       try {
         channel.send(new Message(null, null, myState.name()));
       } catch (Exception e) {
         log.error("Failed to send message to update peir's view of my state", e);
       }
-    } else if (myState != UpdateState.IDLE && message.equals(ProtocolMessage.UPDATE_FAILED)) {
+    } else if (myState != UpdateState.IDLE && message.equals(ProtocolMessage.UPDATE_FAILED.name())) {
+      log.debug("update has failed");
       worker.killUpdate();
       myState = UpdateState.IDLE;
       try {
@@ -96,13 +100,15 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
         log.error("Failed to send message to update peir's view of my state", e);
       }
     } else {
+      log.debug("I might have received a state update");
       try{
         UpdateState state = UpdateState.valueOf(message);
         if(currentStates.containsKey(msg.getSrc().toString())) {
           currentStates.put(msg.getSrc().toString(), state);
+          log.info("Updating state of {} to {}", msg.getSrc(), state);
         }
       } catch(Exception e) {
-        log.warn("Invalid message received {}", message);
+        log.warn("Invalid message received {}, {}", message, e.getMessage());
       }
       
       if(myState == UpdateState.WAITING) {
@@ -141,6 +147,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
 
   @Override
   public void workDone() {
+    log.info("Work is done");
     myState = UpdateState.WAITING;
     try {
       channel.send(new Message(null, null, ProtocolMessage.UPDATE_DONE.name()));
@@ -152,7 +159,8 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
 
   @Override
   public void workFailed() {
-    myState = UpdateState.IDLE;
+    log.info("Work has failed");
+    //myState = UpdateState.IDLE;
     try {
       channel.send(new Message(null, null, ProtocolMessage.UPDATE_FAILED.name()));
     } catch (Exception e) {
@@ -171,7 +179,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   }
 
 
-  UpdateState getMyState() {
+  public UpdateState getMyState() {
     return myState;
   }
 
