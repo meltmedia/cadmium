@@ -11,10 +11,8 @@
 
   <artifactId>jgroups</artifactId>
   <packaging>jar</packaging>
-  <name>jgroups</name>
+  <name>cadmium :: JGroups</name>
 
-  <url>http://maven.apache.org</url>
-  
   <build>
     <plugins>
       <plugin>

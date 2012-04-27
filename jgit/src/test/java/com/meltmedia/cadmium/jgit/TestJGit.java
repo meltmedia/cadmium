@@ -23,11 +23,12 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+@Ignore
 public class TestJGit {
 	private Logger log = LoggerFactory.getLogger(getClass());
 
