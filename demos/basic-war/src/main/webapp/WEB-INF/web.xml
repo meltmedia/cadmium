@@ -13,7 +13,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns
       <init-param>
         <param-name>basepath</param-name>
         <param-value>./files</param-value>
-      </init-param>
+      </init-param>      
     </servlet>
     
     <servlet-mapping>
