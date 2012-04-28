@@ -39,7 +39,7 @@ public class LiveTestApp implements CoordinatedWorker, ContentService, SiteDownS
   }
 
   @Override
-  public void switchContent(File newDir) {
+  public void switchContent(String newDir) {
     new Thread(new Runnable() {
       public void run() {
         System.out.println("Switching content!!!!");

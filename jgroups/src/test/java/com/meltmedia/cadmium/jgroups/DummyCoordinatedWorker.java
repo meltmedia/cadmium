@@ -1,6 +1,5 @@
 package com.meltmedia.cadmium.jgroups;
 
-import java.io.File;
 import java.util.Map;
 
 public class DummyCoordinatedWorker implements CoordinatedWorker, ContentService, SiteDownService {
@@ -14,7 +13,7 @@ public class DummyCoordinatedWorker implements CoordinatedWorker, ContentService
   private boolean switched = false;
 
   @Override
-  public void switchContent(File newDir) {
+  public void switchContent(String newDir) {
     switched = true;
     listener.doneSwitching();
   }

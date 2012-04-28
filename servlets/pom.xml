@@ -30,5 +30,10 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>jgroups</artifactId> 
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 </project>

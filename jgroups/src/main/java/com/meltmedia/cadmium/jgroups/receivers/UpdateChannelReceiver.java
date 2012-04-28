@@ -39,7 +39,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   private SiteDownService sd;
   private Map<String, UpdateState> currentStates = new Hashtable<String, UpdateState>();
   private UpdateState myState = UpdateState.IDLE;
-  private File newDir;
+  private String newDir;
   
   public UpdateChannelReceiver(JChannel channel, CoordinatedWorker worker, ContentService content, SiteDownService sd) {
     this.channel = channel;
@@ -158,7 +158,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
 
 
   @Override
-  public void workDone(File newDir) {
+  public void workDone(String newDir) {
     log.info("Work is done");
     this.newDir = newDir;
     myState = UpdateState.WAITING;
