@@ -20,8 +20,8 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns
       <servlet-name>FileServlet</servlet-name>
       <servlet-class>com.meltmedia.cadmium.servlets.FileServlet</servlet-class>
       <init-param>
-        <param-name>basepath</param-name>
-        <param-value>./files</param-value>
+        <param-name>basePath</param-name>
+        <param-value>/Library/WebServer/Cadmium</param-value>
       </init-param>
     </servlet>
     

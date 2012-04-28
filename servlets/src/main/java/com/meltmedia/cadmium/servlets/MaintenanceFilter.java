@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class MaintenanceFilter implements Filter {
 
-	public volatile boolean isOn = false;
+	public volatile boolean isOn = true;
 	
 
 	@Override
