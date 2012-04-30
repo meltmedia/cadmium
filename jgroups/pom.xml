@@ -9,12 +9,10 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>jgroups</artifactId>
+  <artifactId>cadmium-jgroups</artifactId>
   <packaging>jar</packaging>
-  <name>jgroups</name>
+  <name>cadmium :: JGroups</name>
 
-  <url>http://maven.apache.org</url>
-  
   <build>
     <plugins>
       <plugin>
@@ -39,26 +37,16 @@
     <dependency>
       <groupId>jgroups</groupId>
       <artifactId>jgroups-all</artifactId>
-      <version>2.4.1</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>bsh</artifactId>
-          <groupId>bsh</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>1.5.2</version>
     </dependency>
   
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.10</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

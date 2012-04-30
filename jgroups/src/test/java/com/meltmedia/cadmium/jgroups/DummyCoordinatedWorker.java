@@ -2,7 +2,7 @@ package com.meltmedia.cadmium.jgroups;
 
 import java.util.Map;
 
-public class DummyCoordinatedWorker implements CoordinatedWorker {
+public class DummyCoordinatedWorker implements CoordinatedWorker, ContentService, SiteDownService {
   private boolean pulling = false;
 
   @Override
@@ -13,8 +13,9 @@ public class DummyCoordinatedWorker implements CoordinatedWorker {
   private boolean switched = false;
 
   @Override
-  public void switchContent() {
+  public void switchContent(String newDir) {
     switched = true;
+    listener.doneSwitching();
   }
   
   private boolean killed = false;
@@ -51,6 +52,29 @@ public class DummyCoordinatedWorker implements CoordinatedWorker {
 
   public void setKilled(boolean killed) {
     this.killed = killed;
+  }
+
+  private boolean siteDown = false;
+  
+  @Override
+  public void takeSiteDown() {
+    siteDown = true;
+  }
+
+  @Override
+  public void bringSiteUp() {
+    siteDown = false;
+  }
+  
+  public boolean isSiteDown() {
+    return siteDown;
+  }
+
+  private ContentServiceListener listener;
+  
+  @Override
+  public void setListener(ContentServiceListener listener) {
+    this.listener = listener;
   }
 
 }

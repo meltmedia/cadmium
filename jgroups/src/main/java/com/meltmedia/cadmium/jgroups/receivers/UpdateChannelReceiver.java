@@ -1,5 +1,6 @@
 package com.meltmedia.cadmium.jgroups.receivers;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -15,10 +16,13 @@ import org.jgroups.View;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.jgroups.ContentService;
+import com.meltmedia.cadmium.jgroups.ContentServiceListener;
 import com.meltmedia.cadmium.jgroups.CoordinatedWorker;
 import com.meltmedia.cadmium.jgroups.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.jgroups.SiteDownService;
 
-public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements CoordinatedWorkerListener {
+public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements CoordinatedWorkerListener, ContentServiceListener {
   private Logger log = LoggerFactory.getLogger(getClass());
   
   public static enum ProtocolMessage {
@@ -31,13 +35,19 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   
   private JChannel channel;
   private CoordinatedWorker worker;
+  private ContentService content;
+  private SiteDownService sd;
   private Map<String, UpdateState> currentStates = new Hashtable<String, UpdateState>();
   private UpdateState myState = UpdateState.IDLE;
+  private String newDir;
   
-  public UpdateChannelReceiver(JChannel channel, CoordinatedWorker worker) {
+  public UpdateChannelReceiver(JChannel channel, CoordinatedWorker worker, ContentService content, SiteDownService sd) {
     this.channel = channel;
     this.channel.setReceiver(this);
     this.worker = worker;
+    this.content = content;
+    this.content.setListener(this);
+    this.sd = sd;
     this.worker.setListener(this);
     viewAccepted(channel.getView());
   }
@@ -120,7 +130,8 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
           }
         }
         if(updateDone) {
-          worker.switchContent();
+          sd.takeSiteDown();
+          content.switchContent(newDir);
           myState = UpdateState.IDLE;
         }
       }
@@ -147,8 +158,9 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
 
 
   @Override
-  public void workDone() {
+  public void workDone(String newDir) {
     log.info("Work is done");
+    this.newDir = newDir;
     myState = UpdateState.WAITING;
     try {
       channel.send(new Message(null, null, ProtocolMessage.UPDATE_DONE.name()));
@@ -187,6 +199,12 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
 
   void setMyState(UpdateState myState) {
     this.myState = myState;
+  }
+
+
+  @Override
+  public void doneSwitching() {
+    sd.bringSiteUp();
   }
   
 }
