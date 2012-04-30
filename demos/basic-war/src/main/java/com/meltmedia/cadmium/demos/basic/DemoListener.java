@@ -40,11 +40,12 @@ public class DemoListener extends GuiceServletContextListener {
           
           bind(FileServlet.class).in(Scopes.SINGLETON);
           
+          filter("/*").through(MaintenanceFilter.class);
+          
           Map<String, String> fileParams = new HashMap<String, String>();
           fileParams.put("basePath", "/Library/WebServer/Cadmium");
-          filter("/*").through(MaintenanceFilter.class, fileParams);
           
-          serve("/").with(FileServlet.class);
+          serve("/").with(FileServlet.class, fileParams);
 		}
       };
 	}
