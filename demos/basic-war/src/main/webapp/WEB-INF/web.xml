@@ -4,32 +4,19 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
   <display-name>Cadmium Phase ! Demo</display-name>
   
-    <filter>
-      <display-name>Maintenance Filter</display-name>
-      <filter-name>MaintenanceFilter</filter-name>
-      <filter-class>com.meltmedia.cadmium.servlets.MaintenanceFilter</filter-class>
-    </filter>
-    
-    <filter-mapping>
-      <filter-name>MaintenanceFilter</filter-name>
-      <servlet-name>*</servlet-name>
-   </filter-mapping>
-   
-     <servlet>
-      <display-name>The File System Servlet</display-name>
-      <servlet-name>FileServlet</servlet-name>
-      <servlet-class>com.meltmedia.cadmium.servlets.FileServlet</servlet-class>
-      <init-param>
-        <param-name>basePath</param-name>
-        <param-value>/Library/WebServer/Cadmium</param-value>
-      </init-param>
-    </servlet>
-    
-    <servlet-mapping>
-       <servlet-name>FileServlet</servlet-name>
-       <url-pattern>/</url-pattern>
-    </servlet-mapping>
+  <listener>
+    <listener-class>com.meltmedia.cadmium.demos.basic.DemoListener</listener-class>
+  </listener>
+  
+  <filter>
+    <filter-name>guiceFilter</filter-name>
+    <filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
+  </filter>
 
+  <filter-mapping>
+    <filter-name>guiceFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
    
    <welcome-file-list>
      <welcome-file>index.html</welcome-file>
