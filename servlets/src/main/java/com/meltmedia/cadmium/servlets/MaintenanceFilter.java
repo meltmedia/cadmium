@@ -12,7 +12,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class MaintenanceFilter implements Filter {
+import com.meltmedia.cadmium.jgroups.SiteDownService;
+
+public class MaintenanceFilter implements Filter, SiteDownService {
 
 	public volatile boolean isOn = true;
 	

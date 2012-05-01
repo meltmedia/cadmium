@@ -1,6 +1,5 @@
 package com.meltmedia.cadmium.jgroups.apps;
 
-import java.io.File;
 import java.net.URL;
 import java.util.Map;
 
@@ -58,12 +57,12 @@ public class LiveTestApp implements CoordinatedWorker, ContentService, SiteDownS
   }
 
   @Override
-  public void takeSiteDown() {
+  public void start() {
     System.out.println("Taking Site Down!!!!");
   }
 
   @Override
-  public void bringSiteUp() {
+  public void stop() {
     System.out.println("Bringing Site Up!!!!");
   }
 
@@ -93,7 +92,7 @@ public class LiveTestApp implements CoordinatedWorker, ContentService, SiteDownS
     JChannel cnl = new JChannel(propsUrl);
     cnl.connect("JGroupsContentUpdateTestingChannel");
     LiveTestApp worker = new LiveTestApp();
-    UpdateChannelReceiver receiver = new UpdateChannelReceiver(cnl, worker, worker, worker);
+    UpdateChannelReceiver receiver = new UpdateChannelReceiver(cnl, worker, worker, worker, "");
     if(receiver.getMyState() == UpdateChannelReceiver.UpdateState.IDLE){
       System.out.print("Hit enter to continue: ");
       worker.readLine();

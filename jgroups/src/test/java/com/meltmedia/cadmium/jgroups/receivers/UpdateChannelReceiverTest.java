@@ -25,7 +25,7 @@ public class UpdateChannelReceiverTest {
     
     DummyCoordinatedWorker worker = new DummyCoordinatedWorker();
     
-    UpdateChannelReceiver receiver = new UpdateChannelReceiver(channel, worker, worker, worker);
+    UpdateChannelReceiver receiver = new UpdateChannelReceiver(channel, worker, worker, worker, null);
     receiver.setMyState(UpdateChannelReceiver.UpdateState.IDLE);
     
     receiver.receive(new Message(null, null, "UPDATE branch=master;rev=head"));
