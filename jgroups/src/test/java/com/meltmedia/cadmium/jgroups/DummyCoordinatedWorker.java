@@ -57,12 +57,12 @@ public class DummyCoordinatedWorker implements CoordinatedWorker, ContentService
   private boolean siteDown = false;
   
   @Override
-  public void takeSiteDown() {
+  public void start() {
     siteDown = true;
   }
 
   @Override
-  public void bringSiteUp() {
+  public void stop() {
     siteDown = false;
   }
   

@@ -1,10 +1,12 @@
 package com.meltmedia.cadmium.jgroups.receivers;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Vector;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.jgroups.Address;
 import org.jgroups.ChannelClosedException;
@@ -23,7 +25,10 @@ import com.meltmedia.cadmium.jgroups.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.jgroups.SiteDownService;
 
 public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements CoordinatedWorkerListener, ContentServiceListener {
-  private Logger log = LoggerFactory.getLogger(getClass());
+  
+  public static final String BASE_PATH = "ApplicationBasePath";
+  
+  private final Logger log = LoggerFactory.getLogger(getClass());
   
   public static enum ProtocolMessage {
     UPDATE, READY, UPDATE_DONE, UPDATE_FAILED, CURRENT_STATE
@@ -33,15 +38,22 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
     IDLE, UPDATING, WAITING
   }
   
-  private JChannel channel;
-  private CoordinatedWorker worker;
-  private ContentService content;
-  private SiteDownService sd;
+  protected JChannel channel;
+  
+  protected CoordinatedWorker worker;
+  
+  protected ContentService content;
+  
+  protected SiteDownService sd;
+  
+  protected String parentPath;
+  
   private Map<String, UpdateState> currentStates = new Hashtable<String, UpdateState>();
   private UpdateState myState = UpdateState.IDLE;
   private String newDir;
   
-  public UpdateChannelReceiver(JChannel channel, CoordinatedWorker worker, ContentService content, SiteDownService sd) {
+  @Inject
+  public UpdateChannelReceiver(JChannel channel, CoordinatedWorker worker, ContentService content, SiteDownService sd, @Named(BASE_PATH) String parentPath) {
     this.channel = channel;
     this.channel.setReceiver(this);
     this.worker = worker;
@@ -49,6 +61,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
     this.content.setListener(this);
     this.sd = sd;
     this.worker.setListener(this);
+    this.parentPath = parentPath;
     viewAccepted(channel.getView());
   }
 
@@ -81,6 +94,9 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
       // Parse out message parameters
       
       Map<String, String> workProperties = new HashMap<String, String>();
+      if(this.parentPath != null && this.parentPath.length() > 0) {
+        workProperties.put("basePath", this.parentPath);
+      }
       message = message.substring(ProtocolMessage.UPDATE.name().length()).trim();
       if(message.length() > 0) {
         String msgParams[] = message.split(";");
@@ -130,7 +146,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
           }
         }
         if(updateDone) {
-          sd.takeSiteDown();
+          sd.start();
           content.switchContent(newDir);
           myState = UpdateState.IDLE;
         }
@@ -173,7 +189,6 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   @Override
   public void workFailed() {
     log.info("Work has failed");
-    //myState = UpdateState.IDLE;
     try {
       channel.send(new Message(null, null, ProtocolMessage.UPDATE_FAILED.name()));
     } catch (Exception e) {
@@ -204,7 +219,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
 
   @Override
   public void doneSwitching() {
-    sd.bringSiteUp();
+    sd.stop();
   }
   
 }
