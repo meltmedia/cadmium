@@ -47,23 +47,16 @@ public class MaintenanceFilter implements Filter, SiteDownService {
 		writer.close();
 	}
 	
+	@Override
 	public void start()
 	{
 		isOn = true;
 	}
 	
+	@Override
 	public void stop() {
 		isOn = false;
 	}
 
-	@Override
-	public void takeSiteDown() {
-		stop();
-	}
-
-	@Override
-	public void bringSiteUp() {
-		start();
-	}
 
 }

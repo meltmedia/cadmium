@@ -43,6 +43,18 @@
     </dependency>
 
     <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-core</artifactId>
+      <version>1.12</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-client</artifactId>
+      <version>1.12</version>
+    </dependency>
+
+    <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.3</version>
@@ -96,6 +108,7 @@
     <module>jgroups</module>
     <module>jgit</module>
     <module>servlets</module>
+    <module>cli</module>
     <module>demos</module>
   </modules>
 
