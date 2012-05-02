@@ -11,6 +11,7 @@ import org.jgroups.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.jgroups.SiteDownService;
 import com.meltmedia.cadmium.jgroups.receivers.UpdateChannelReceiver;
 
 @Path("/update")
@@ -25,6 +26,9 @@ public class UpdateService {
   @Named(REPOSITORY_LOCATION)
   protected String repo;
   
+  @Inject
+  protected SiteDownService sd;
+  
   @GET
   @Produces("text/plain")
   public String update() throws Exception {
@@ -34,6 +38,22 @@ public class UpdateService {
     } else {
       log.error("Channel is not wired");
     }
+    return "ok";
+  }
+  
+  @GET
+  @Path("/start")
+  @Produces("text/plain")
+  public String start() {
+    sd.start();
+    return "ok";
+  }
+  
+  @GET
+  @Path("/stop")
+  @Produces("text/plain")
+  public String stop() {
+    sd.stop();
     return "ok";
   }
 }

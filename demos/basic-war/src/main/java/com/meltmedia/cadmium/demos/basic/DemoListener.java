@@ -88,14 +88,17 @@ public class DemoListener extends GuiceServletContextListener {
           bind(FileServlet.class).in(Scopes.SINGLETON);
           bind(ContentService.class).to(FileServlet.class);
           
-          filter("/*").through(MaintenanceFilter.class);
-          
           Map<String, String> fileParams = new HashMap<String, String>();
           fileParams.put("basePath", contentDir);
+          
+          Map<String, String> maintParams = new HashMap<String, String>();
+          maintParams.put("ignorePrefix", "/system");
 
           serve("/system/*").with(GuiceContainer.class);
           
           serve("/*").with(FileServlet.class, fileParams);
+          
+          filter("/*").through(MaintenanceFilter.class, maintParams);
           
           //Bind application base path
           bind(String.class).annotatedWith(Names.named(UpdateChannelReceiver.BASE_PATH)).toInstance(applicationBasePath);
