@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.jgit.impl;
 import java.io.IOException;
 import java.util.Map;
 
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -12,7 +13,7 @@ import com.meltmedia.cadmium.jgroups.CoordinatedWorkerListener;
 
 public class CoordinatedWorkerImpl implements CoordinatedWorker {
 	
-	private String lastUpdatedDir = "";
+	protected String lastUpdatedDir = "";
 	private CoordinatedWorkerListener listener;
 	private boolean kill = false;
 	private boolean running = false;
@@ -29,15 +30,15 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 					
 					running = true;
 					try {
-						
-						Repository repo = new FileRepository(properties.get("repo"));
+						Repository repo = new FileRepository(properties.get("repo")+"/.git");
 						Git git = new Git(repo);
-						git.pull();
+						git.pull().call();
 						// TODO clone to new directory and delete .git folder.
 						if(!kill) {
+						  lastUpdatedDir = properties.get("repo");
 							listener.workDone(lastUpdatedDir);
 						}
-					} catch (IOException e) {
+					} catch (Exception e) {
 						if(!kill) {
 							listener.workFailed();
 						}

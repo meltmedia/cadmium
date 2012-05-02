@@ -18,12 +18,6 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-
-		config.getServletContext().setAttribute(ContentService.class.getName(), this);
-		
-		if (config.getInitParameter("pathPrefix") != null) {
-			this.setBasePath(config.getInitParameter("pathPrefix"));
-		}
 	}	
 	
 	

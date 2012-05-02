@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.jgroups.Address;
 import org.jgroups.ChannelClosedException;
@@ -24,6 +25,7 @@ import com.meltmedia.cadmium.jgroups.CoordinatedWorker;
 import com.meltmedia.cadmium.jgroups.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.jgroups.SiteDownService;
 
+@Singleton
 public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements CoordinatedWorkerListener, ContentServiceListener {
   
   public static final String BASE_PATH = "ApplicationBasePath";
@@ -54,6 +56,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   
   @Inject
   public UpdateChannelReceiver(JChannel channel, CoordinatedWorker worker, ContentService content, SiteDownService sd, @Named(BASE_PATH) String parentPath) {
+    System.err.println(">>>>>>Creating a channel receiver");
     this.channel = channel;
     this.channel.setReceiver(this);
     this.worker = worker;
@@ -69,8 +72,10 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   @Override
   public void receive(Message msg) {
     String message = msg.getObject().toString();
+    System.err.println(">>>>>Received msg ["+message+"]");
     log.debug("Received a message state {}, message {}, src {}",new Object[] { myState, message, msg.getSrc()});
     if(message.equals(ProtocolMessage.CURRENT_STATE.name())) {
+      System.err.println(">>>>>Current State");
       log.debug("Responding with current state");
       Message reply = msg.makeReply();
       reply.setObject(myState.name());
@@ -82,6 +87,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
         log.error("The channel is closed", e);
       }
     } else if (myState == UpdateState.IDLE && message.startsWith(ProtocolMessage.UPDATE.name())) {
+      System.err.println(">>>>>Update from IDLE");
       log.debug("Beginning an update");
       myState = UpdateState.UPDATING;
       
@@ -110,6 +116,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
       // Begin work 
       worker.beginPullUpdates(workProperties);
     } else if (message.equals(ProtocolMessage.UPDATE_DONE.name())) {
+      System.err.println(">>>>>Update_done");
       log.debug("Update is done");
       try {
         channel.send(new Message(null, null, myState.name()));
@@ -117,6 +124,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
         log.error("Failed to send message to update peir's view of my state", e);
       }
     } else if (myState != UpdateState.IDLE && message.equals(ProtocolMessage.UPDATE_FAILED.name())) {
+      System.err.println(">>>>>Update failed");
       log.debug("update has failed");
       worker.killUpdate();
       myState = UpdateState.IDLE;
@@ -126,6 +134,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
         log.error("Failed to send message to update peir's view of my state", e);
       }
     } else {
+      System.err.println(">>>>>Other ["+currentStates.size()+"]");
       log.debug("I might have received a state update");
       try{
         UpdateState state = UpdateState.valueOf(message);
@@ -149,6 +158,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
           sd.start();
           content.switchContent(newDir);
           myState = UpdateState.IDLE;
+          System.err.println(">>>>>Done");
         }
       }
     }
@@ -220,6 +230,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   @Override
   public void doneSwitching() {
     sd.stop();
+    System.err.println(">>>>>Done Switching!");
   }
   
 }
