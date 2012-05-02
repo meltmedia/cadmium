@@ -16,7 +16,7 @@ import com.meltmedia.cadmium.jgroups.SiteDownService;
 
 public class MaintenanceFilter implements Filter, SiteDownService {
 
-	public volatile boolean isOn = true;
+	public volatile boolean isOn = false;
 	
 
 	@Override

@@ -21,6 +21,7 @@ public class JChannelProvider implements Provider<JChannel> {
 
   private String channelName;
   private URL configFile;
+  private JChannel channel;
   
   @Inject
   public JChannelProvider(@Named(CHANNEL_NAME) String channelName, @Named(CONFIG_NAME) URL configFile) {
@@ -30,14 +31,15 @@ public class JChannelProvider implements Provider<JChannel> {
   
   @Override
   public JChannel get() {
-    try{
-      JChannel channel = new JChannel(configFile);
-      channel.connect(channelName);
-      return channel;
-    } catch(Exception e) {
-      log.error("Failed to get jgroups channel", e);
+    if(channel == null) {
+      try{
+        channel = new JChannel(configFile);
+        channel.connect(channelName);
+      } catch(Exception e) {
+        log.error("Failed to get jgroups channel", e);
+      }
     }
-    return null;
+    return channel;
   }
 
 }
