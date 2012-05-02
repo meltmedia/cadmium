@@ -38,6 +38,7 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 public class DemoListener extends GuiceServletContextListener {
   private String applicationBasePath = "/Library/WebServer/Cadmium";
   private String repoDir = "git-checkout";
+  private String contentDir = "renderedContent";
 	Injector injector = null;
 
 	@Override
@@ -57,9 +58,17 @@ public class DemoListener extends GuiceServletContextListener {
 	  if(repoDir != null && repoDir.trim().length() > 0) {
 	    this.repoDir = repoDir;
 	  }
+	  String contentDir = servletContextEvent.getServletContext().getInitParameter("contentDir");
+	  if(contentDir != null && contentDir.trim().length() > 0) {
+	    this.contentDir = contentDir;
+	  }
     File repoFile = new File(this.applicationBasePath, this.repoDir);
     if(repoFile.isDirectory() && repoFile.canWrite()) {
       this.repoDir = repoFile.getAbsoluteFile().getAbsolutePath();
+    }
+    File contentFile = new File(this.applicationBasePath, this.contentDir);
+    if(contentFile.isDirectory() && contentFile.canWrite()) {
+      this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     }
     super.contextInitialized(servletContextEvent);
   }
@@ -82,15 +91,20 @@ public class DemoListener extends GuiceServletContextListener {
           filter("/*").through(MaintenanceFilter.class);
           
           Map<String, String> fileParams = new HashMap<String, String>();
-          fileParams.put("basePath", repoDir);
+          fileParams.put("basePath", contentDir);
+
+          serve("/system/*").with(GuiceContainer.class);
           
-          //serve("/*").with(FileServlet.class, fileParams);
+          serve("/*").with(FileServlet.class, fileParams);
           
           //Bind application base path
           bind(String.class).annotatedWith(Names.named(UpdateChannelReceiver.BASE_PATH)).toInstance(applicationBasePath);
                     
           //Bind git repo path
           bind(String.class).annotatedWith(Names.named(UpdateService.REPOSITORY_LOCATION)).toInstance(repoDir);
+          
+          //Bind static content path
+          bind(String.class).annotatedWith(Names.named(CoordinatedWorkerImpl.RENDERED_DIRECTORY)).toInstance(contentDir);
           
           //Bind channel name
           bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel");
@@ -110,8 +124,6 @@ public class DemoListener extends GuiceServletContextListener {
           
           //Bind Jersey UpdateService
           bind(UpdateService.class).in(Scopes.SINGLETON);
-
-          serve("/system/*").with(GuiceContainer.class, new HashMap<String, String>());
 		}
       };
 	}

@@ -34,6 +34,6 @@ public class UpdateService {
     } else {
       log.error("Channel is not wired");
     }
-    return "ok\n\n";
+    return "ok";
   }
 }
