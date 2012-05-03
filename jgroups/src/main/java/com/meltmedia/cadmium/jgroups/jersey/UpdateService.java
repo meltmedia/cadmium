@@ -34,7 +34,7 @@ public class UpdateService {
   public String update() throws Exception {
     if(channel != null) {
       log.debug("Sending update message");
-      channel.send(new Message(null, null, UpdateChannelReceiver.ProtocolMessage.UPDATE.name() + " repo="+repo));
+      channel.send(new Message(null, null, UpdateChannelReceiver.ProtocolMessage.UPDATE.name()));
     } else {
       log.error("Channel is not wired");
     }

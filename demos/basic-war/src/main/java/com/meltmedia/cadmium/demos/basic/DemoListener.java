@@ -1,14 +1,18 @@
 package com.meltmedia.cadmium.demos.basic;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.servlet.ServletContextEvent;
 
 import org.jgroups.JChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -36,6 +40,11 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
  */
 
 public class DemoListener extends GuiceServletContextListener {
+  private final Logger log = LoggerFactory.getLogger(getClass());
+  public static final String CONFIG_PROPERTIES_FILE = "config.properties";
+  public static final String BASE_PATH_ENV = "com.meltmedia.cadmium.contentRoot";
+  public static final String REPO_KEY_ENV = "com.meltmedia.cadmium.github.sshKey";
+  public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
   private String applicationBasePath = "/Library/WebServer/Cadmium";
   private String repoDir = "git-checkout";
   private String contentDir = "renderedContent";
@@ -54,6 +63,16 @@ public class DemoListener extends GuiceServletContextListener {
 	      this.applicationBasePath = applicationBasePath;
 	    }
 	  }
+	  Properties configProperties = new Properties();
+    configProperties.putAll(System.getenv());
+    configProperties.putAll(System.getProperties());
+    
+    if(configProperties.containsKey(BASE_PATH_ENV) ) {
+      File basePath = new File(configProperties.getProperty(BASE_PATH_ENV));
+      if(basePath.exists() && basePath.canRead() && basePath.canWrite()) {
+        this.applicationBasePath = basePath.getAbsolutePath();
+      }
+    }
 	  String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
 	  if(repoDir != null && repoDir.trim().length() > 0) {
 	    this.repoDir = repoDir;
@@ -82,6 +101,24 @@ public class DemoListener extends GuiceServletContextListener {
       return new ServletModule() {
         @Override
 		protected void configureServlets() {
+          
+          Properties configProperties = new Properties();
+          configProperties.putAll(System.getenv());
+          configProperties.putAll(System.getProperties());
+          
+          try{
+            configProperties.load(new FileReader(new File(applicationBasePath, CONFIG_PROPERTIES_FILE)));
+          } catch(Exception e){
+            log.warn("Failed to load properties file ["+CONFIG_PROPERTIES_FILE+"] from content directory.", e);
+          }
+          
+          if(configProperties.containsKey(LAST_UPDATED_DIR)) {
+            File cntDir = new File(configProperties.getProperty(LAST_UPDATED_DIR));
+            if(cntDir.exists() && cntDir.canRead()) {
+              contentDir = cntDir.getAbsolutePath();
+            }
+          }
+
           bind(MaintenanceFilter.class).in(Scopes.SINGLETON);
           bind(SiteDownService.class).to(MaintenanceFilter.class);
           
@@ -99,7 +136,7 @@ public class DemoListener extends GuiceServletContextListener {
           serve("/*").with(FileServlet.class, fileParams);
           
           filter("/*").through(MaintenanceFilter.class, maintParams);
-          
+
           //Bind application base path
           bind(String.class).annotatedWith(Names.named(UpdateChannelReceiver.BASE_PATH)).toInstance(applicationBasePath);
                     
@@ -111,6 +148,12 @@ public class DemoListener extends GuiceServletContextListener {
           
           //Bind channel name
           bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel");
+          
+          if(configProperties.containsKey(REPO_KEY_ENV)) {
+            bind(String.class).annotatedWith(Names.named(REPO_KEY_ENV)).toInstance(configProperties.getProperty(REPO_KEY_ENV));
+          }
+          
+          bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
           
           //Bind Config file URL
           URL propsUrl = JChannelProvider.class.getClassLoader().getResource("tcp.xml");

@@ -1,10 +1,13 @@
 package com.meltmedia.cadmium.jgit.impl;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.jgroups.CoordinatedWorker;
 import com.meltmedia.cadmium.jgroups.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.jgroups.jersey.UpdateService;
+import com.meltmedia.cadmium.jgroups.receivers.UpdateChannelReceiver;
 
 public class CoordinatedWorkerImpl implements CoordinatedWorker {
   private static final Pattern FNAME_PATTERN = Pattern.compile("^(.+)_(\\d+)$", Pattern.CASE_INSENSITIVE);
@@ -30,6 +35,15 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 	@Inject
 	@Named(RENDERED_DIRECTORY)
 	protected String lastUpdatedDir = "";
+	
+	@Inject
+	@Named(UpdateService.REPOSITORY_LOCATION)
+	protected String repoDirectory = "";
+	
+	@Inject
+	@Named(UpdateChannelReceiver.BASE_PATH)
+	protected String baseDirectory = "";
+	
 	private CoordinatedWorkerListener listener;
 	private boolean kill = false;
 	private boolean running = false;
@@ -46,7 +60,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 					
 					running = true;
 					try {
-					  File repoDir = new File(properties.get("repo"));
+					  File repoDir = new File(repoDirectory);
 					  if(repoDir.exists() && repoDir.isDirectory()) {
 					    File gitDir = new File(repoDir, ".git");
 					    if(gitDir.exists() && gitDir.isDirectory()) {
@@ -57,7 +71,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
     						  File lastDir = new File(lastUpdatedDir);
     						  String newDir = lastUpdatedDir;
     						  if(lastDir.exists()) {
-    						    File parentDir = lastDir.getParentFile();
+    						    File parentDir = new File(baseDirectory);
     						    String dirName = lastDir.getName();
     						    if(parentDir.exists() && parentDir.canWrite()) {
     						      int nextNum = 0;
@@ -96,6 +110,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
   
       						    if(!kill) {
       						      listener.workDone(lastUpdatedDir);
+      						      updatePropertiesFile();
       						    }
     						    }
     						  } else if(!kill){
@@ -106,7 +121,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 					      throw new Exception("Not a valid git repo");
 					    }
 					  } else if(!kill){
-					    throw new Exception("Repo dir ["+properties.get("repo")+"] does not exist or is not a directory");
+					    throw new Exception("Repo dir ["+repoDirectory+"] does not exist or is not a directory");
 					  }
 					} catch (Exception e) {
 						if(!kill) {
@@ -124,6 +139,23 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 			
 		}
 		
+	}
+	
+	private void updatePropertiesFile() {
+	  Properties configProperties = new Properties();
+	  try{
+	    configProperties.load(new FileReader(new File(baseDirectory, "config.properties")));
+	  } catch(Exception e){
+	    log.debug("Failed to load properties file");
+	  }
+	  
+	  configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
+	  
+	  try{
+	  configProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), "Persistent properties");
+	  } catch(Exception e) {
+	    log.warn("Failed to write out config file", e);
+	  }
 	}
 	
 	private static void deleteDeep(File repoFile) {
