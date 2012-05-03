@@ -130,7 +130,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
     } else {
       log.debug("I might have received a state update");
       try{
-        UpdateState state = UpdateState.valueOf(message);
+        UpdateState state = UpdateState.valueOf(message.replaceAll("\\A(\\w+)\\s.*\\Z", "$1"));
         if(currentStates.containsKey(msg.getSrc().toString())) {
           currentStates.put(msg.getSrc().toString(), state);
           log.info("Updating state of {} to {}", msg.getSrc(), state);
