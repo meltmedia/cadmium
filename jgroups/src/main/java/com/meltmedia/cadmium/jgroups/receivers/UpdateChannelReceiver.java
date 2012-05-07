@@ -85,7 +85,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
       }
     } else if (message.replaceAll("\\A(\\w+)\\s.*\\Z", "$1").equals(ProtocolMessage.UPDATE.name())) {
       if(myState == UpdateState.IDLE) {
-        log.info("Beginning an update");
+        log.info("Beginning an update, started by {}", msg.getSrc());
         myState = UpdateState.UPDATING;
         
         try {
@@ -116,31 +116,34 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
         log.info("Received "+message+" message with current state [{}] not IDLE from {}", myState, msg.getSrc());
       }
     } else if (message.equals(ProtocolMessage.UPDATE_DONE.name())) {
-      log.info("Update is done");
+      log.info("Update is done @ {}", msg.getSrc());
       try {
         channel.send(new Message(null, null, myState.name()));
       } catch (Exception e) {
         log.error("Failed to send message to update peir's view of my state", e);
       }
-    } else if (myState != UpdateState.IDLE && message.equals(ProtocolMessage.UPDATE_FAILED.name())) {
-      log.info("update has failed");
-      worker.killUpdate();
-      myState = UpdateState.IDLE;
-      try {
-        channel.send(new Message(null, null, myState.name()));
-      } catch (Exception e) {
-        log.error("Failed to send message to update peir's view of my state", e);
+    } else if (message.equals(ProtocolMessage.UPDATE_FAILED.name())) {
+      if(myState != UpdateState.IDLE) {
+        log.info("update has failed @ {}", msg.getSrc());
+        worker.killUpdate();
+        myState = UpdateState.IDLE;
+        try {
+          channel.send(new Message(null, null, myState.name()));
+        } catch (Exception e) {
+          log.error("Failed to send message to update peir's view of my state", e);
+        }
       }
     } else {
       log.debug("I might have received a state update");
+      String messageName = message.replaceAll("\\A(\\w+)\\s.*\\Z", "$1");
       try{
-        UpdateState state = UpdateState.valueOf(message.replaceAll("\\A(\\w+)\\s.*\\Z", "$1"));
+        UpdateState state = UpdateState.valueOf(messageName);
         if(currentStates.containsKey(msg.getSrc().toString())) {
           currentStates.put(msg.getSrc().toString(), state);
           log.info("Updating state of {} to {}", msg.getSrc(), state);
         }
       } catch(Exception e) {
-        log.warn("Invalid message received {}, {}", message, e.getMessage());
+        log.warn("Invalid message received \"{}\", parsed \"{}\", error msg \"{}\"", new Object[] {message, messageName, e.getMessage()});
       }
       
       if(myState == UpdateState.WAITING) {
@@ -152,6 +155,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
           }
         }
         if(updateDone) {
+          log.info("Done updating content now switching content.");
           sd.start();
           content.switchContent(newDir);
           myState = UpdateState.IDLE;
@@ -226,6 +230,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   @Override
   public void doneSwitching() {
     sd.stop();
+    log.info("Done switching content.");
   }
   
 }
