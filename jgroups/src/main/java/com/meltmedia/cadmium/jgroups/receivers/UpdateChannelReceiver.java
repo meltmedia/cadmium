@@ -73,7 +73,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
     String message = msg.getObject().toString();
     log.debug("Received a message state {}, message {}, src {}",new Object[] { myState, message, msg.getSrc()});
     if(message.equals(ProtocolMessage.CURRENT_STATE.name())) {
-      log.debug("Responding with current state");
+      log.info("Responding with current state {}", myState);
       Message reply = msg.makeReply();
       reply.setObject(myState.name());
       try {
@@ -83,43 +83,47 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
       } catch (ChannelClosedException e) {
         log.error("The channel is closed", e);
       }
-    } else if (myState == UpdateState.IDLE && message.startsWith(ProtocolMessage.UPDATE.name())) {
-      log.debug("Beginning an update");
-      myState = UpdateState.UPDATING;
-      
-      try {
-        channel.send(new Message(null, null, myState.name()));
-      } catch (Exception e) {
-        log.error("Failed to send message to update peir's view of my state", e);
-      }
-      
-      // Parse out message parameters
-      
-      Map<String, String> workProperties = new HashMap<String, String>();
-      if(this.parentPath != null && this.parentPath.length() > 0) {
-        workProperties.put("basePath", this.parentPath);
-      }
-      message = message.substring(ProtocolMessage.UPDATE.name().length()).trim();
-      if(message.length() > 0) {
-        String msgParams[] = message.split(";");
-        for(String msgParam : msgParams) {
-          if(msgParam.indexOf("=") > -1) {
-            workProperties.put(msgParam.substring(0, msgParam.indexOf("=")).trim(), msgParam.substring(msgParam.indexOf("=") + 1).trim());            
+    } else if (message.replaceAll("\\A(\\w+)\\s.*\\Z", "$1").equals(ProtocolMessage.UPDATE.name())) {
+      if(myState == UpdateState.IDLE) {
+        log.info("Beginning an update");
+        myState = UpdateState.UPDATING;
+        
+        try {
+          channel.send(new Message(null, null, myState.name()));
+        } catch (Exception e) {
+          log.error("Failed to send message to update peir's view of my state", e);
+        }
+        
+        // Parse out message parameters
+        
+        Map<String, String> workProperties = new HashMap<String, String>();
+        if(this.parentPath != null && this.parentPath.length() > 0) {
+          workProperties.put("basePath", this.parentPath);
+        }
+        message = message.substring(ProtocolMessage.UPDATE.name().length()).trim();
+        if(message.length() > 0) {
+          String msgParams[] = message.split(";");
+          for(String msgParam : msgParams) {
+            if(msgParam.indexOf("=") > -1) {
+              workProperties.put(msgParam.substring(0, msgParam.indexOf("=")).trim(), msgParam.substring(msgParam.indexOf("=") + 1).trim());            
+            }
           }
         }
+        
+        // Begin work 
+        worker.beginPullUpdates(workProperties);
+      } else {
+        log.info("Received "+message+" message with current state [{}] not IDLE from {}", myState, msg.getSrc());
       }
-      
-      // Begin work 
-      worker.beginPullUpdates(workProperties);
     } else if (message.equals(ProtocolMessage.UPDATE_DONE.name())) {
-      log.debug("Update is done");
+      log.info("Update is done");
       try {
         channel.send(new Message(null, null, myState.name()));
       } catch (Exception e) {
         log.error("Failed to send message to update peir's view of my state", e);
       }
     } else if (myState != UpdateState.IDLE && message.equals(ProtocolMessage.UPDATE_FAILED.name())) {
-      log.debug("update has failed");
+      log.info("update has failed");
       worker.killUpdate();
       myState = UpdateState.IDLE;
       try {
