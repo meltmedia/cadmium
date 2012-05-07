@@ -52,7 +52,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 	public void beginPullUpdates(final Map<String, String> properties) {
 		
 		if(!running) {
-			
+			kill = false;
 			new Thread(new Runnable() {
 				
 				@Override
