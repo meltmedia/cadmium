@@ -127,7 +127,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
           log.warn("Failed to sync, {}", e.getMessage());
         }
       } else {
-        log.info("Received sync message from new member");
+        log.info("Received sync message from new member {}", msg.getSrc());
         Properties configProperties = new Properties();
         
         Map<String, String> workProperties = extractProperties(msgParameters);
