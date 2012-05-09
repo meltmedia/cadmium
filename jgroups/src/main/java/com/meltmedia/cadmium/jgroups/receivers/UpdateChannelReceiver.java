@@ -1,8 +1,13 @@
 package com.meltmedia.cadmium.jgroups.receivers;
 
+import java.io.File;
+import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Vector;
 
 import javax.inject.Inject;
@@ -33,7 +38,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   public static enum ProtocolMessage {
-    UPDATE, READY, UPDATE_DONE, UPDATE_FAILED, CURRENT_STATE
+    UPDATE, READY, UPDATE_DONE, UPDATE_FAILED, CURRENT_STATE, SYNC
   }
   
   public static enum UpdateState {
@@ -71,8 +76,91 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   @Override
   public void receive(Message msg) {
     String message = msg.getObject().toString();
-    log.debug("Received a message state {}, message {}, src {}",new Object[] { myState, message, msg.getSrc()});
-    if(message.equals(ProtocolMessage.CURRENT_STATE.name())) {
+    String msgPrefix = message.replaceAll("\\A(\\w+)\\s.*\\Z", "$1");
+    String msgParameters = message.replaceAll("\\A(\\w+)\\s(.*)\\Z", "$2");
+    log.debug("Received a message state {}, message {}, msgPrefix \"{}\", msgParameters \"{}\", src {}",new Object[] { myState, message, msgPrefix, msgParameters, msg.getSrc()});
+    if(msgPrefix.equals(ProtocolMessage.SYNC.name())) {
+      if(!channel.getLocalAddress().equals(channel.getView().getCreator())) {
+        log.info("Received SYNC request from coordinator");
+        try {
+          Properties configProperties = new Properties();
+          try{
+            configProperties.load(new FileReader(new File(this.parentPath, "config.properties")));
+          } catch(Exception e){
+            log.debug("Failed to load config.properties");
+          }
+          // Parse out message parameters
+          
+          Map<String, String> workProperties = extractProperties(msgParameters);
+          
+          boolean update = false;
+          if(workProperties.containsKey("branch") || workProperties.containsKey("sha")) {
+            update = true;
+          }
+          
+          if(update) {
+            log.info("Taking site down to run sync update!");
+            sd.start();
+            this.myState = UpdateState.UPDATING;
+            final UpdateChannelReceiver thisReceiver = this;
+            this.worker.setListener(new CoordinatedWorkerListener() {
+
+              @Override
+              public void workDone(String newDir) {
+                log.info("Sync done");
+                content.switchContent(newDir);
+                worker.setListener(thisReceiver);
+              }
+
+              @Override
+              public void workFailed() {
+                log.info("Sync failed");
+                myState = UpdateState.IDLE;
+                worker.setListener(thisReceiver);
+              }
+            });
+            
+            this.worker.beginPullUpdates(workProperties);
+          }
+          
+        } catch(Exception e){
+          log.warn("Failed to sync, {}", e.getMessage());
+        }
+      } else {
+        log.info("Received sync message from new member");
+        Properties configProperties = new Properties();
+        
+        Map<String, String> workProperties = extractProperties(msgParameters);
+
+        boolean update = false;
+        if(new File(this.parentPath, "config.properties").exists()) {
+          try{
+            configProperties.load(new FileReader(new File(this.parentPath, "config.properties")));
+          } catch(Exception e){
+            log.debug("Failed to load config.properties");
+          }
+        }
+        
+        if(workProperties.containsKey("branch") && workProperties.containsKey("sha")) {
+          if(configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+            if(!configProperties.get("branch").equals(workProperties.get("branch")) || !configProperties.get("git.ref.sha").equals(workProperties.get("sha"))) {
+              update = true;
+            }
+          }
+        } else if (configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+          update = true;
+        }
+        
+        if(update) {
+          try{
+            log.info("Sending sync message to new member {}, branch {}, sha {}", new Object[] {msg.getSrc(), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
+            channel.send(new Message(msg.getSrc(), null, ProtocolMessage.SYNC + " branch="+configProperties.getProperty("branch") + ";sha="+configProperties.getProperty("git.ref.sha")));
+          } catch(Exception e) {
+            log.warn("Failed to send sync message", e);
+          }
+        }
+      }
+    } else if(message.equals(ProtocolMessage.CURRENT_STATE.name())) {
       log.info("Responding with current state {}", myState);
       Message reply = msg.makeReply();
       reply.setObject(myState.name());
@@ -83,7 +171,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
       } catch (ChannelClosedException e) {
         log.error("The channel is closed", e);
       }
-    } else if (message.replaceAll("\\A(\\w+)\\s.*\\Z", "$1").equals(ProtocolMessage.UPDATE.name())) {
+    } else if (msgPrefix.equals(ProtocolMessage.UPDATE.name())) {
       if(myState == UpdateState.IDLE) {
         log.info("Beginning an update, started by {}", msg.getSrc());
         myState = UpdateState.UPDATING;
@@ -96,19 +184,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
         
         // Parse out message parameters
         
-        Map<String, String> workProperties = new HashMap<String, String>();
-        if(this.parentPath != null && this.parentPath.length() > 0) {
-          workProperties.put("basePath", this.parentPath);
-        }
-        message = message.substring(ProtocolMessage.UPDATE.name().length()).trim();
-        if(message.length() > 0) {
-          String msgParams[] = message.split(";");
-          for(String msgParam : msgParams) {
-            if(msgParam.indexOf("=") > -1) {
-              workProperties.put(msgParam.substring(0, msgParam.indexOf("=")).trim(), msgParam.substring(msgParam.indexOf("=") + 1).trim());            
-            }
-          }
-        }
+        Map<String, String> workProperties = extractProperties(msgParameters);
         
         // Begin work 
         worker.beginPullUpdates(workProperties);
@@ -135,15 +211,14 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
       }
     } else {
       log.debug("I might have received a state update");
-      String messageName = message.replaceAll("\\A(\\w+)\\s.*\\Z", "$1");
       try{
-        UpdateState state = UpdateState.valueOf(messageName);
+        UpdateState state = UpdateState.valueOf(msgPrefix);
         if(currentStates.containsKey(msg.getSrc().toString())) {
           currentStates.put(msg.getSrc().toString(), state);
           log.info("Updating state of {} to {}", msg.getSrc(), state);
         }
       } catch(Exception e) {
-        log.warn("Invalid message received \"{}\", parsed \"{}\", error msg \"{}\"", new Object[] {message, messageName, e.getMessage()});
+        log.warn("Invalid message received \"{}\", parsed \"{}\", error msg \"{}\"", new Object[] {message, msgPrefix, e.getMessage()});
       }
       
       if(myState == UpdateState.WAITING) {
@@ -158,25 +233,83 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
           log.info("Done updating content now switching content.");
           sd.start();
           content.switchContent(newDir);
-          myState = UpdateState.IDLE;
         }
       }
     }
+  }
+
+
+  private Map<String, String> extractProperties(String msgParameters) {
+    Map<String, String> workProperties = new HashMap<String, String>();
+    if(this.parentPath != null && this.parentPath.length() > 0) {
+      workProperties.put("basePath", this.parentPath);
+    }
+    if(msgParameters.length() > 0) {
+      String msgParams[] = msgParameters.split(";");
+      for(String msgParam : msgParams) {
+        if(msgParam.indexOf("=") > -1) {
+          workProperties.put(msgParam.substring(0, msgParam.indexOf("=")).trim(), msgParam.substring(msgParam.indexOf("=") + 1).trim());            
+        }
+      }
+    }
+    return workProperties;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public void viewAccepted(View new_view) {
     Vector<Address> members = new_view.getMembers();
-    
+    List<Address> newMembers = new ArrayList<Address>();
     for(Address member : members) {
       if(!currentStates.containsKey(member.toString())) {
         log.info("Discovered new member {}", member.toString());
         currentStates.put(member.toString(), UpdateState.IDLE);
+        newMembers.add(member);
         try {
           channel.send(new Message(member, null, ProtocolMessage.CURRENT_STATE.name()));
         } catch (Exception e) {
           log.error("Failed to send message to check for peir's current state", e);
+        }
+      }
+    }
+    
+    Map<String, UpdateState> oldCurrentStates = new Hashtable<String, UpdateState>();
+    oldCurrentStates.putAll(currentStates);
+    for(String member : oldCurrentStates.keySet()) {
+      boolean found = false;
+      for(Address newMember : members) {
+        if(member.equals(newMember.toString())) {
+          found = true;
+        }
+      }
+      if(!found) {
+        currentStates.remove(member);
+      }
+    }
+    
+    log.debug("Here is the new view {}", new_view);
+    if(!new_view.getCreator().equals(channel.getLocalAddress())) {
+      log.debug("I'm not the coordinator!!!");
+      Properties configProperties = new Properties();
+      try{
+        configProperties.load(new FileReader(new File(this.parentPath, "config.properties")));
+
+      } catch(Exception e){
+        log.warn("Failed to load properties file, {}", e.getMessage());
+      }
+      if(configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+        try{
+          log.info("Sending sync message to coordinator {}, branch {}, sha {}", new Object[] {new_view.getCreator(), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
+          channel.send(new Message(new_view.getCreator(), null, ProtocolMessage.SYNC+" branch="+configProperties.getProperty("branch")+";sha="+configProperties.getProperty("git.ref.sha")));
+        } catch(Exception e) {
+          log.error("Failed to send message", e);
+        }
+      } else {
+        try{
+          log.info("Sending sync message to coordinator {}", new_view.getCreator());
+          channel.send(new Message(new_view.getCreator(), null, ProtocolMessage.SYNC));
+        } catch(Exception e) {
+          log.error("Failed to send message", e);
         }
       }
     }
@@ -231,6 +364,7 @@ public class UpdateChannelReceiver extends ExtendedReceiverAdapter implements Co
   public void doneSwitching() {
     sd.stop();
     log.info("Done switching content.");
+    myState = UpdateState.IDLE;
   }
   
 }

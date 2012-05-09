@@ -16,7 +16,11 @@ import javax.inject.Named;
 
 
 import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.slf4j.Logger;
@@ -50,8 +54,15 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 	
 	@Override
 	public void beginPullUpdates(final Map<String, String> properties) {
-		
 		if(!running) {
+
+	    if(!properties.isEmpty()) {
+	      log.info("Properties not empty: ");
+	      for(String key : properties.keySet()) {
+	        log.info("    ["+key+"] : ["+properties.get(key)+"]");
+	      }
+	    }
+	    
 			kill = false;
 			new Thread(new Runnable() {
 				
@@ -59,15 +70,30 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 				public void run() {
 					
 					running = true;
+					FileRepository repo = null;
 					try {
 					  File repoDir = new File(repoDirectory);
 					  if(repoDir.exists() && repoDir.isDirectory()) {
 					    File gitDir = new File(repoDir, ".git");
 					    if(gitDir.exists() && gitDir.isDirectory()) {
-    						Repository repo = new FileRepository(gitDir.getAbsolutePath());
+    						repo = new FileRepository(gitDir.getAbsolutePath());
     						Git git = new Git(repo);
-    						git.pull().call();
+    						if(properties.containsKey("branch") && !repo.getBranch().equals(properties.get("branch"))) {
+    						  log.info("Switching branch from {} to {}", repo.getBranch(), properties.get("branch"));
+                  CreateBranchCommand branch = git.branchCreate().setName(properties.get("branch"));
+                  branch.setStartPoint("origin/"+Repository.shortenRefName(properties.get("branch")));
+                  branch.setForce(true);
+                  branch.call();
+                }
+    						PullResult result = git.pull().call();
     						if(!kill) {
+    						  if(!result.isSuccessful()) {
+    						    throw new Exception("Pull failed");
+    						  }
+  						    if(properties.containsKey("sha")) {
+  						      log.info("Resetting to sha {}", properties.get("sha"));
+  						      git.reset().setMode(ResetType.HARD).setRef(properties.get("sha")).call();
+  						    }
     						  File lastDir = new File(lastUpdatedDir);
     						  String newDir = lastUpdatedDir;
     						  if(lastDir.exists()) {
@@ -109,8 +135,9 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
        						    }
   
       						    if(!kill) {
+      						      Ref ref = repo.getRef(repo.getBranch());
       						      listener.workDone(lastUpdatedDir);
-      						      updatePropertiesFile();
+      						      updatePropertiesFile(ref);
       						    }
     						    }
     						  } else if(!kill){
@@ -131,6 +158,9 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 					}
 					finally {
 						running = false;
+						if(repo != null) {
+						  repo.close();
+						}
 					}
 				}
 
@@ -141,7 +171,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 		
 	}
 	
-	private void updatePropertiesFile() {
+	private void updatePropertiesFile(Ref ref) {
 	  Properties configProperties = new Properties();
 	  try{
 	    configProperties.load(new FileReader(new File(baseDirectory, "config.properties")));
@@ -150,6 +180,8 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 	  }
 	  
 	  configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
+	  configProperties.setProperty("branch", Repository.shortenRefName(ref.getName()));
+	  configProperties.setProperty("git.ref.sha", ref.getObjectId().getName());
 	  
 	  try{
 	  configProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), "Persistent properties");
