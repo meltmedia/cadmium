@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.jgit.impl;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,12 +57,6 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 	public void beginPullUpdates(final Map<String, String> properties) {
 		if(!running) {
 
-	    if(!properties.isEmpty()) {
-	      log.info("Properties not empty: ");
-	      for(String key : properties.keySet()) {
-	        log.info("    ["+key+"] : ["+properties.get(key)+"]");
-	      }
-	    }
 	    
 			kill = false;
 			new Thread(new Runnable() {
@@ -138,6 +133,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
       						      Ref ref = repo.getRef(repo.getBranch());
       						      listener.workDone(lastUpdatedDir);
       						      updatePropertiesFile(ref);
+      						      cleanUp();
       						    }
     						    }
     						  } else if(!kill){
@@ -171,20 +167,82 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker {
 		
 	}
 	
+	private void cleanUp() {
+	  new Thread(new Runnable() {
+
+      @Override
+      public void run() {
+        final File lastUpdated = new File(lastUpdatedDir);
+        if(lastUpdated.exists()) {
+          File parentDir = lastUpdated.getParentFile();
+          Matcher nameMatcher = FNAME_PATTERN.matcher(lastUpdated.getName());
+          if(nameMatcher.matches()){
+            final String prefixName = nameMatcher.group(1);
+            final int dirNumber = Integer.parseInt(nameMatcher.group(2));
+            File renderedDirs[] = parentDir.listFiles(new FilenameFilter() {
+
+              @Override
+              public boolean accept(File file, String name) {
+                if(name.startsWith(prefixName)) {
+                  return true;
+                }
+                return false;
+              }
+              
+            });
+            
+            for(File renderedDir : renderedDirs) {
+              if(renderedDir.getName().equals(prefixName) && dirNumber > 1) {
+                try{
+                  deleteDeep(renderedDir);
+                } catch(Exception e) {
+                  log.warn("Failed to delete old dir {}, {}", renderedDir.getName(), e.getMessage());
+                }
+              } else {
+                Matcher otherNameMatcher = FNAME_PATTERN.matcher(renderedDir.getName());
+                if(otherNameMatcher.matches()) {
+                  int otherDirNumber = Integer.parseInt(otherNameMatcher.group(2));
+                  if(otherDirNumber < (dirNumber - 1)) {
+                    try{
+                      deleteDeep(renderedDir);
+                    } catch(Exception e) {
+                      log.warn("Failed to delete old dir {}, {}", renderedDir.getName(), e.getMessage());
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+	    
+	  }).start();
+	}
+	
 	private void updatePropertiesFile(Ref ref) {
 	  Properties configProperties = new Properties();
-	  try{
-	    configProperties.load(new FileReader(new File(baseDirectory, "config.properties")));
-	  } catch(Exception e){
-	    log.debug("Failed to load properties file");
+	  if(new File(baseDirectory, "config.properties").exists()) {
+  	  try{
+  	    configProperties.load(new FileReader(new File(baseDirectory, "config.properties")));
+  	  } catch(Exception e){
+  	    log.debug("Failed to load properties file");
+  	  }
 	  }
-	  
+	  if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
+	    configProperties.setProperty("com.meltmedia.cadmium.previous", configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
+	  }
 	  configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
+    if(configProperties.containsKey("branch")) {
+      configProperties.setProperty("branch.last", configProperties.getProperty("branch"));
+    }
 	  configProperties.setProperty("branch", Repository.shortenRefName(ref.getName()));
+    if(configProperties.containsKey("git.ref.sha")) {
+      configProperties.setProperty("git.ref.sha.last", configProperties.getProperty("git.ref.sha"));
+    }
 	  configProperties.setProperty("git.ref.sha", ref.getObjectId().getName());
 	  
 	  try{
-	  configProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), "Persistent properties");
+	    configProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
 	  } catch(Exception e) {
 	    log.warn("Failed to write out config file", e);
 	  }
