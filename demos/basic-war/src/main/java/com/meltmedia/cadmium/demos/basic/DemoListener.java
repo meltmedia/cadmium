@@ -106,10 +106,12 @@ public class DemoListener extends GuiceServletContextListener {
           configProperties.putAll(System.getenv());
           configProperties.putAll(System.getProperties());
           
-          try{
-            configProperties.load(new FileReader(new File(applicationBasePath, CONFIG_PROPERTIES_FILE)));
-          } catch(Exception e){
-            log.warn("Failed to load properties file ["+CONFIG_PROPERTIES_FILE+"] from content directory.", e);
+          if(new File(applicationBasePath, CONFIG_PROPERTIES_FILE).exists()) {
+            try{
+              configProperties.load(new FileReader(new File(applicationBasePath, CONFIG_PROPERTIES_FILE)));
+            } catch(Exception e){
+              log.warn("Failed to load properties file ["+CONFIG_PROPERTIES_FILE+"] from content directory.", e);
+            }
           }
           
           if(configProperties.containsKey(LAST_UPDATED_DIR)) {
