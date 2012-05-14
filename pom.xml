@@ -78,6 +78,12 @@
       <artifactId>guice-servlet</artifactId>
       <version>3.0</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2</version>
+    </dependency>
     
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -100,8 +106,7 @@
   </dependencyManagement>
 
   <modules>
-    <module>jgroups</module>
-    <module>jgit</module>
+    <module>core</module>
     <module>servlets</module>
     <module>cli</module>
     <module>demos</module>
