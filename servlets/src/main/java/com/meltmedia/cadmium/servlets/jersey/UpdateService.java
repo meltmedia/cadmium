@@ -4,6 +4,7 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,11 +26,17 @@ public class UpdateService {
   
   @GET
   @Produces("text/plain")
-  public String update() throws Exception {
+  public String update(@QueryParam("branch") String branch, @QueryParam("sha") String sha) throws Exception {
     if(sender != null) {
       log.debug("Sending update message");
       Message msg = new Message();
       msg.setCommand(ProtocolMessage.UPDATE);
+      if(branch != null && branch.trim().length() > 0) {
+        msg.getProtocolParameters().put("branch", branch);
+      }
+      if(sha != null && sha.trim().length() > 0) {
+        msg.getProtocolParameters().put("sha", sha);
+      }
       sender.sendMessage(msg, null);
     } else {
       log.error("Channel is not wired");

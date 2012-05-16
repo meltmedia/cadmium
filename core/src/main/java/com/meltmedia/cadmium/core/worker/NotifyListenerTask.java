@@ -24,7 +24,7 @@ public class NotifyListenerTask implements Callable<Boolean> {
         throw new Exception("Previous task failed");
       }
     }
-    
+    Thread.sleep(1000l);
     listener.workDone();
     
     return true;

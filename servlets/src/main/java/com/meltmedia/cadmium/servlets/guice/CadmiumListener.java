@@ -73,6 +73,19 @@ public class CadmiumListener extends GuiceServletContextListener {
 
 	@Override
 	public void contextDestroyed(ServletContextEvent event) {
+	  JChannel channel = injector.getInstance(JChannel.class);
+	  if(channel != null) {
+	    channel.close();
+	  }
+	  GitService git = injector.getInstance(GitService.class);
+	  if(git != null) {
+	    try {
+        git.close();
+      } catch (Exception e) {
+        log.warn("Failed to close GitService", e);
+      }
+	  }
+	  super.contextDestroyed(event);
 	}
 
 	@Override
@@ -115,7 +128,8 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
 	protected Injector getInjector() {
-		return Guice.createInjector(createServletModule());
+		injector = Guice.createInjector(createServletModule());
+		return injector;
 	}
 	
 	private ServletModule createServletModule() {

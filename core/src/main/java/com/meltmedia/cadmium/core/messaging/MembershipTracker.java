@@ -42,7 +42,7 @@ public class MembershipTracker extends MembershipListenerAdapter {
   @Override
   public void viewAccepted(View new_view) {
     if(this.members != null) {
-      log.warn("Received a new view ["+new_view.size()+"]");
+      log.info("Received a new view ["+new_view.size()+"]");
       List<Address> memberAddresses = new_view.getMembers();
       
       addNewMembers(memberAddresses);
@@ -50,13 +50,14 @@ public class MembershipTracker extends MembershipListenerAdapter {
       pergeDroppedMembers(memberAddresses);
       
       handleSyncRequest(new_view);
+      log.info("Processed new view now there are ["+new_view.size()+"] members");
     } else {
       log.warn("Received a new view members list is null");
     }
   }
 
   private void handleSyncRequest(View new_view) {
-    log.debug("Here is the new view {}", new_view);
+    log.info("Here is the new view {}", new_view);
     ChannelMember coordinator = getCoordinator();
     if(coordinator != null && !coordinator.isMine()) {
       log.debug("I'm not the coordinator!!!");
@@ -66,6 +67,7 @@ public class MembershipTracker extends MembershipListenerAdapter {
       if(configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
         syncMessage.getProtocolParameters().put("branch", configProperties.getProperty("branch"));
         syncMessage.getProtocolParameters().put("sha", configProperties.getProperty("git.ref.sha"));
+        log.info("I have branch:{}, and sha:{}", configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha"));
       }
       try{
         sender.sendMessage(syncMessage, coordinator);
@@ -87,6 +89,7 @@ public class MembershipTracker extends MembershipListenerAdapter {
       }
       if(!found) {
         members.remove(member);
+        log.info("Purging old member {}, was coordinator {}, me {}", new Object[] {member.getAddress().toString(), member.isCoordinator(), member.isMine()});
       }
     }
   }
@@ -103,6 +106,11 @@ public class MembershipTracker extends MembershipListenerAdapter {
           sender.sendMessage(stateMsg, cMember);
         } catch (Exception e) {
           log.error("Failed to send message to check for peir's current state", e);
+        }
+      } else if(cMember.isCoordinator()){
+        cMember = members.get(members.indexOf(cMember));
+        if(!cMember.isCoordinator()) {
+          log.info("Coordinator changed to {}" + (cMember.isMine()? " and is me" : "" ), cMember.getAddress().toString());
         }
       }
     }

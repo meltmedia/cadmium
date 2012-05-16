@@ -37,10 +37,9 @@ public class UpdateDoneCommandActionTest {
     
     assertTrue("Command returned false", cmd.execute(ctx));
     
-    assertTrue("State not updated", service.getCurrentState() == UpdateState.WAITING);
     assertTrue("no message sent", sender.dest == null && sender.msg != null);
     assertTrue("No state update", sender.msg.getCommand() == ProtocolMessage.STATE_UPDATE);
     assertTrue("Incorrect state in update", sender.msg.getProtocolParameters().containsKey("state") 
-        && sender.msg.getProtocolParameters().get("state").equals(UpdateState.WAITING.name()));
+        && sender.msg.getProtocolParameters().get("state").equals(UpdateState.UPDATING.name()));
   }
 }

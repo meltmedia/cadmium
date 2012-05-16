@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
+import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -36,6 +38,9 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   @Inject
   protected MessageSender sender;
   
+  @Inject
+  protected LifecycleService lifecycleService;
+  
   protected Future<Boolean> lastTask = null;
   
   private CoordinatedWorkerListener listener;
@@ -46,8 +51,9 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void beginPullUpdates(Map<String, String> properties) {
+  public void beginPullUpdates(final Map<String, String> properties) {
     synchronized(pool) {
+      log.info("Beginning Update...");
       lastTask = null;
       
       if(properties.containsKey("branch")) {
@@ -91,6 +97,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   @Override
   public void workDone() {
     log.info("Work is done");
+    lifecycleService.updateMyState(UpdateState.WAITING, false);
     Message doneMessage = new Message();
     doneMessage.setCommand(ProtocolMessage.UPDATE_DONE);
     try {

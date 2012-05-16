@@ -3,15 +3,21 @@ package com.meltmedia.cadmium.core.worker;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.jgroups.stack.IpAddress;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
+import com.meltmedia.cadmium.core.lifecycle.UpdateState;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.DummyMessageSender;
 
 public class CoordinatedWorkerImplTest {
@@ -54,13 +60,24 @@ public class CoordinatedWorkerImplTest {
     
     DummyMessageSender sender = new DummyMessageSender();
     
+    LifecycleService lifecycleService = new LifecycleService();
+    
+    lifecycleService.setSender(sender);
+    
+    List<ChannelMember> members = new ArrayList<ChannelMember>();
+    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.UPDATING));
+    lifecycleService.setMembers(members);
+    
+    
     CoordinatedWorkerImpl worker = new CoordinatedWorkerImpl();
     worker.configProperties = configProperties;
     worker.sender = sender;
     worker.service = service;
+    worker.lifecycleService = lifecycleService;
     
     worker.beginPullUpdates(properties);
     int timeout = 5000;
+    Thread.sleep(500l);
     while(timeout > 0 && !worker.lastTask.isDone()) {
       timeout--;
       Thread.sleep(500l);
@@ -70,5 +87,6 @@ public class CoordinatedWorkerImplTest {
     assertTrue("Work shouldn't have been cancelled", !worker.lastTask.isCancelled());
     
     assertTrue("Work not success", worker.lastTask.get());
+    assertTrue("State not updated to waiting", members.get(0).getState() == UpdateState.WAITING);
   }
  }

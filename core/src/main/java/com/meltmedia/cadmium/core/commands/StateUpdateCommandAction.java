@@ -31,7 +31,10 @@ public class StateUpdateCommandAction implements CommandAction {
   public boolean execute(CommandContext ctx) throws Exception {
     try {
       if(ctx.getMessage().getProtocolParameters().containsKey("state")) {
-        lifecycleService.updateState(new ChannelMember(ctx.getSource()), UpdateState.valueOf(ctx.getMessage().getProtocolParameters().get("state")));
+        UpdateState newState = UpdateState.valueOf(ctx.getMessage().getProtocolParameters().get("state"));
+        if(newState != UpdateState.UPDATING || !lifecycleService.isMe(new ChannelMember(ctx.getSource())) || lifecycleService.getCurrentState() != UpdateState.WAITING) {
+          lifecycleService.updateState(new ChannelMember(ctx.getSource()), newState);
+        }
         if(lifecycleService.getCurrentState() == UpdateState.WAITING && lifecycleService.allEquals(UpdateState.WAITING)) {
           log.info("Done updating content now switching content.");
           maintFilter.start();

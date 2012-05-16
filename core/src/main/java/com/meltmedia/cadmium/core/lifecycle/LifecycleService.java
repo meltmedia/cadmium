@@ -29,22 +29,32 @@ public class LifecycleService {
     if(members != null && members.contains(member)) {
       log.info("Updating state of {} to {}", member.getAddress().toString(), state);
       member = members.get(members.indexOf(member));
-      UpdateState oldState = member.getState();
       member.setState(state);
-      if(oldState != state) {
-        sendStateUpdate(null);
-      }
     }
   }
   
+  public boolean isMe(ChannelMember member) {
+    if(members != null && members.contains(member)) {
+      return members.get(members.indexOf(member)).isMine();
+    }
+    return false;
+  }
+  
   public void updateMyState(UpdateState state) {
+    updateMyState(state, true);
+  }
+  
+  public void updateMyState(UpdateState state, boolean sendUpdate) {
     if(members != null) {
       for(ChannelMember member : members) {
         if(member.isMine()) {
           UpdateState oldState = member.getState();
           member.setState(state);
           if(oldState != state) {
-            sendStateUpdate(null);
+            log.info("Updating my state to {} and sendUpdate is {}", state, sendUpdate);
+            if(sendUpdate) {
+              sendStateUpdate(null);
+            }
           }
         }
       }
@@ -56,6 +66,7 @@ public class LifecycleService {
     updateStateMsg.setCommand(ProtocolMessage.STATE_UPDATE);
     updateStateMsg.getProtocolParameters().put("state", getCurrentState().name());
     try{
+      log.info("Sending state update message from state change!");
       sender.sendMessage(updateStateMsg, source);
     } catch(Exception e) {
       log.warn("Failed to send state update: {}", e.getMessage());
@@ -84,6 +95,7 @@ public class LifecycleService {
   
   public boolean allEquals(UpdateState state) {
     if(members != null) {
+      log.info("Checking if all {} members are in {} state", members.size(), state);
       boolean allEqual = true;
       for(ChannelMember member : members) {
         if(member.getState() != state) {

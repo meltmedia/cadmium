@@ -29,7 +29,6 @@ public class UpdateCommandAction implements CommandAction {
     if(lifecycleService.getCurrentState() == UpdateState.IDLE) {
       log.info("Beginning an update, started by {}", ctx.getSource());
       lifecycleService.updateMyState(UpdateState.UPDATING);
-      
       worker.beginPullUpdates(ctx.getMessage().getProtocolParameters());
       
     } else {

@@ -43,6 +43,35 @@ public class LifecycleServiceTest {
     service.updateState(new ChannelMember(new IpAddress(4322)), UpdateState.UPDATING);
     
     assertTrue("State not updated", members.get(1).getState() == UpdateState.UPDATING);
+    assertTrue("No message sent", channel.getMessageList().size() == 0);
+  }
+
+  @Test
+  public void testUpdateMyState() throws Exception {
+    Address me = new IpAddress(1234);
+    Address other2 = new IpAddress(4322);
+    Address other3 = new IpAddress(4321);
+    Vector<Address> viewMems = new Vector<Address>();
+    viewMems.add(other2);
+    viewMems.add(me);
+    viewMems.add(other3);
+    
+    DummyJChannel channel = new DummyJChannel(me, viewMems);
+    JGroupsMessageSender sender = new JGroupsMessageSender();
+    sender.setChannel(channel);
+    
+    List<ChannelMember> members = new ArrayList<ChannelMember>();
+    members.add(new ChannelMember(new IpAddress(1234), true, false, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(4322), false, true, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(4321), false, false, UpdateState.IDLE));
+    
+    LifecycleService service = new LifecycleService();
+    service.members = members;
+    service.sender = sender;
+    
+    service.updateMyState(UpdateState.UPDATING);
+    
+    assertTrue("State not updated", members.get(1).getState() == UpdateState.UPDATING);
     assertTrue("No message sent", channel.getMessageList().size() == 1);
     assertTrue("Message sent not a STATE_UPDATE", channel.getMessageList().get(0).getObject().toString().contains(ProtocolMessage.STATE_UPDATE.name()));
     assertTrue("Correct state not sent", channel.getMessageList().get(0).getObject().toString().contains(UpdateState.UPDATING.name()));

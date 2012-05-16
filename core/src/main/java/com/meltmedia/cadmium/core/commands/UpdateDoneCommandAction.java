@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
-import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 
 @Singleton
 public class UpdateDoneCommandAction implements CommandAction {
@@ -20,12 +19,8 @@ public class UpdateDoneCommandAction implements CommandAction {
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
-    if(lifecycleService.getCurrentState() == UpdateState.UPDATING) {
-      log.info("Update is done @ {}", ctx.getSource());
-      lifecycleService.updateMyState(UpdateState.WAITING);
-    } else {
-      log.info("Received Update done message while not updating: {}", lifecycleService.getCurrentState());
-    }
+    log.info("Update is done @ {}, my state {}", ctx.getSource(), lifecycleService.getCurrentState());
+    lifecycleService.sendStateUpdate(null);
     return true;
   }
 

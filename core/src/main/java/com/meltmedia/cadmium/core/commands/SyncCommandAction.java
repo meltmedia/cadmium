@@ -90,12 +90,16 @@ public class SyncCommandAction implements CommandAction {
     log.info("Received SYNC message from new member {}", ctx.getSource());
     boolean update = false;
     if(ctx.getMessage().getProtocolParameters().containsKey("branch") && ctx.getMessage().getProtocolParameters().containsKey("sha")) {
+      log.info("Sync Request has branch {} and sha {}", ctx.getMessage().getProtocolParameters().get("branch"), ctx.getMessage().getProtocolParameters().get("sha"));
       if(configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+        log.info("I have branch {} and sha {}", configProperties.get("branch"), configProperties.get("git.ref.sha"));
         if(!configProperties.getProperty("branch").equals(ctx.getMessage().getProtocolParameters().get("branch")) || !configProperties.getProperty("git.ref.sha").equals(ctx.getMessage().getProtocolParameters().get("sha"))) {
+          log.info("Update is required!");
           update = true;
         }
       }
     } else if (configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+      log.info("Sync request has not branch or sha! update is required!");
       update = true;
     }
     

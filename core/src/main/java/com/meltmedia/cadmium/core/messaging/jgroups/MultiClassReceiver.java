@@ -40,7 +40,7 @@ public class MultiClassReceiver implements Receiver, MessageListener, Membership
 
   @Override
   public void viewAccepted(View arg0) {
-    log.info("Received updated view deligating to {"+this.membershipListener+"}");
+    log.trace("Received updated view deligating to {"+this.membershipListener+"}");
     membershipListener.viewAccepted(arg0);
   }
 
@@ -51,7 +51,7 @@ public class MultiClassReceiver implements Receiver, MessageListener, Membership
 
   @Override
   public void receive(Message arg0) {
-    log.info("Received message deligating to {"+this.messageListener+"}");
+    log.trace("Received message deligating to {"+this.messageListener+"}");
     messageListener.receive(arg0);
   }
 
