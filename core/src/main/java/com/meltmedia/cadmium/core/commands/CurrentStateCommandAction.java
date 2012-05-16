@@ -1,6 +1,7 @@
 package com.meltmedia.cadmium.core.commands;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 
+@Singleton
 public class CurrentStateCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
   

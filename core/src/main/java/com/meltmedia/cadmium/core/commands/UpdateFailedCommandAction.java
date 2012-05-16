@@ -1,6 +1,7 @@
 package com.meltmedia.cadmium.core.commands;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 
+@Singleton
 public class UpdateFailedCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
   

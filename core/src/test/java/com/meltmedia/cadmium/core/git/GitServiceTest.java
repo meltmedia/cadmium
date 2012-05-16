@@ -73,7 +73,7 @@ public class GitServiceTest {
   
   @Test
   public void testCloneDiskBasedRepo() throws Exception {
-    GitService git = GitService.cloneRepo(git1.repository.getDirectory().getAbsolutePath(), new File(testDir, "cloned").getAbsolutePath());
+    GitService git = GitService.cloneRepo(git1.getRepositoryDirectory(), new File(testDir, "cloned").getAbsolutePath());
     assertTrue("New Git service not created", git != null);
     git.close();
     assertTrue("Failed to create new directory", new File(testDir, "cloned").exists());

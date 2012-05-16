@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.core.lifecycle;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ public class LifecycleService {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
+  @Named("members")
   List<ChannelMember> members;
   
   @Inject

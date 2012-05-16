@@ -4,6 +4,8 @@ import java.io.File;
 
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.CreateBranchCommand;
+import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.lib.Repository;
@@ -65,6 +67,14 @@ public class GitService {
     return null;
   }
   
+  public String getRepositoryDirectory() throws Exception {
+    return this.repository.getDirectory().getAbsolutePath();
+  }
+  
+  public String getBaseDirectory() throws Exception {
+    return FileSystemManager.getParent(this.repository.getDirectory().getParent());
+  }
+  
   public boolean pull() throws Exception {
     log.debug("Pulling latest updates from remote git repo");
     return git.pull().call().isSuccessful();
@@ -76,12 +86,13 @@ public class GitService {
       CheckoutCommand checkout = git.checkout();
       checkout.setName(branchName);
       if(this.repository.getRef(branchName) == null) {
-        checkout.setCreateBranch(true);
-        checkout.setStartPoint("origin/"+branchName);
-        checkout.setForce(true);
+        CreateBranchCommand create = git.branchCreate();
+        create.setName(branchName);
+        create.setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM);
+        create.setStartPoint("origin/"+branchName);
+        create.call();
       }
       checkout.call();
-      
     }
   }
   

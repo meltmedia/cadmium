@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.jgroups.Address;
@@ -18,22 +19,30 @@ import org.slf4j.LoggerFactory;
 public class MembershipTracker extends MembershipListenerAdapter {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
-  @Inject
   protected MessageSender sender;
   
-  @Inject
   protected JChannel channel;
   
-  @Inject
   protected List<ChannelMember> members;
   
-  @Inject
   protected Properties configProperties;
+  
+  @Inject
+  public MembershipTracker(MessageSender sender, JChannel channel, @Named("members") List<ChannelMember> members, @Named("config.properties") Properties configProperties) {
+    this.sender = sender;
+    this.channel = channel;
+    this.members = members;
+    this.configProperties = configProperties;
+    if(this.channel != null) {
+      viewAccepted(this.channel.getView());
+    }
+  }
 
   @SuppressWarnings("unchecked")
   @Override
   public void viewAccepted(View new_view) {
     if(this.members != null) {
+      log.warn("Received a new view ["+new_view.size()+"]");
       List<Address> memberAddresses = new_view.getMembers();
       
       addNewMembers(memberAddresses);
@@ -41,6 +50,8 @@ public class MembershipTracker extends MembershipListenerAdapter {
       pergeDroppedMembers(memberAddresses);
       
       handleSyncRequest(new_view);
+    } else {
+      log.warn("Received a new view members list is null");
     }
   }
 

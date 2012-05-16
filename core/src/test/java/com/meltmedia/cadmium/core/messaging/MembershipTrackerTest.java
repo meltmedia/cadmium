@@ -38,13 +38,8 @@ public class MembershipTrackerTest {
     JGroupsMessageSender sender = new JGroupsMessageSender();
     sender.setChannel(channel);
     
-    MembershipTracker tracker = new MembershipTracker();
-    tracker.channel = channel;
-    tracker.members = members;
-    tracker.sender = sender;
-    tracker.configProperties = configProps;
-    
-    tracker.viewAccepted(channel.getView());
+    new MembershipTracker(sender, channel, members, configProps);
+    //tracker.viewAccepted(channel.getView());
     
     List<org.jgroups.Message> msgs = channel.getMessageList();
     

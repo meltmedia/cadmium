@@ -18,7 +18,7 @@ public class DummyCommandAction implements CommandAction {
     if(throwException) {
       throw new Exception("");
     }
-    return failTest;
+    return !failTest;
   }
 
   @Override

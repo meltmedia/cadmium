@@ -34,6 +34,10 @@ public final class FileSystemManager {
     return new File(path).isDirectory();
   }
   
+  public static String getParent(String path) {
+    return new File(path).getParent();
+  }
+  
   public static boolean canRead(String path) {
     return new File(path).canRead();
   }

@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.core.messaging;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.jgroups.blocks.MessageListenerAdapter;
@@ -14,6 +15,7 @@ import com.meltmedia.cadmium.core.CommandContext;
 public class MessageReceiver extends MessageListenerAdapter {
   
   @Inject
+  @Named("commandMap")
   Map<ProtocolMessage, CommandAction> commandMap; 
   
   @Override
@@ -25,7 +27,7 @@ public class MessageReceiver extends MessageListenerAdapter {
       CommandAction action = commandMap.get(message.getCommand());
       if(action != null) {
         try{
-          if(action.execute(ctx)){
+          if(!action.execute(ctx)){
             action.handleFailure(ctx, null);
           }
         } catch(Exception e) {

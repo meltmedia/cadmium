@@ -1,35 +1,56 @@
-package com.meltmedia.cadmium.demos.basic;
+package com.meltmedia.cadmium.servlets.guice;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.ServletContextEvent;
 
 import org.jgroups.JChannel;
+import org.jgroups.MembershipListener;
+import org.jgroups.MessageListener;
+import org.jgroups.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
-import com.meltmedia.cadmium.jgit.impl.CoordinatedWorkerImpl;
-import com.meltmedia.cadmium.jgroups.ContentService;
-import com.meltmedia.cadmium.jgroups.CoordinatedWorker;
-import com.meltmedia.cadmium.jgroups.JChannelProvider;
-import com.meltmedia.cadmium.jgroups.SiteDownService;
-import com.meltmedia.cadmium.jgroups.jersey.UpdateService;
-import com.meltmedia.cadmium.jgroups.receivers.UpdateChannelReceiver;
+import com.meltmedia.cadmium.core.CommandAction;
+import com.meltmedia.cadmium.core.ContentService;
+import com.meltmedia.cadmium.core.CoordinatedWorker;
+import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.commands.CommandMapProvider;
+import com.meltmedia.cadmium.core.commands.CurrentStateCommandAction;
+import com.meltmedia.cadmium.core.commands.StateUpdateCommandAction;
+import com.meltmedia.cadmium.core.commands.SyncCommandAction;
+import com.meltmedia.cadmium.core.commands.UpdateCommandAction;
+import com.meltmedia.cadmium.core.commands.UpdateDoneCommandAction;
+import com.meltmedia.cadmium.core.commands.UpdateFailedCommandAction;
+import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.MembershipTracker;
+import com.meltmedia.cadmium.core.messaging.MessageReceiver;
+import com.meltmedia.cadmium.core.messaging.MessageSender;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
+import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
+import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
+import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
-import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.meltmedia.cadmium.servlets.jersey.UpdateService;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 /**
@@ -39,16 +60,16 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
  * @author Christian Trimble
  */
 
-public class DemoListener extends GuiceServletContextListener {
+public class CadmiumListener extends GuiceServletContextListener {
   private final Logger log = LoggerFactory.getLogger(getClass());
   public static final String CONFIG_PROPERTIES_FILE = "config.properties";
   public static final String BASE_PATH_ENV = "com.meltmedia.cadmium.contentRoot";
-  public static final String REPO_KEY_ENV = "com.meltmedia.cadmium.github.sshKey";
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
   private String applicationBasePath = "/Library/WebServer/Cadmium";
   private String repoDir = "git-checkout";
   private String contentDir = "renderedContent";
 	Injector injector = null;
+	private List<ChannelMember> members;
 
 	@Override
 	public void contextDestroyed(ServletContextEvent event) {
@@ -127,6 +148,27 @@ public class DemoListener extends GuiceServletContextListener {
           bind(FileServlet.class).in(Scopes.SINGLETON);
           bind(ContentService.class).to(FileServlet.class);
           
+          bind(MessageSender.class).to(JGroupsMessageSender.class);
+          
+          try {
+            bind(GitService.class).toInstance(GitService.createGitService(repoDir));
+          } catch (Exception e) {
+            throw new Error("Failed to bind git service");
+          }
+          
+          members = Collections.synchronizedList(new ArrayList<ChannelMember>());
+          bind(new TypeLiteral<List<ChannelMember>>(){}).annotatedWith(Names.named("members")).toInstance(members);
+                    
+          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.CURRENT_STATE.name())).to(CurrentStateCommandAction.class).in(Scopes.SINGLETON);
+          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.STATE_UPDATE.name())).to(StateUpdateCommandAction.class).in(Scopes.SINGLETON);
+          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.SYNC.name())).to(SyncCommandAction.class).in(Scopes.SINGLETON);
+          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.UPDATE.name())).to(UpdateCommandAction.class).in(Scopes.SINGLETON);
+          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.UPDATE_DONE.name())).to(UpdateDoneCommandAction.class).in(Scopes.SINGLETON);
+          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.UPDATE_FAILED.name())).to(UpdateFailedCommandAction.class).in(Scopes.SINGLETON);
+          
+          
+          bind(new TypeLiteral<Map<ProtocolMessage, CommandAction>>(){}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
+          
           Map<String, String> fileParams = new HashMap<String, String>();
           fileParams.put("basePath", contentDir);
           
@@ -139,21 +181,8 @@ public class DemoListener extends GuiceServletContextListener {
           
           filter("/*").through(MaintenanceFilter.class, maintParams);
 
-          //Bind application base path
-          bind(String.class).annotatedWith(Names.named(UpdateChannelReceiver.BASE_PATH)).toInstance(applicationBasePath);
-                    
-          //Bind git repo path
-          bind(String.class).annotatedWith(Names.named(UpdateService.REPOSITORY_LOCATION)).toInstance(repoDir);
-          
-          //Bind static content path
-          bind(String.class).annotatedWith(Names.named(CoordinatedWorkerImpl.RENDERED_DIRECTORY)).toInstance(contentDir);
-          
           //Bind channel name
-          bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel");
-          
-          if(configProperties.containsKey(REPO_KEY_ENV)) {
-            bind(String.class).annotatedWith(Names.named(REPO_KEY_ENV)).toInstance(configProperties.getProperty(REPO_KEY_ENV));
-          }
+          bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0");
           
           bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
           
@@ -164,14 +193,17 @@ public class DemoListener extends GuiceServletContextListener {
           //Bind JChannel provider
           bind(JChannel.class).toProvider(JChannelProvider.class).in(Scopes.SINGLETON);
           
-          //Bind CoordinatedWorker
-          bind(CoordinatedWorker.class).to(CoordinatedWorkerImpl.class).in(Scopes.SINGLETON);          
+
+          bind(MembershipListener.class).to(MembershipTracker.class);
+          bind(MessageListener.class).to(MessageReceiver.class);
           
-          //Bind UpdateChannelReceiver
-          bind(UpdateChannelReceiver.class).asEagerSingleton();
+          bind(LifecycleService.class);
+          bind(CoordinatedWorker.class).to(CoordinatedWorkerImpl.class);
+          
+          bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
           
           //Bind Jersey UpdateService
-          bind(UpdateService.class).in(Scopes.SINGLETON);
+          bind(UpdateService.class).asEagerSingleton();
 		}
       };
 	}

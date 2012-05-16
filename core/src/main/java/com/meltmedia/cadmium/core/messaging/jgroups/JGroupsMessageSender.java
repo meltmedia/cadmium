@@ -1,6 +1,7 @@
 package com.meltmedia.cadmium.core.messaging.jgroups;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.jgroups.JChannel;
 
@@ -9,6 +10,7 @@ import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageConverter;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 
+@Singleton
 public class JGroupsMessageSender implements MessageSender {
   
   @Inject

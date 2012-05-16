@@ -3,6 +3,8 @@ package com.meltmedia.cadmium.core.commands;
 import java.util.Properties;
 
 import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,7 @@ import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
+@Singleton
 public class SyncCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
@@ -29,6 +32,7 @@ public class SyncCommandAction implements CommandAction {
   protected MembershipTracker tracker;
   
   @Inject
+  @Named("config.properties")
   protected Properties configProperties;
   
   @Inject
