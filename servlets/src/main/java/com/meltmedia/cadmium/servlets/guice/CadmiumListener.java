@@ -12,6 +12,7 @@ import java.util.Properties;
 
 import javax.servlet.ServletContextEvent;
 
+import org.eclipse.jgit.transport.SshSessionFactory;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
@@ -48,6 +49,7 @@ import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
+import com.meltmedia.cadmium.core.git.GithubConfigSessionFactory;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.jersey.UpdateService;
@@ -65,7 +67,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   public static final String CONFIG_PROPERTIES_FILE = "config.properties";
   public static final String BASE_PATH_ENV = "com.meltmedia.cadmium.contentRoot";
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
-  private String applicationBasePath = "/Library/WebServer/Cadmium";
+  private String applicationBasePath;
   private String repoDir = "git-checkout";
   private String contentDir = "renderedContent";
 	Injector injector = null;
@@ -107,6 +109,13 @@ public class CadmiumListener extends GuiceServletContextListener {
         this.applicationBasePath = basePath.getAbsolutePath();
       }
     }
+
+    if(applicationBasePath == null ) {
+      applicationBasePath = "/Library/WebServer/Cadmium";
+    }
+
+    SshSessionFactory.setInstance(new GithubConfigSessionFactory(applicationBasePath+"/.ssh"));
+
 	  String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
 	  if(repoDir != null && repoDir.trim().length() > 0) {
 	    this.repoDir = repoDir;

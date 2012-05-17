@@ -59,6 +59,10 @@
           <artifactId>bsh</artifactId>
           <groupId>bsh</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
 
