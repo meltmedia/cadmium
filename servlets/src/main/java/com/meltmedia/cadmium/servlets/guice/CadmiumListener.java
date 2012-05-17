@@ -12,7 +12,6 @@ import java.util.Properties;
 
 import javax.servlet.ServletContextEvent;
 
-import org.eclipse.jgit.transport.SshSessionFactory;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
@@ -49,14 +48,13 @@ import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
-import com.meltmedia.cadmium.core.git.GithubConfigSessionFactory;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.jersey.UpdateService;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 /**
- * Builds the context with the Guice framework.  To see how this works, go to:
+ * Builds the context with the Guice framework. To see how this works, go to:
  * http://code.google.com/p/google-guice/wiki/ServletModule
  * 
  * @author Christian Trimble
@@ -64,170 +62,235 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 public class CadmiumListener extends GuiceServletContextListener {
   private final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String CONFIG_PROPERTIES_FILE = "config.properties";
   public static final String BASE_PATH_ENV = "com.meltmedia.cadmium.contentRoot";
+  public static final String SSH_PATH_ENV = "com.meltmedia.cadmium.github.sshKey";
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
-  private String applicationBasePath;
+  public File sharedContentRoot;
+  public File applicationContentRoot;
   private String repoDir = "git-checkout";
   private String contentDir = "renderedContent";
-	Injector injector = null;
-	private List<ChannelMember> members;
+  private File sshDir;
+  private List<ChannelMember> members;
 
-	@Override
-	public void contextDestroyed(ServletContextEvent event) {
-	  JChannel channel = injector.getInstance(JChannel.class);
-	  if(channel != null) {
-	    channel.close();
-	  }
-	  GitService git = injector.getInstance(GitService.class);
-	  if(git != null) {
-	    try {
-        git.close();
-      } catch (Exception e) {
-        log.warn("Failed to close GitService", e);
+  private Injector injector = null;
+
+  @Override
+  public void contextDestroyed(ServletContextEvent event) {
+    try {
+      JChannel channel = injector.getInstance(JChannel.class);
+      if (channel != null) {
+        try {
+          channel.close();
+        } catch (Exception e) {
+          log.warn("Failed to close jgroups channel", e);
+        }
       }
-	  }
-	  super.contextDestroyed(event);
-	}
+    } catch (Exception e) {
+      log.warn("Failed to get channel", e);
+    }
+    try {
+      GitService git = injector.getInstance(GitService.class);
+      if (git != null) {
+        try {
+          git.close();
+        } catch (Exception e) {
+          log.warn("Failed to close GitService", e);
+        }
+      }
+    } catch (Exception e) {
+      log.warn("Failed to get git service", e);
+    }
+    super.contextDestroyed(event);
+  }
 
-	@Override
+  @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
-	  String applicationBasePath = servletContextEvent.getServletContext().getInitParameter("applicationBasePath");
-	  if(applicationBasePath != null && applicationBasePath.trim().length() > 0) {
-	    File appBasePath = new File(applicationBasePath);
-	    if(appBasePath.isDirectory() && appBasePath.canWrite()) {
-	      this.applicationBasePath = applicationBasePath;
-	    }
-	  }
-	  Properties configProperties = new Properties();
+    Properties configProperties = new Properties();
     configProperties.putAll(System.getenv());
     configProperties.putAll(System.getProperties());
-    
-    if(configProperties.containsKey(BASE_PATH_ENV) ) {
-      File basePath = new File(configProperties.getProperty(BASE_PATH_ENV));
-      if(basePath.exists() && basePath.canRead() && basePath.canWrite()) {
-        this.applicationBasePath = basePath.getAbsolutePath();
+
+    if (configProperties.containsKey(BASE_PATH_ENV)) {
+      sharedContentRoot = new File(configProperties.getProperty(BASE_PATH_ENV));
+      if (!sharedContentRoot.exists() || !sharedContentRoot.canRead()
+          || !sharedContentRoot.canWrite()) {
+        sharedContentRoot = null;
       }
     }
 
-    if(applicationBasePath == null ) {
-      applicationBasePath = "/Library/WebServer/Cadmium";
+    if (sharedContentRoot == null) {
+      log.warn("Could not access cadmium content root.  Using the tempdir.");
+      sharedContentRoot = (File) servletContextEvent.getServletContext()
+          .getAttribute("javax.servlet.context.tempdir");
     }
 
-    SshSessionFactory.setInstance(new GithubConfigSessionFactory(applicationBasePath+"/.ssh"));
+    // compute the directory for this application, based on the war name.
+    String path;
+    path = servletContextEvent.getServletContext().getRealPath("/WEB-INF/web.xml");
+    String[] pathSegments = path.split("/");
+    String warName = pathSegments[pathSegments.length - 3];
+    applicationContentRoot = new File(sharedContentRoot, warName);
+    if (!applicationContentRoot.exists())
+      applicationContentRoot.mkdir();
 
-	  String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
-	  if(repoDir != null && repoDir.trim().length() > 0) {
-	    this.repoDir = repoDir;
-	  }
-	  String contentDir = servletContextEvent.getServletContext().getInitParameter("contentDir");
-	  if(contentDir != null && contentDir.trim().length() > 0) {
-	    this.contentDir = contentDir;
-	  }
-    File repoFile = new File(this.applicationBasePath, this.repoDir);
-    if(repoFile.isDirectory() && repoFile.canWrite()) {
+    if (applicationContentRoot == null) {
+      throw new RuntimeException("Could not make application content root.");
+    } else {
+      log.info("Application content root:"
+          + applicationContentRoot.getAbsolutePath());
+    }
+
+    if (configProperties.containsKey(SSH_PATH_ENV)) {
+      sshDir = new File(configProperties.getProperty(SSH_PATH_ENV));
+      if (!sshDir.exists() && !sshDir.isDirectory()) {
+        sshDir = null;
+      }
+    }
+    if (sshDir == null) {
+      sshDir = new File(sharedContentRoot, ".ssh");
+      if (!sshDir.exists() && !sshDir.isDirectory()) {
+        sshDir = null;
+      }
+    }
+
+    if (sshDir != null) {
+      GitService.setupSsh(sshDir.getAbsolutePath());
+    }
+
+    String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
+    if (repoDir != null && repoDir.trim().length() > 0) {
+      this.repoDir = repoDir;
+    }
+    String contentDir = servletContextEvent.getServletContext()
+        .getInitParameter("contentDir");
+    if (contentDir != null && contentDir.trim().length() > 0) {
+      this.contentDir = contentDir;
+    }
+    File repoFile = new File(this.applicationContentRoot, this.repoDir);
+    if (repoFile.isDirectory() && repoFile.canWrite()) {
       this.repoDir = repoFile.getAbsoluteFile().getAbsolutePath();
     }
-    File contentFile = new File(this.applicationBasePath, this.contentDir);
-    if(contentFile.isDirectory() && contentFile.canWrite()) {
+
+    File contentFile = new File(this.applicationContentRoot, this.contentDir);
+    if (contentFile.exists() && contentFile.isDirectory()
+        && contentFile.canWrite()) {
+      this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
+    } else {
+      log.warn("The content directory exists, but we cannot write to it.");
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     }
+
+    injector = Guice.createInjector(createServletModule());
     super.contextInitialized(servletContextEvent);
   }
 
   @Override
-	protected Injector getInjector() {
-		injector = Guice.createInjector(createServletModule());
-		return injector;
-	}
-	
-	private ServletModule createServletModule() {
-      return new ServletModule() {
-        @Override
-		protected void configureServlets() {
-          
-          Properties configProperties = new Properties();
-          configProperties.putAll(System.getenv());
-          configProperties.putAll(System.getProperties());
-          
-          if(new File(applicationBasePath, CONFIG_PROPERTIES_FILE).exists()) {
-            try{
-              configProperties.load(new FileReader(new File(applicationBasePath, CONFIG_PROPERTIES_FILE)));
-            } catch(Exception e){
-              log.warn("Failed to load properties file ["+CONFIG_PROPERTIES_FILE+"] from content directory.", e);
-            }
-          }
-          
-          if(configProperties.containsKey(LAST_UPDATED_DIR)) {
-            File cntDir = new File(configProperties.getProperty(LAST_UPDATED_DIR));
-            if(cntDir.exists() && cntDir.canRead()) {
-              contentDir = cntDir.getAbsolutePath();
-            }
-          }
+  protected Injector getInjector() {
+    return injector;
+  }
 
-          bind(MaintenanceFilter.class).in(Scopes.SINGLETON);
-          bind(SiteDownService.class).to(MaintenanceFilter.class);
-          
-          bind(FileServlet.class).in(Scopes.SINGLETON);
-          bind(ContentService.class).to(FileServlet.class);
-          
-          bind(MessageSender.class).to(JGroupsMessageSender.class);
-          
+  private ServletModule createServletModule() {
+    return new ServletModule() {
+      @Override
+      protected void configureServlets() {
+
+        Properties configProperties = new Properties();
+        configProperties.putAll(System.getenv());
+        configProperties.putAll(System.getProperties());
+
+        if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
           try {
-            bind(GitService.class).toInstance(GitService.createGitService(repoDir));
+            configProperties.load(new FileReader(new File(
+                applicationContentRoot, CONFIG_PROPERTIES_FILE)));
           } catch (Exception e) {
-            throw new Error("Failed to bind git service");
+            log.warn("Failed to load properties file ["
+                + CONFIG_PROPERTIES_FILE + "] from content directory.", e);
           }
-          
-          members = Collections.synchronizedList(new ArrayList<ChannelMember>());
-          bind(new TypeLiteral<List<ChannelMember>>(){}).annotatedWith(Names.named("members")).toInstance(members);
-                    
-          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.CURRENT_STATE.name())).to(CurrentStateCommandAction.class).in(Scopes.SINGLETON);
-          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.STATE_UPDATE.name())).to(StateUpdateCommandAction.class).in(Scopes.SINGLETON);
-          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.SYNC.name())).to(SyncCommandAction.class).in(Scopes.SINGLETON);
-          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.UPDATE.name())).to(UpdateCommandAction.class).in(Scopes.SINGLETON);
-          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.UPDATE_DONE.name())).to(UpdateDoneCommandAction.class).in(Scopes.SINGLETON);
-          bind(CommandAction.class).annotatedWith(Names.named(ProtocolMessage.UPDATE_FAILED.name())).to(UpdateFailedCommandAction.class).in(Scopes.SINGLETON);
-          
-          
-          bind(new TypeLiteral<Map<ProtocolMessage, CommandAction>>(){}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
-          
-          Map<String, String> fileParams = new HashMap<String, String>();
-          fileParams.put("basePath", contentDir);
-          
-          Map<String, String> maintParams = new HashMap<String, String>();
-          maintParams.put("ignorePrefix", "/system");
+        }
 
-          serve("/system/*").with(GuiceContainer.class);
-          
-          serve("/*").with(FileServlet.class, fileParams);
-          
-          filter("/*").through(MaintenanceFilter.class, maintParams);
+        if (configProperties.containsKey(LAST_UPDATED_DIR)) {
+          File cntDir = new File(configProperties.getProperty(LAST_UPDATED_DIR));
+          if (cntDir.exists() && cntDir.canRead()) {
+            contentDir = cntDir.getAbsolutePath();
+          }
+        }
 
-          //Bind channel name
-          bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0");
-          
-          bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
-          
-          //Bind Config file URL
-          URL propsUrl = JChannelProvider.class.getClassLoader().getResource("tcp.xml");
-          bind(URL.class).annotatedWith(Names.named(JChannelProvider.CONFIG_NAME)).toInstance(propsUrl);
-          
-          //Bind JChannel provider
-          bind(JChannel.class).toProvider(JChannelProvider.class).in(Scopes.SINGLETON);
-          
+        bind(MaintenanceFilter.class).in(Scopes.SINGLETON);
+        bind(SiteDownService.class).to(MaintenanceFilter.class);
 
-          bind(MembershipListener.class).to(MembershipTracker.class);
-          bind(MessageListener.class).to(MessageReceiver.class);
-          
-          bind(LifecycleService.class);
-          bind(CoordinatedWorker.class).to(CoordinatedWorkerImpl.class);
-          
-          bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
-          
-          //Bind Jersey UpdateService
-          bind(UpdateService.class).asEagerSingleton();
-		}
-      };
-	}
+        bind(FileServlet.class).in(Scopes.SINGLETON);
+        bind(ContentService.class).to(FileServlet.class);
+
+        bind(MessageSender.class).to(JGroupsMessageSender.class);
+
+        try {
+          bind(GitService.class).toInstance(
+              GitService.createGitService(repoDir));
+        } catch (Exception e) {
+          throw new Error("Failed to bind git service");
+        }
+
+        members = Collections.synchronizedList(new ArrayList<ChannelMember>());
+        bind(new TypeLiteral<List<ChannelMember>>() {
+        }).annotatedWith(Names.named("members")).toInstance(members);
+
+        bind(CommandAction.class)
+            .annotatedWith(Names.named(ProtocolMessage.CURRENT_STATE.name()))
+            .to(CurrentStateCommandAction.class).in(Scopes.SINGLETON);
+        bind(CommandAction.class)
+            .annotatedWith(Names.named(ProtocolMessage.STATE_UPDATE.name()))
+            .to(StateUpdateCommandAction.class).in(Scopes.SINGLETON);
+        bind(CommandAction.class)
+            .annotatedWith(Names.named(ProtocolMessage.SYNC.name()))
+            .to(SyncCommandAction.class).in(Scopes.SINGLETON);
+        bind(CommandAction.class)
+            .annotatedWith(Names.named(ProtocolMessage.UPDATE.name()))
+            .to(UpdateCommandAction.class).in(Scopes.SINGLETON);
+        bind(CommandAction.class)
+            .annotatedWith(Names.named(ProtocolMessage.UPDATE_DONE.name()))
+            .to(UpdateDoneCommandAction.class).in(Scopes.SINGLETON);
+        bind(CommandAction.class)
+            .annotatedWith(Names.named(ProtocolMessage.UPDATE_FAILED.name()))
+            .to(UpdateFailedCommandAction.class).in(Scopes.SINGLETON);
+
+        bind(new TypeLiteral<Map<ProtocolMessage, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
+
+        Map<String, String> fileParams = new HashMap<String, String>();
+        fileParams.put("basePath", contentDir);
+
+        Map<String, String> maintParams = new HashMap<String, String>();
+        maintParams.put("ignorePrefix", "/system");
+
+        serve("/system/*").with(GuiceContainer.class);
+
+        serve("/*").with(FileServlet.class, fileParams);
+
+        filter("/*").through(MaintenanceFilter.class, maintParams);
+
+        // Bind channel name
+        bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0");
+
+        bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
+
+        // Bind Config file URL
+        URL propsUrl = JChannelProvider.class.getClassLoader().getResource("tcp.xml");
+        bind(URL.class).annotatedWith(Names.named(JChannelProvider.CONFIG_NAME)).toInstance(propsUrl);
+
+        // Bind JChannel provider
+        bind(JChannel.class).toProvider(JChannelProvider.class).in(Scopes.SINGLETON);
+
+        bind(MembershipListener.class).to(MembershipTracker.class);
+        bind(MessageListener.class).to(MessageReceiver.class);
+
+        bind(LifecycleService.class);
+        bind(CoordinatedWorker.class).to(CoordinatedWorkerImpl.class);
+
+        bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
+
+        // Bind Jersey UpdateService
+        bind(UpdateService.class).asEagerSingleton();
+      }
+    };
+  }
 }

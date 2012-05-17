@@ -10,6 +10,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.SshSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,10 @@ public class GitService {
   private GitService(Git gitRepo) {
     this.git = gitRepo;
     this.repository = gitRepo.getRepository();
+  }
+  
+  public static void setupSsh(String sshDir) {
+    SshSessionFactory.setInstance(new GithubConfigSessionFactory(sshDir));
   }
   
   public static GitService createGitService(String repositoryDirectory) throws Exception {
