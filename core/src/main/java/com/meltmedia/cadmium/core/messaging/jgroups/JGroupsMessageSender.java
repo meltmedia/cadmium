@@ -24,6 +24,10 @@ public class JGroupsMessageSender implements MessageSender {
     }
   }
   
+  public String getGroupName() {
+    return channel.getClusterName();
+  }
+  
   public void setChannel(JChannel channel) {
     this.channel = channel;
   }

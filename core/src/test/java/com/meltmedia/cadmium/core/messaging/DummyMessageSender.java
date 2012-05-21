@@ -11,4 +11,9 @@ public class DummyMessageSender implements MessageSender {
     this.dest = dest;
   }
 
+  @Override
+  public String getGroupName() {
+    return "";
+  }
+
 }

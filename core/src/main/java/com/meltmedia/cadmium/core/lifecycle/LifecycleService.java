@@ -1,5 +1,6 @@
 package com.meltmedia.cadmium.core.lifecycle;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -106,6 +107,18 @@ public class LifecycleService {
       return allEqual;
     }
     return false;
+  }
+  
+  public List<ChannelMember> getPeirStates() {
+    List<ChannelMember> peirMembers = new ArrayList<ChannelMember>();
+    if(members != null) {
+      for(ChannelMember member : members) {
+        if(!member.isMine()) {
+          peirMembers.add(new ChannelMember(member.getAddress(), member.isCoordinator(), member.isMine(), member.getState()));
+        }
+      }
+    }
+    return peirMembers;
   }
 
   public void setMembers(List<ChannelMember> members) {

@@ -39,7 +39,7 @@ public class RedirectFilter implements Filter {
       HttpServletResponse response = (HttpServletResponse)resp;
       String path = request.getRequestURI();
       String queryString = request.getQueryString();
-      log.info("Checking for existing redirect [{}?{}]", path, queryString);
+      log.debug("Checking for existing redirect [{}?{}]", path, queryString);
       Redirect redir = redirect.requestMatches(path, queryString);
       if(redir != null) {
         String redirectTo = redir.getUrlSubstituted();

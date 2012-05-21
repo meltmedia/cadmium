@@ -1,6 +1,13 @@
 package com.meltmedia.cadmium.servlets.jersey;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -9,7 +16,11 @@ import javax.ws.rs.QueryParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
+import com.meltmedia.cadmium.core.lifecycle.UpdateState;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -23,6 +34,17 @@ public class UpdateService {
   
   @Inject
   protected SiteDownService sd;
+  
+  @Inject
+  protected LifecycleService lifecycleService;
+  
+  @Inject
+  @Named("config.properties")
+  protected Properties configProperties;
+  
+  @Inject
+  @Named("contentDir")
+  protected String initialContentDir;
   
   @GET
   @Produces("text/plain")
@@ -42,6 +64,38 @@ public class UpdateService {
       log.error("Channel is not wired");
     }
     return "ok";
+  }
+  
+  @GET
+  @Path("/status")
+  @Produces("application/json")
+  public String status() {
+    Map<String, Object> returnObj = new LinkedHashMap<String, Object>();
+    UpdateState state = lifecycleService.getCurrentState();
+    String contentDir = this.initialContentDir;
+    if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
+      contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+    }
+    String branch = configProperties.getProperty("branch");
+    String rev = configProperties.getProperty("git.ref.sha");
+    returnObj.put("groupName", sender.getGroupName());
+    returnObj.put("contentDir", contentDir);
+    returnObj.put("currentState", state.name());
+    List<ChannelMember> members = lifecycleService.getPeirStates();
+    if(members != null) {
+      List<Map<String, Object>> peirs = new ArrayList<Map<String, Object>>();
+      for(ChannelMember member : members) {
+        Map<String, Object> peir = new LinkedHashMap<String, Object>();
+        peir.put("address", member.getAddress().toString());
+        peir.put("coordinator", member.isCoordinator());
+        peir.put("state", member.getState().name());
+        peirs.add(peir);
+      }
+      returnObj.put("peirs", peirs);
+    }
+    returnObj.put("branch", branch);
+    returnObj.put("revision", rev);
+    return new Gson().toJson(returnObj);
   }
   
   @GET

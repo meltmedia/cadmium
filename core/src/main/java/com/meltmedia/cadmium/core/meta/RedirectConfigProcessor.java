@@ -64,7 +64,7 @@ public class RedirectConfigProcessor implements ConfigProcessor {
   
   public Redirect requestMatches(String pathInfo, String queryString) {
     Redirect matched = null;
-    log.info("Checking pathInfo {}, and queryString {}", pathInfo, queryString);
+    log.debug("Checking pathInfo {}, and queryString {}", pathInfo, queryString);
     if(liveRedirects != null && !liveRedirects.isEmpty()) {
       if(queryString != null && queryString.length() > 0) {
         for(Redirect redir : liveRedirects) {

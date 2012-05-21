@@ -51,10 +51,12 @@ public class UpdateConfigTask implements Callable<Boolean> {
       updatedProperties.setProperty("branch.last", configProperties.getProperty("branch"));
     }
     updatedProperties.setProperty("branch", service.getBranchName());
+    configProperties.setProperty("branch", service.getBranchName());
     if(configProperties.containsKey("git.ref.sha")) {
       updatedProperties.setProperty("git.ref.sha.last", configProperties.getProperty("git.ref.sha"));
     }
     updatedProperties.setProperty("git.ref.sha", service.getCurrentRevison());
+    configProperties.setProperty("git.ref.sha", service.getCurrentRevison());
     
     try{
       updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
