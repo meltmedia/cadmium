@@ -38,7 +38,9 @@ public class RedirectConfigProcessor implements ConfigProcessor {
           }
           if(redirs != null && !redirs.isEmpty()) {
             stagedRedirects.clear();
-            stagedRedirects.addAll(redirs);
+            for(Redirect redir : redirs) {
+              stagedRedirects.add((Redirect)redir.clone());
+            }
           } else {
             stagedRedirects.clear();
           }
@@ -66,12 +68,10 @@ public class RedirectConfigProcessor implements ConfigProcessor {
     if(liveRedirects != null && !liveRedirects.isEmpty()) {
       if(queryString != null && queryString.length() > 0) {
         for(Redirect redir : liveRedirects) {
-          if((redir.getPathPattern() == null && redir.getPath().contains("?")) || (redir.getPathPattern() != null)) {
-            synchronized(redir) {
-              if(redir.matches(pathInfo+"?"+queryString)) {
-                matched = (Redirect)redir.clone();
-                break;
-              }
+          synchronized(redir) {
+            if(redir.matches(pathInfo+"?"+queryString)) {
+              matched = (Redirect)redir.clone();
+              break;
             }
           }
         }

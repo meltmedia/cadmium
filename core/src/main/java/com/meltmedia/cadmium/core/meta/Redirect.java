@@ -70,8 +70,12 @@ public class Redirect implements Cloneable {
   public Object clone() {
     Redirect cloneOf = new Redirect();
     cloneOf.url = url;
-    cloneOf.path = path;
-    cloneOf.pathPattern = pathPattern;
+    if(this.pathPattern == null) {
+      cloneOf.setPath(path);
+    } else {
+      cloneOf.path = path;
+      cloneOf.pathPattern = pathPattern;
+    }
     cloneOf.matcher = matcher;
     return cloneOf;
   }
