@@ -23,12 +23,7 @@
     </dependency>
     <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
-      <artifactId>cadmium-jgroups</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.meltmedia.cadmium</groupId>
-      <artifactId>cadmium-jgit</artifactId>
+      <artifactId>cadmium-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -64,6 +59,10 @@
           <artifactId>bsh</artifactId>
           <groupId>bsh</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -77,6 +76,18 @@
       <groupId>com.google.inject.extensions</groupId>
       <artifactId>guice-servlet</artifactId>
       <version>3.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.sun.jersey.contribs</groupId>
+      <artifactId>jersey-guice</artifactId>
+      <version>1.12</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2</version>
     </dependency>
     
     <dependency>
@@ -100,8 +111,7 @@
   </dependencyManagement>
 
   <modules>
-    <module>jgroups</module>
-    <module>jgit</module>
+    <module>core</module>
     <module>servlets</module>
     <module>cli</module>
     <module>demos</module>

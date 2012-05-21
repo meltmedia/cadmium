@@ -5,7 +5,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns
   <display-name>Cadmium Phase ! Demo</display-name>
   
   <listener>
-    <listener-class>com.meltmedia.cadmium.demos.basic.DemoListener</listener-class>
+    <listener-class>com.meltmedia.cadmium.servlets.guice.CadmiumListener</listener-class>
   </listener>
   
   <filter>
