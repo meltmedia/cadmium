@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ContentService;
+import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -18,6 +19,9 @@ import javax.servlet.ServletException;
 public class FileServlet extends net.balusc.webapp.FileServlet implements ContentService {
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
+	
+	@Inject
+	protected MimeTypeConfigProcessor mimeTypes;
 	
 	@Inject
 	@Named("config.properties")
@@ -43,5 +47,17 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 		}
 		
 	}
+  
+  @Override
+  protected String resolveMimeType(String filename) {
+    String contentType = super.resolveMimeType(filename);
+    if(mimeTypes != null) {
+      String ctype = mimeTypes.getContentType(filename);
+      if(ctype != null && ctype.length() > 0) {
+        contentType = ctype;
+      }
+    }
+    return contentType;
+  }
 
 }

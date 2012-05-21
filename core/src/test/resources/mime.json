@@ -1,0 +1,18 @@
+[
+ 
+  {
+    "extension" : "mp4",
+    "contentType" : "video/mp4"
+  },
+ 
+  {
+    "extension" : "html",
+    "contentType" : "text/html"
+  },
+ 
+  {
+    "extension" : "htm",
+    "contentType" : "text/html"
+  }
+ 
+]

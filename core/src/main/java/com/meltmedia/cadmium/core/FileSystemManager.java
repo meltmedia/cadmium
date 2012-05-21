@@ -20,10 +20,49 @@ public final class FileSystemManager {
     if(parentFile.exists() && parentFile.isDirectory()) {
       File childFile = new File(parentFile, child);
       if(childFile.exists()) {
-        return childFile.getAbsolutePath();
+        return childFile.getAbsoluteFile().getAbsolutePath();
       }
     }
     return null;
+  }
+  
+  public static String getFileIfCanRead(String path, String file) {
+    File fileObj = new File(path, file);
+    if(fileObj.canRead()){
+      return fileObj.getAbsoluteFile().getAbsolutePath();
+    }
+    return null;
+  }
+  
+  public static String getFileIfCanWrite(String path, String file) {
+    File fileObj = new File(path, file);
+    if(fileObj.canWrite()){
+      return fileObj.getAbsoluteFile().getAbsolutePath();
+    }
+    return null;
+  }
+  
+  public static String[] getFilesInDirectory(String directory, final String ext) {
+    File dir = new File(directory);
+    if(dir.isDirectory()) {
+      String files[] = null;
+      if(ext != null && ext.length() > 0) {
+        files = dir.list(new FilenameFilter(){
+
+          @Override
+          public boolean accept(File file, String name) {
+            return name.endsWith("."+ext);
+          }
+          
+        });
+      } else {
+        files = dir.list();
+      }
+      if(files != null) {
+        return files;
+      }
+    }
+    return new String[] {};
   }
   
   public static boolean exists(String path) {

@@ -3,9 +3,13 @@ package com.meltmedia.cadmium.core.worker;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.meltmedia.cadmium.core.git.GitService;
 
 public class PullUpdateTask implements Callable<Boolean> {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   
   private GitService service;
   private Future<Boolean> previousTask;
@@ -23,7 +27,7 @@ public class PullUpdateTask implements Callable<Boolean> {
         throw new Exception("Previous task failed");
       }
     }
-    
+    log.info("Pulling latest Github updates.");
     return service.pull();
   }
 

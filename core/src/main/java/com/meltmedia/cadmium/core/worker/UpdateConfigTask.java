@@ -35,7 +35,7 @@ public class UpdateConfigTask implements Callable<Boolean> {
         throw new Exception("Previous task failed");
       }
     }
-    
+    log.info("Updating config.properties file");
     String lastUpdatedDir = properties.get("nextDirectory");
     
     String baseDirectory = service.getBaseDirectory();

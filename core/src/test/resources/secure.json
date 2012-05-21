@@ -1,0 +1,11 @@
+[
+  {
+    "url": "/register/index.html"
+  },
+  {
+    "url": "/unsubscribe/index.html"
+  },
+  {
+    "url": ".*/(other).*"
+  }
+]

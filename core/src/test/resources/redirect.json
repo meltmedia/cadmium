@@ -1,0 +1,27 @@
+[
+ 
+  {
+ 
+    "url": "/section1/page/index.html",
+ 
+    "path": ".*/(other).*"
+ 
+  },  
+ 
+  {
+ 
+    "url": "/section1/firstPage/index.html",
+ 
+    "path": "/section1/index.html"
+ 
+  },  
+ 
+  {
+ 
+    "url": "/section1/$1/index.html",
+ 
+    "path": ".*/(test1|test2).*"
+ 
+  }
+ 
+]

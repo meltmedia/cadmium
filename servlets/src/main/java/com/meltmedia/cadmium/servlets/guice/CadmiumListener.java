@@ -47,9 +47,16 @@ import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
+import com.meltmedia.cadmium.core.meta.ConfigProcessor;
+import com.meltmedia.cadmium.core.meta.MetaConfigProvider;
+import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
+import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
+import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
+import com.meltmedia.cadmium.servlets.RedirectFilter;
+import com.meltmedia.cadmium.servlets.SslRedirectFilter;
 import com.meltmedia.cadmium.servlets.jersey.UpdateService;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
@@ -73,6 +80,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String contentDir = "renderedContent";
   private File sshDir;
   private List<ChannelMember> members;
+  private String warName;
 
   private Injector injector = null;
 
@@ -130,6 +138,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     path = servletContextEvent.getServletContext().getRealPath("/WEB-INF/web.xml");
     String[] pathSegments = path.split("/");
     String warName = pathSegments[pathSegments.length - 3];
+    this.warName = warName;
     applicationContentRoot = new File(sharedContentRoot, warName);
     if (!applicationContentRoot.exists())
       applicationContentRoot.mkdir();
@@ -139,6 +148,16 @@ public class CadmiumListener extends GuiceServletContextListener {
     } else {
       log.info("Application content root:"
           + applicationContentRoot.getAbsolutePath());
+    }
+
+    if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
+      try {
+        configProperties.load(new FileReader(new File(
+            applicationContentRoot, CONFIG_PROPERTIES_FILE)));
+      } catch (Exception e) {
+        log.warn("Failed to load properties file ["
+            + CONFIG_PROPERTIES_FILE + "] from content directory.", e);
+      }
     }
 
     if (configProperties.containsKey(SSH_PATH_ENV)) {
@@ -166,6 +185,12 @@ public class CadmiumListener extends GuiceServletContextListener {
         .getInitParameter("contentDir");
     if (contentDir != null && contentDir.trim().length() > 0) {
       this.contentDir = contentDir;
+    }
+    if (configProperties.containsKey(LAST_UPDATED_DIR)) {
+      File cntDir = new File(configProperties.getProperty(LAST_UPDATED_DIR));
+      if (cntDir.exists() && cntDir.canRead()) {
+        this.contentDir = cntDir.getName();
+      }
     }
     File repoFile = new File(this.applicationContentRoot, this.repoDir);
     if (repoFile.isDirectory() && repoFile.canWrite()) {
@@ -206,13 +231,6 @@ public class CadmiumListener extends GuiceServletContextListener {
           } catch (Exception e) {
             log.warn("Failed to load properties file ["
                 + CONFIG_PROPERTIES_FILE + "] from content directory.", e);
-          }
-        }
-
-        if (configProperties.containsKey(LAST_UPDATED_DIR)) {
-          File cntDir = new File(configProperties.getProperty(LAST_UPDATED_DIR));
-          if (cntDir.exists() && cntDir.canRead()) {
-            contentDir = cntDir.getAbsolutePath();
           }
         }
 
@@ -258,6 +276,8 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         Map<String, String> fileParams = new HashMap<String, String>();
         fileParams.put("basePath", contentDir);
+        
+        bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
 
         Map<String, String> maintParams = new HashMap<String, String>();
         maintParams.put("ignorePrefix", "/system");
@@ -267,9 +287,11 @@ public class CadmiumListener extends GuiceServletContextListener {
         serve("/*").with(FileServlet.class, fileParams);
 
         filter("/*").through(MaintenanceFilter.class, maintParams);
+        filter("/*").through(RedirectFilter.class);
+        filter("/*").through(SslRedirectFilter.class);
 
         // Bind channel name
-        bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0");
+        bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+warName);
 
         bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
 
@@ -285,6 +307,12 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(LifecycleService.class);
         bind(CoordinatedWorker.class).to(CoordinatedWorkerImpl.class);
+        
+        //Bind Meta-config objects
+        bind(RedirectConfigProcessor.class);
+        bind(MimeTypeConfigProcessor.class);
+        bind(SslRedirectConfigProcessor.class);
+        bind(new TypeLiteral<List<ConfigProcessor>>() {}).toProvider(MetaConfigProvider.class).in(Scopes.SINGLETON);
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
 

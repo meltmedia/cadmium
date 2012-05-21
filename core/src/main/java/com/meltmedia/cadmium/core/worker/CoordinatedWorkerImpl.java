@@ -21,6 +21,7 @@ import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 @Singleton
 public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWorkerListener {
@@ -36,10 +37,17 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   protected Properties configProperties;
   
   @Inject
+  @Named("contentDir")
+  protected String contentDir;
+  
+  @Inject
   protected MessageSender sender;
   
   @Inject
   protected LifecycleService lifecycleService;
+  
+  @Inject
+  protected SiteConfigProcessor processor;
   
   protected Future<Boolean> lastTask = null;
   
@@ -66,13 +74,20 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
         lastTask = pool.submit(new ResetToRevTask(service, properties.get("sha"), lastTask));
       }
       
-      lastTask = pool.submit(new CreateNewRenderedDirectoryTask(service, configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"), properties, lastTask));
+      String contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+      if(contentDir == null || contentDir.length() == 0) {
+        contentDir = this.contentDir;
+      }
+      
+      lastTask = pool.submit(new CreateNewRenderedDirectoryTask(service, contentDir, properties, lastTask));
+      
+      lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
       
       lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, lastTask));
       
       lastTask = pool.submit(new NotifyListenerTask(listener, lastTask));
       
-      lastTask = pool.submit(new CleanUpTask(configProperties, lastTask));
+      lastTask = pool.submit(new CleanUpTask(listener, configProperties, lastTask));
     }
   }
 

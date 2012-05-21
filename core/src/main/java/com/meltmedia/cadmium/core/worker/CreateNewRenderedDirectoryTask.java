@@ -4,10 +4,14 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.git.GitService;
 
 public class CreateNewRenderedDirectoryTask implements Callable<Boolean> {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   
   private GitService service;
   private String lastDirectory;
@@ -29,17 +33,25 @@ public class CreateNewRenderedDirectoryTask implements Callable<Boolean> {
         throw new Exception("Previous task failed");
       }
     }
-    String nextDirectory = FileSystemManager.getNextDirInSequence(lastDirectory);
-    if(nextDirectory != null) {
-      GitService git = GitService.cloneRepo(service.getRepositoryDirectory(), nextDirectory);
-      if(git != null) {
-        git.close();
-        FileSystemManager.deleteDeep(FileSystemManager.getChildDirectoryIfExists(nextDirectory, ".git"));
-        properties.put("nextDirectory", nextDirectory);
+    log.info("Creating a new directory for the rendered content");
+    try{
+      String nextDirectory = FileSystemManager.getNextDirInSequence(lastDirectory);
+      if(nextDirectory != null) {
+        GitService git = GitService.cloneRepo(service.getRepositoryDirectory(), nextDirectory);
+        if(git != null) {
+          git.close();
+          FileSystemManager.deleteDeep(FileSystemManager.getChildDirectoryIfExists(nextDirectory, ".git"));
+          properties.put("nextDirectory", nextDirectory);
+        } else {
+          log.warn("Failed to clone repo to "+nextDirectory);
+          return false;
+        }
       } else {
+        log.warn("Failed to get next directory");
         return false;
       }
-    } else {
+    } catch(Exception e) {
+      log.error("Failed to create new rendered directory", e);
       return false;
     }
     return true;

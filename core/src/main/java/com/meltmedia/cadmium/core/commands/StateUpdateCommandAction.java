@@ -13,6 +13,7 @@ import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 @Singleton
 public class StateUpdateCommandAction implements CommandAction {
@@ -26,6 +27,9 @@ public class StateUpdateCommandAction implements CommandAction {
   
   @Inject
   protected ContentService fileServlet;
+  
+  @Inject
+  protected SiteConfigProcessor processor;
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
@@ -39,6 +43,9 @@ public class StateUpdateCommandAction implements CommandAction {
           log.info("Done updating content now switching content.");
           maintFilter.start();
           fileServlet.switchContent();
+          if(processor != null) {
+            processor.makeLive();
+          }
           maintFilter.stop();
           lifecycleService.updateMyState(UpdateState.IDLE);
         }

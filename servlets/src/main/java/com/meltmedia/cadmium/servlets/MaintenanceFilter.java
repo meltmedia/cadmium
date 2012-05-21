@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.servlets;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -14,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.meltmedia.cadmium.core.SiteDownService;
 
+@Singleton
 public class MaintenanceFilter implements Filter, SiteDownService {
 
 	public volatile boolean isOn = false;
