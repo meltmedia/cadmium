@@ -23,6 +23,9 @@ public class CadmiumCli {
 		  HelpCommand helpCommand = new HelpCommand();
 		  jCommander.addCommand("help", helpCommand);
 		  
+		  InitializeCommand initCommand = new InitializeCommand();
+		  jCommander.addCommand("init", initCommand);
+		  
 		  jCommander.parse(args);
 		  
 		  String commandName = jCommander.getParsedCommand();
@@ -49,11 +52,15 @@ public class CadmiumCli {
 		  else if( commandName.equals("update") ) {
 		     throw new UnsupportedOperationException("update not yet supported.");
 		  }
+		  else if( commandName.equals("init") ) {
+		    initCommand.execute();
+		  }
 		
 		}
 		catch( Exception e ) {
 			jCommander.usage();
 			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 
 	}
