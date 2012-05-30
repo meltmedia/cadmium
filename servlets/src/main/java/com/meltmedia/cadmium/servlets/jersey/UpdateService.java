@@ -8,10 +8,12 @@ import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,20 +48,26 @@ public class UpdateService {
   @Named("contentDir")
   protected String initialContentDir;
   
-  @GET
+  @POST
+  @Consumes("application/x-www-form-urlencoded")
   @Produces("text/plain")
-  public String update(@QueryParam("branch") String branch, @QueryParam("sha") String sha) throws Exception {
+  public String update(@FormParam("branch") String branch, @FormParam("sha") String sha, @FormParam("comment") String comment) throws Exception {
     if(sender != null) {
-      log.debug("Sending update message");
-      Message msg = new Message();
-      msg.setCommand(ProtocolMessage.UPDATE);
-      if(branch != null && branch.trim().length() > 0) {
-        msg.getProtocolParameters().put("branch", branch);
+      if(comment != null && comment.trim().length() > 0) {
+        log.debug("Sending update message");
+        Message msg = new Message();
+        msg.setCommand(ProtocolMessage.UPDATE);
+        if(branch != null && branch.trim().length() > 0) {
+          msg.getProtocolParameters().put("branch", branch);
+        }
+        if(sha != null && sha.trim().length() > 0) {
+          msg.getProtocolParameters().put("sha", sha);
+        }
+        msg.getProtocolParameters().put("comment", comment);
+        sender.sendMessage(msg, null);
+      } else {
+        return "invalid request\n";
       }
-      if(sha != null && sha.trim().length() > 0) {
-        msg.getProtocolParameters().put("sha", sha);
-      }
-      sender.sendMessage(msg, null);
     } else {
       log.error("Channel is not wired");
     }

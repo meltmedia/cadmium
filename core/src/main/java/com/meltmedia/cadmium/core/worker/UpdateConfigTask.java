@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 
 public class UpdateConfigTask implements Callable<Boolean> {
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -18,12 +19,14 @@ public class UpdateConfigTask implements Callable<Boolean> {
   private GitService service;
   private Map<String, String> properties;
   private Properties configProperties;
+  private HistoryManager manager;
   private Future<Boolean> previousTask;
   
-  public UpdateConfigTask(GitService service, Map<String, String> properties, Properties configProperties, Future<Boolean> previousTask) {
+  public UpdateConfigTask(GitService service, Map<String, String> properties, Properties configProperties, HistoryManager manager, Future<Boolean> previousTask) {
     this.service = service;
     this.properties = properties;
     this.configProperties = configProperties;
+    this.manager = manager;
     this.previousTask = previousTask;
   }
 
@@ -57,6 +60,10 @@ public class UpdateConfigTask implements Callable<Boolean> {
     }
     updatedProperties.setProperty("git.ref.sha", service.getCurrentRevison());
     configProperties.setProperty("git.ref.sha", service.getCurrentRevison());
+    
+    if(manager != null) {
+      manager.logEvent(service.getBranchName(), service.getCurrentRevison(), "", lastUpdatedDir, properties.get("comment"), true);
+    }
     
     try{
       updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);

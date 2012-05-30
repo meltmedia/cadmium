@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.Message;
@@ -48,6 +49,9 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   
   @Inject
   protected SiteConfigProcessor processor;
+  
+  @Inject
+  protected HistoryManager historyManager;
   
   protected Future<Boolean> lastTask = null;
   
@@ -83,7 +87,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
       
       lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
       
-      lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, lastTask));
+      lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, historyManager, lastTask));
       
       lastTask = pool.submit(new NotifyListenerTask(listener, lastTask));
       
