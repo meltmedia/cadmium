@@ -18,7 +18,7 @@ import com.meltmedia.cadmium.core.SiteDownService;
 @Singleton
 public class MaintenanceFilter implements Filter, SiteDownService {
 
-	public volatile boolean isOn = false;
+	public volatile boolean on = false;
 	private String ignorePath;
 	
 
@@ -45,7 +45,7 @@ public class MaintenanceFilter implements Filter, SiteDownService {
     if(contextPath != null && contextPath.trim().length() > 0 && uri.startsWith(contextPath)) {
       uri = uri.substring(contextPath.length());
     }
-    if( !isOn || (ignorePath != null && uri.startsWith(ignorePath)) ) {
+    if( !on || (ignorePath != null && uri.startsWith(ignorePath)) ) {
 			chain.doFilter(req, res);
 			return;
 		}
@@ -57,14 +57,17 @@ public class MaintenanceFilter implements Filter, SiteDownService {
 	}
 	
 	@Override
-	public void start()
-	{
-		isOn = true;
+	public void start()	{		
+		on = true;
 	}
 	
 	@Override
 	public void stop() {
-		isOn = false;
+		on = false;
+	}
+	
+	public boolean isOn() {
+		return on;
 	}
 
 
