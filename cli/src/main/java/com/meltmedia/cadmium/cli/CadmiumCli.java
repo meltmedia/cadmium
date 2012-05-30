@@ -11,7 +11,7 @@ public class CadmiumCli {
 	 */
 	public static void main(String[] args) {
 		try {
-		  MainCommands mainCommands = new MainCommands();
+		  //MainCommands mainCommands = new MainCommands();
 		  //jCommander = new JCommander(mainCommands);
 		  jCommander = new JCommander();
 		  
@@ -25,6 +25,9 @@ public class CadmiumCli {
 		  
 		  InitializeCommand initCommand = new InitializeCommand();
 		  jCommander.addCommand("init", initCommand);
+		  
+		  HistoryCommand historyCommand = new HistoryCommand();
+		  jCommander.addCommand("history", historyCommand);
 		  
 		  jCommander.parse(args);
 		  
@@ -54,6 +57,9 @@ public class CadmiumCli {
 		  }
 		  else if( commandName.equals("init") ) {
 		    initCommand.execute();
+		  }
+		  else if( commandName.equals("history") ) {
+		    historyCommand.execute();
 		  }
 		
 		}

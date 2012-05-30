@@ -46,6 +46,9 @@ public class HistoryManager {
       lastEntry.setTimeLive(newEntry.getTimestamp().getTime() - lastEntry.getTimestamp().getTime());
       log.debug("The last history event lived [{}ms]", lastEntry.getTimeLive());
     }
+    if(lastEntry != null) {
+      newEntry.setIndex(lastEntry.getIndex()+1);
+    }
     newEntry.setBranch(branch);
     newEntry.setRevision(sha);
     newEntry.setOpenId(openId);

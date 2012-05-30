@@ -7,8 +7,8 @@ import javax.inject.Named;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ public class HistoryService {
 
   @GET
   @Produces("application/json")
-  public String getHistory(@PathParam("limit") @DefaultValue("-1") int limit, @PathParam("filter") @DefaultValue("false") boolean filter) throws Exception {
+  public String getHistory(@QueryParam("limit") @DefaultValue("-1") int limit, @QueryParam("filter") @DefaultValue("false") boolean filter) throws Exception {
     ChannelMember coordinator = membershipTracker.getCoordinator();
     if(coordinator.isMine()) {
       log.info("Responding with my own history");

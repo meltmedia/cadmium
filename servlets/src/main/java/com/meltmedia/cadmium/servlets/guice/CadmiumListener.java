@@ -287,6 +287,11 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(CommandAction.class)
             .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE.name()))
             .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
+        
+
+        bind(CommandResponse.class)
+            .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE.name()))
+            .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
 
         bind(new TypeLiteral<Map<ProtocolMessage, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
 

@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.core.history;
 import java.util.Date;
 
 public class HistoryEntry {
+  private long index = 1;
   private Date timestamp;
   private String branch;
   private String revision;
@@ -23,6 +24,14 @@ public class HistoryEntry {
     this.servedDirectory = servedDirectory;
     this.revertible = revertible;
     this.comment = comment;
+  }
+  
+  public long getIndex() {
+    return index;
+  }
+  
+  public void setIndex(long index) {
+    this.index = index;
   }
 
   public Date getTimestamp() {
