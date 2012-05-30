@@ -31,14 +31,18 @@ import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
+import com.meltmedia.cadmium.core.commands.CommandResponse;
 import com.meltmedia.cadmium.core.commands.CurrentStateCommandAction;
 import com.meltmedia.cadmium.core.commands.MaintenanceCommandAction;
+import com.meltmedia.cadmium.core.commands.HistoryRequestCommandAction;
+import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
 import com.meltmedia.cadmium.core.commands.StateUpdateCommandAction;
 import com.meltmedia.cadmium.core.commands.SyncCommandAction;
 import com.meltmedia.cadmium.core.commands.UpdateCommandAction;
 import com.meltmedia.cadmium.core.commands.UpdateDoneCommandAction;
 import com.meltmedia.cadmium.core.commands.UpdateFailedCommandAction;
 import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
@@ -59,6 +63,7 @@ import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SslRedirectFilter;
 import com.meltmedia.cadmium.servlets.jersey.MaintenanceService;
+import com.meltmedia.cadmium.servlets.jersey.HistoryService;
 import com.meltmedia.cadmium.servlets.jersey.UpdateService;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
@@ -274,8 +279,14 @@ public class CadmiumListener extends GuiceServletContextListener {
             .annotatedWith(Names.named(ProtocolMessage.UPDATE_FAILED.name()))
             .to(UpdateFailedCommandAction.class).in(Scopes.SINGLETON);
         bind(CommandAction.class)
-        .annotatedWith(Names.named(ProtocolMessage.MAINTENANCE.name()))
-        .to(MaintenanceCommandAction.class).in(Scopes.SINGLETON);
+            .annotatedWith(Names.named(ProtocolMessage.MAINTENANCE.name()))
+            .to(MaintenanceCommandAction.class).in(Scopes.SINGLETON);
+        bind(CommandAction.class)
+            .annotatedWith(Names.named(ProtocolMessage.HISTORY_REQUEST.name()))
+            .to(HistoryRequestCommandAction.class).in(Scopes.SINGLETON);
+        bind(CommandAction.class)
+            .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE.name()))
+            .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
 
         bind(new TypeLiteral<Map<ProtocolMessage, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
 
@@ -297,6 +308,10 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         // Bind channel name
         bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+warName);
+        
+        bind(String.class).annotatedWith(Names.named("applicationContentRoot")).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
+        
+        bind(HistoryManager.class);
 
         bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
 
@@ -321,9 +336,10 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
 
-        // Bind Jersey UpdateService
+        // Bind Jersey Endpoints
         bind(UpdateService.class).asEagerSingleton();
         bind(MaintenanceService.class).asEagerSingleton();
+        bind(HistoryService.class).asEagerSingleton();
       }
     };
   }
