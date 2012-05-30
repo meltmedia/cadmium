@@ -32,6 +32,7 @@ import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CurrentStateCommandAction;
+import com.meltmedia.cadmium.core.commands.MaintenanceCommandAction;
 import com.meltmedia.cadmium.core.commands.StateUpdateCommandAction;
 import com.meltmedia.cadmium.core.commands.SyncCommandAction;
 import com.meltmedia.cadmium.core.commands.UpdateCommandAction;
@@ -57,6 +58,7 @@ import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SslRedirectFilter;
+import com.meltmedia.cadmium.servlets.jersey.MaintenanceService;
 import com.meltmedia.cadmium.servlets.jersey.UpdateService;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
@@ -271,6 +273,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(CommandAction.class)
             .annotatedWith(Names.named(ProtocolMessage.UPDATE_FAILED.name()))
             .to(UpdateFailedCommandAction.class).in(Scopes.SINGLETON);
+        bind(CommandAction.class)
+        .annotatedWith(Names.named(ProtocolMessage.MAINTENANCE.name()))
+        .to(MaintenanceCommandAction.class).in(Scopes.SINGLETON);
 
         bind(new TypeLiteral<Map<ProtocolMessage, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
 
@@ -318,6 +323,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         // Bind Jersey UpdateService
         bind(UpdateService.class).asEagerSingleton();
+        bind(MaintenanceService.class).asEagerSingleton();
       }
     };
   }

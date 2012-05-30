@@ -39,6 +39,10 @@ public class CommandMapProvider implements Provider<Map<ProtocolMessage, Command
   @Named("UPDATE_FAILED")
   protected CommandAction updateFailed;
   
+  @Inject
+  @Named("MAINTENANCE")
+  protected CommandAction maintenance;
+  
   private Map<ProtocolMessage, CommandAction> actionMap = null;
   
   public CommandMapProvider() {}
@@ -53,6 +57,7 @@ public class CommandMapProvider implements Provider<Map<ProtocolMessage, Command
       actionMap.put(ProtocolMessage.UPDATE, update);
       actionMap.put(ProtocolMessage.UPDATE_DONE, updateDone);
       actionMap.put(ProtocolMessage.UPDATE_FAILED, updateFailed);
+      actionMap.put(ProtocolMessage.MAINTENANCE, maintenance);
       
       actionMap = Collections.unmodifiableMap(actionMap);
     }
