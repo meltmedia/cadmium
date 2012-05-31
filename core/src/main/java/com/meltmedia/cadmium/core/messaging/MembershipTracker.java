@@ -49,10 +49,26 @@ public class MembershipTracker extends MembershipListenerAdapter {
       
       pergeDroppedMembers(memberAddresses);
       
+      fixCoordinator();
+      
       handleSyncRequest(new_view);
       log.info("Processed new view now there are ["+new_view.size()+"] members");
     } else {
       log.warn("Received a new view members list is null");
+    }
+  }
+
+  private void fixCoordinator() {
+    if(members != null) {
+      for(ChannelMember member : members) {
+        if(member.isCoordinator() && !isCoordinator(member.getAddress())) {
+          member.setCoordinator(false);
+          log.info("Coordinator is no longer ["+member.getAddress()+"]");
+        } else if(!member.isCoordinator() && isCoordinator(member.getAddress())) {
+          member.setCoordinator(true);
+          log.info("Coordinator is now ["+member.getAddress()+"]");
+        }
+      }
     }
   }
 
