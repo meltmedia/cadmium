@@ -29,6 +29,9 @@ public class CadmiumCli {
 		  HistoryCommand historyCommand = new HistoryCommand();
 		  jCommander.addCommand("history", historyCommand);
 		  
+		  MaintenanceCommand maintenanceCommand = new MaintenanceCommand();
+		  jCommander.addCommand("maintenance", maintenanceCommand);
+		  
 		  jCommander.parse(args);
 		  
 		  String commandName = jCommander.getParsedCommand();
@@ -60,6 +63,9 @@ public class CadmiumCli {
 		  }
 		  else if( commandName.equals("history") ) {
 		    historyCommand.execute();
+		  }
+		  else if ( commandName.equals("maintenance")) {
+		  	maintenanceCommand.execute();
 		  }
 		
 		}

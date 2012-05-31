@@ -23,11 +23,14 @@ public class MaintenanceCommand {
 
 	@Parameter(names="comment", description="Comment", required=true)
 	private String comment;
-
+	
+	private final String ENDPOINT = "/maintenance";
+	
 	public void execute() throws ClientProtocolException, IOException {
 		
 		DefaultHttpClient client = new DefaultHttpClient();
-		String url = site + "/maintenance";
+		// TODO do I need to validate the site
+		String url = site + ENDPOINT;
 		
 		if(state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off")) {
 			HttpPost post = new HttpPost(url);
@@ -36,8 +39,9 @@ public class MaintenanceCommand {
 			params.setParameter("comment", comment.trim());
 			HttpResponse response = client.execute(post);
 			System.out.println(response.toString());		
+		} else {
+			System.err.println("Invalid State. Please use 'on' or 'off'.");
 		}
-		System.err.println("Invalid State. Please use 'on' or 'off'.");
 	}
 
 }
