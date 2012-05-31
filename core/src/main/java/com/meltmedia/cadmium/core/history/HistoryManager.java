@@ -53,21 +53,19 @@ public class HistoryManager {
     if(lastEntry != null) {
       newEntry.setIndex(lastEntry.getIndex()+1);
     }
-    if(revertible) {
-      int index = 1;
-      while(lastEntry != null && !lastEntry.isRevertible()) {
-        if(history.size() > index) {
-          lastEntry = history.get(index);
-          index++;
-        } else {
-          lastEntry = null;
-          break;
-        }
+    int index = 1;
+    while(lastEntry != null && (lastEntry.isRevertible() != revertible)) {
+      if(history.size() > index) {
+        lastEntry = history.get(index);
+        index++;
+      } else {
+        lastEntry = null;
+        break;
       }
-      if(lastEntry != null && lastEntry.getTimestamp() != null){
-        lastEntry.setTimeLive(newEntry.getTimestamp().getTime() - lastEntry.getTimestamp().getTime());
-        log.debug("The last history event lived [{}ms]", lastEntry.getTimeLive());
-      }
+    }
+    if(lastEntry != null && lastEntry.getTimestamp() != null){
+      lastEntry.setTimeLive(newEntry.getTimestamp().getTime() - lastEntry.getTimestamp().getTime());
+      log.debug("The last history event lived [{}ms]", lastEntry.getTimeLive());
     }
     newEntry.setBranch(branch);
     newEntry.setRevision(sha);
@@ -75,7 +73,7 @@ public class HistoryManager {
     newEntry.setServedDirectory(directory);
     newEntry.setComment(comment);
     newEntry.setRevertible(revertible);
-    log.debug("Logging new History Event: branch[{}], sha[{}], openId[{}], directory[{}], revertible[{}], comment[{}]", new Object[] {branch, sha, openId, directory, revertible, comment});
+    log.info("Logging new History Event: branch[{}], sha[{}], openId[{}], directory[{}], revertible[{}], maint[{}], comment[{}]", new Object[] {branch, sha, openId, directory, revertible, maint, comment});
     
     history.add(0, newEntry);
     

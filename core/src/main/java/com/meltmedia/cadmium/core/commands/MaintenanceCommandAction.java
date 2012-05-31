@@ -17,6 +17,7 @@ import com.meltmedia.cadmium.core.history.HistoryManager;
 public class MaintenanceCommandAction implements CommandAction {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
+	@Inject
 	private HistoryManager manager;
 
 	@Inject
@@ -32,9 +33,11 @@ public class MaintenanceCommandAction implements CommandAction {
 				comment = params.get("comment");
 			}
 			if(state.equalsIgnoreCase("on")) {
+			  log.info("Starting maintenance page.");
 				siteDownService.start();
 			} 
 			else if (state.equalsIgnoreCase("off")) {
+        log.info("Stopping maintenance page.");
 				siteDownService.stop();
 			}
 		} 		

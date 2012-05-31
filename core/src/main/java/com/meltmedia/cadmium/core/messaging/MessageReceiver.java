@@ -7,12 +7,15 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.jgroups.blocks.MessageListenerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 
 @Singleton
 public class MessageReceiver extends MessageListenerAdapter {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
   @Named("commandMap")
@@ -32,6 +35,7 @@ public class MessageReceiver extends MessageListenerAdapter {
           }
         } catch(Exception e) {
           action.handleFailure(ctx, e);
+          log.error("Command [{}] failed: {}", message.getCommand(), e.getMessage());
         }
       }
     }
