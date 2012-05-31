@@ -67,19 +67,20 @@ public class HistoryCommand {
             List<HistoryEntry> history = new Gson().fromJson(responseContent, new TypeToken<List<HistoryEntry>>() {}.getType());
             
             if(history != null && history.size() > 0) {
-              System.console().format("%7s|%12s|%7s|%14s|%24s|%44s|%24s|%6s\n", "Index", "Date", "Time", "User", "Branch", "Revision", "Time Live", "Revertible");
-              for(int i=0; i<145; i++) {
+              System.console().format("%7s|%12s|%7s|%14s|%24s|%44s|%24s|%6s|%6s\n", "Index", "Date", "Time", "User", "Branch", "Revision", "Time Live", "Maint", "Revertible");
+              for(int i=0; i<151; i++) {
                 System.out.print("-");
               }
               System.out.println();
               for(HistoryEntry entry : history) {
-                System.console().format("%7d|%4tm/%<2td/%<4tY|%<4tH:%<2tM|%14s|%24s|%44s|%24s|%6b\n",
+                System.console().format("%7d|%4tm/%<2td/%<4tY|%<4tH:%<2tM|%14s|%24s|%44s|%24s|%6b|%6b\n",
                     entry.getIndex(),
                     entry.getTimestamp(),
                     entry.getOpenId(),
                     entry.getBranch(),
                     entry.getRevision(),
                     formatTimeLive(entry.getTimeLive()),
+                    entry.isMaintenance(),
                     entry.isRevertible());
                 printComments(entry.getComment());
               }
@@ -108,7 +109,7 @@ public class HistoryCommand {
 
   private void printComments(String comment) {
     int index = 0;
-    int nextIndex = 143;
+    int nextIndex = 149;
     while(index < comment.length()) {
       nextIndex = nextIndex <= comment.length() ? nextIndex : comment.length();
       String commentSegment = comment.substring(index, nextIndex);
@@ -134,7 +135,7 @@ public class HistoryCommand {
       if(lastNewLine > 0) {
         index++;
       }
-      nextIndex = index + 143;
+      nextIndex = index + 149;
     }
   }
 

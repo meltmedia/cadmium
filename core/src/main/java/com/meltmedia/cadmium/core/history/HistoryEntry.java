@@ -11,6 +11,7 @@ public class HistoryEntry {
   private String openId;
   private String servedDirectory;
   private boolean revertible;
+  private boolean maintenance;
   private String comment;
   
   public HistoryEntry(){}
@@ -96,5 +97,13 @@ public class HistoryEntry {
 
   public void setComment(String comment) {
     this.comment = comment;
+  }
+  
+  public void setMaintenance(boolean maint) {
+    this.maintenance = maint;
+  }
+  
+  public boolean isMaintenance() {
+    return this.maintenance;
   }
 }
