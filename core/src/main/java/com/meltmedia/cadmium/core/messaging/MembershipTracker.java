@@ -45,11 +45,13 @@ public class MembershipTracker extends MembershipListenerAdapter {
       log.info("Received a new view ["+new_view.size()+"]");
       List<Address> memberAddresses = new_view.getMembers();
       
-      addNewMembers(memberAddresses);
+      List<ChannelMember> newMembers = addNewMembers(memberAddresses);
       
       pergeDroppedMembers(memberAddresses);
       
       fixCoordinator();
+      
+      sendStateMessages(newMembers);
       
       handleSyncRequest(new_view);
       log.info("Processed new view now there are ["+new_view.size()+"] members");
@@ -61,12 +63,12 @@ public class MembershipTracker extends MembershipListenerAdapter {
   private void fixCoordinator() {
     if(members != null) {
       for(ChannelMember member : members) {
-        if(member.isCoordinator() && !isCoordinator(member.getAddress())) {
-          member.setCoordinator(false);
-          log.info("Coordinator is no longer ["+member.getAddress()+"]");
-        } else if(!member.isCoordinator() && isCoordinator(member.getAddress())) {
+        if(isCoordinator(member.getAddress())) {
           member.setCoordinator(true);
-          log.info("Coordinator is now ["+member.getAddress()+"]");
+          log.info("Coordinator is ["+member.getAddress()+"]");
+        } else {
+          member.setCoordinator(false);
+          log.info("Member ["+member.getAddress()+"] is not coordinator");
         }
       }
     }
@@ -92,6 +94,20 @@ public class MembershipTracker extends MembershipListenerAdapter {
       }
     }
   }
+  
+  private void sendStateMessages(List<ChannelMember> newMembers) {
+    if(newMembers != null) {
+      for(ChannelMember cMember : newMembers) {
+        Message stateMsg = new Message();
+        stateMsg.setCommand(ProtocolMessage.CURRENT_STATE);
+        try {
+          sender.sendMessage(stateMsg, cMember);
+        } catch (Exception e) {
+          log.error("Failed to send message to check for peir's current state", e);
+        }
+      }
+    }
+  }
 
   private void pergeDroppedMembers(List<Address> memberAddresses) {
     List<ChannelMember> oldMembers = new ArrayList<ChannelMember>();
@@ -110,26 +126,17 @@ public class MembershipTracker extends MembershipListenerAdapter {
     }
   }
 
-  private void addNewMembers(List<Address> memberAddresses) {
+  private List<ChannelMember> addNewMembers(List<Address> memberAddresses) {
+    List<ChannelMember> newMembers = new ArrayList<ChannelMember>();
     for(Address member : memberAddresses) {
       ChannelMember cMember = new ChannelMember(member, isCoordinator(member), isMine(member));
       if(!members.contains(cMember)) {
         log.info("Discovered new member {}, coordinator {}, me {}", new Object[] {member.toString(), cMember.isCoordinator(), cMember.isMine()});
         members.add(cMember);
-        Message stateMsg = new Message();
-        stateMsg.setCommand(ProtocolMessage.CURRENT_STATE);
-        try {
-          sender.sendMessage(stateMsg, cMember);
-        } catch (Exception e) {
-          log.error("Failed to send message to check for peir's current state", e);
-        }
-      } else if(cMember.isCoordinator()){
-        cMember = members.get(members.indexOf(cMember));
-        if(!cMember.isCoordinator()) {
-          log.info("Coordinator changed to {}" + (cMember.isMine()? " and is me" : "" ), cMember.getAddress().toString());
-        }
+        newMembers.add(cMember);
       }
     }
+    return newMembers;
   }
   
   private boolean isCoordinator(Address newAddress) {
