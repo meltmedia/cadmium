@@ -17,4 +17,9 @@ public class DummySiteDownService implements SiteDownService {
     didStop = true;
   }
 
+	@Override
+	public boolean isOn() {
+		return false;
+	}
+
 }
