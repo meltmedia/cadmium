@@ -37,8 +37,16 @@ public class HistoryManager {
     
     pool = Executors.newSingleThreadExecutor();
   }
-
+  
+  public void logEvent(boolean maint, String openId, String comment) {
+    logEvent("", "", openId, "", comment, maint, false);
+  }
+  
   public void logEvent(String branch, String sha, String openId, String directory, String comment, boolean revertible) {
+    logEvent(branch, sha, openId, directory, comment, false, revertible);
+  }
+
+  public void logEvent(String branch, String sha, String openId, String directory, String comment, boolean maint, boolean revertible) {
     HistoryEntry lastEntry = history.size() > 0 ? history.get(0) : null;
     HistoryEntry newEntry = new HistoryEntry();
     newEntry.setTimestamp(new Date());
