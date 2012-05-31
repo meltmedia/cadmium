@@ -97,6 +97,7 @@ public class UpdateService {
         peir.put("address", member.getAddress().toString());
         peir.put("coordinator", member.isCoordinator());
         peir.put("state", member.getState().name());
+        peir.put("me", member.isMine());
         peirs.add(peir);
       }
       returnObj.put("peirs", peirs);
