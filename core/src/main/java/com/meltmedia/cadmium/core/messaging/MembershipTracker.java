@@ -63,7 +63,7 @@ public class MembershipTracker extends MembershipListenerAdapter {
   private void fixCoordinator(View newView) {
     if(members != null) {
       for(ChannelMember member : members) {
-        if(isCoordinator(member.getAddress(), newView)) {
+        if(members.size() == 1 || isCoordinator(member.getAddress(), newView)) {
           member.setCoordinator(true);
           log.info("Coordinator is ["+member.getAddress()+"]");
         } else {
