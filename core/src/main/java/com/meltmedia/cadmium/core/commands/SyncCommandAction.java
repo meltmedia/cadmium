@@ -81,7 +81,7 @@ public class SyncCommandAction implements CommandAction {
           worker.setListener(oldListener);
         }
       });
-      
+      ctx.getMessage().getProtocolParameters().put("comment", "SYNC");
       this.worker.beginPullUpdates(ctx.getMessage().getProtocolParameters());
     }
   }

@@ -42,12 +42,24 @@ public class HistoryManager {
     HistoryEntry lastEntry = history.size() > 0 ? history.get(0) : null;
     HistoryEntry newEntry = new HistoryEntry();
     newEntry.setTimestamp(new Date());
-    if(lastEntry != null && lastEntry.getTimestamp() != null){
-      lastEntry.setTimeLive(newEntry.getTimestamp().getTime() - lastEntry.getTimestamp().getTime());
-      log.debug("The last history event lived [{}ms]", lastEntry.getTimeLive());
-    }
     if(lastEntry != null) {
       newEntry.setIndex(lastEntry.getIndex()+1);
+    }
+    if(revertible) {
+      int index = 1;
+      while(lastEntry != null && !lastEntry.isRevertible()) {
+        if(history.size() > index) {
+          lastEntry = history.get(index);
+          index++;
+        } else {
+          lastEntry = null;
+          break;
+        }
+      }
+      if(lastEntry != null && lastEntry.getTimestamp() != null){
+        lastEntry.setTimeLive(newEntry.getTimestamp().getTime() - lastEntry.getTimestamp().getTime());
+        log.debug("The last history event lived [{}ms]", lastEntry.getTimeLive());
+      }
     }
     newEntry.setBranch(branch);
     newEntry.setRevision(sha);
