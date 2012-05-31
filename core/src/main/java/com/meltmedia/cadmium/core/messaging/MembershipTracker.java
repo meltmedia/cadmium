@@ -45,11 +45,11 @@ public class MembershipTracker extends MembershipListenerAdapter {
       log.info("Received a new view ["+new_view.size()+"]");
       List<Address> memberAddresses = new_view.getMembers();
       
-      List<ChannelMember> newMembers = addNewMembers(memberAddresses);
+      List<ChannelMember> newMembers = addNewMembers(memberAddresses, new_view);
       
       pergeDroppedMembers(memberAddresses);
       
-      fixCoordinator();
+      fixCoordinator(new_view);
       
       sendStateMessages(newMembers);
       
@@ -60,10 +60,10 @@ public class MembershipTracker extends MembershipListenerAdapter {
     }
   }
 
-  private void fixCoordinator() {
+  private void fixCoordinator(View newView) {
     if(members != null) {
       for(ChannelMember member : members) {
-        if(isCoordinator(member.getAddress())) {
+        if(isCoordinator(member.getAddress(), newView)) {
           member.setCoordinator(true);
           log.info("Coordinator is ["+member.getAddress()+"]");
         } else {
@@ -126,10 +126,10 @@ public class MembershipTracker extends MembershipListenerAdapter {
     }
   }
 
-  private List<ChannelMember> addNewMembers(List<Address> memberAddresses) {
+  private List<ChannelMember> addNewMembers(List<Address> memberAddresses, View newView) {
     List<ChannelMember> newMembers = new ArrayList<ChannelMember>();
     for(Address member : memberAddresses) {
-      ChannelMember cMember = new ChannelMember(member, isCoordinator(member), isMine(member));
+      ChannelMember cMember = new ChannelMember(member, isCoordinator(member, newView), isMine(member));
       if(!members.contains(cMember)) {
         log.info("Discovered new member {}, coordinator {}, me {}", new Object[] {member.toString(), cMember.isCoordinator(), cMember.isMine()});
         members.add(cMember);
@@ -139,9 +139,9 @@ public class MembershipTracker extends MembershipListenerAdapter {
     return newMembers;
   }
   
-  private boolean isCoordinator(Address newAddress) {
+  private boolean isCoordinator(Address newAddress, View newView) {
     boolean coord = false;
-    if(newAddress != null && newAddress.toString().equals(channel.getView().getCreator().toString())) {
+    if(newAddress != null && newAddress.toString().equals(newView.getCreator().toString())) {
       coord = true;
     }
     return coord;
