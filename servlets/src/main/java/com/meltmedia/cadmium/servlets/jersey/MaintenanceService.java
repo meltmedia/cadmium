@@ -26,18 +26,18 @@ public class MaintenanceService {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces("text/plain")
 	public String post(@FormParam("state") String state,@FormParam("comment") String comment) throws Exception {
-      Message msg = new Message();
-      log.info("state: " + state);
-      log.info("comment: " + comment);
-      msg.setCommand(ProtocolMessage.MAINTENANCE);
-      if(state != null && (state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off"))) {
-      	msg.getProtocolParameters().put("state", state);
-      	if(comment != null && comment.trim().length() > 0) {
-        	msg.getProtocolParameters().put("comment", comment);
-        }
-      	sender.sendMessage(msg, null);
-      	return "ok";
+    Message msg = new Message();
+    log.info("state: " + state);
+    log.info("comment: " + comment);
+    msg.setCommand(ProtocolMessage.MAINTENANCE);
+    if(state != null && (state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off"))) {
+    	msg.getProtocolParameters().put("state", state);
+    	if(comment != null && comment.trim().length() > 0) {
+      	msg.getProtocolParameters().put("comment", comment);
       }
-      return "invalid request";
+    	sender.sendMessage(msg, null);
+    	return "ok";
+    }
+    return "invalid request";
 	}
 }

@@ -18,13 +18,14 @@ public class MaintenanceCommandAction implements CommandAction {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
 	@Inject
-	private HistoryManager manager;
+	protected HistoryManager manager;
 
 	@Inject
-	private SiteDownService siteDownService;
+	protected SiteDownService siteDownService;
 	
 	@Override
 	public boolean execute(CommandContext ctx) throws Exception {
+		log.info("Beginning Maintenance Toggle, started by {}", ctx.getSource());
 		Map<String,String> params = ctx.getMessage().getProtocolParameters();
 		String comment = "";
 		if(params.containsKey("state") && params.get("state") != null) {
