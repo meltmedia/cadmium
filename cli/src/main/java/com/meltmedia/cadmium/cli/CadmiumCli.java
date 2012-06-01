@@ -26,6 +26,9 @@ public class CadmiumCli {
 		  InitializeCommand initCommand = new InitializeCommand();
 		  jCommander.addCommand("init", initCommand);
 		  
+		  InitializeWarCommand initWarCommand = new InitializeWarCommand();
+		  jCommander.addCommand("init-war", initWarCommand);
+		  
 		  HistoryCommand historyCommand = new HistoryCommand();
 		  jCommander.addCommand("history", historyCommand);
 		  
@@ -66,6 +69,9 @@ public class CadmiumCli {
 		  }
 		  else if( commandName.equals("init") ) {
 		    initCommand.execute();
+		  }
+		  else if( commandName.equals("init-war") ) {
+		    initWarCommand.execute();
 		  }
 		  else if( commandName.equals("history") ) {
 		    historyCommand.execute();
