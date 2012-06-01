@@ -1,6 +1,7 @@
 package com.meltmedia.cadmium.core.git;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -76,6 +77,27 @@ public class GitService {
       return new GitService(clone.call());
     } 
     return null;
+  }
+  
+  public static GitService init(String site, String dir) throws Exception {
+  	String repoPath = dir + "/" + site;
+  	log.debug("Repository Path :" + repoPath);
+  	Repository repo = new FileRepository(repoPath + "/.git");
+  	try {
+  		repo.create();
+  		Git git = new Git(repo);
+  		
+  		File localGitRepo = new File(repoPath);
+  		localGitRepo.mkdirs();
+  		new File(localGitRepo, "delete.me").createNewFile();
+  		
+  		git.add().addFilepattern("delete.me").call();
+  		git.commit().setMessage("initial commit").call();
+  		return new GitService(git);  		
+  	} catch (IllegalStateException e) {
+  		System.out.println("Repo Already exists locally");
+  	}
+		return null;
   }
   
   public String getRepositoryDirectory() throws Exception {
