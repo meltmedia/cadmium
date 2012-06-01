@@ -30,6 +30,10 @@ public class BranchCreator {
     return branchCreated;
   }
   
+  public GitService getGitService() {
+    return this.clonedRemote;
+  }
+  
   public void closeAndRemoveLocal() throws Exception {
     try{
       clonedRemote.close();
