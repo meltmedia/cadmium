@@ -30,7 +30,10 @@ public class CadmiumCli {
 		  jCommander.addCommand("history", historyCommand);
 		  
 		  MaintenanceCommand maintenanceCommand = new MaintenanceCommand();
-		  jCommander.addCommand("maintenance", maintenanceCommand);
+		  jCommander.addCommand("maint", maintenanceCommand);
+		  
+		  NewBranchCommand newBranchCommand = new NewBranchCommand();
+		  jCommander.addCommand("new-branch", newBranchCommand);
 		  
 		  jCommander.parse(args);
 		  
@@ -64,8 +67,11 @@ public class CadmiumCli {
 		  else if( commandName.equals("history") ) {
 		    historyCommand.execute();
 		  }
-		  else if ( commandName.equals("maintenance")) {
+		  else if ( commandName.equals("maint")) {
 		  	maintenanceCommand.execute();
+		  }
+		  else if ( commandName.equals("new-branch")) {
+		    newBranchCommand.execute();
 		  }
 		
 		}

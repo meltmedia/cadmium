@@ -1,15 +1,21 @@
 package com.meltmedia.cadmium.core.git;
 
 import java.io.File;
+import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +33,7 @@ public class GitService {
     git = new Git(this.repository);
   }
   
-  private GitService(Git gitRepo) {
+  protected GitService(Git gitRepo) {
     this.git = gitRepo;
     this.repository = gitRepo.getRepository();
   }
@@ -68,7 +74,7 @@ public class GitService {
       clone.setURI(uri);
       
       return new GitService(clone.call());
-    }
+    } 
     return null;
   }
   
@@ -108,11 +114,40 @@ public class GitService {
     }
   }
   
+  public boolean newRemoteBranch(String branchName) throws Exception {
+    try{
+      log.info("Purging branches that no longer have remotes.");
+      git.fetch().setRemoveDeletedRefs(true).call();
+    } catch(Exception e) {
+      log.warn("Tried to fetch from remote when there is no remote.");
+      return false;
+    }
+    log.info("Getting list of existing branches.");
+    List<Ref> refs = git.branchList().setListMode(ListMode.ALL).call();
+    boolean branchExists = false; 
+    if(refs != null) {
+      for(Ref ref : refs) {
+        if(ref.getName().endsWith("/" + branchName)) {
+          branchExists = true;
+          break;
+        }
+      }
+    }
+    if(!branchExists) {
+      Ref ref = git.branchCreate().setName(branchName).call();
+      git.push().add(ref).call();
+      return true;
+    } else {
+      log.info(branchName + " already exists.");
+    }
+    return false;
+  }
+  
   public String getBranchName() throws Exception {
     return repository.getBranch();
   }
   
-  public String getCurrentRevison() throws Exception {
+  public String getCurrentRevision() throws Exception {
     return repository.getRef(getBranchName()).getObjectId().getName();
   }
   

@@ -29,6 +29,7 @@ import com.google.inject.servlet.ServletModule;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
+import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
@@ -122,6 +123,24 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
+    Properties cadmiumProperties = new Properties();
+    String cadmiumPropsFile = servletContextEvent.getServletContext().getRealPath("/WEB-INF/cadmium.properties");
+    if(FileSystemManager.canRead(cadmiumPropsFile)){
+      FileReader reader = null;
+      try{
+        reader = new FileReader(cadmiumPropsFile);
+        cadmiumProperties.load(reader);
+      } catch(Exception e) {
+        log.warn("Failed to load cadmium.properties file");
+      } finally {
+        if(reader != null) {
+          try{
+            reader.close();
+          } catch(Exception e){}
+        }
+      }
+    }
+    
     Properties configProperties = new Properties();
     configProperties.putAll(System.getenv());
     configProperties.putAll(System.getProperties());
