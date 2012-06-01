@@ -22,8 +22,10 @@ public class UpdateCommandActionTest {
   public void testCommand() throws Exception {
     DummyCoordinatedWorker worker = new DummyCoordinatedWorker();
     DummyMessageSender sender = new DummyMessageSender();
+    DummySiteDownService siteDown = new DummySiteDownService();
     
     LifecycleService service = new LifecycleService();
+ 
     
     service.setSender(sender);
     List<ChannelMember> members = new ArrayList<ChannelMember>();
