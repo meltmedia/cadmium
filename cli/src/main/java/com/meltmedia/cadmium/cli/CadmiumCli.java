@@ -67,7 +67,7 @@ public class CadmiumCli {
 		  else if( commandName.equals("history") ) {
 		    historyCommand.execute();
 		  }
-		  else if ( commandName.equals("maintenance")) {
+		  else if ( commandName.equals("maint")) {
 		  	maintenanceCommand.execute();
 		  }
 		  else if ( commandName.equals("new-branch")) {

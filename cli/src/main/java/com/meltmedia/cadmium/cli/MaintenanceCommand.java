@@ -27,13 +27,12 @@ public class MaintenanceCommand {
 	@Parameter(names="--comment", description="Comment", required=true)
 	private String comment;
 	
-	private final String ENDPOINT = "/system/maintenance";
+	private final String JERSEY_ENDPOINT = "/system/maintenance";
 	
 	public void execute() throws ClientProtocolException, IOException {
 		
 		DefaultHttpClient client = new DefaultHttpClient();
-		// TODO do I need to validate the site
-		String url = site + ENDPOINT;
+		String url = site + JERSEY_ENDPOINT;
 		
 		if(state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off")) {
 			HttpPost post = new HttpPost(url);
