@@ -58,11 +58,11 @@ public class UpdateConfigTask implements Callable<Boolean> {
     if(configProperties.containsKey("git.ref.sha")) {
       updatedProperties.setProperty("git.ref.sha.last", configProperties.getProperty("git.ref.sha"));
     }
-    updatedProperties.setProperty("git.ref.sha", service.getCurrentRevison());
-    configProperties.setProperty("git.ref.sha", service.getCurrentRevison());
+    updatedProperties.setProperty("git.ref.sha", service.getCurrentRevision());
+    configProperties.setProperty("git.ref.sha", service.getCurrentRevision());
     
     if(manager != null) {
-      manager.logEvent(service.getBranchName(), service.getCurrentRevison(), "SYNC".equals(properties.get("comment")) ? "AUTO" : "", lastUpdatedDir, properties.get("comment"), true);
+      manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : "", lastUpdatedDir, properties.get("comment"), true);
     }
     
     try{

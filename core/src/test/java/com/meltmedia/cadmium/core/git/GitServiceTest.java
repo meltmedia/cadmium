@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.eclipse.jgit.api.Git;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,6 +15,10 @@ public class GitServiceTest {
   private GitService git1;
   private File gitRepo2;
   private GitService git2;
+  private File localGitRepo;
+  private GitService localGit;
+  private File localGitRepoCloned;
+  private GitService localClone;
   
   @Before
   public void createDirForTests() throws Exception {
@@ -25,6 +30,17 @@ public class GitServiceTest {
         
         gitRepo2 = new File(testDir, "checkout2");
         git2 = GitService.cloneRepo("git://github.com/meltmedia/test-content-repo.git", gitRepo2.getAbsolutePath());
+        localGitRepo = new File(testDir, "local-git");
+        localGitRepo.mkdirs();
+        new File(localGitRepo, "delete.me").createNewFile();
+        
+        localGit = new GitService(Git.init().setDirectory(localGitRepo).call());
+        localGit.git.add().addFilepattern("delete.me").call();
+        localGit.git.commit().setMessage("initial commit").call();
+        
+        localGitRepoCloned = new File(testDir, "local-git-cloned");
+        localClone = GitService.cloneRepo(new File(localGitRepo, ".git").getAbsoluteFile().getAbsolutePath(), localGitRepoCloned.getAbsoluteFile().getAbsolutePath());
+        
       } else {
         throw new Exception("Failed to set up tests");
       }
@@ -34,6 +50,12 @@ public class GitServiceTest {
       
       gitRepo2 = new File(testDir, "checkout2");
       git2 = GitService.createGitService(new File(gitRepo2, ".git").getAbsolutePath());
+      
+      localGitRepo = new File(testDir, "local-git");
+      localGit = GitService.createGitService(new File(localGitRepo, ".git").getAbsolutePath());
+      
+      localGitRepoCloned = new File(testDir, "local-git-cloned");
+      localClone = GitService.createGitService(new File(localGitRepoCloned, ".git").getAbsolutePath());
     }
   }
   
@@ -41,6 +63,8 @@ public class GitServiceTest {
   public void closeGitServices() throws Exception {
     git1.close();
     git2.close();
+    localGit.close();
+    localClone.close();
   }
   
   @Test
@@ -62,13 +86,13 @@ public class GitServiceTest {
   
   @Test
   public void testResetToRev() throws Exception {
-    String currentRev = git2.getCurrentRevison();
+    String currentRev = git2.getCurrentRevision();
     String prevRev = "41fb29368e8649c1ee2ea74228414553dd1f2d45";
     
     git2.resetToRev(prevRev);
-    assertTrue("Revision not reset to previous revision ["+git2.getCurrentRevison()+"]", git2.getCurrentRevison().equals(prevRev));
+    assertTrue("Revision not reset to previous revision ["+git2.getCurrentRevision()+"]", git2.getCurrentRevision().equals(prevRev));
     git2.resetToRev(currentRev);
-    assertTrue("Revision not reset to current revision ["+git2.getCurrentRevison()+"]", git2.getCurrentRevison().equals(currentRev));
+    assertTrue("Revision not reset to current revision ["+git2.getCurrentRevision()+"]", git2.getCurrentRevision().equals(currentRev));
   }
   
   @Test
@@ -77,6 +101,20 @@ public class GitServiceTest {
     assertTrue("New Git service not created", git != null);
     git.close();
     assertTrue("Failed to create new directory", new File(testDir, "cloned").exists());
+  }
+  
+  @Test
+  public void testNewRemoteBranch() throws Exception {
+    
+    assertTrue("Branch shouldn't yet exist", localGit.repository.getRef("newBranch") == null);
+    
+    assertTrue("Branch should have been created", localClone.newRemoteBranch("newBranch"));
+    
+    assertTrue("Branch did not get created in remote", localGit.repository.getRef("newBranch") != null);
+    
+    assertTrue("Branch did not get created in local", localClone.repository.getRef("newBranch") != null);
+    
+    assertTrue("Branch shouldn't allow me to create it", !localClone.newRemoteBranch("newBranch"));
   }
 }
 
