@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
-import com.sun.jersey.server.impl.cdi.Utils;
 
 @Path("/maintenance")
 public class MaintenanceService {

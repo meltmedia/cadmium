@@ -30,6 +30,12 @@ public class BranchCreator {
     return branchCreated;
   }
   
+  public boolean createBranchForGene(String basename) throws Exception {
+    boolean branchCreated = clonedRemote.newRemoteBranch("cd-gene-"+basename);
+    System.out.println("Created branch \"cd-gene-"+basename+"\"");
+    return branchCreated;
+  }
+  
   public GitService getGitService() {
     return this.clonedRemote;
   }
