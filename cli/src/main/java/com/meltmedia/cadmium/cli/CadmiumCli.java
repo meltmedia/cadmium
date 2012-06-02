@@ -24,7 +24,7 @@ public class CadmiumCli {
 		  jCommander.addCommand("help", helpCommand);
 		  
 		  InitializeCommand initCommand = new InitializeCommand();
-		  jCommander.addCommand("init", initCommand);
+		  jCommander.addCommand("init-content", initCommand);
 		  
 		  InitializeWarCommand initWarCommand = new InitializeWarCommand();
 		  jCommander.addCommand("init-war", initWarCommand);
@@ -64,7 +64,7 @@ public class CadmiumCli {
 		  else if( commandName.equals("update") ) {
 		     throw new UnsupportedOperationException("update not yet supported.");
 		  }
-		  else if( commandName.equals("init") ) {
+		  else if( commandName.equals("init-content") ) {
 		    initCommand.execute();
 		  }
 		  else if( commandName.equals("init-war") ) {

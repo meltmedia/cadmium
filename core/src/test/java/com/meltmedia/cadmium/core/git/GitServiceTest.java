@@ -116,5 +116,47 @@ public class GitServiceTest {
     
     assertTrue("Branch shouldn't allow me to create it", !localClone.newRemoteBranch("newBranch"));
   }
+  
+  @Test
+  public void testInitializeContentDirectory() throws Exception {
+    GitService cloned = null;
+    try {
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war");
+    } finally {
+      if(cloned != null) {
+        cloned.close();
+      }
+    }
+    assertTrue("Initialize method failed", cloned != null);
+    cloned = null;
+    try {
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war");
+    } finally {
+      if(cloned != null) {
+        cloned.close();
+      }
+    }
+    
+    assertTrue("Initialize method failed", cloned != null);
+    File contentDir = new File(testDir, "content");
+    assertTrue("Content dir does not exist", contentDir.exists() && contentDir.isDirectory());
+    
+    File warDir = new File(contentDir, "cadmium.war");
+    assertTrue("War dir does not exist", warDir.exists() && contentDir.isDirectory());
+    
+    File gitDir = new File(warDir, "git-checkout");
+    assertTrue("Git repo not checked out", gitDir.exists() && gitDir.isDirectory());
+    
+    File dotGitDir = new File(gitDir, ".git");
+    assertTrue(".Git dir not created", dotGitDir.exists() && dotGitDir.isDirectory());
+    
+    File renderedContentDir = new File(warDir, "renderedContent");
+    assertTrue("RenderedContent dir not created", renderedContentDir.exists() && renderedContentDir.isDirectory());
+    
+    File otherdotGitDir = new File(renderedContentDir, ".git");
+    assertTrue(".Git dir not deleted", !otherdotGitDir.exists());
+    
+    
+  }
 }
 

@@ -64,6 +64,29 @@ public final class FileSystemManager {
     }
     return new String[] {};
   }
+
+  
+  public static String[] getDirectoriesInDirectory(String directory, final String baseName) {
+    File dir = new File(directory);
+    if(dir.isDirectory()) {
+      String files[] = null;
+      files = dir.list(new FilenameFilter(){
+
+        @Override
+        public boolean accept(File file, String name) {
+          if(baseName != null && baseName.length() > 0) {
+            return file.isAbsolute() && name.startsWith(baseName);
+          }
+          return file.isDirectory();
+        }
+        
+      });
+      if(files != null) {
+        return files;
+      }
+    }
+    return new String[] {};
+  }
   
   public static boolean exists(String path) {
     return new File(path).exists();

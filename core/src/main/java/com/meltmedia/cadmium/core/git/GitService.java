@@ -1,7 +1,6 @@
 package com.meltmedia.cadmium.core.git;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.jgit.api.CheckoutCommand;
@@ -14,8 +13,6 @@ import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +75,64 @@ public class GitService {
     return null;
   }
   
+  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName) throws Exception {
+    if(!FileSystemManager.exists(root)) {
+      log.info("Content Root directory [{}] does not exist. Creating!!!", root);
+      if(!new File(root).mkdirs()) {
+        throw new Exception("Failed to create cadmium root @ "+root);
+      }
+    }
+    String warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
+    if(warDir == null) {
+      log.info("War directory [{}] does not exist. Creating!!!", warName);
+      if(!new File(root, warName).mkdirs()) {
+        throw new Exception("Failed to create war content directory @ " + warDir);
+      }
+    }
+    warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
+    GitService cloned = null;
+    if(FileSystemManager.getChildDirectoryIfExists(warDir, "git-checkout") == null) {
+      log.info("Cloning remote git repository to git-checkout");
+      cloned = cloneRepo(uri, new File(warDir, "git-checkout").getAbsolutePath());
+      
+      if(!cloned.checkForRemoteBranch(branch)) {
+        String envString = System.getProperty("com.meltmedia.cadmium.environment", "dev");
+        branch = "cd-"+envString+"-"+branch;
+      }
+      log.info("Switching to branch {}", branch);
+      cloned.switchBranch(branch);
+      
+    } else {
+      cloned = createGitService(FileSystemManager.getChildDirectoryIfExists(warDir, "git-checkout"));
+    }
+
+    if(cloned == null) {
+      throw new Exception("Failed to clone remote github repo from "+uri);
+    }
+    
+    String dirList[] = FileSystemManager.getDirectoriesInDirectory(warDir, "renderedContent");
+    if(dirList.length == 0) {
+      log.info("RenderedContent directory does not exist. Creating!!!");
+      GitService rendered = null;
+      try {
+        rendered = GitService.cloneRepo(new File(FileSystemManager.getChildDirectoryIfExists(warDir, "git-checkout"), ".git").getAbsolutePath(), new File(warDir, "renderedContent").getAbsolutePath());
+
+        log.info("Removing .git directory from freshly cloned renderedContent directory.");
+        String gitDir = FileSystemManager.getChildDirectoryIfExists(new File(warDir, "renderedContent").getAbsolutePath(), ".git");
+        if(gitDir != null) {
+          FileSystemManager.deleteDeep(gitDir);
+        }
+        
+      } finally {
+        if(rendered != null) {
+          rendered.close();
+        }
+      }
+    }
+    
+    return cloned;
+  }
+  
   public String getRepositoryDirectory() throws Exception {
     return this.repository.getDirectory().getAbsolutePath();
   }
@@ -114,14 +169,7 @@ public class GitService {
     }
   }
   
-  public boolean newRemoteBranch(String branchName) throws Exception {
-    try{
-      log.info("Purging branches that no longer have remotes.");
-      git.fetch().setRemoveDeletedRefs(true).call();
-    } catch(Exception e) {
-      log.warn("Tried to fetch from remote when there is no remote.");
-      return false;
-    }
+  private boolean checkForRemoteBranch(String branchName) throws Exception {
     log.info("Getting list of existing branches.");
     List<Ref> refs = git.branchList().setListMode(ListMode.ALL).call();
     boolean branchExists = false; 
@@ -133,6 +181,18 @@ public class GitService {
         }
       }
     }
+    return branchExists;
+  }
+  
+  public boolean newRemoteBranch(String branchName) throws Exception {
+    try{
+      log.info("Purging branches that no longer have remotes.");
+      git.fetch().setRemoveDeletedRefs(true).call();
+    } catch(Exception e) {
+      log.warn("Tried to fetch from remote when there is no remote.");
+      return false;
+    }
+    boolean branchExists = checkForRemoteBranch(branchName);
     if(!branchExists) {
       Ref ref = git.branchCreate().setName(branchName).call();
       git.push().add(ref).call();

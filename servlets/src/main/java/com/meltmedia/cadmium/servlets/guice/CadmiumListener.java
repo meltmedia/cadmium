@@ -202,6 +202,22 @@ public class CadmiumListener extends GuiceServletContextListener {
     if (sshDir != null) {
       GitService.setupSsh(sshDir.getAbsolutePath());
     }
+    
+    String repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
+    String branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
+    
+    if(repoUri != null && branch != null) {
+      GitService cloned = null;
+      try {
+        cloned = GitService.initializeContentDirectory(repoUri, branch, this.sharedContentRoot.getAbsolutePath(), warName);
+      } catch(Exception e) {
+        throw new RuntimeException(e);
+      } finally {
+        try{
+          cloned.close();
+        } catch(Exception e){}
+      }
+    }
 
     String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
     if (repoDir != null && repoDir.trim().length() > 0) {
