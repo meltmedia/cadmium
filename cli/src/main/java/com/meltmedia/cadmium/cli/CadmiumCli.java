@@ -38,6 +38,9 @@ public class CadmiumCli {
 		  NewBranchCommand newBranchCommand = new NewBranchCommand();
 		  jCommander.addCommand("new-branch", newBranchCommand);
 		  
+		  InitializeProjectCommand initProjectCommand = new InitializeProjectCommand();
+		  jCommander.addCommand("init-project", initProjectCommand);
+		  
 		  jCommander.parse(args);
 		  
 		  String commandName = jCommander.getParsedCommand();
@@ -78,6 +81,9 @@ public class CadmiumCli {
 		  }
 		  else if ( commandName.equals("new-branch")) {
 		    newBranchCommand.execute();
+		  } 
+		  else if ( commandName.equals("init-project")) {
+		  	initProjectCommand.execute();
 		  }
 		
 		}
