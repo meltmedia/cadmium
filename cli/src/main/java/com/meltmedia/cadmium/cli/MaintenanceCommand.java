@@ -17,7 +17,7 @@ import com.beust.jcommander.Parameters;
 
 @Parameters(commandDescription = "Toggles on and off maintenance page", separators="=")
 public class MaintenanceCommand {
-	
+
 	@Parameter(names="--state", description="The state of the maintenance page", required=true)
 	private String state;
 
@@ -26,21 +26,21 @@ public class MaintenanceCommand {
 
 	@Parameter(names="--comment", description="Comment", required=true)
 	private String comment;
-	
+
 	private final String JERSEY_ENDPOINT = "/system/maintenance";
-	
+
 	public void execute() throws ClientProtocolException, IOException {
-		
+
 		DefaultHttpClient client = new DefaultHttpClient();
 		String url = site + JERSEY_ENDPOINT;
-		
+
 		if(state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off")) {
 			HttpPost post = new HttpPost(url);
 			List <NameValuePair> nvps = new ArrayList <NameValuePair>();
-      nvps.add(new BasicNameValuePair("state", state.trim()));
-      nvps.add(new BasicNameValuePair("comment", comment.trim()));
+			nvps.add(new BasicNameValuePair("state", state.trim()));
+			nvps.add(new BasicNameValuePair("comment", comment.trim()));
 
-      post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
+			post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
 			HttpResponse response = client.execute(post);
 			System.out.println(response.toString());		
 		} else {

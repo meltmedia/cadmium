@@ -50,7 +50,7 @@ public class StatusService {
 	@Named("contentDir")
 	protected String initialContentDir;
 
-	// repo url, source [repo, branch, revision], environment, maintenance page state [on | off]
+	
 	
 	@GET
 	@Path("/status")
@@ -104,7 +104,7 @@ public class StatusService {
 		
 		// Get environment status TODO: setup the system property in jboss on servers
 		String environment = "";
-		String environFromConfig = System.getProperty("environment");
+		String environFromConfig = System.getProperty("com.meltmedia.cadmium.environment");
 		
 		if(environFromConfig != null && environFromConfig.trim().length() > 0) {			
 			
@@ -133,7 +133,7 @@ public class StatusService {
 		returnObj.put("branch", branch);
 		returnObj.put("revision", rev);		
 		returnObj.put("repo", repo);
-		returnObj.put("maintPage", maintStatus);
+		returnObj.put("maintPageState", maintStatus);
 		
 		return new Gson().toJson(returnObj);
 	}
