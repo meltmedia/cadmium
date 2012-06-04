@@ -45,7 +45,7 @@ public class StatusCommand {
             String responseContent = EntityUtils.toString(entity);            
             Status statusObj = new Gson().fromJson(responseContent, new TypeToken<Status>() {}.getType());
             
-            //TODO: print out status info!!
+            System.out.println(statusObj.toString());
 		}		
 			
 	}

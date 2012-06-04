@@ -73,4 +73,14 @@ public class Status {
 	public void setMaintPageState(String maintPageState) {
 		this.maintPageState = maintPageState;
 	}
+	@Override
+	public String toString() {
+		return "Status [environment=" + environment + ", repo=" + repo
+				+ ", branch=" + branch + ", revision=" + revision
+				+ ", sourceRepo=" + sourceRepo + ", sourceBranch="
+				+ sourceBranch + ", sourceRevision=" + sourceRevision
+				+ ", maintPageState=" + maintPageState + "]";
+	}
+	
+	
 }
