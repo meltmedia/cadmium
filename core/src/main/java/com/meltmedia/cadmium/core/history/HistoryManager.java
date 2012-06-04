@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import com.meltmedia.cadmium.core.FileSystemManager;
 
 @Singleton
@@ -106,9 +107,10 @@ public class HistoryManager {
       
       if(path != null) {
         Gson gson = new Gson();
-        FileReader reader = null;
+        JsonReader reader = null;
         try{
-          reader = new FileReader(path);
+          reader = new JsonReader(new FileReader(path));
+          reader.setLenient(true);
           List<HistoryEntry> entries = gson.fromJson(reader, new TypeToken<List<HistoryEntry>>(){}.getType());
           
           if(entries != null) {

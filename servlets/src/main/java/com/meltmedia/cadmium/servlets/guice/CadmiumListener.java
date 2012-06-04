@@ -149,7 +149,9 @@ public class CadmiumListener extends GuiceServletContextListener {
       sharedContentRoot = new File(configProperties.getProperty(BASE_PATH_ENV));
       if (!sharedContentRoot.exists() || !sharedContentRoot.canRead()
           || !sharedContentRoot.canWrite()) {
-        sharedContentRoot = null;
+        if (!sharedContentRoot.mkdirs()) {
+          sharedContentRoot = null;
+        }
       }
     }
 
