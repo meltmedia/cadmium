@@ -13,12 +13,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.history.HistoryEntry;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 
+@Path("/status")
 public class StatusService {
 
 	//constants
@@ -43,8 +46,8 @@ public class StatusService {
 	protected Properties configProperties;
 	
 	@Inject
-	@Named("cadmium.properties")
-	protected Properties cadmiumProperties;
+	@Named("com.meltmedia.cadmium.git.uri")
+	protected String repoUri;
 	
 	@Inject
 	@Named("contentDir")
@@ -52,8 +55,7 @@ public class StatusService {
 
 	
 	
-	@GET
-	@Path("/status")
+	@GET	
 	@Produces("application/json")
 	public String status() {
 		
@@ -73,7 +75,7 @@ public class StatusService {
 		// Get cadmium project info (branch, repo and revision)
 		String rev = configProperties.getProperty("git.ref.sha");
 		String branch = configProperties.getProperty("branch");
-		String repo = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
+		String repo = repoUri;
 		
 		// Get source project info (branch, repo and revision)
 		String sourceRev = "";

@@ -41,6 +41,9 @@ public class CadmiumCli {
 		  InitializeProjectCommand initProjectCommand = new InitializeProjectCommand();
 		  jCommander.addCommand("init-project", initProjectCommand);
 		  
+		  StatusCommand statusCommand = new StatusCommand();
+		  jCommander.addCommand("status", statusCommand);
+		  
 		  jCommander.parse(args);
 		  
 		  String commandName = jCommander.getParsedCommand();
@@ -84,6 +87,9 @@ public class CadmiumCli {
 		  } 
 		  else if ( commandName.equals("init-project")) {
 		  	initProjectCommand.execute();
+		  }
+		  else if ( commandName.equals("status")) {
+			statusCommand.execute();
 		  }
 		
 		}

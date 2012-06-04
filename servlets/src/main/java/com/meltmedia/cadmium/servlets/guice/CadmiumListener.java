@@ -65,6 +65,7 @@ import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SslRedirectFilter;
 import com.meltmedia.cadmium.servlets.jersey.MaintenanceService;
 import com.meltmedia.cadmium.servlets.jersey.HistoryService;
+import com.meltmedia.cadmium.servlets.jersey.StatusService;
 import com.meltmedia.cadmium.servlets.jersey.UpdateService;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
@@ -89,6 +90,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private File sshDir;
   private List<ChannelMember> members;
   private String warName;
+  private String repoUri;
 
   private Injector injector = null;
 
@@ -205,7 +207,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       GitService.setupSsh(sshDir.getAbsolutePath());
     }
     
-    String repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
+    repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
     String branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
     
     if(repoUri != null && branch != null) {
@@ -353,6 +355,10 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         bind(String.class).annotatedWith(Names.named("applicationContentRoot")).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
         
+        if(repoUri != null) {
+          bind(String.class).annotatedWith(Names.named("com.meltmedia.cadmium.git.uri")).toInstance(repoUri);
+        }
+        
         bind(HistoryManager.class);
 
         bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
@@ -382,6 +388,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(UpdateService.class).asEagerSingleton();
         bind(MaintenanceService.class).asEagerSingleton();
         bind(HistoryService.class).asEagerSingleton();
+        bind(StatusService.class).asEagerSingleton();
       }
     };
   }
