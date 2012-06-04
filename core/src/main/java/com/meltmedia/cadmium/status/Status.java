@@ -2,15 +2,13 @@ package com.meltmedia.cadmium.status;
 
 public class Status {
 
-	public Status(String environment, String repo, String branch, String revision, String sourceRepo, String sourceBranch, String sourceRevision, String maintPageState) {
+	public Status(String environment, String repo, String branch, String revision, String source, String maintPageState) {
 		
 		this.environment = environment;
 		this.repo = repo;
 		this.branch = branch;
 		this.revision = revision;
-		this.sourceRepo = sourceRepo;
-		this.sourceBranch = sourceBranch;
-		this.sourceRevision = sourceRevision;
+		this.source = source;
 		this.maintPageState = maintPageState;
 	}	
 	
@@ -19,9 +17,7 @@ public class Status {
 	private String repo;
 	private String branch;
 	private String revision;
-	private String sourceRepo;
-	private String sourceBranch;
-	private String sourceRevision;
+	private String source;
 	private String maintPageState;
 	
 	
@@ -49,23 +45,11 @@ public class Status {
 	public void setRevision(String revision) {
 		this.revision = revision;
 	}
-	public String getSourceRepo() {
-		return sourceRepo;
+	public String getSource() {
+		return source;
 	}
-	public void setSourceRepo(String sourceRepo) {
-		this.sourceRepo = sourceRepo;
-	}
-	public String getSourceBranch() {
-		return sourceBranch;
-	}
-	public void setSourceBranch(String sourceBranch) {
-		this.sourceBranch = sourceBranch;
-	}
-	public String getSourceRevision() {
-		return sourceRevision;
-	}
-	public void setSourceRevision(String sourceRevision) {
-		this.sourceRevision = sourceRevision;
+	public void setSource(String source) {
+		this.source = source;
 	}
 	public String getMaintPageState() {
 		return maintPageState;
@@ -77,8 +61,7 @@ public class Status {
 	public String toString() {
 		return "Status [environment=" + environment + ", repo=" + repo
 				+ ", branch=" + branch + ", revision=" + revision
-				+ ", sourceRepo=" + sourceRepo + ", sourceBranch="
-				+ sourceBranch + ", sourceRevision=" + sourceRevision
+				+ ", source=" + source
 				+ ", maintPageState=" + maintPageState + "]";
 	}
 	
