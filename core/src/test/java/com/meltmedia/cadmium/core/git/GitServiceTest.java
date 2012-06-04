@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.junit.After;
 import org.junit.Before;
@@ -33,10 +34,16 @@ public class GitServiceTest {
         localGitRepo = new File(testDir, "local-git");
         localGitRepo.mkdirs();
         new File(localGitRepo, "delete.me").createNewFile();
+        new File(localGitRepo, "dir1").mkdirs();
+        new File(localGitRepo, "dir1/remove.me").createNewFile();
         
         localGit = new GitService(Git.init().setDirectory(localGitRepo).call());
-        localGit.git.add().addFilepattern("delete.me").call();
+        AddCommand add = localGit.git.add();
+        add.addFilepattern("delete.me");
+        add.addFilepattern("dir1");
+        add.call();
         localGit.git.commit().setMessage("initial commit").call();
+        localGit.git.branchCreate().setName("test").call();
         
         localGitRepoCloned = new File(testDir, "local-git-cloned");
         localClone = GitService.cloneRepo(new File(localGitRepo, ".git").getAbsoluteFile().getAbsolutePath(), localGitRepoCloned.getAbsoluteFile().getAbsolutePath());
@@ -57,6 +64,30 @@ public class GitServiceTest {
       localGitRepoCloned = new File(testDir, "local-git-cloned");
       localClone = GitService.createGitService(new File(localGitRepoCloned, ".git").getAbsolutePath());
     }
+    
+    File source = new File(testDir, "source");
+    source.mkdirs();
+    
+    source = new File(source, "other.file");
+    source.createNewFile();
+
+    source = new File(testDir, "source/dir2");
+    source.mkdirs();
+
+    source = new File(source, "other.file");
+    source.createNewFile();
+    
+    source = new File(testDir, "source2");
+    source.mkdirs();
+    
+    source = new File(source, "other2.file");
+    source.createNewFile();
+
+    source = new File(testDir, "source2/dir3");
+    source.mkdirs();
+
+    source = new File(source, "other2.file");
+    source.createNewFile();
   }
   
   @After
@@ -157,6 +188,29 @@ public class GitServiceTest {
     assertTrue(".Git dir not deleted", !otherdotGitDir.exists());
     
     
+  }
+  
+  @Test
+  public void testCheckinNewContent() throws Exception {
+    localGit.checkinNewContent("./target/git-test/source", "test");
+    
+    assertTrue("delete.me should be gone.", !new File(localGitRepo, "delete.me").exists());
+    assertTrue("dir1/remove.me should be gone.", !new File(localGitRepo, "dir1/remove.me").exists());
+    assertTrue("dir1 should be gone.", !new File(localGitRepo, "dir1").exists());
+    assertTrue("other.file should be there.", new File(localGitRepo, "other.file").exists());
+    assertTrue("dir2/other.file should be there.", new File(localGitRepo, "dir2/other.file").exists());
+  }
+  
+  @Test
+  public void testMoveContentToBranch() throws Exception {
+    String rev = GitService.moveContentToBranch("./target/git-test/source2", localGit, "test", "test moveContentToBranch");
+    
+    assertTrue("New revision(sha) is not returned", rev != null && rev.length() > 0);
+    
+    localGit.git.checkout().setName("test").call();
+
+    assertTrue("other2.file should be there.", new File(localGitRepo, "other2.file").exists());
+    assertTrue("dir3/other2.file should be there.", new File(localGitRepo, "dir3/other2.file").exists());
   }
 }
 

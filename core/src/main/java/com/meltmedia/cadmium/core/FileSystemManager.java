@@ -1,7 +1,16 @@
 package com.meltmedia.cadmium.core;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -163,6 +172,75 @@ public final class FileSystemManager {
     return newDir;
   }
   
+  public static void copyAllContent(final String source, final String target, final boolean ignoreHidden) throws Exception {
+    File sourceFile = new File(source);
+    File targetFile = new File(target);
+    if(!targetFile.exists()) {
+      targetFile.mkdirs();
+    }
+    if(sourceFile.exists() && sourceFile.canRead() && sourceFile.isDirectory() 
+        && targetFile.exists() && targetFile.canWrite() && targetFile.isDirectory()) {
+      List<File> copyList = new ArrayList<File>();
+      FilenameFilter filter = new FilenameFilter() {
+
+        @Override
+        public boolean accept(File file, String name) {
+          return !ignoreHidden || !name.startsWith(".");
+        }
+        
+      };
+      File files [] = sourceFile.listFiles(filter);
+      if(files.length > 0) {
+        copyList.addAll(Arrays.asList(files));
+      }
+      for(int index = 0; index < copyList.size(); index++) {
+        File aFile = copyList.get(index);
+        String relativePath = aFile.getAbsoluteFile().getAbsolutePath().replaceFirst(sourceFile.getAbsoluteFile().getAbsolutePath(), "");
+        if(aFile.isDirectory()) {
+          File newDir = new File(target, relativePath);
+          if(newDir.mkdir()) {
+            newDir.setExecutable(aFile.canExecute(), false);
+            newDir.setReadable(aFile.canRead(), false);
+            newDir.setWritable(aFile.canWrite(), false);
+            newDir.setLastModified(aFile.lastModified());
+            files = aFile.listFiles(filter);
+            if(files.length > 0) {
+              copyList.addAll(index + 1, Arrays.asList(files));
+            }
+          } else {
+            log.warn("Failed to create new subdirectory \"{}\" in the target path \"{}\".", relativePath, target);
+          }
+        } else {
+          File newFile = new File(target, relativePath);
+          if(newFile.createNewFile()) {
+            newFile.setExecutable(aFile.canExecute(), false);
+            newFile.setReadable(aFile.canRead(), false);
+            newFile.setWritable(aFile.canWrite(), false);
+            newFile.setLastModified(aFile.lastModified());
+            FileInputStream inStream = null;
+            FileOutputStream outStream = null;
+            try{
+              inStream = new FileInputStream(aFile);
+              outStream = new FileOutputStream(aFile);
+              streamCopy(inStream, outStream);
+            } finally {
+              if(inStream != null) {
+                try{
+                  inStream.close();
+                } catch(Exception e){}
+              }
+              if(outStream != null) {
+                try{
+                  outStream.close();
+                } catch(Exception e){}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
   public static void cleanUpOld(final String lastUpdatedDir, final int numToKeep) {
     final File lastUpdated = new File(lastUpdatedDir);
     if(lastUpdated.exists()) {
@@ -206,5 +284,30 @@ public final class FileSystemManager {
         }
       }
     }
+  }
+  
+  public static void streamCopy(InputStream streamIn, OutputStream streamOut) throws IOException {
+    ReadableByteChannel input = Channels.newChannel(streamIn);
+    WritableByteChannel output = Channels.newChannel(streamOut);
+    
+    ByteBuffer buffer = ByteBuffer.allocateDirect(16 * 1024);
+    
+    while (input.read(buffer) != -1) {
+      buffer.flip();
+
+      output.write(buffer);
+
+      buffer.compact();
+    }   
+    
+    buffer.flip();
+
+    // Make sure the buffer is empty
+    while (buffer.hasRemaining()) {
+      output.write(buffer);
+    }   
+    
+    input.close();
+    output.close();
   }
 }
