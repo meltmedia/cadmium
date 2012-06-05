@@ -75,10 +75,10 @@ public class StatusCommand {
             System.out.println("-----------------------------------------------------");
             for(StatusMember member : members) {
             	System.out.println(
-            			"   Address : [" + member.getAddress() + "]\n" +
+            			"   Address         : [" + member.getAddress() + "]\n" +
             			"   Is Coordinator? : [" + member.isCoordinator() + "]\n" +
-            			"   State : [" + member.getState() + "]\n" +
-            			"   Is Me? : [" + member.isMine() + "]\n"  	
+            			"   State           : [" + member.getState() + "]\n" +
+            			"   Is Me?          : [" + member.isMine() + "]\n"  	
             			            	
             	);
             }
