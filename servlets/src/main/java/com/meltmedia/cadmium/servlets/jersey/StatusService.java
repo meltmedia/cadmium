@@ -12,6 +12,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
+import org.jgroups.Address;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.SiteDownService;
@@ -61,9 +63,6 @@ public class StatusService {
 		
 		Map<String, Object> returnObj = new LinkedHashMap<String, Object>();
 		
-		// Get current state
-		UpdateState state = lifecycleService.getCurrentState();		
-		
 		// Get content directory
 		String contentDir = this.initialContentDir;
 		if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
@@ -97,8 +96,9 @@ public class StatusService {
 				peer.put("address", member.getAddress().toString());
 				peer.put("coordinator", member.isCoordinator());
 				peer.put("state", member.getState().name());
-				peer.put("me", member.isMine());
-				peers.add(peer);
+				peer.put("mine", member.isMine());
+				peers.add(peer);			
+				
 			}
 			
 			returnObj.put("members", peers);
@@ -131,7 +131,6 @@ public class StatusService {
 		
 		returnObj.put("groupName", sender.getGroupName());
 		returnObj.put("contentDir", contentDir);
-		returnObj.put("currentState", state.name());
 		returnObj.put("branch", branch);
 		returnObj.put("revision", rev);		
 		returnObj.put("repo", repo);

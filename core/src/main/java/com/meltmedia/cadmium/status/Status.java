@@ -1,8 +1,12 @@
 package com.meltmedia.cadmium.status;
 
+import java.util.List;
+
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+
 public class Status {
 
-	public Status(String environment, String repo, String branch, String revision, String source, String maintPageState) {
+	public Status(String environment, String repo, String branch, String revision, String source, String maintPageState, List<StatusMember> members) {
 		
 		this.environment = environment;
 		this.repo = repo;
@@ -10,6 +14,7 @@ public class Status {
 		this.revision = revision;
 		this.source = source;
 		this.maintPageState = maintPageState;
+        this.setMembers(members);
 	}	
 	
 	
@@ -19,6 +24,7 @@ public class Status {
 	private String revision;
 	private String source;
 	private String maintPageState;
+	private List<StatusMember> members;
 	
 	
 	public String getEnvironment() {
@@ -54,16 +60,23 @@ public class Status {
 	public String getMaintPageState() {
 		return maintPageState;
 	}
-	public void setMaintPageState(String maintPageState) {
-		this.maintPageState = maintPageState;
-	}
 	@Override
 	public String toString() {
 		return "Status [environment=" + environment + ", repo=" + repo
-				+ ", branch=" + branch + ", revision=" + revision
-				+ ", source=" + source
-				+ ", maintPageState=" + maintPageState + "]";
+				+ ", branch=" + branch + ", revision=" + revision + ", source="
+				+ source + ", maintPageState=" + maintPageState + ", members="
+				+ members + "]";
 	}
+	public void setMaintPageState(String maintPageState) {
+		this.maintPageState = maintPageState;
+	}
+	public void setMembers(List<StatusMember> members) {
+		this.members = members;
+	}
+	public List<StatusMember> getMembers() {
+		return members;
+	}
+	
 	
 	
 }

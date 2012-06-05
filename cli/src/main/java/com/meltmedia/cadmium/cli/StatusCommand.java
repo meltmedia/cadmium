@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -22,7 +23,9 @@ import com.beust.jcommander.Parameters;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.status.Status;
+import com.meltmedia.cadmium.status.StatusMember;
 
 
 @Parameters(commandDescription = "Displays status info for a site", separators="=")
@@ -47,15 +50,39 @@ public class StatusCommand {
 		HttpEntity entity = response.getEntity();
 		
 		log.debug("entity content type: {}", entity.getContentType().getValue());
-		if(entity.getContentType().getValue().equals("application/json")) {			
-		
-			log.debug("statusObj.toString()");
-			
-            String responseContent = EntityUtils.toString(entity);            
-            Status statusObj = new Gson().fromJson(responseContent, new TypeToken<Status>() {}.getType());
+		if(entity.getContentType().getValue().equals("application/json")) {				
+						
+            String responseContent = EntityUtils.toString(entity);  
+            log.info("responseContent: {}" + responseContent);
+            Status statusObj = new Gson().fromJson(responseContent, new TypeToken<Status>() {}.getType());    
+            List<StatusMember> members = statusObj.getMembers();
             
-            log.debug("statusObj.toString()");
-            System.out.println(statusObj.toString());
+            log.debug(statusObj.toString());              
+           
+            System.out.println();
+            System.out.println("Current status for [" + site +"]"); 
+            System.out.println("-----------------------------------------------------");
+            System.out.println(
+            		"Environment      => [" + statusObj.getEnvironment() + "]\n" +
+            		"Repo URL         => [" + statusObj.getRepo() + "]\n" +
+            		"Branch           => [" + statusObj.getBranch() + "]\n" +
+            		"Revision         => [" + statusObj.getRevision() + "]\n" +
+            		"Content Source   => [" + statusObj.getSource() + "]\n" +
+            		"Maint Page State => [" + statusObj.getMaintPageState() +"]\n");  
+            
+            System.out.println();
+            System.out.println("Member States:\n");
+            System.out.println("-----------------------------------------------------");
+            for(StatusMember member : members) {
+            	System.out.println(
+            			"   Address : [" + member.getAddress() + "]\n" +
+            			"   Is Coordinator? : [" + member.isCoordinator() + "]\n" +
+            			"   State : [" + member.getState() + "]\n" +
+            			"   Is Me? : [" + member.isMine() + "]\n"  	
+            			            	
+            	);
+            }
+            
 		}		
 			
 	}
