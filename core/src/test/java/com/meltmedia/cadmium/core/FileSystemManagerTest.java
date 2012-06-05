@@ -33,6 +33,21 @@ public class FileSystemManagerTest {
     
     newFile = new File("./target/test-content/test_1/index.html");
     newFile.createNewFile();
+    
+    newFile = new File(targetDir, "copy-test/level1/level2/level3");
+    newFile.mkdirs();
+    
+    newFile = new File(targetDir, "copy-test/.git");
+    newFile.mkdirs();
+    
+    newFile = new File(newFile, "data");
+    newFile.createNewFile();
+    
+    newFile = new File(targetDir, "copy-test/level1/file");
+    newFile.createNewFile();
+    
+    newFile = new File(targetDir, "copy-test/level1/level2/level3/file");
+    newFile.createNewFile();
   }
 
   @Test
@@ -89,5 +104,20 @@ public class FileSystemManagerTest {
     assertTrue("test_1 dir should not have been removed", new File("./target/test-content/test_1").exists());
     assertTrue("test_2 dir should not have been removed", new File("./target/test-content/test_2").exists());
     assertTrue("test_3 dir should not have been removed", new File("./target/test-content/test_3").exists());
+  }
+  
+  @Test
+  public void testCopyAllContent() throws Exception {
+    FileSystemManager.copyAllContent("./target/test-content/copy-test", "./target/test-content/copy-test_2", true);
+    
+    assertTrue("target dir did not get created.", new File("./target/test-content/copy-test_2").exists());
+    assertTrue(".git dir shouldn't get created.", !new File("./target/test-content/copy-test_2/.git").exists());
+    assertTrue("lowest level file didn't get created.", new File("./target/test-content/copy-test_2/level1/level2/level3/file").exists());
+    assertTrue("highest level file didn't get created.", new File("./target/test-content/copy-test_2/level1/file").exists());
+
+    FileSystemManager.copyAllContent("./target/test-content/copy-test", "./target/test-content/copy-test_3", false);
+    assertTrue(".git dir didn't get created.", new File("./target/test-content/copy-test_3/.git/data").exists());
+    
+    
   }
 }

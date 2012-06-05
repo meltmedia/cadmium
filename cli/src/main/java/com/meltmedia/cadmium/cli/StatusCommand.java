@@ -8,12 +8,9 @@ import java.util.Map.Entry;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +19,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.meltmedia.cadmium.core.history.HistoryEntry;
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.status.Status;
 import com.meltmedia.cadmium.status.StatusMember;
 
@@ -36,7 +31,7 @@ public class StatusCommand {
 	@Parameter(names="--site", description="The site for which the status is desired", required=true)
 	private String site;	
 
-	private final String JERSEY_ENDPOINT = "/system/status";
+	public static final String JERSEY_ENDPOINT = "/system/status";
 
 	public void execute() throws ClientProtocolException, IOException {
 

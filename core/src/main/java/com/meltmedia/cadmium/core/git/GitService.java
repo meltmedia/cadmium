@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.core.git;
 import java.io.File;
 import java.util.List;
 
+import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CreateBranchCommand;
@@ -10,8 +11,10 @@ import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
+import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevTag;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.slf4j.Logger;
@@ -73,6 +76,40 @@ public class GitService {
       return new GitService(clone.call());
     } 
     return null;
+  }
+  
+  public static String moveContentToBranch(String source, GitService gitRepo, String targetBranch, String comment) throws Exception {
+    if(!gitRepo.getBranchName().equals(targetBranch)) {
+      File tmpDir = File.createTempFile("git_", targetBranch);
+      if(tmpDir.delete()){
+        log.info("Cloning repository @ " + gitRepo.getBaseDirectory() + " for branch " + targetBranch);
+        GitService forBranch = GitService.cloneRepo(gitRepo.getBaseDirectory(), tmpDir.getAbsolutePath());
+        String returnVal = null;
+        try { 
+          forBranch.switchBranch(targetBranch);
+          forBranch.pull();
+          
+          returnVal = moveContentToGit(source, forBranch, comment);
+          log.info("Pushing branch modifications back to repository @ " + gitRepo.getBaseDirectory());
+          forBranch.git.push().call();
+        } finally {
+          if(forBranch != null) {
+            forBranch.close();
+          }
+        }
+        return returnVal;
+      } else {
+        throw new Exception("Failed to delete temp file for temp dir creation.");
+      }
+    } else if(!new File(gitRepo.getBaseDirectory()).getAbsoluteFile().getAbsolutePath().equals(new File(source).getAbsoluteFile().getAbsolutePath())){
+      return moveContentToGit(source, gitRepo, comment);
+    } else {
+      throw new Exception("Source must not be the same as the target.");
+    }
+  }
+  
+  private static String moveContentToGit(String source, GitService git, String comment) throws Exception {
+    return git.checkinNewContent(source, comment);
   }
   
   public static GitService initializeContentDirectory(String uri, String branch, String root, String warName) throws Exception {
@@ -159,7 +196,7 @@ public class GitService {
   }
   
   public String getBaseDirectory() throws Exception {
-    return FileSystemManager.getParent(this.repository.getDirectory().getParent());
+    return FileSystemManager.getParent(getRepositoryDirectory());
   }
   
   public boolean pull() throws Exception {
@@ -215,11 +252,75 @@ public class GitService {
     }
     boolean branchExists = checkForRemoteBranch(branchName);
     if(!branchExists) {
-      Ref ref = git.branchCreate().setName(branchName).call();
+      Ref ref = newLocalBranch(branchName);
       git.push().add(ref).call();
       return true;
     } else {
       log.info(branchName + " already exists.");
+    }
+    return false;
+  }
+  
+  public Ref newLocalBranch(String branchName) throws Exception {
+    return git.branchCreate().setName(branchName).call();
+  }
+  
+  public void deleteLocalBranch(String branchName) throws Exception {
+    git.branchDelete().setForce(true).setBranchNames(branchName).call();
+  }
+  
+  public String checkinNewContent(String sourceDirectory, String message) throws Exception {
+    log.info("Purging old content.");
+    RmCommand remove = git.rm();
+    for(String filename : new File(getBaseDirectory()).list()) {
+      if(!filename.equals(".git")) {
+        remove.addFilepattern(filename);
+      }
+    }
+    remove.call();
+    log.info("Committing removal of content.");
+    git.commit().setMessage("Removed old content for deployment \""+message+"\"").call();
+    log.info("Copying in new content.");
+    FileSystemManager.copyAllContent(sourceDirectory, getBaseDirectory(), true);
+    log.info("Adding new content.");
+    AddCommand add = git.add();
+    for(String filename : new File(getBaseDirectory()).list()) {
+      if(!filename.equals(".git")) {
+        add.addFilepattern(filename);
+      }
+    }
+    add.call();
+    log.info("Committing new content.");
+    git.commit().setMessage(message).call();
+    return getCurrentRevision();
+  }
+  
+  public boolean tag(String tagname, String comment) throws Exception {
+    List<RevTag> tags = git.tagList().call();
+    if(tags != null && tags.size() > 0) {
+      for(RevTag tag : tags) {
+        if(tag.getTagName().equals(tagname)) {
+          throw new Exception("Tag already exists.");
+        }
+      }
+    }
+    boolean success = git.tag().setMessage(comment).setName(tagname).call() != null;
+    try{
+      git.push().setPushTags().call();
+    } catch(Exception e){
+      log.debug("Failed to push changes.", e);
+    }
+    return success;
+  }
+  
+  public boolean isTag(String tagname) throws Exception {
+    List<RevTag> tags = git.tagList().call();
+    if(tags != null && tags.size() > 0) {
+      for(RevTag tag : tags) {
+        if(tag.getTagName().equals(tagname)) {
+          return true;
+        }
+      }
     }
     return false;
   }
