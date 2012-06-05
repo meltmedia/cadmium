@@ -104,7 +104,7 @@ public class StatusService {
 			returnObj.put("members", peers);
 		}
 		
-		// Get environment status TODO: setup the system property in jboss on servers
+		// Get environment status 
 		String environFromConfig = System.getProperty("com.meltmedia.cadmium.environment");
 		
 		if(environFromConfig != null && environFromConfig.trim().length() > 0) {			
