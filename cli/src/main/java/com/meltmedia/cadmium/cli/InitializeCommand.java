@@ -20,7 +20,6 @@ public class InitializeCommand {
   private List<String> wars;
   
   public void execute() throws Exception {
-    setupSsh();
     
     for(String war : wars) {
       System.out.println("Initializing content for "+war);
@@ -55,13 +54,6 @@ public class InitializeCommand {
           } catch(Exception e){}
         }
       }
-    }
-  }
-
-  private void setupSsh() {
-    File userSsh = new File(System.getProperty("user.home"), ".ssh");
-    if(userSsh.exists()) {
-      GitService.setupSsh(userSsh.getAbsolutePath());
     }
   }
 }

@@ -27,8 +27,13 @@ public class PullUpdateTask implements Callable<Boolean> {
         throw new Exception("Previous task failed");
       }
     }
-    log.info("Pulling latest Github updates.");
-    return service.pull();
+    if(!service.isTag(service.getBranchName())) {
+      log.info("Pulling latest Github updates.");
+      return service.pull();
+    } else {
+      log.info("Skipping pull since tags cannot update.");
+      return true;
+    }
   }
 
 }

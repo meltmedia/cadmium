@@ -1,6 +1,9 @@
 package com.meltmedia.cadmium.cli;
 
+import java.io.File;
+
 import com.beust.jcommander.JCommander;
+import com.meltmedia.cadmium.core.git.GitService;
 
 public class CadmiumCli {
 	
@@ -11,6 +14,8 @@ public class CadmiumCli {
 	 */
 	public static void main(String[] args) {
 		try {
+		  setupSsh();
+		  
 		  jCommander = new JCommander();
 		  
 		  jCommander.setProgramName("cadmium");
@@ -103,6 +108,13 @@ public class CadmiumCli {
 			e.printStackTrace();
 		}
 
+	}
+	
+	private static void setupSsh() {
+    File sshDir = new File(System.getProperty("user.home"), ".ssh");
+    if(sshDir.exists()) {
+      GitService.setupLocalSsh(sshDir.getAbsolutePath());
+    }
 	}
 
 }

@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.core;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileWriter;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,12 +43,31 @@ public class FileSystemManagerTest {
     
     newFile = new File(newFile, "data");
     newFile.createNewFile();
+    FileWriter writer = null;
+    try{
+      writer = new FileWriter(newFile);
+      writer.write("content");
+    } finally {
+      writer.close();
+    }
     
     newFile = new File(targetDir, "copy-test/level1/file");
     newFile.createNewFile();
+    try{
+      writer = new FileWriter(newFile);
+      writer.write("content2");
+    } finally {
+      writer.close();
+    }
     
     newFile = new File(targetDir, "copy-test/level1/level2/level3/file");
     newFile.createNewFile();
+    try{
+      writer = new FileWriter(newFile);
+      writer.write("content3");
+    } finally {
+      writer.close();
+    }
   }
 
   @Test
@@ -114,9 +134,12 @@ public class FileSystemManagerTest {
     assertTrue(".git dir shouldn't get created.", !new File("./target/test-content/copy-test_2/.git").exists());
     assertTrue("lowest level file didn't get created.", new File("./target/test-content/copy-test_2/level1/level2/level3/file").exists());
     assertTrue("highest level file didn't get created.", new File("./target/test-content/copy-test_2/level1/file").exists());
+    assertTrue("lowest level file content didn't get copied.", new File("./target/test-content/copy-test_2/level1/level2/level3/file").length() > 0);
+    assertTrue("highest level file content didn't get copied.", new File("./target/test-content/copy-test_2/level1/file").length() > 0);
 
     FileSystemManager.copyAllContent("./target/test-content/copy-test", "./target/test-content/copy-test_3", false);
-    assertTrue(".git dir didn't get created.", new File("./target/test-content/copy-test_3/.git/data").exists());
+    assertTrue(".git data didn't get created.", new File("./target/test-content/copy-test_3/.git/data").exists());
+    assertTrue(".git data content didn't get copied.", new File("./target/test-content/copy-test_3/.git/data").length() > 0);
     
     
   }

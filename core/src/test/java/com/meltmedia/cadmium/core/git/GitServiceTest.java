@@ -114,6 +114,7 @@ public class GitServiceTest {
     assertTrue("Branch didn't change ["+git1.getBranchName()+"]", git1.getBranchName().equals(nextBranch));
     git1.switchBranch(currentBranch);
     assertTrue("Branch didn't change back ["+git1.getBranchName()+"]", git1.getBranchName().equals(currentBranch));
+    System.out.println("getBranchName for a branch ["+git1.getBranchName()+"]");
   }
   
   @Test
@@ -223,6 +224,9 @@ public class GitServiceTest {
     localGit.tag("release-1.0", "Testing tag creation.");
     
     assertTrue("Tag not created", localGit.repository.getRef("refs/tags/release-1.0") != null);
+    
+    localClone.switchBranch("release-1.0");
+    System.out.println("getBranchName for a tag ["+localClone.getBranchName()+"]");
   }
   
   @Test
