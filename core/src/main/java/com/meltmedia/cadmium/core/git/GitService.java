@@ -14,6 +14,7 @@ import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevTag;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.slf4j.Logger;
@@ -251,13 +252,21 @@ public class GitService {
     }
     boolean branchExists = checkForRemoteBranch(branchName);
     if(!branchExists) {
-      Ref ref = git.branchCreate().setName(branchName).call();
+      Ref ref = newLocalBranch(branchName);
       git.push().add(ref).call();
       return true;
     } else {
       log.info(branchName + " already exists.");
     }
     return false;
+  }
+  
+  public Ref newLocalBranch(String branchName) throws Exception {
+    return git.branchCreate().setName(branchName).call();
+  }
+  
+  public void deleteLocalBranch(String branchName) throws Exception {
+    git.branchDelete().setForce(true).setBranchNames(branchName).call();
   }
   
   public String checkinNewContent(String sourceDirectory, String message) throws Exception {
@@ -284,6 +293,36 @@ public class GitService {
     log.info("Committing new content.");
     git.commit().setMessage(message).call();
     return getCurrentRevision();
+  }
+  
+  public boolean tag(String tagname, String comment) throws Exception {
+    List<RevTag> tags = git.tagList().call();
+    if(tags != null && tags.size() > 0) {
+      for(RevTag tag : tags) {
+        if(tag.getTagName().equals(tagname)) {
+          throw new Exception("Tag already exists.");
+        }
+      }
+    }
+    boolean success = git.tag().setMessage(comment).setName(tagname).call() != null;
+    try{
+      git.push().setPushTags().call();
+    } catch(Exception e){
+      log.debug("Failed to push changes.", e);
+    }
+    return success;
+  }
+  
+  public boolean isTag(String tagname) throws Exception {
+    List<RevTag> tags = git.tagList().call();
+    if(tags != null && tags.size() > 0) {
+      for(RevTag tag : tags) {
+        if(tag.getTagName().equals(tagname)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
   
   public String getBranchName() throws Exception {

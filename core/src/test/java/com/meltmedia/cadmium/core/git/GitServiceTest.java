@@ -44,6 +44,7 @@ public class GitServiceTest {
         add.call();
         localGit.git.commit().setMessage("initial commit").call();
         localGit.git.branchCreate().setName("test").call();
+        localGit.git.branchCreate().setName("test-delete").call();
         
         localGitRepoCloned = new File(testDir, "local-git-cloned");
         localClone = GitService.cloneRepo(new File(localGitRepo, ".git").getAbsoluteFile().getAbsolutePath(), localGitRepoCloned.getAbsoluteFile().getAbsolutePath());
@@ -211,6 +212,47 @@ public class GitServiceTest {
 
     assertTrue("other2.file should be there.", new File(localGitRepo, "other2.file").exists());
     assertTrue("dir3/other2.file should be there.", new File(localGitRepo, "dir3/other2.file").exists());
+  }
+  
+  @Test
+  public void testTag() throws Exception {
+    if(!localGit.getBranchName().equals("test")){
+      localGit.git.checkout().setName("test").call();
+    }
+    
+    localGit.tag("release-1.0", "Testing tag creation.");
+    
+    assertTrue("Tag not created", localGit.repository.getRef("refs/tags/release-1.0") != null);
+  }
+  
+  @Test
+  public void testIsTag() throws Exception {
+    if(!localGit.getBranchName().equals("test")){
+      localGit.git.checkout().setName("test").call();
+    }
+    
+    localGit.tag("release-1.1", "Testing isTag test.");
+    
+    assertTrue("Tag not created", localGit.repository.getRef("refs/tags/release-1.1") != null);
+    
+    assertTrue("Failed", localGit.isTag("release-1.1"));
+    
+  }
+  
+  @Test
+  public void testNewLocalBranch() throws Exception {
+    localGit.newLocalBranch("test-local");
+    
+    assertTrue("Branch not created", localGit.repository.getRef("refs/heads/test-local") != null);
+  }
+  
+  @Test
+  public void testDeleteLocalBranch() throws Exception {
+    assertTrue("Branch should exist", localGit.repository.getRef("refs/heads/test-delete") != null);
+    
+    localGit.deleteLocalBranch("test-delete");
+    
+    assertTrue("Branch not delete", localGit.repository.getRef("refs/heads/test-delete") == null);
   }
 }
 

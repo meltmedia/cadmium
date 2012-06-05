@@ -11,8 +11,6 @@ public class CadmiumCli {
 	 */
 	public static void main(String[] args) {
 		try {
-		  //MainCommands mainCommands = new MainCommands();
-		  //jCommander = new JCommander(mainCommands);
 		  jCommander = new JCommander();
 		  
 		  jCommander.setProgramName("cadmium");
@@ -43,6 +41,9 @@ public class CadmiumCli {
 		  
 		  StatusCommand statusCommand = new StatusCommand();
 		  jCommander.addCommand("status", statusCommand);
+		  
+		  CloneCommand cloneCommand = new CloneCommand();
+		  jCommander.addCommand("clone", cloneCommand);
 		  
 		  jCommander.parse(args);
 		  
@@ -90,6 +91,9 @@ public class CadmiumCli {
 		  }
 		  else if ( commandName.equals("status")) {
 			statusCommand.execute();
+		  }
+		  else if ( commandName.equals("clone")) {
+		    cloneCommand.execute();
 		  }
 		
 		}
