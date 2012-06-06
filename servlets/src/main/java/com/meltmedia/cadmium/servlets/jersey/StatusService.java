@@ -12,14 +12,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import org.jgroups.Address;
-
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.SiteDownService;
-import com.meltmedia.cadmium.core.history.HistoryEntry;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
-import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 
