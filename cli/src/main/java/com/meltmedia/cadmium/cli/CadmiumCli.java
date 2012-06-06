@@ -50,6 +50,9 @@ public class CadmiumCli {
 		  CloneCommand cloneCommand = new CloneCommand();
 		  jCommander.addCommand("clone", cloneCommand);
 		  
+		  CommitCommand commitCommand = new CommitCommand();
+		  jCommander.addCommand("commit", commitCommand);
+		  
 		  jCommander.parse(args);
 		  
 		  String commandName = jCommander.getParsedCommand();
@@ -99,6 +102,9 @@ public class CadmiumCli {
 		  }
 		  else if ( commandName.equals("clone")) {
 		    cloneCommand.execute();
+		  }
+		  else if ( commandName.equals("commit")) {
+		    commitCommand.execute();
 		  }
 		
 		}

@@ -94,7 +94,7 @@ public class CloneCommand {
         site2Service.resetToRev(site1Service.getCurrentRevision());
       } else {
         System.out.println("Cloning content from ["+site1+"] to ["+site2+"]");
-        revision = cloneContent(site1Service.getBaseDirectory(), site2Service);
+        revision = cloneContent(site1Service.getBaseDirectory(), site2Service, comment);
       }
       
       if(tagname != null) {
@@ -105,7 +105,7 @@ public class CloneCommand {
       }
       
       System.out.println("Sending update message to ["+site2+"]");
-      sendUpdateMessage(branch, revision);
+      sendUpdateMessage(site2, branch, revision, "Cloned from ["+site1+"]: " + comment);
       
     } catch(Exception e) {
       e.printStackTrace();
@@ -124,7 +124,7 @@ public class CloneCommand {
     }
   }
   
-  private void sendUpdateMessage(String branch, String revision) throws Exception {
+  public static void sendUpdateMessage(String site2, String branch, String revision, String comment) throws Exception {
     HttpClient client = new DefaultHttpClient();
     
     HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
@@ -138,7 +138,7 @@ public class CloneCommand {
       parameters.add(new BasicNameValuePair("rev", revision));
     }
     
-    parameters.add(new BasicNameValuePair("comment", "Cloned from ["+site1+"]: " + comment));
+    parameters.add(new BasicNameValuePair("comment", comment));
     
     post.setEntity(new UrlEncodedFormEntity(parameters,"UTF-8"));
     
@@ -153,13 +153,13 @@ public class CloneCommand {
     }
   }
 
-  private String cloneContent(String source, GitService service) throws Exception {
+  public static String cloneContent(String source, GitService service, String comment) throws Exception {
     String rev = GitService.moveContentToBranch(source, service, service.getBranchName(), comment);
     service.push(false);
     return rev;
   }
 
-  private Status getSiteStatus(String site) throws Exception {
+  public static Status getSiteStatus(String site) throws Exception {
     HttpClient client = new DefaultHttpClient();
     
     HttpGet get = new HttpGet(site + StatusCommand.JERSEY_ENDPOINT);
@@ -172,7 +172,7 @@ public class CloneCommand {
     return null;
   }
   
-  private GitService cloneSiteRepo(Status status) throws Exception {
+  public static GitService cloneSiteRepo(Status status) throws Exception {
     File tmpDir = File.createTempFile("site", "git");
     GitService git = null;
     if(tmpDir.delete()) {
