@@ -103,7 +103,7 @@ public class CloneCommand {
     }
   }
   
-  private void sendUpdateMessage(String branch, String revision) throws Exception {
+  public void sendUpdateMessage(String branch, String revision) throws Exception {
     HttpClient client = new DefaultHttpClient();
     
     HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
@@ -136,7 +136,7 @@ public class CloneCommand {
     return GitService.moveContentToBranch(source, service, service.getBranchName(), comment);
   }
 
-  private Status getSiteStatus(String site) throws Exception {
+  public static Status getSiteStatus(String site) throws Exception {
     HttpClient client = new DefaultHttpClient();
     
     HttpGet get = new HttpGet(site + StatusCommand.JERSEY_ENDPOINT);
