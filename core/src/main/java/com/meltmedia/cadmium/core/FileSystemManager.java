@@ -213,15 +213,11 @@ public final class FileSystemManager {
         } else {
           File newFile = new File(target, relativePath);
           if(newFile.createNewFile()) {
-            newFile.setExecutable(aFile.canExecute(), false);
-            newFile.setReadable(aFile.canRead(), false);
-            newFile.setWritable(aFile.canWrite(), false);
-            newFile.setLastModified(aFile.lastModified());
             FileInputStream inStream = null;
             FileOutputStream outStream = null;
             try{
               inStream = new FileInputStream(aFile);
-              outStream = new FileOutputStream(aFile);
+              outStream = new FileOutputStream(newFile);
               streamCopy(inStream, outStream);
             } finally {
               if(inStream != null) {
@@ -231,10 +227,17 @@ public final class FileSystemManager {
               }
               if(outStream != null) {
                 try{
+                  outStream.flush();
+                } catch(Exception e){}
+                try{
                   outStream.close();
                 } catch(Exception e){}
               }
             }
+            newFile.setExecutable(aFile.canExecute(), false);
+            newFile.setReadable(aFile.canRead(), false);
+            newFile.setWritable(aFile.canWrite(), false);
+            newFile.setLastModified(aFile.lastModified());
           }
         }
       }

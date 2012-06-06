@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 
@@ -41,7 +42,7 @@ public class UpdateConfigTask implements Callable<Boolean> {
     log.info("Updating config.properties file");
     String lastUpdatedDir = properties.get("nextDirectory");
     
-    String baseDirectory = service.getBaseDirectory();
+    String baseDirectory = FileSystemManager.getParent(service.getBaseDirectory());
     
     Properties updatedProperties = new Properties();
     
@@ -62,7 +63,11 @@ public class UpdateConfigTask implements Callable<Boolean> {
     configProperties.setProperty("git.ref.sha", service.getCurrentRevision());
     
     if(manager != null) {
-      manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : "", lastUpdatedDir, properties.get("comment"), true);
+      try {
+        manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : "", lastUpdatedDir, properties.get("comment"), true);
+      } catch(Exception e){
+        log.warn("Failed to update log", e);
+      }
     }
     
     try{

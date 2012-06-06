@@ -1,7 +1,10 @@
 package com.meltmedia.cadmium.core.git;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.List;
+import java.util.Properties;
 
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
@@ -10,13 +13,16 @@ import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
+import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.RmCommand;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevTag;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.SshSessionFactory;
+import org.eclipse.jgit.transport.TagOpt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +46,10 @@ public class GitService {
   
   public static void setupSsh(String sshDir) {
     SshSessionFactory.setInstance(new GithubConfigSessionFactory(sshDir));
+  }
+  
+  public static void setupLocalSsh(String sshDir) {
+    SshSessionFactory.setInstance(new LocalConfigSessionFactory(sshDir));
   }
   
   public static GitService createGitService(String repositoryDirectory) throws Exception {
@@ -102,7 +112,8 @@ public class GitService {
         throw new Exception("Failed to delete temp file for temp dir creation.");
       }
     } else if(!new File(gitRepo.getBaseDirectory()).getAbsoluteFile().getAbsolutePath().equals(new File(source).getAbsoluteFile().getAbsolutePath())){
-      return moveContentToGit(source, gitRepo, comment);
+      String rev = moveContentToGit(source, gitRepo, comment);
+      return rev;
     } else {
       throw new Exception("Source must not be the same as the target.");
     }
@@ -147,13 +158,27 @@ public class GitService {
       throw new Exception("Failed to clone remote github repo from "+uri);
     }
     
-    String dirList[] = FileSystemManager.getDirectoriesInDirectory(warDir, "renderedContent");
-    if(dirList.length == 0) {
+    Properties configProperties = new Properties();
+    String configPropsFile = FileSystemManager.getFileIfCanRead(warDir, "config.properties");
+    if(configPropsFile != null) {
+      FileReader reader = null;
+      try {
+        reader = new FileReader(configPropsFile);
+        configProperties.load(reader);
+      } finally {
+        if(reader != null) {
+          reader.close();
+        }
+      }
+    }
+    
+    String renderedContentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+    if(renderedContentDir == null || !FileSystemManager.exists(renderedContentDir)) {
       log.info("RenderedContent directory does not exist. Creating!!!");
       GitService rendered = null;
       try {
         rendered = GitService.cloneRepo(new File(FileSystemManager.getChildDirectoryIfExists(warDir, "git-checkout"), ".git").getAbsolutePath(), new File(warDir, "renderedContent").getAbsolutePath());
-
+        renderedContentDir = rendered.getBaseDirectory();
         log.info("Removing .git directory from freshly cloned renderedContent directory.");
         String gitDir = FileSystemManager.getChildDirectoryIfExists(new File(warDir, "renderedContent").getAbsolutePath(), ".git");
         if(gitDir != null) {
@@ -163,6 +188,26 @@ public class GitService {
       } finally {
         if(rendered != null) {
           rendered.close();
+        }
+      }
+    } 
+    
+    if(configPropsFile == null) {
+      configPropsFile = new File(warDir, "config.properties").getAbsoluteFile().getAbsolutePath();
+      
+      if(renderedContentDir != null) {
+        configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
+      }
+      configProperties.setProperty("branch", cloned.getBranchName());
+      configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
+      
+      FileWriter writer = null;
+      try{
+        writer = new FileWriter(configPropsFile);
+        configProperties.store(writer, "initialized configuration properties");
+      } finally {
+        if(writer != null) {
+          writer.close();
         }
       }
     }
@@ -204,16 +249,29 @@ public class GitService {
     return git.pull().call().isSuccessful();
   }
   
+  public void push(boolean tags) throws Exception {
+    PushCommand push = git.push();
+    if(tags) {
+      push.setPushTags();
+    }
+    push.call();
+  }
+  
   public void switchBranch(String branchName) throws Exception {
     if(branchName != null && !repository.getBranch().equals(branchName)) {
       log.info("Switching branch from {} to {}", repository.getBranch(), branchName);
       CheckoutCommand checkout = git.checkout();
-      checkout.setName(branchName);
-      if(this.repository.getRef(branchName) == null) {
+      checkout.setName("refs/heads/"+branchName);
+      if(this.repository.getRef("refs/heads/"+ branchName) == null) {
         CreateBranchCommand create = git.branchCreate();
         create.setName(branchName);
         create.setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM);
-        create.setStartPoint("origin/"+branchName);
+        if(!isTag(branchName)) {
+          create.setStartPoint("origin/"+branchName);
+        } else {
+          log.info("Switching to tag ["+branchName+"]");
+          create.setStartPoint(branchName);
+        }
         create.call();
       }
       checkout.call();
@@ -296,6 +354,11 @@ public class GitService {
   }
   
   public boolean tag(String tagname, String comment) throws Exception {
+    try{
+      git.fetch().setTagOpt(TagOpt.FETCH_TAGS).call();
+    } catch(Exception e) {
+      log.debug("Fetch from origin failed.", e);
+    }
     List<RevTag> tags = git.tagList().call();
     if(tags != null && tags.size() > 0) {
       for(RevTag tag : tags) {
@@ -314,6 +377,11 @@ public class GitService {
   }
   
   public boolean isTag(String tagname) throws Exception {
+    try{
+      git.fetch().setTagOpt(TagOpt.FETCH_TAGS).call();
+    } catch(Exception e) {
+      log.debug("Fetch from origin failed.", e);
+    }
     List<RevTag> tags = git.tagList().call();
     if(tags != null && tags.size() > 0) {
       for(RevTag tag : tags) {

@@ -33,15 +33,28 @@ public class CloneCommand {
   @Parameter(names="--site2", description="The url to the site to clone to.", required=true)
   private String site2;
   
+  @Parameter(names="--repo", description="Overrides the repository url from the server.", required=false)
+  private String repo;
+  
   @Parameter(names="--tagname", description="The name of a tag to create to serve site2 from.", required=false)
   private String tagname;
   
   @Parameter(description="comment", required=true)
+  private List<String> comments;
+  
   private String comment;
   
   public void execute() throws Exception {
     GitService site1Service = null;
     GitService site2Service = null;
+    for(String comment : comments) {
+      if(this.comment == null) {
+        this.comment = "";
+      } else {
+        this.comment += "\n";
+      }
+      this.comment += comment;
+    }
     try{
       System.out.println("Getting status of ["+site1+"]");
       Status site1Status = getSiteStatus(site1);
@@ -51,6 +64,11 @@ public class CloneCommand {
       
       System.out.println("Getting status of ["+site2+"]");
       Status site2Status = getSiteStatus(site2);
+      
+      String site2repo = site2Status.getRepo();
+      if(repo != null) {
+        site2Status.setRepo(repo);
+      }
       
       System.out.println("Cloning repository that ["+site2+"] is serving");
       site2Service = cloneSiteRepo(site2Status);
@@ -62,14 +80,16 @@ public class CloneCommand {
         throw new Exception("Site ["+site2+"] is currently serving from a tag. Please specify a new tag name to serve from!");
       }
       
-      if(site1Status.getRepo().equals(site2Status.getRepo()) && site1Status.getBranch().equals(site2Status.getBranch()) && site1Status.getRevision().equals(site2Status.getRevision())) {
+      if(site1Status.getRepo().equals(site2repo) && site1Status.getBranch().equals(site2Status.getBranch()) && site1Status.getRevision().equals(site2Status.getRevision())) {
         throw new Exception("Nothing to do, sites are currently serving same content.");
-      }
+      } 
       
-      if(site1Status.getRepo().equals(site2Status.getRepo()) && site2Service.isTag(site2Status.getBranch()) && site1Service.isTag(site1Status.getBranch()) && !site1Status.getBranch().equals(site2Status.getBranch())) {
+      if(site1Status.getRepo().equals(site2repo) && site2Service.isTag(site2Status.getBranch()) && site1Service.isTag(site1Status.getBranch()) && !site1Status.getBranch().equals(site2Status.getBranch())) {
+        System.out.println("Both sites are on tags using tag ["+site1Service.getBranchName()+"]");
         branch = site1Service.getBranchName();
         revision = null;
-      } else if(site1Status.getRepo().equals(site2Status.getRepo()) && site2Service.isTag(site2Status.getBranch()) && !site1Status.getBranch().equals(site2Status.getBranch())) {
+      } else if(site1Status.getRepo().equals(site2repo) && site2Service.isTag(site2Status.getBranch()) && !site1Status.getBranch().equals(site2Status.getBranch())) {
+        System.out.println("["+site2+"] is on a tag switching to ["+site1Service.getBranchName()+"] and revision ["+site1Service.getCurrentRevision()+"] to tag from.");
         site2Service.switchBranch(site1Service.getBranchName());
         site2Service.resetToRev(site1Service.getCurrentRevision());
       } else {
@@ -88,6 +108,7 @@ public class CloneCommand {
       sendUpdateMessage(branch, revision);
       
     } catch(Exception e) {
+      e.printStackTrace();
       System.err.println("Failed to clone ["+site1+"] to ["+site2+"]: "+e.getMessage());
     } finally {
       if(site1Service != null){
@@ -126,14 +147,16 @@ public class CloneCommand {
     if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
       String responseString = EntityUtils.toString(response.getEntity());
       
-      if(responseString == null || !responseString.trim().equals("OK")) {
+      if(responseString == null || !responseString.trim().equals("ok")) {
         System.err.println("Update message to ["+site2+"] failed.");
       }
     }
   }
 
   private String cloneContent(String source, GitService service) throws Exception {
-    return GitService.moveContentToBranch(source, service, service.getBranchName(), comment);
+    String rev = GitService.moveContentToBranch(source, service, service.getBranchName(), comment);
+    service.push(false);
+    return rev;
   }
 
   public static Status getSiteStatus(String site) throws Exception {
@@ -161,7 +184,9 @@ public class CloneCommand {
         if(!git.getCurrentRevision().equals(status.getRevision())) {
           git.resetToRev(status.getRevision());
         }
-      } finally {
+      } catch(Exception e) {
+        System.err.println("Failed to clone repo "+status.getRepo()+" branch "+status.getBranch()+ "["+tmpDir+"]");
+        e.printStackTrace();
         if(git != null) {
           git.close();
           git = null;

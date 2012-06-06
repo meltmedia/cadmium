@@ -14,14 +14,16 @@ import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 import com.meltmedia.cadmium.core.FileSystemManager;
 
-public class GithubConfigSessionFactory extends JschConfigSessionFactory {
+public class LocalConfigSessionFactory extends JschConfigSessionFactory {
 	
 	private String privateKeyFile;
 	private String knownHostsFile;
+	private String sshDir;
 	
-	public GithubConfigSessionFactory( String sshDir ) {
+	public LocalConfigSessionFactory( String sshDir ) {
 		this.privateKeyFile = sshDir+"/meltmedia-gene-deploy";
 		this.knownHostsFile = sshDir+"/known_hosts";
+		this.sshDir = sshDir;
 	}
 	
 	@Override
@@ -30,21 +32,23 @@ public class GithubConfigSessionFactory extends JschConfigSessionFactory {
 
 			@Override
 			public String getPassphrase() {
-				return "";
+				return new String(System.console().readPassword());
 			}
 
 			@Override
 			public String getPassword() {
-				return "";
+				return new String(System.console().readPassword());
 			}
 
 			@Override
 			public boolean promptPassphrase(String arg0) {
+        System.err.print("Enter "+arg0+": ");
 				return true;
 			}
 
 			@Override
 			public boolean promptPassword(String arg0) {
+        System.err.print("Enter "+arg0+": ");
 				return true;
 			}
 
@@ -55,7 +59,7 @@ public class GithubConfigSessionFactory extends JschConfigSessionFactory {
 
 			@Override
 			public void showMessage(String arg0) {
-			  
+				System.err.println("Password or passphrase needed:");
 			}
 			
 		});
@@ -76,6 +80,8 @@ public class GithubConfigSessionFactory extends JschConfigSessionFactory {
     JSch.setConfig("StrictHostKeyChecking", "no");
 		  if(FileSystemManager.exists(privateKeyFile)) {
 		    jsch.addIdentity(privateKeyFile);
+		  } else if (FileSystemManager.exists(sshDir + "/id_rsa")) {
+		    jsch.addIdentity(sshDir + "/id_rsa");
 		  }
 	    jsch.setKnownHosts(knownHostsFile);
 		return jsch;
