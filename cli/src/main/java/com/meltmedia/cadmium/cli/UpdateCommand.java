@@ -30,19 +30,19 @@ public class UpdateCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Parameter(names="branch", description="The branch that you are updating", required=true)
+	@Parameter(names="--branch", description="The branch that you are updating", required=true)
 	private String branch;
 
-	@Parameter(names="revision", description="The revision that you are updating to", required=true)
+	@Parameter(names="--revision", description="The revision that you are updating to", required=true)
 	private String revision;
 
-	@Parameter(names="site", description="The site that is to be updated", required=true)
+	@Parameter(names="--site", description="The site that is to be updated", required=true)
 	private String site;
 
-	@Parameter(names="comment", description="The comment for the history", required=true)
+	@Parameter(names="--comment", description="The comment for the history", required=true)
 	private String comment;
 
-	@Parameter(names="--force", description="The comment for the history", required=false)
+	@Parameter(names="--force", description="Force the update", required=false)
 	private String force;
 
 	public static final String JERSEY_ENDPOINT = "/system/update";
@@ -62,9 +62,15 @@ public class UpdateCommand {
 
 			boolean branchSame = true;
 			boolean revisionSame = true;
+			boolean forceUpdate = false;
 			
 			String currentRevision = siteStatus.getRevision();
 			String currentBranch = siteStatus.getBranch();
+			
+			if(force != null) {
+				
+				forceUpdate = true;
+			}
 
 
 			if(!branch.trim().equals(currentBranch.trim())) {
@@ -79,7 +85,7 @@ public class UpdateCommand {
 				revisionSame = false;
 			}
 
-			if( branchSame && revisionSame) {
+			if( branchSame && revisionSame && !forceUpdate) {
 				
 				System.out.println("The site [" + site  + "] is already on branch [" + branch  + "] and revision [" + revision  + "].");
 			}
