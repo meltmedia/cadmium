@@ -25,15 +25,15 @@ import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 import com.meltmedia.cadmium.status.StatusMember;
 
-@Parameters(commandDescription = "Instructs a site to update its content.")
+@Parameters(commandDescription = "Instructs a site to update its content.", separators="=")
 public class UpdateCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Parameter(names="--branch", description="The branch that you are updating", required=true)
+	@Parameter(names="--branch", description="The branch that you are updating", required=false)
 	private String branch;
 
-	@Parameter(names="--revision", description="The revision that you are updating to", required=true)
+	@Parameter(names="--revision", description="The revision that you are updating to", required=false)
 	private String revision;
 
 	@Parameter(names="--site", description="The site that is to be updated", required=true)
@@ -43,7 +43,7 @@ public class UpdateCommand {
 	private String comment;
 
 	@Parameter(names="--force", description="Force the update", required=false)
-	private String force;
+	private boolean force;
 
 	public static final String JERSEY_ENDPOINT = "/system/update";
 
@@ -60,32 +60,33 @@ public class UpdateCommand {
 
 			Status siteStatus = CloneCommand.getSiteStatus(site);
 
-			boolean branchSame = true;
-			boolean revisionSame = true;
-			boolean forceUpdate = false;
+			boolean branchSame = false;
+			boolean revisionSame = false;
+			boolean forceUpdate = force;
 			
 			String currentRevision = siteStatus.getRevision();
 			String currentBranch = siteStatus.getBranch();
+					
+
+			log.info("branch = {}, and currentBranch = {}", branch, currentBranch);
 			
-			if(force != null) {
-				
-				forceUpdate = true;
-			}
-
-
-			if(!branch.trim().equals(currentBranch.trim())) {
+			if(branch == null || branch.trim().equals(currentBranch.trim())) {
 				//update the branch to requested branch
 				branch = currentBranch.trim();
-				branchSame = false;
+				branchSame = true;
 			}
+			
+			log.info("revision = {}, and currentRevision = {}", revision, currentRevision);
 						
-			if(revision.trim().equals(currentRevision.trim())) {
+			if(revision == null || revision.trim().equals(currentRevision.trim())) {
 				//update the branch to requested branch
 				revision = currentRevision.trim();
-				revisionSame = false;
+				revisionSame = true;
 			}
 
-			if( branchSame && revisionSame && !forceUpdate) {
+			log.info("branchSame = {}, and revisionSame = {}", branchSame, revisionSame);
+			
+			if(branchSame && revisionSame && !forceUpdate) {
 				
 				System.out.println("The site [" + site  + "] is already on branch [" + branch  + "] and revision [" + revision  + "].");
 			}
@@ -93,8 +94,16 @@ public class UpdateCommand {
 
 				HttpPost post = new HttpPost(url);
 				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
-				nvps.add(new BasicNameValuePair("branch", branch.trim()));
-				nvps.add(new BasicNameValuePair("rev", revision.trim()));
+				
+				if(!branchSame) {
+					
+					nvps.add(new BasicNameValuePair("branch", branch.trim()));
+				}
+				
+				if(!revisionSame) {
+					
+					nvps.add(new BasicNameValuePair("sha", revision.trim()));
+				}
 				nvps.add(new BasicNameValuePair("comment", comment.trim()));
 	
 				post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
@@ -107,9 +116,6 @@ public class UpdateCommand {
 
 			System.err.println("Failed to updated site [" + site  + "] to branch [" + branch  + "] and revision [" + revision  + "].");
 		}
-
-
-
 
 	}
 }

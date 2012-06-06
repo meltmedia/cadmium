@@ -77,7 +77,7 @@ public class CadmiumCli {
 			  }
 		  }
 		  else if( commandName.equals("update") ) {
-		     throw new UnsupportedOperationException("update not yet supported.");
+			  updateCommand.execute();
 		  }
 		  else if( commandName.equals("init-content") ) {
 		    initCommand.execute();
