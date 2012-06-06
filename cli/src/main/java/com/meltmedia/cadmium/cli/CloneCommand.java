@@ -51,7 +51,7 @@ public class CloneCommand {
       if(this.comment == null) {
         this.comment = "";
       } else {
-        this.comment += "\n";
+        this.comment += " ";
       }
       this.comment += comment;
     }
@@ -135,7 +135,7 @@ public class CloneCommand {
     }
     
     if(revision != null) {
-      parameters.add(new BasicNameValuePair("rev", revision));
+      parameters.add(new BasicNameValuePair("sha", revision));
     }
     
     parameters.add(new BasicNameValuePair("comment", comment));

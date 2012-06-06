@@ -29,7 +29,7 @@ public class CommitCommand {
       if(this.comment == null) {
         this.comment = "";
       } else {
-        this.comment += "\n";
+        this.comment += " ";
       }
       this.comment += comment;
     }

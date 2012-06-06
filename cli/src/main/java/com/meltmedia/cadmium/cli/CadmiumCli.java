@@ -20,38 +20,41 @@ public class CadmiumCli {
 		  
 		  jCommander.setProgramName("cadmium");
 		  
-		  UpdateCommand updateCommand = new UpdateCommand();
-		  jCommander.addCommand("update", updateCommand);
-		  
 		  HelpCommand helpCommand = new HelpCommand();
 		  jCommander.addCommand("help", helpCommand);
+      
+      NewBranchCommand newBranchCommand = new NewBranchCommand();
+      jCommander.addCommand("new-branch", newBranchCommand);
+      
+      InitializeProjectCommand initProjectCommand = new InitializeProjectCommand();
+      jCommander.addCommand("init-project", initProjectCommand);
 		  
 		  InitializeCommand initCommand = new InitializeCommand();
 		  jCommander.addCommand("init-content", initCommand);
 		  
 		  InitializeWarCommand initWarCommand = new InitializeWarCommand();
 		  jCommander.addCommand("init-war", initWarCommand);
+      
+      CloneCommand cloneCommand = new CloneCommand();
+      jCommander.addCommand("clone", cloneCommand);
+      
+      RevertCommand revertCommand = new RevertCommand();
+      jCommander.addCommand("revert", revertCommand);
+      
+      UpdateCommand updateCommand = new UpdateCommand();
+      jCommander.addCommand("update", updateCommand);
+      
+      StatusCommand statusCommand = new StatusCommand();
+      jCommander.addCommand("status", statusCommand);
 		  
 		  HistoryCommand historyCommand = new HistoryCommand();
 		  jCommander.addCommand("history", historyCommand);
 		  
-		  MaintenanceCommand maintenanceCommand = new MaintenanceCommand();
-		  jCommander.addCommand("maint", maintenanceCommand);
-		  
-		  NewBranchCommand newBranchCommand = new NewBranchCommand();
-		  jCommander.addCommand("new-branch", newBranchCommand);
-		  
-		  InitializeProjectCommand initProjectCommand = new InitializeProjectCommand();
-		  jCommander.addCommand("init-project", initProjectCommand);
-		  
-		  StatusCommand statusCommand = new StatusCommand();
-		  jCommander.addCommand("status", statusCommand);
-		  
-		  CloneCommand cloneCommand = new CloneCommand();
-		  jCommander.addCommand("clone", cloneCommand);
-		  
 		  CommitCommand commitCommand = new CommitCommand();
 		  jCommander.addCommand("commit", commitCommand);
+      
+      MaintenanceCommand maintenanceCommand = new MaintenanceCommand();
+      jCommander.addCommand("maint", maintenanceCommand);
 		  
 		  jCommander.parse(args);
 		  
@@ -105,6 +108,9 @@ public class CadmiumCli {
 		  }
 		  else if ( commandName.equals("commit")) {
 		    commitCommand.execute();
+		  }
+		  else if ( commandName.equals("revert")) {
+		    revertCommand.execute();
 		  }
 		
 		}
