@@ -290,6 +290,10 @@ public final class FileSystemManager {
   }
   
   public static void streamCopy(InputStream streamIn, OutputStream streamOut) throws IOException {
+    streamCopy(streamIn, streamOut, false);
+  }
+    
+  public static void streamCopy(InputStream streamIn, OutputStream streamOut, boolean leaveOutputOpen) throws IOException {
     ReadableByteChannel input = Channels.newChannel(streamIn);
     WritableByteChannel output = Channels.newChannel(streamOut);
     
@@ -309,8 +313,10 @@ public final class FileSystemManager {
     while (buffer.hasRemaining()) {
       output.write(buffer);
     }   
-    
+
     input.close();
-    output.close();
+    if(!leaveOutputOpen) {
+      output.close();
+    }
   }
 }
