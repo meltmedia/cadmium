@@ -120,6 +120,7 @@
     <module>servlets</module>
     <module>cli</module>
     <module>demos</module>
+    <module>deployer</module>
   </modules>
 
   <name>cadmium :: Parent POM</name>
