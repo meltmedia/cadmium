@@ -22,6 +22,8 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -34,6 +36,8 @@ import com.meltmedia.cadmium.core.FileSystemManager;
 @Parameters(commandDescription="Initializes a new sites war from an existing war.", separators="=")
 public class InitializeWarCommand {
 
+	private final Logger log = LoggerFactory.getLogger(getClass()); 
+	
 	@Parameter(names="--existingWar", description="Path to an existing cadmium war.", required=false)
 	private String war;
 

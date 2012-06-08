@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.meltmedia.cadmium</groupId>
+    <artifactId>cadmium</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>cadmium-deployer</artifactId>
+  <packaging>war</packaging>
+  <name>cadmium :: Deployer</name>
+  <description>A webapp that will deploy new cadmium projects to a server</description>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>maven-jetty-plugin</artifactId>
+        <version>6.1.10</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeTypes>war</includeTypes>
+              <stripVersion>true</stripVersion>
+              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <dependencies>
+    <dependency>
+      <groupId>com.meltmedia.cadmium</groupId>
+      <artifactId>cadmium-servlets</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.meltmedia.cadmium</groupId>
+      <artifactId>cadmium-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.meltmedia.cadmium</groupId>
+      <artifactId>cadmium-cli</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>cadmium-basic-war</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</project>
