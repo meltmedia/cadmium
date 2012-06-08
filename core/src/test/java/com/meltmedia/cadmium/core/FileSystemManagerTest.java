@@ -143,4 +143,20 @@ public class FileSystemManagerTest {
     
     
   }
+  
+  @Test
+  public void testGetFileContents() throws Exception {
+    String content = FileSystemManager.getFileContents("./target/test-content/copy-test/.git/data");
+    assertTrue("Content not read from file.", content != null && content.trim().equals("content"));
+  }
+  
+  @Test
+  public void testWriteStringToFile() throws Exception {
+    String content = "test-content";
+    FileSystemManager.writeStringToFile("./target/test-content/test-write", "test.file", content);
+    File theFile = new File("./target/test-content/test-write/test.file");
+    assertTrue("File not written", theFile.exists() && theFile.length() > 0);
+    String content2 = FileSystemManager.getFileContents("./target/test-content/test-write/test.file");
+    assertTrue("Content not read from file.", content2 != null && content2.equals(content));
+  }
 }

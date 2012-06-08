@@ -73,6 +73,7 @@
       <artifactId>cadmium-basic-war</artifactId>
       <version>${project.version}</version>
       <type>war</type>
+      <scope>provided</scope>
     </dependency>
   
     <dependency>

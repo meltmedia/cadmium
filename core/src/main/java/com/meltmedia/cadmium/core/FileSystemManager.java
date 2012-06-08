@@ -1,5 +1,7 @@
 package com.meltmedia.cadmium.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -33,6 +35,50 @@ public final class FileSystemManager {
       }
     }
     return null;
+  }
+  
+  public static String getFileContents(String path) throws Exception {
+    InputStream in = null;
+    String content = null;
+    try {
+      in = new FileInputStream(path);
+      content = getFileContents(in);
+    } finally {
+      if(in != null) {
+        try {
+          in.close();
+        } catch(Exception e) {}
+      }
+    }
+    return content;
+  }
+  
+  public static String getFileContents(InputStream in) throws Exception {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    streamCopy(in, out);
+    String contents = out.toString();
+    if(contents != null) {
+      contents.trim();
+    }
+    return contents;
+  }
+  
+  public static void writeStringToFile(String path, String filename, String content) throws Exception {
+    OutputStream out = null;
+    try{
+      if(!exists(path)) {
+        new File(path).mkdirs();
+      }
+      out = new FileOutputStream(new File(path, filename), false);
+      ByteArrayInputStream in = new ByteArrayInputStream(content.getBytes());
+      streamCopy(in, out);
+    } finally {
+      if(out != null) {
+        try {
+          out.close();
+        } catch(Exception e){}
+      }
+    }
   }
   
   public static String getFileIfCanRead(String path, String file) {
