@@ -19,7 +19,7 @@ public class DeployCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Parameter(names="--domain", description="The site for which the status is desired", required=true)
+	@Parameter(names="--domain", description="The domain where the cadmium application will be deployed", required=true)
 	private String domain;
 	
 	@Parameter(names="--repo", description="The repo from which cadmium will serve content initially", required=true)
@@ -28,7 +28,9 @@ public class DeployCommand {
 	@Parameter(names="--branch", description="The branch from which cadmium will serve content initially", required=true)
 	private String branch;
 	
-	private String site;	
+	@Parameter(names="--site", description="The branch from which cadmium will serve content initially", required=true)
+	private String site;
+	
 
 	public static final String JERSEY_ENDPOINT = "/deploy";
 
