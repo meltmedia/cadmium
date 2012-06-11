@@ -83,6 +83,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   public static final String BASE_PATH_ENV = "com.meltmedia.cadmium.contentRoot";
   public static final String SSH_PATH_ENV = "com.meltmedia.cadmium.github.sshKey";
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
+  public static final String SSL_HEADER = "Request_Is_SSL";
   public File sharedContentRoot;
   public File applicationContentRoot;
   private String repoDir = "git-checkout";
@@ -381,6 +382,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(MimeTypeConfigProcessor.class);
         bind(SslRedirectConfigProcessor.class);
         bind(new TypeLiteral<List<ConfigProcessor>>() {}).toProvider(MetaConfigProvider.class).in(Scopes.SINGLETON);
+        
+        //This should be the name of a header that BigIp will set if the incoming request was SSL
+        bind(String.class).annotatedWith(Names.named(SslRedirectFilter.SSL_HEADER_NAME)).toInstance(SSL_HEADER);
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
 
