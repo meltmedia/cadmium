@@ -4,29 +4,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
-import com.meltmedia.cadmium.status.StatusMember;
 
 @Parameters(commandDescription = "Instructs a site to update its content.", separators="=")
-public class UpdateCommand {
+public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -50,6 +43,7 @@ public class UpdateCommand {
 	public void execute() throws ClientProtocolException, IOException {
 
 		DefaultHttpClient client = new DefaultHttpClient();
+		
 		String url = site + JERSEY_ENDPOINT;	
 
 		log.debug("site + JERSEY_ENDPOINT = {}", url);
@@ -58,7 +52,7 @@ public class UpdateCommand {
 		System.out.println("Getting status of ["+site+"]");
 		try {
 
-			Status siteStatus = CloneCommand.getSiteStatus(site);
+			Status siteStatus = CloneCommand.getSiteStatus(site, token);
 
 			boolean branchSame = false;
 			boolean revisionSame = false;
@@ -93,6 +87,7 @@ public class UpdateCommand {
 			else {				
 
 				HttpPost post = new HttpPost(url);
+		    addAuthHeader(post);
 				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
 				
 				if(!branchSame) {
@@ -118,4 +113,9 @@ public class UpdateCommand {
 		}
 
 	}
+
+  @Override
+  public String getCommandName() {
+    return "update";
+  }
 }

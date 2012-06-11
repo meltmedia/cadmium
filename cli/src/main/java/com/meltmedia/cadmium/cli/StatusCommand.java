@@ -21,7 +21,7 @@ import com.meltmedia.cadmium.status.StatusMember;
 
 
 @Parameters(commandDescription = "Displays status info for a site", separators="=")
-public class StatusCommand {
+public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -38,6 +38,8 @@ public class StatusCommand {
 		log.debug("site + JERSEY_ENDPOINT = {}", url);
 		
 		HttpGet get = new HttpGet(url);
+    addAuthHeader(get);
+    
 		HttpResponse response = client.execute(get);
 		HttpEntity entity = response.getEntity();
 		
@@ -78,5 +80,10 @@ public class StatusCommand {
 		}		
 			
 	}
+
+  @Override
+  public String getCommandName() {
+    return "status";
+  }
 
 }

@@ -32,7 +32,7 @@ import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.FileSystemManager;
 
 @Parameters(commandDescription="Initializes a new sites war from an existing war.", separators="=")
-public class InitializeWarCommand {
+public class InitializeWarCommand implements CliCommand {
 
 	@Parameter(names="--existingWar", description="Path to an existing cadmium war.", required=false)
 	private String war;
@@ -244,4 +244,9 @@ public class InitializeWarCommand {
 	public void setNewWarNames(List<String> newWarNames) {
 		this.newWarNames = newWarNames;
 	}
+
+  @Override
+  public String getCommandName() {
+    return "init-war";
+  }
 }

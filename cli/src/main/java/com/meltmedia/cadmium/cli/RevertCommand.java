@@ -10,7 +10,7 @@ import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 
 @Parameters(commandDescription="Displays history from a site and allows a selection of which item to revert to.", separators="=")
-public class RevertCommand {
+public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Parameter(names="-i", description="Turns on interactive mode. (Not to be used with -n option)", required=false)
@@ -41,7 +41,7 @@ public class RevertCommand {
       comment += commentLine;
     }
     
-    List<HistoryEntry> history = HistoryCommand.getHistory(site, -1, false);
+    List<HistoryEntry> history = HistoryCommand.getHistory(site, -1, false, token);
     HistoryEntry selectedEntry = null;
     if(interactive && history != null && history.size() > 0) {
       HistoryCommand.displayHistory(history, true, 5);
@@ -66,7 +66,7 @@ public class RevertCommand {
         System.out.println("Switching content on ["+site+"]");
       }
       log.debug("Reverting to branch {}, revision {}, comment [{}]", new Object [] {selectedEntry.getBranch(), selectedEntry.getRevision(), selectedEntry.getComment()});
-      CloneCommand.sendUpdateMessage(site, selectedEntry.getBranch(), selectedEntry.getRevision(), comment);
+      CloneCommand.sendUpdateMessage(site, selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token);
     } else {
       System.exit(1);
     }
@@ -113,5 +113,10 @@ public class RevertCommand {
       System.err.println("Invalid entry!");
     }
     return selectedEntry;
+  }
+
+  @Override
+  public String getCommandName() {
+    return "revert";
   }
 }

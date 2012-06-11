@@ -6,7 +6,7 @@ import com.meltmedia.cadmium.core.git.GitService;
 
 
 @Parameters(commandDescription = "Initializes New Cadmium Project", separators="=")
-public class InitializeProjectCommand {
+public class InitializeProjectCommand implements CliCommand {
 	
 	@Parameter(names="--site", description="Site Name", required=true)
 	private String site;
@@ -24,5 +24,10 @@ public class InitializeProjectCommand {
 		}
 		
 	}
+
+  @Override
+  public String getCommandName() {
+    return "init-project";
+  }
 
 }

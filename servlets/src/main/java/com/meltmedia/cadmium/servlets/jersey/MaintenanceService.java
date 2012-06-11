@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.servlets.jersey;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -15,7 +16,7 @@ import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Path("/maintenance")
-public class MaintenanceService {
+public class MaintenanceService extends AuthorizationService {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
 	@Inject
@@ -24,7 +25,10 @@ public class MaintenanceService {
 	@POST
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces("text/plain")
-	public String post(@FormParam("state") String state,@FormParam("comment") String comment) throws Exception {
+	public String post(@FormParam("state") String state,@FormParam("comment") String comment, @HeaderParam("Authorization") String auth) throws Exception {
+	  if(!this.isAuth(auth)) {
+      throw new Exception("Unauthorized!");
+    }
     Message msg = new Message();
     log.info("state: " + state);
     log.info("comment: " + comment);
@@ -34,6 +38,7 @@ public class MaintenanceService {
     	if(comment != null && comment.trim().length() > 0) {
       	msg.getProtocolParameters().put("comment", comment);
       }
+    	msg.getProtocolParameters().put("openId", openId);
     	sender.sendMessage(msg, null);
     	return "ok";
     }

@@ -16,7 +16,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 @Parameters(commandDescription = "Toggles on and off maintenance page", separators="=")
-public class MaintenanceCommand {
+public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCommand {
 
 	@Parameter(names="--state", description="The state of the maintenance page", required=true)
 	private String state;
@@ -36,6 +36,8 @@ public class MaintenanceCommand {
 
 		if(state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off")) {
 			HttpPost post = new HttpPost(url);
+	    addAuthHeader(post);
+	    
 			List <NameValuePair> nvps = new ArrayList <NameValuePair>();
 			nvps.add(new BasicNameValuePair("state", state.trim()));
 			nvps.add(new BasicNameValuePair("comment", comment.trim()));
@@ -47,5 +49,10 @@ public class MaintenanceCommand {
 			System.err.println("Invalid State. Please use 'on' or 'off'.");
 		}
 	}
+
+  @Override
+  public String getCommandName() {
+    return "maint";
+  }
 
 }

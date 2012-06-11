@@ -6,7 +6,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 @Parameters(commandDescription = "Sets up new dev and meltqa branches with a command given basename.", separators="=")
-public class NewBranchCommand {
+public class NewBranchCommand implements CliCommand {
   
   @Parameter(names="--repo", description="Repository URI", required=true)
   private String repo;
@@ -23,6 +23,11 @@ public class NewBranchCommand {
     } finally {
       creator.closeAndRemoveLocal();
     }
+  }
+
+  @Override
+  public String getCommandName() {
+    return "new-branch";
   }
 
 }

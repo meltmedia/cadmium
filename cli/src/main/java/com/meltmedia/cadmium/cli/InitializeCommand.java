@@ -11,7 +11,7 @@ import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
 
 @Parameters(commandDescription = "Initializes the content directory for a new war", separators="=")
-public class InitializeCommand {
+public class InitializeCommand implements CliCommand {
   
   @Parameter(names="--root", description="Shared content root", required=true)
   private String root;
@@ -55,5 +55,10 @@ public class InitializeCommand {
         }
       }
     }
+  }
+
+  @Override
+  public String getCommandName() {
+    return "init-content";
   }
 }

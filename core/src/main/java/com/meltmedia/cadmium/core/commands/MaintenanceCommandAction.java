@@ -42,7 +42,7 @@ public class MaintenanceCommandAction implements CommandAction {
 				siteDownService.stop();
 			}
 		} 		
-		manager.logEvent(siteDownService.isOn(),"",comment);
+		manager.logEvent(siteDownService.isOn(),ctx.getMessage().getProtocolParameters().get("openId"),comment);
 		return true;
 	}
 

@@ -24,7 +24,7 @@ import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
 @Parameters(commandDescription="This command will move all content from one branch to another or tag a version of a branch.", separators="=")
-public class CloneCommand {
+public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
   public static final String UPDATE_ENDPOINT = "/system/update";
 
   @Parameter(names="--site1", description="The url to the site to clone from.", required=true)
@@ -57,13 +57,13 @@ public class CloneCommand {
     }
     try{
       System.out.println("Getting status of ["+site1+"]");
-      Status site1Status = getSiteStatus(site1);
+      Status site1Status = getSiteStatus(site1, token);
       
       System.out.println("Cloning repository that ["+site1+"] is serving");
       site1Service = cloneSiteRepo(site1Status);
       
       System.out.println("Getting status of ["+site2+"]");
-      Status site2Status = getSiteStatus(site2);
+      Status site2Status = getSiteStatus(site2, token);
       
       String site2repo = site2Status.getRepo();
       if(repo != null) {
@@ -105,7 +105,7 @@ public class CloneCommand {
       }
       
       System.out.println("Sending update message to ["+site2+"]");
-      sendUpdateMessage(site2, branch, revision, "Cloned from ["+site1+"]: " + comment);
+      sendUpdateMessage(site2, branch, revision, "Cloned from ["+site1+"]: " + comment, token);
       
     } catch(Exception e) {
       e.printStackTrace();
@@ -124,10 +124,12 @@ public class CloneCommand {
     }
   }
   
-  public static void sendUpdateMessage(String site2, String branch, String revision, String comment) throws Exception {
+  public static void sendUpdateMessage(String site2, String branch, String revision, String comment, String token) throws Exception {
     HttpClient client = new DefaultHttpClient();
     
     HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
+    addAuthHeader(token, post);
+    
     List<NameValuePair> parameters = new ArrayList<NameValuePair>();
     
     if(branch != null) {
@@ -159,10 +161,12 @@ public class CloneCommand {
     return rev;
   }
 
-  public static Status getSiteStatus(String site) throws Exception {
+  public static Status getSiteStatus(String site, String token) throws Exception {
     HttpClient client = new DefaultHttpClient();
     
     HttpGet get = new HttpGet(site + StatusCommand.JERSEY_ENDPOINT);
+    addAuthHeader(token, get);
+    
     HttpResponse response = client.execute(get);
     HttpEntity entity = response.getEntity();
     if(entity.getContentType().getValue().equals("application/json")) { 
@@ -194,5 +198,10 @@ public class CloneCommand {
       }
     }
     return git;
+  }
+
+  @Override
+  public String getCommandName() {
+    return "clone";
   }
 }

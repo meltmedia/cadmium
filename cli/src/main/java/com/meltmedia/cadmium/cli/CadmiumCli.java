@@ -1,9 +1,19 @@
 package com.meltmedia.cadmium.cli;
 
 import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.github.ApiClient;
 
 public class CadmiumCli {
 	
@@ -23,49 +33,20 @@ public class CadmiumCli {
 		  HelpCommand helpCommand = new HelpCommand();
 		  jCommander.addCommand("help", helpCommand);
       
-      NewBranchCommand newBranchCommand = new NewBranchCommand();
-      jCommander.addCommand("new-branch", newBranchCommand);
-      
-      InitializeProjectCommand initProjectCommand = new InitializeProjectCommand();
-      jCommander.addCommand("init-project", initProjectCommand);
-		  
-		  InitializeCommand initCommand = new InitializeCommand();
-		  jCommander.addCommand("init-content", initCommand);
-		  
-		  InitializeWarCommand initWarCommand = new InitializeWarCommand();
-		  jCommander.addCommand("init-war", initWarCommand);
-      
-      CloneCommand cloneCommand = new CloneCommand();
-      jCommander.addCommand("clone", cloneCommand);
-      
-      RevertCommand revertCommand = new RevertCommand();
-      jCommander.addCommand("revert", revertCommand);
-      
-      UpdateCommand updateCommand = new UpdateCommand();
-      jCommander.addCommand("update", updateCommand);
-      
-      StatusCommand statusCommand = new StatusCommand();
-      jCommander.addCommand("status", statusCommand);
-		  
-		  HistoryCommand historyCommand = new HistoryCommand();
-		  jCommander.addCommand("history", historyCommand);
-		  
-		  CommitCommand commitCommand = new CommitCommand();
-		  jCommander.addCommand("commit", commitCommand);
-      
-      MaintenanceCommand maintenanceCommand = new MaintenanceCommand();
-      jCommander.addCommand("maint", maintenanceCommand);
+      Map<String, CliCommand> commands = wireCommands(jCommander);
 		  
 		  jCommander.parse(args);
 		  
 		  String commandName = jCommander.getParsedCommand();
 		  if( commandName == null ) {
-			  System.out.println("Use cadmium help for usage information.");
-			  return;
-		  }
-		  
-		  if( commandName.equals("help") ) {
-			  if( helpCommand.subCommand.size()==0 ) {
+		    System.out.println("Please use one of the following commands:");
+		    for(String command : jCommander.getCommands().keySet() ) {
+		      String desc = jCommander.getCommands().get(command).getObjects().get(0).getClass().getAnnotation(Parameters.class).commandDescription();
+		      System.console().format("   %16s    -%s\n", command, desc);
+		    }
+		  } 
+		  else if( commandName.equals("help") ) {
+			  if( helpCommand.subCommand == null || helpCommand.subCommand.size()==0 ) {
 				  jCommander.usage();
 				  return;
 			  }
@@ -78,44 +59,17 @@ public class CadmiumCli {
 				 subCommander.usage();
 				 return;
 			  }
-		  }
-		  else if( commandName.equals("update") ) {
-			  updateCommand.execute();
-		  }
-		  else if( commandName.equals("init-content") ) {
-		    initCommand.execute();
-		  }
-		  else if( commandName.equals("init-war") ) {
-		    initWarCommand.execute();
-		  }
-		  else if( commandName.equals("history") ) {
-		    historyCommand.execute();
-		  }
-		  else if ( commandName.equals("maint")) {
-		  	maintenanceCommand.execute();
-		  }
-		  else if ( commandName.equals("new-branch")) {
-		    newBranchCommand.execute();
 		  } 
-		  else if ( commandName.equals("init-project")) {
-		  	initProjectCommand.execute();
-		  }
-		  else if ( commandName.equals("status")) {
-			statusCommand.execute();
-		  }
-		  else if ( commandName.equals("clone")) {
-		    cloneCommand.execute();
-		  }
-		  else if ( commandName.equals("commit")) {
-		    commitCommand.execute();
-		  }
-		  else if ( commandName.equals("revert")) {
-		    revertCommand.execute();
+		  else if(commands.containsKey(commandName)){
+		    CliCommand command = commands.get(commandName);
+		    if(command instanceof AuthorizedOnly) {
+		      setupAuth((AuthorizedOnly) command);
+		    }
+		    command.execute();
 		  }
 		
 		}
 		catch( Exception e ) {
-			jCommander.usage();
 			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
@@ -127,6 +81,60 @@ public class CadmiumCli {
     if(sshDir.exists()) {
       GitService.setupLocalSsh(sshDir.getAbsolutePath());
     }
+	}
+	
+	private static void setupAuth(AuthorizedOnly authCmd) throws Exception {
+	  String token = ApiClient.getToken();
+	  
+	  if(token == null) {
+	    String username = System.console().readLine("Username [github]: ");
+	    String password = new String(System.console().readPassword("Password: "));
+	    List<String> scopes = new ArrayList<String>();
+	    scopes.add("repos");
+	    ApiClient.authorizeAndCreateTokenFile(username, password, scopes);
+	    
+	    token = ApiClient.getToken();
+	  }
+	  
+	  if(token != null) {
+	    authCmd.setToken(token);
+	  } else {
+	    System.err.println("Github auth failed");
+	    System.exit(1);
+	  }
+	}
+	
+	private static Map<String, CliCommand> wireCommands(JCommander jCommander) throws Exception {
+	  Map<String, CliCommand> commands = new LinkedHashMap<String, CliCommand>();
+	  String packageName = CadmiumCli.class.getPackage().getName();
+	  String dirName = packageName.replace(".", "/");
+	  Enumeration<URL> resources = CadmiumCli.class.getClassLoader().getResources(dirName);
+	  while(resources.hasMoreElements()) {
+	    URL resource = resources.nextElement();
+	    if(resource.getFile().contains("!")) {
+	      ZipFile resFile = new ZipFile(resource.getFile().split("\\!")[0].substring(5));
+	      Enumeration<? extends ZipEntry> entries = resFile.entries();
+	      while(entries.hasMoreElements()) {
+	        ZipEntry entry = entries.nextElement();
+    	    if(entry.getName().startsWith(dirName) && entry.getName().endsWith(".class")) {
+    	      String classFileName = entry.getName().substring(0, entry.getName().length() - 6);
+    	      try {
+      	      String fileName = classFileName.replace("/", ".");
+      	      Class<?> classInPackage = Class.forName(fileName);
+      	      if(CliCommand.class.isAssignableFrom(classInPackage) && !classInPackage.isInterface()) {
+      	        CliCommand command = (CliCommand) classInPackage.newInstance();
+      	        
+      	        commands.put(command.getCommandName(), command);
+      	        jCommander.addCommand(command.getCommandName(), command);
+      	      }
+    	      } catch(Throwable e) {
+    	        // I can't autowire this class.
+    	      }
+    	    }
+	      }
+	    }
+	  }
+	  return commands;
 	}
 
 }

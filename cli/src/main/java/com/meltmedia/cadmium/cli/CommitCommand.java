@@ -8,7 +8,7 @@ import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
 @Parameters(commandDescription="Commits content from a specific directory into a repo:branch that a site is serving from then updates the site to serve the new content.", separators="=")
-public class CommitCommand {
+public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand {
 
   @Parameter(names="--content-directory", description="The directory to pull content from.", required=false)
   private String content = ".";
@@ -37,7 +37,7 @@ public class CommitCommand {
     GitService git = null;
     try {
       System.out.println("Getting status of ["+site+"]");
-      Status status = CloneCommand.getSiteStatus(site);
+      Status status = CloneCommand.getSiteStatus(site, token);
   
       if(repo != null) {
         status.setRepo(repo);
@@ -56,7 +56,7 @@ public class CommitCommand {
       revision = CloneCommand.cloneContent(content, git, comment);
       
       System.out.println("Switching content on ["+site+"]");
-      CloneCommand.sendUpdateMessage(site, branch, revision, comment);
+      CloneCommand.sendUpdateMessage(site, branch, revision, comment, token);
       
     } catch(Exception e) {
       System.err.println("Failed to commit changes to ["+site+"]: "+e.getMessage());
@@ -66,5 +66,10 @@ public class CommitCommand {
       }
     }
     
+  }
+
+  @Override
+  public String getCommandName() {
+    return "commit";
   }
 }

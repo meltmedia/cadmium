@@ -9,6 +9,7 @@ import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
@@ -19,7 +20,7 @@ import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 
 @Path("/status")
-public class StatusService {
+public class StatusService extends AuthorizationService {
 
 	//constants
 	public final String ENVIRON_DEV = "dev";
@@ -54,8 +55,11 @@ public class StatusService {
 	
 	@GET	
 	@Produces("application/json")
-	public String status() {
-		
+	public String status(@HeaderParam("Authorization") String auth) throws Exception {
+	  if(!this.isAuth(auth)) {
+      throw new Exception("Unauthorized!");
+    }
+    
 		Map<String, Object> returnObj = new LinkedHashMap<String, Object>();
 		
 		// Get content directory

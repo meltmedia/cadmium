@@ -64,7 +64,7 @@ public class UpdateConfigTask implements Callable<Boolean> {
     
     if(manager != null) {
       try {
-        manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : "", lastUpdatedDir, properties.get("comment"), true);
+        manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), lastUpdatedDir, properties.get("comment"), true);
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }

@@ -6,6 +6,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -25,7 +26,7 @@ import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Path("/history")
-public class HistoryService {
+public class HistoryService extends AuthorizationService {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
@@ -43,7 +44,10 @@ public class HistoryService {
 
   @GET
   @Produces("application/json")
-  public String getHistory(@QueryParam("limit") @DefaultValue("-1") int limit, @QueryParam("filter") @DefaultValue("false") boolean filter) throws Exception {
+  public String getHistory(@QueryParam("limit") @DefaultValue("-1") int limit, @QueryParam("filter") @DefaultValue("false") boolean filter, @HeaderParam("Authorization") String auth) throws Exception {
+    if(!this.isAuth(auth)) {
+      throw new Exception("Unauthorized!");
+    }
     ChannelMember coordinator = membershipTracker.getCoordinator();
     if(coordinator.isMine()) {
       log.info("Responding with my own history");

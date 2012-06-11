@@ -6,6 +6,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -20,7 +21,7 @@ import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Path("/update")
-public class UpdateService {
+public class UpdateService extends AuthorizationService {
   private final Logger log = LoggerFactory.getLogger(getClass());
 
   @Inject
@@ -43,7 +44,11 @@ public class UpdateService {
   @POST
   @Consumes("application/x-www-form-urlencoded")
   @Produces("text/plain")
-  public String update(@FormParam("branch") String branch, @FormParam("sha") String sha, @FormParam("comment") String comment) throws Exception {
+  public String update(@FormParam("branch") String branch, @FormParam("sha") String sha, @FormParam("comment") String comment, @HeaderParam("Authorization") String auth) throws Exception {
+    if(!this.isAuth(auth)) {
+      throw new Exception("Unauthorized!");
+    }
+   
     if(sender != null) {
       if(comment != null && comment.trim().length() > 0) {
         log.debug("Sending update message");
@@ -56,6 +61,7 @@ public class UpdateService {
           msg.getProtocolParameters().put("sha", sha);
         }
         msg.getProtocolParameters().put("comment", comment);
+        msg.getProtocolParameters().put("openId", openId);
         sender.sendMessage(msg, null);
       } else {
         return "invalid request\n";

@@ -24,7 +24,7 @@ import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 
 @Parameters(commandDescription = "Lists history for a given site in human readable form.", separators="=")
-public class HistoryCommand {
+public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand {
   private static final Pattern URI_PATTERN = Pattern.compile("^(http[s]{0,1}://.*)$");
 
   @Parameter(names="-n", description="Limits number of history items returned.", required=false)
@@ -44,7 +44,7 @@ public class HistoryCommand {
       
       System.out.println("Showing history for "+site+":");
       
-      List<HistoryEntry> history = getHistory(siteUri, limit, filter);
+      List<HistoryEntry> history = getHistory(siteUri, limit, filter, token);
             
       displayHistory(history, false, null);
     } else {
@@ -86,7 +86,7 @@ public class HistoryCommand {
     }
   }
 
-  public static List<HistoryEntry> getHistory(String siteUri, int limit, boolean filter)
+  public static List<HistoryEntry> getHistory(String siteUri, int limit, boolean filter, String token)
       throws URISyntaxException, IOException, ClientProtocolException {
 
     if(!siteUri.endsWith("/system/history")) {
@@ -107,6 +107,7 @@ public class HistoryCommand {
       }
       URI uri = uriBuilder.build();
       get = new HttpGet(uri);
+      addAuthHeader(token, get);
       
       HttpResponse resp = httpClient.execute(get);
       if(resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -183,6 +184,11 @@ public class HistoryCommand {
       }
     }
     return timeString;
+  }
+
+  @Override
+  public String getCommandName() {
+    return "history";
   }
   
 }
