@@ -33,7 +33,7 @@ import com.meltmedia.cadmium.core.FileSystemManager;
 
 @Parameters(commandDescription="Initializes a new sites war from an existing war.", separators="=")
 public class InitializeWarCommand implements CliCommand {
-
+	
 	@Parameter(names="--existingWar", description="Path to an existing cadmium war.", required=false)
 	private String war;
 

@@ -16,7 +16,7 @@ import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.github.ApiClient;
 
 public class CadmiumCli {
-	
+
 	public static JCommander jCommander = null;
 
 	/**
@@ -75,12 +75,12 @@ public class CadmiumCli {
 		}
 
 	}
-	
+
 	private static void setupSsh() {
-    File sshDir = new File(System.getProperty("user.home"), ".ssh");
-    if(sshDir.exists()) {
-      GitService.setupLocalSsh(sshDir.getAbsolutePath());
-    }
+		File sshDir = new File(System.getProperty("user.home"), ".ssh");
+		if(sshDir.exists()) {
+			GitService.setupLocalSsh(sshDir.getAbsolutePath());
+		}
 	}
 	
 	private static void setupAuth(AuthorizedOnly authCmd) throws Exception {
