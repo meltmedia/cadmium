@@ -47,7 +47,7 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
 		if(entity.getContentType().getValue().equals("application/json")) {				
 						
             String responseContent = EntityUtils.toString(entity);  
-            log.info("responseContent: {}" + responseContent);
+            log.debug("responseContent: {}" + responseContent);
             Status statusObj = new Gson().fromJson(responseContent, new TypeToken<Status>() {}.getType());    
             List<StatusMember> members = statusObj.getMembers();
             

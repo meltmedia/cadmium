@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
@@ -55,7 +56,7 @@ public class StatusService extends AuthorizationService {
 	
 	@GET	
 	@Produces("application/json")
-	public String status(@HeaderParam("Authorization") String auth) throws Exception {
+	public String status(@HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
 	  if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }

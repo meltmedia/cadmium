@@ -2,6 +2,7 @@ package com.meltmedia.cadmium.servlets.jersey;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -25,7 +26,7 @@ public class MaintenanceService extends AuthorizationService {
 	@POST
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces("text/plain")
-	public String post(@FormParam("state") String state,@FormParam("comment") String comment, @HeaderParam("Authorization") String auth) throws Exception {
+	public String post(@FormParam("state") String state,@FormParam("comment") String comment, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
 	  if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }

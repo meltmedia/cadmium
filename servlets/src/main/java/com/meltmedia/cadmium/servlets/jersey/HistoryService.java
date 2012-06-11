@@ -44,7 +44,7 @@ public class HistoryService extends AuthorizationService {
 
   @GET
   @Produces("application/json")
-  public String getHistory(@QueryParam("limit") @DefaultValue("-1") int limit, @QueryParam("filter") @DefaultValue("false") boolean filter, @HeaderParam("Authorization") String auth) throws Exception {
+  public String getHistory(@QueryParam("limit") @DefaultValue("-1") int limit, @QueryParam("filter") @DefaultValue("false") boolean filter, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }

@@ -23,6 +23,9 @@ public class ApiClientTest {
   public void setupForTest() throws Exception {
     File cadmiumDir = new File(System.getProperty("user.home"),".cadmium");
     File tokenFile = new File(cadmiumDir, "github.token");
+    if(tokenFile.exists()) {
+      tokenFile.renameTo(new File(cadmiumDir, "github.token.old"));
+    }
     if(!tokenFile.exists()) {
       System.out.println("Token file doesn't exist.");
       if(username == null || password == null) {
@@ -54,6 +57,11 @@ public class ApiClientTest {
     File tokenFile = new File(cadmiumDir, "github.token");
     if(tokenFile.exists()) {
       tokenFile.delete();
+    }
+    tokenFile = new File(cadmiumDir, "github.token.old");
+
+    if(tokenFile.exists()) {
+      tokenFile.renameTo(new File(cadmiumDir, "github.token"));
     }
     
     if(tokenAuth != null) {

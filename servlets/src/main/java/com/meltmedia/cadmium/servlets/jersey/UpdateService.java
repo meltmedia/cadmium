@@ -5,6 +5,7 @@ import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -44,7 +45,7 @@ public class UpdateService extends AuthorizationService {
   @POST
   @Consumes("application/x-www-form-urlencoded")
   @Produces("text/plain")
-  public String update(@FormParam("branch") String branch, @FormParam("sha") String sha, @FormParam("comment") String comment, @HeaderParam("Authorization") String auth) throws Exception {
+  public String update(@FormParam("branch") String branch, @FormParam("sha") String sha, @FormParam("comment") String comment, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }

@@ -1,12 +1,19 @@
 package com.meltmedia.cadmium.cli;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +22,7 @@ import com.beust.jcommander.Parameters;
 
 
 @Parameters(commandDescription = "Deploys the cadmium war to the specified(domain) server", separators="=")
-public class DeployCommand implements CliCommand {
+public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -39,19 +46,38 @@ public class DeployCommand implements CliCommand {
 		DefaultHttpClient client = new DefaultHttpClient();
 		String url = site + JERSEY_ENDPOINT;	
 
-		log.info("site + JERSEY_ENDPOINT = {}", url);
+		log.debug("site + JERSEY_ENDPOINT = {}", url);
 
 		try {
 			
 			HttpPost post = new HttpPost(url);
+			addAuthHeader(post);
+			
+		  List<NameValuePair> params = new ArrayList<NameValuePair>();
+      params.add(new BasicNameValuePair("branch", branch));
+		  params.add(new BasicNameValuePair("repo", repo));
+		  params.add(new BasicNameValuePair("domain", domain));
+		  
+		  post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+			
 			HttpResponse response = client.execute(post);
-			HttpEntity entity = response.getEntity();
-			log.debug("entity content type: {}", entity.getContentType().getValue());
-			System.out.println("Successfully deployed cadmium application to [" + domain + "], with repo [" + repo + "] and branch [" + branch + "]");
+			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+  			HttpEntity entity = response.getEntity();
+  			String resp = EntityUtils.toString(entity);
+  			if(resp.equalsIgnoreCase("ok")) {
+    			log.debug("entity content type: {}", entity.getContentType().getValue());
+    			System.out.println("Successfully deployed cadmium application to [" + domain + "], with repo [" + repo + "] and branch [" + branch + "]");
+  			} else {
+  			  throw new Exception("");
+  			}
+			} else {
+        throw new Exception("Bad response status: "+response.getStatusLine().toString());
+			}
 		} 
 		catch (Exception e) {
-
+		  e.printStackTrace();
 			System.err.println("Failed to deploy cadmium application to [" + domain + "], with repo [" + repo + "] and branch [" + branch + "]");
+			System.exit(1);
 		}		
 
 	}
