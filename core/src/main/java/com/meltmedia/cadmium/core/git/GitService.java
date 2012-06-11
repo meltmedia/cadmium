@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 
 public class GitService {
   private static final Logger log = LoggerFactory.getLogger(GitService.class);
@@ -200,10 +201,14 @@ public class GitService {
       configProperties.setProperty("branch", cloned.getBranchName());
       configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
       
+      HistoryManager historyManager = new HistoryManager(warDir);
+      
+      
       FileWriter writer = null;
       try{
         writer = new FileWriter(configPropsFile);
         configProperties.store(writer, "initialized configuration properties");
+        historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "Initial content pull.", true);
       } finally {
         if(writer != null) {
           writer.close();

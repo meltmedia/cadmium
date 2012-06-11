@@ -85,12 +85,18 @@ public class CadmiumCli {
 	
 	private static void setupAuth(AuthorizedOnly authCmd) throws Exception {
 	  String token = ApiClient.getToken();
-	  
+	  if(token != null) {
+	    try {
+	      new ApiClient(token);
+	    } catch(Exception e) {
+	      token = null;
+	    }
+	  }
 	  if(token == null) {
 	    String username = System.console().readLine("Username [github]: ");
 	    String password = new String(System.console().readPassword("Password: "));
 	    List<String> scopes = new ArrayList<String>();
-	    scopes.add("repos");
+	    scopes.add("repo");
 	    ApiClient.authorizeAndCreateTokenFile(username, password, scopes);
 	    
 	    token = ApiClient.getToken();

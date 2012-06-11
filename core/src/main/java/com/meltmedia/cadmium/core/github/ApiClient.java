@@ -102,7 +102,7 @@ public class ApiClient {
       if(cadmiumToken != null) {
         File cadmiumDir = new File(cadmiumToken, ".cadmium").getAbsoluteFile();
         if(cadmiumDir.exists() || cadmiumDir.mkdirs()) {
-          FileSystemManager.writeStringToFile(cadmiumToken, "github.token", auth.getToken());
+          FileSystemManager.writeStringToFile(cadmiumDir.getAbsolutePath(), "github.token", auth.getToken());
         }
       }
     }
@@ -221,9 +221,12 @@ public class ApiClient {
       RateLimitResponse responseObj = new Gson().fromJson(responseString, new TypeToken<RateLimitResponse>() {}.getType());
       if(responseObj.rate != null) {
         if(responseObj.rate.remaining != null) { 
+          log.info("The remaining rate limit is {}", responseObj.rate.remaining);
           return responseObj.rate.remaining;
         }
       }
+    } else if(response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED){
+      throw new Exception("Unauthorized!");
     }
     return -1;
   }
