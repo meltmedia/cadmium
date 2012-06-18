@@ -150,7 +150,7 @@ public class ResourceManager extends TimerTask {
   @Override
   public void run() {
     try {
-      log.info("Running check to see if the safety has updated.");
+      log.debug("Running check to see if the safety has updated.");
       String updated[] = updateSafety();
       if(updated != null && updated.length > 0) {
         service.notifyListener(updated);
