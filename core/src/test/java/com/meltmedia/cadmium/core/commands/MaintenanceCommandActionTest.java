@@ -23,7 +23,6 @@ public class MaintenanceCommandActionTest {
 
 	@Test
 	public void testCommand() throws Exception {
-		DummyCoordinatedWorker worker = new DummyCoordinatedWorker();
 		DummyMessageSender sender = new DummyMessageSender();
 		DummySiteDownService siteDownService = new DummySiteDownService();
 		

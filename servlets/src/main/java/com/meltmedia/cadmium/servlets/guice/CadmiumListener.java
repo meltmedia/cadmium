@@ -57,6 +57,7 @@ import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.MetaConfigProvider;
 import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
 import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
+import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.FileServlet;
@@ -68,6 +69,9 @@ import com.meltmedia.cadmium.servlets.jersey.HistoryService;
 import com.meltmedia.cadmium.servlets.jersey.StatusService;
 import com.meltmedia.cadmium.servlets.jersey.UpdateService;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
+
+import com.meltmedia.cadmium.vault.guice.VaultModule;
+import com.meltmedia.cadmium.vault.service.VaultConstants;
 
 /**
  * Builds the context with the Guice framework. To see how this works, go to:
@@ -83,7 +87,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   public static final String BASE_PATH_ENV = "com.meltmedia.cadmium.contentRoot";
   public static final String SSH_PATH_ENV = "com.meltmedia.cadmium.github.sshKey";
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
-  public static final String SSL_HEADER = "Request_Is_SSL";
+  public static final String SSL_HEADER = "REQUEST_IS_SSL";
   public File sharedContentRoot;
   public File applicationContentRoot;
   private String repoDir = "git-checkout";
@@ -266,7 +270,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     return new ServletModule() {
       @Override
       protected void configureServlets() {
-
+        
         Properties configProperties = new Properties();
         configProperties.putAll(System.getenv());
         configProperties.putAll(System.getProperties());
@@ -383,10 +387,17 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(SslRedirectConfigProcessor.class);
         bind(new TypeLiteral<List<ConfigProcessor>>() {}).toProvider(MetaConfigProvider.class).in(Scopes.SINGLETON);
         
+        bind(SiteConfigProcessor.class);
+        
         //This should be the name of a header that BigIp will set if the incoming request was SSL
         bind(String.class).annotatedWith(Names.named(SslRedirectFilter.SSL_HEADER_NAME)).toInstance(SSL_HEADER);
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
+        
+        install(new VaultModule());
+        
+        //bind vault cache-directory
+        bind(String.class).annotatedWith(Names.named(VaultConstants.CACHE_DIRECTORY)).toInstance(new File(applicationContentRoot, "vault").getAbsoluteFile().getAbsolutePath());
 
         // Bind Jersey Endpoints
         bind(UpdateService.class).asEagerSingleton();

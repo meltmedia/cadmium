@@ -64,12 +64,17 @@ public class UpdateConfigTask implements Callable<Boolean> {
     
     if(manager != null) {
       try {
-        manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), lastUpdatedDir, properties.get("comment"), true);
+        manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), lastUpdatedDir, properties.get("comment"), !new Boolean(properties.get("nonRevertible")));
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }
     }
-    
+    if(configProperties.containsKey("updating.to.sha")) {
+      configProperties.remove("updating.to.sha");
+    }
+    if(configProperties.containsKey("updating.to.branch")) {
+      configProperties.remove("updating.to.branch");
+    }
     try{
       updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
     } catch(Exception e) {

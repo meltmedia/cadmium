@@ -106,7 +106,7 @@ public final class FileSystemManager {
 
           @Override
           public boolean accept(File file, String name) {
-            return name.endsWith("."+ext);
+            return !file.isDirectory() && name.endsWith("."+ext);
           }
           
         });
@@ -130,7 +130,7 @@ public final class FileSystemManager {
         @Override
         public boolean accept(File file, String name) {
           if(baseName != null && baseName.length() > 0) {
-            return file.isAbsolute() && name.startsWith(baseName);
+            return file.isDirectory() && file.isAbsolute() && name.startsWith(baseName);
           }
           return file.isDirectory();
         }

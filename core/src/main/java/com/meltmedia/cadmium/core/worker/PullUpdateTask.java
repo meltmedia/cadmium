@@ -1,5 +1,6 @@
 package com.meltmedia.cadmium.core.worker;
 
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -13,10 +14,12 @@ public class PullUpdateTask implements Callable<Boolean> {
   
   private GitService service;
   private Future<Boolean> previousTask;
+  private Properties configProperties;
   
-  public PullUpdateTask(GitService service, Future<Boolean> previousTask) {
+  public PullUpdateTask(GitService service, Properties configProperties, Future<Boolean> previousTask) {
     this.service = service;
     this.previousTask = previousTask;
+    this.configProperties = configProperties;
   }
   
   @Override
@@ -29,8 +32,13 @@ public class PullUpdateTask implements Callable<Boolean> {
     }
     if(!service.isTag(service.getBranchName())) {
       log.info("Pulling latest Github updates.");
-      return service.pull();
+      boolean retVal = service.pull();
+      configProperties.setProperty("updating.to.sha", service.getCurrentRevision());
+      configProperties.setProperty("updating.to.branch", service.getBranchName());
+      return retVal;
     } else {
+      configProperties.setProperty("updating.to.sha", service.getCurrentRevision());
+      configProperties.setProperty("updating.to.branch", service.getBranchName());
       log.info("Skipping pull since tags cannot update.");
       return true;
     }

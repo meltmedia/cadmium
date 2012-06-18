@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.eclipse.jgit.api.AddCommand;
@@ -386,12 +387,11 @@ public class GitService {
     } catch(Exception e) {
       log.debug("Fetch from origin failed.", e);
     }
-    List<RevTag> tags = git.tagList().call();
-    if(tags != null && tags.size() > 0) {
-      for(RevTag tag : tags) {
-        if(tag.getTagName().equals(tagname)) {
-          return true;
-        }
+    Map<String, Ref> allRefs = repository.getTags();
+    for(String key : allRefs.keySet()) {
+      Ref ref = allRefs.get(key);
+      if(key.equals(tagname) && ref.getName().equals("refs/tags/" + tagname)) {
+        return true;
       }
     }
     return false;

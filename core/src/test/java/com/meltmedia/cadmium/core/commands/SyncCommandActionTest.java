@@ -67,7 +67,7 @@ public class SyncCommandActionTest {
       }
 
       @Override
-      public void workFailed() {
+      public void workFailed(String branch, String sha, String openId) {
       }
       
     };

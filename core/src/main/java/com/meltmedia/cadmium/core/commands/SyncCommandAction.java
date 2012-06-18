@@ -76,7 +76,7 @@ public class SyncCommandAction implements CommandAction {
         }
 
         @Override
-        public void workFailed() {
+        public void workFailed(String branch, String sha, String openId) {
           log.info("Sync failed");
           worker.setListener(oldListener);
         }

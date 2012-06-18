@@ -1,7 +1,5 @@
 package com.meltmedia.cadmium.status;
 
-import org.jgroups.Address;
-
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 
 public class StatusMember {

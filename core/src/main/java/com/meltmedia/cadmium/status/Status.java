@@ -2,8 +2,6 @@ package com.meltmedia.cadmium.status;
 
 import java.util.List;
 
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
-
 public class Status {
 
 	public Status(String environment, String repo, String branch, String revision, String source, String maintPageState, List<StatusMember> members) {

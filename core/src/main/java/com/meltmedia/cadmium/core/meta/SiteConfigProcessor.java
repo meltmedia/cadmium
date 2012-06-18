@@ -1,5 +1,7 @@
 package com.meltmedia.cadmium.core.meta;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -8,7 +10,6 @@ import javax.inject.Singleton;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.meltmedia.cadmium.core.FileSystemManager;
 
 @Singleton
 public class SiteConfigProcessor {
@@ -27,9 +28,8 @@ public class SiteConfigProcessor {
   
   public void processDir(String contentDirectory) throws Exception {
     log.info("Checking for a META-INF directory in {}", contentDirectory);
-    String metaDir = FileSystemManager.getChildDirectoryIfExists(contentDirectory, "META-INF");
+    String metaDir = new File(contentDirectory, "META-INF").getAbsoluteFile().getAbsolutePath();
     if(metaDir != null) {
-      log.info("meta directory exists {}", metaDir);
       if(processors != null) {
         boolean failed = false;
         log.info("Running {} processor[s] for {} directory", processors.size(), metaDir);
@@ -37,8 +37,10 @@ public class SiteConfigProcessor {
           try {
             log.info("Running {}", processor.getClass().getName());
             processor.processFromDirectory(metaDir);
+          } catch(IOException e) {
+            throw e;
           } catch(Exception e){
-            log.error("Failed to processes config", e);
+            log.error("Failed to process config", e);
             failed = true;
           }
         }

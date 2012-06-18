@@ -67,31 +67,39 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
     synchronized(pool) {
       log.info("Beginning Update...");
       lastTask = null;
-      
-      if(properties.containsKey("branch")) {
-        lastTask = pool.submit(new SwitchBranchTask(service, properties.get("branch"), lastTask));
+      try {
+        if(properties.containsKey("sha")) {
+          configProperties.setProperty("updating.to.sha", properties.get("sha"));
+        }
+        if(properties.containsKey("branch")) {
+          configProperties.setProperty("updating.to.branch", properties.get("branch"));
+          lastTask = pool.submit(new SwitchBranchTask(service, properties.get("branch"), lastTask));
+        }
+        
+        lastTask = pool.submit(new PullUpdateTask(service, configProperties, lastTask));
+        
+        if(properties.containsKey("sha")) {
+          lastTask = pool.submit(new ResetToRevTask(service, properties.get("sha"), configProperties, lastTask));
+        }
+        
+        String contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+        if(contentDir == null || contentDir.length() == 0) {
+          contentDir = this.contentDir;
+        }
+        
+        lastTask = pool.submit(new CreateNewRenderedDirectoryTask(service, contentDir, properties, lastTask));
+        
+        lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
+        
+        lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, historyManager, lastTask));
+        
+        lastTask = pool.submit(new NotifyListenerTask(listener, properties, lastTask));
+        
+        lastTask = pool.submit(new CleanUpTask(listener, configProperties, properties, lastTask));
+      } catch(Throwable t) {
+        log.error("Failed to run update.", t);
+        throw new Error(t);
       }
-      
-      lastTask = pool.submit(new PullUpdateTask(service, lastTask));
-      
-      if(properties.containsKey("sha")) {
-        lastTask = pool.submit(new ResetToRevTask(service, properties.get("sha"), lastTask));
-      }
-      
-      String contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
-      if(contentDir == null || contentDir.length() == 0) {
-        contentDir = this.contentDir;
-      }
-      
-      lastTask = pool.submit(new CreateNewRenderedDirectoryTask(service, contentDir, properties, lastTask));
-      
-      lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
-      
-      lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, historyManager, lastTask));
-      
-      lastTask = pool.submit(new NotifyListenerTask(listener, lastTask));
-      
-      lastTask = pool.submit(new CleanUpTask(listener, configProperties, lastTask));
     }
   }
 
@@ -127,10 +135,19 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void workFailed() {
+  public void workFailed(String branch, String sha, String openId) {
     log.info("Work has failed");
     Message doneMessage = new Message();
     doneMessage.setCommand(ProtocolMessage.UPDATE_FAILED);
+    if(branch != null) {
+      doneMessage.getProtocolParameters().put("branch", branch);
+    }
+    if(sha != null) {
+      doneMessage.getProtocolParameters().put("sha", sha);
+    }
+    if(openId != null) {
+      doneMessage.getProtocolParameters().put("openId", openId);
+    }
     try {
       sender.sendMessage(doneMessage, null);
     } catch (Exception e) {

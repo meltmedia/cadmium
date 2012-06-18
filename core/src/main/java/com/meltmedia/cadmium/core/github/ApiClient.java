@@ -108,9 +108,9 @@ public class ApiClient {
     }
   }
   
-  public static List<Integer> getAuthorizationIds(String username, String password) throws Exception {
+  public static List<Long> getAuthorizationIds(String username, String password) throws Exception {
     int limitRemain = getRateLimitRemain(null);
-    List<Integer> authIds = new ArrayList<Integer>();
+    List<Long> authIds = new ArrayList<Long>();
     if(limitRemain > 0) {
       DefaultHttpClient client = new DefaultHttpClient();
       
@@ -124,7 +124,7 @@ public class ApiClient {
           for(Map<String, Object> auth : auths) {
             if(auth != null && auth.containsKey("id")) {
               Double id = (Double)auth.get("id");
-              authIds.add(id.intValue());
+              authIds.add(id.longValue());
             }
           }
         }
@@ -139,7 +139,7 @@ public class ApiClient {
     message.addHeader("Authorization", "Basic "+Base64.encodeBytes(new String(username+":"+password).getBytes()));
   }
   
-  public void deauthorizeToken(String username, String password, int authId) throws Exception {
+  public void deauthorizeToken(String username, String password, long authId) throws Exception {
     int limitRemain = getRateLimitRemain();
     if(limitRemain > 0) {
       DefaultHttpClient client = new DefaultHttpClient();
@@ -231,6 +231,52 @@ public class ApiClient {
     return -1;
   }
   
+  public long commentOnCommit(String repoUri, String sha, String comment) throws Exception {
+    String orgRepo = getOrgRepo(repoUri);
+    
+    HttpClient client = new DefaultHttpClient();
+    
+    HttpPost post = new HttpPost("https://api.github.com/repos/" + orgRepo + "/commits/" + sha + "/comments");
+    addAuthHeader(post);
+    
+    Comment commentBody = new Comment();
+    commentBody.body = comment;
+    
+    String commentJsonString = new Gson().toJson(commentBody, Comment.class);
+    log.info("Setting a new comment [{}]", commentJsonString);
+    post.setEntity(new StringEntity(commentJsonString));
+    
+    HttpResponse response = client.execute(post);
+    
+    if(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+      String resp = EntityUtils.toString(response.getEntity());
+      IdExtractor id = new Gson().fromJson(resp, IdExtractor.class);
+      return id.id;
+    } else {
+      throw new Exception("Failed to create new comment of commit ["+orgRepo+":"+sha+"]: "+response.getStatusLine().toString());
+    }
+  }
+
+  public static String getOrgRepo(String repoUri) throws Exception {
+    repoUri = repoUri.replace(".git", "");
+    repoUri = repoUri.split(":")[1];
+    String orgName = null;
+    String repoName = null;
+    String splitRepo[] = repoUri.split("/");
+    for(int i=0; i<splitRepo.length; i++) {
+      if(i > 0) {
+        if(splitRepo[i-1].trim().length() > 0 && splitRepo[i].trim().length() > 0) {
+          orgName = splitRepo[i-1];
+          repoName = splitRepo[i];
+        }
+      }
+    }
+    if(orgName == null || repoName == null) {
+      throw new Exception("Invalid repo uri");
+    }
+    return orgName + "/" + repoName;
+  } 
+  
   private void addAuthHeader(HttpMessage message) {
     addAuthHeader(message, token);
   }
@@ -240,6 +286,15 @@ public class ApiClient {
       message.addHeader("Authorization", "token "+token);
     }
   }  
+  
+  private static class IdExtractor {
+    Long id;
+  }
+  
+  private static class Comment {
+    @SuppressWarnings("unused")
+    String body;
+  }
   
   private static class Rate {
     Integer remaining;
@@ -255,13 +310,13 @@ public class ApiClient {
   }
   
   public static class Authorization {
-    protected Integer id;
+    protected Long id;
     protected String token;
     protected String scopes[];
-    public Integer getId() {
+    public Long getId() {
       return id;
     }
-    public void setId(Integer id) {
+    public void setId(Long id) {
       this.id = id;
     }
     public String getToken() {

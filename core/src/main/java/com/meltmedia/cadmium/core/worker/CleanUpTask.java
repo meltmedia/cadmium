@@ -1,5 +1,6 @@
 package com.meltmedia.cadmium.core.worker;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -15,10 +16,12 @@ public class CleanUpTask implements Callable<Boolean> {
   private Properties configProperties;
   private Future<Boolean> previousTask;
   private CoordinatedWorkerListener listener;
+  private Map<String, String> properties;
   
-  public CleanUpTask(CoordinatedWorkerListener listener, Properties configProperties, Future<Boolean> previousTask) {
+  public CleanUpTask(CoordinatedWorkerListener listener, Properties configProperties, Map<String, String> properties, Future<Boolean> previousTask) {
     this.configProperties = configProperties;
     this.previousTask = previousTask;
+    this.properties = properties;
     this.listener = listener;
   }
 
@@ -31,7 +34,8 @@ public class CleanUpTask implements Callable<Boolean> {
           throw new Exception("Previous task failed");
         }
       } catch(Exception e) {
-        listener.workFailed();
+        log.warn("Work failed!", e);
+        listener.workFailed(properties.get("branch"), properties.get("sha"), properties.get("openId"));
         return false;
       }
     }

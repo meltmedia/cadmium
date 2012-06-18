@@ -22,7 +22,6 @@ public class UpdateCommandActionTest {
   public void testCommand() throws Exception {
     DummyCoordinatedWorker worker = new DummyCoordinatedWorker();
     DummyMessageSender sender = new DummyMessageSender();
-    DummySiteDownService siteDown = new DummySiteDownService();
     
     LifecycleService service = new LifecycleService();
  

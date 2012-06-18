@@ -9,8 +9,6 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.gson.stream.JsonReader;
-
 public class HistoryManagerTest {
   private static final String INIT_HISTORY_CONTENT = "[{\"timestamp\":\"May 29, 2012 2:10:32 PM\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":1000,\"openId\":\"me\",\"servedDirectory\":\"./target/history-test\",\"revertible\":true,\"comment\":\"This is it\"}," +
   		"{\"timestamp\":\"May 29, 2012 2:10:31 PM\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":0,\"openId\":\"auto\",\"servedDirectory\":\"./target/history-test\",\"revertible\":false,\"comment\":\"This is an init log\"}]";

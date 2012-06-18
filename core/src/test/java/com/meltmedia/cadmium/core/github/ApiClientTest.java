@@ -40,7 +40,7 @@ public class ApiClientTest {
       }
        
       List<String> scopes = new ArrayList<String>();
-      scopes.add("repos");
+      scopes.add("repo");
       
       tokenAuth = ApiClient.authorize(username, password, scopes);
       
@@ -81,7 +81,7 @@ public class ApiClientTest {
   
   @Test
   public void testGetAuthorizationIds() throws Exception {
-    List<Integer> ids = ApiClient.getAuthorizationIds(username, password);
+    List<Long> ids = ApiClient.getAuthorizationIds(username, password);
     
     assertTrue("No id returned", ids != null && ids.size() > 0);
     assertTrue("Current auth id not in list", ids.contains(tokenAuth.getId()));
@@ -92,5 +92,24 @@ public class ApiClientTest {
     int limit = ApiClient.getRateLimitRemain(tokenAuth.getToken());
     
     assertTrue("Limit not greater than 0", limit > 0);
+  }
+  
+  @Test
+  public void testGetOrgRepo() throws Exception {
+    String orgRepoHttps = ApiClient.getOrgRepo("https://github.com/meltmedia/test-content-repo.git");
+    assertTrue("Bad Org/Repo for Https", orgRepoHttps != null && orgRepoHttps.equals("meltmedia/test-content-repo"));
+    String orgRepoSsh  = ApiClient.getOrgRepo("git@github.com:meltmedia/test-content-repo.git");
+    assertTrue("Bad Org/Repo for SSH", orgRepoSsh != null && orgRepoSsh.equals("meltmedia/test-content-repo"));
+    String orgRepoReadOnly  = ApiClient.getOrgRepo("git://github.com/meltmedia/test-content-repo.git");
+    assertTrue("Bad Org/Repo for Read Only", orgRepoReadOnly != null && orgRepoReadOnly.equals("meltmedia/test-content-repo"));
+  }
+  
+  @Test
+  public void testComments() throws Exception {
+    ApiClient client = new ApiClient(tokenAuth.getToken());
+    
+    long id = client.commentOnCommit("https://github.com/meltmedia/test-content-repo.git", "ae457d2ea15f3ce7d0a53cc01d12d3bb5c971ddb", "This is a comment from the junit test case.");
+    
+    assertTrue("The id is invalid", id > 0);
   }
 }
