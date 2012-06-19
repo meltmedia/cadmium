@@ -355,8 +355,10 @@ public class CadmiumListener extends GuiceServletContextListener {
         filter("/*").through(RedirectFilter.class);
         filter("/*").through(SslRedirectFilter.class);
 
+        String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
+        
         // Bind channel name
-        bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+warName);
+        bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+warName+"-"+environment);
         
         bind(String.class).annotatedWith(Names.named("applicationContentRoot")).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
         
