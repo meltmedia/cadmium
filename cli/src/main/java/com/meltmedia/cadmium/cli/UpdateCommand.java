@@ -26,19 +26,20 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Parameter(names="--branch", description="The branch that you are updating", required=false)
+	@Parameter(names={"--branch", "-b", "--tag", "-t"}, description="The branch that you are updating", required=true)
 	private String branch;
 
-	@Parameter(names="--revision", description="The revision that you are updating to", required=false)
+	@Parameter(names={"--revision", "-r"}, description="The revision that you are updating to", required=false)
 	private String revision;
 
-	@Parameter(names="--site", description="The site that is to be updated", required=true)
-	private String site;
+	@Parameter(description="<site>", required=true)
+	private List<String> site;
 
-	@Parameter(names="--comment", description="The comment for the history", required=true)
-	private String comment;
 
-	@Parameter(names="--force", description="Force the update", required=false)
+	@Parameter(names={"--comment", "-m"}, description="The comment for the history", required=true)
+	private String message;
+
+	@Parameter(names={"--force", "-f"}, description="Force the update", required=false)
 	private boolean force;
 
 	public static final String JERSEY_ENDPOINT = "/system/update";
@@ -46,7 +47,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	public void execute() throws ClientProtocolException, IOException {
 
 		DefaultHttpClient client = new DefaultHttpClient();
-		
+
 		String url = site + JERSEY_ENDPOINT;	
 
 		log.debug("site + JERSEY_ENDPOINT = {}", url);
@@ -55,70 +56,68 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		System.out.println("Getting status of ["+site+"]");
 		try {
 
-			Status siteStatus = CloneCommand.getSiteStatus(site, token);
+			Status siteStatus = CloneCommand.getSiteStatus(site.get(0), token);
 
 			boolean branchSame = false;
 			boolean revisionSame = false;
 			boolean forceUpdate = force;
-			
+
 			String currentRevision = siteStatus.getRevision();
 			String currentBranch = siteStatus.getBranch();
-					
+
 
 			log.info("branch = {}, and currentBranch = {}", branch, currentBranch);
-			
-			if(branch == null || branch.trim().equals(currentBranch.trim())) {
-				//update the branch to requested branch
-				branch = currentBranch.trim();
+
+			if(branch != null && branch.trim().equals(currentBranch.trim())) {
+								
 				branchSame = true;
 			}
-			
+
 			log.info("revision = {}, and currentRevision = {}", revision, currentRevision);
-						
-			if(revision == null || revision.trim().equals(currentRevision.trim())) {
-				//update the branch to requested branch
-				revision = currentRevision.trim();
+
+			if(revision != null && revision.trim().equals(currentRevision.trim())) {
+							
 				revisionSame = true;
 			}
 
 			log.info("branchSame = {}, and revisionSame = {}", branchSame, revisionSame);
-			
+
 			if(branchSame && revisionSame && !forceUpdate) {
-				
+
 				System.out.println("The site [" + site  + "] is already on branch [" + branch  + "] and revision [" + revision  + "].");
 			}
 			else {				
 
 				HttpPost post = new HttpPost(url);
-		    addAuthHeader(post);
+				addAuthHeader(post);
 				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
-				
-				if(!branchSame) {
-					
+
+				if(branch != null) {
+
 					nvps.add(new BasicNameValuePair("branch", branch.trim()));
 				}
-				
-				if(!revisionSame) {
-					
+
+				if(revision != null) {
+
 					nvps.add(new BasicNameValuePair("sha", revision.trim()));
 				}
-				nvps.add(new BasicNameValuePair("comment", comment.trim()));
-	
+				nvps.add(new BasicNameValuePair("comment", message.trim()));
+
 				post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
 				HttpResponse response = client.execute(post);
 
-	      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-	        HttpEntity entity = response.getEntity();
-	        String resp = EntityUtils.toString(entity);
-	        if(resp.equalsIgnoreCase("ok")) {
-	          System.out.println("Success!");
-	        } else {
-	          System.out.println(resp);
-	        }
-	      } else {
-	        System.out.println(response.toString());
-	      }
-	      
+				if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					HttpEntity entity = response.getEntity();
+					String resp = EntityUtils.toString(entity);
+					if(resp.equalsIgnoreCase("ok")) {
+						System.out.println("Success!");
+					} else {
+						System.out.println(resp);
+					}
+				} else {
+					System.out.println(response.toString());
+				}
+
 			}
 
 		} 
@@ -129,8 +128,8 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	}
 
-  @Override
-  public String getCommandName() {
-    return "update";
-  }
+	@Override
+	public String getCommandName() {
+		return "update";
+	}
 }
