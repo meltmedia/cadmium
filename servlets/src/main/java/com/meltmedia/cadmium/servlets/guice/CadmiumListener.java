@@ -2,6 +2,7 @@ package com.meltmedia.cadmium.servlets.guice;
 
 import java.io.File;
 import java.io.FileReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,6 +88,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   public static final String BASE_PATH_ENV = "com.meltmedia.cadmium.contentRoot";
   public static final String SSH_PATH_ENV = "com.meltmedia.cadmium.github.sshKey";
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
+  public static final String JGROUPS_CHANNEL_CONFIG_URL = "com.meltmedia.cadmium.jgroups.channel.config";
   public static final String SSL_HEADER = "REQUEST_IS_SSL";
   public File sharedContentRoot;
   public File applicationContentRoot;
@@ -96,6 +98,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private List<ChannelMember> members;
   private String warName;
   private String repoUri;
+  private String channelConfigUrl;
 
   private Injector injector = null;
 
@@ -256,6 +259,29 @@ public class CadmiumListener extends GuiceServletContextListener {
       log.warn("The content directory exists, but we cannot write to it.");
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     }
+    
+    String channelCfgUrl = System.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
+    if(channelCfgUrl != null) {
+      File channelCfgFile = null;
+      URL fileUrl = null;
+      try {
+        fileUrl = new URL(channelCfgUrl);
+      } catch(Exception e) {
+        channelCfgFile = new File(channelCfgUrl);
+      }
+      if(fileUrl == null && channelCfgFile != null) {
+        if(!channelCfgFile.isAbsolute() && !channelCfgFile.exists()) {
+          channelCfgFile = new File(this.sharedContentRoot, channelCfgUrl);
+          if(channelCfgFile.exists()) {
+            this.channelConfigUrl = "file://" + channelCfgFile.getAbsoluteFile().getAbsolutePath();
+          }
+        } else {
+          this.channelConfigUrl = "file://" + channelCfgFile.getAbsoluteFile().getAbsolutePath();
+        }
+      } else if(fileUrl != null) {
+        this.channelConfigUrl = fileUrl.toString();
+      }
+    }
 
     injector = Guice.createInjector(createServletModule());
     super.contextInitialized(servletContextEvent);
@@ -371,8 +397,18 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
 
         // Bind Config file URL
-        URL propsUrl = JChannelProvider.class.getClassLoader().getResource("tcp.xml");
-        bind(URL.class).annotatedWith(Names.named(JChannelProvider.CONFIG_NAME)).toInstance(propsUrl);
+        if(channelConfigUrl == null) {
+          log.info("Using internal tcp.xml configuration file for JGroups.");
+          URL propsUrl = JChannelProvider.class.getClassLoader().getResource("tcp.xml");
+          bind(URL.class).annotatedWith(Names.named(JChannelProvider.CONFIG_NAME)).toInstance(propsUrl);
+        } else {
+          try {
+            log.info("Using {} configuration file for JGroups.", channelConfigUrl);
+            bind(URL.class).annotatedWith(Names.named(JChannelProvider.CONFIG_NAME)).toInstance(new URL(channelConfigUrl));
+          } catch (MalformedURLException e) {
+            log.error("Failed to setup jgroups with the file specified ["+channelConfigUrl+"]. Failing back to built in configuration!", e);
+          }
+        }
 
         // Bind JChannel provider
         bind(JChannel.class).toProvider(JChannelProvider.class).in(Scopes.SINGLETON);
