@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,6 +43,11 @@ public class HistoryManagerTest {
     }
     
     manager = new HistoryManager(testDirectory);
+  }
+  
+  @After
+  public void cleanUp() throws Exception {
+    historyFile.delete();
   }
   
   @Test
