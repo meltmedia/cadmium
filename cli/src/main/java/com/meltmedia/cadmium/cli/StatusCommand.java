@@ -20,20 +20,22 @@ import com.meltmedia.cadmium.status.Status;
 import com.meltmedia.cadmium.status.StatusMember;
 
 
-@Parameters(commandDescription = "Displays status info for a site", separators="=")
+@Parameters(commandDescription = "Displays status info for a site")
 public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
-	@Parameter(names="--site", description="The site for which the status is desired", required=true)
-	private String site;	
+	@Parameter(description="<site>", required=true)
+	private List<String> site;	
 
 	public static final String JERSEY_ENDPOINT = "/system/status";
 
 	public void execute() throws ClientProtocolException, IOException {
 
 		DefaultHttpClient client = new DefaultHttpClient();
-		String url = site + JERSEY_ENDPOINT;	
+		
+		String siteUrl = site.get(0);		
+		String url = siteUrl + JERSEY_ENDPOINT;	
 		
 		log.debug("site + JERSEY_ENDPOINT = {}", url);
 		
@@ -54,7 +56,7 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
             log.debug(statusObj.toString());              
            
             System.out.println();
-            System.out.println("Current status for [" + site +"]"); 
+            System.out.println("Current status for [" + siteUrl +"]"); 
             System.out.println("-----------------------------------------------------");
             System.out.println(
             		"Environment      => [" + statusObj.getEnvironment() + "]\n" +
