@@ -26,8 +26,11 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Parameter(names={"--branch", "-b", "--tag", "-t"}, description="The branch that you are updating", required=true)
+	@Parameter(names={"--branch", "-b", "--tag", "-t"}, description="The branch that you are updating", required=false)
 	private String branch;
+	
+	@Parameter(names={"--tag", "-t"}, description="The branch that you are updating", required=false)
+	private String tag;
 
 	@Parameter(names={"--revision", "-r"}, description="The revision that you are updating to", required=false)
 	private String revision;
@@ -36,7 +39,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	private List<String> site;
 
 
-	@Parameter(names={"--comment", "-m"}, description="The comment for the history", required=true)
+	@Parameter(names={"--message", "-m"}, description="The comment for the history", required=true)
 	private String message;
 
 	@Parameter(names={"--force", "-f"}, description="Force the update", required=false)
@@ -48,23 +51,28 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 		DefaultHttpClient client = new DefaultHttpClient();
 
-		String url = site + JERSEY_ENDPOINT;	
+		String siteUrl = site.get(0);
+		String url = siteUrl + JERSEY_ENDPOINT;	
 
 		log.debug("site + JERSEY_ENDPOINT = {}", url);
 
 
-		System.out.println("Getting status of ["+site+"]");
+		System.out.println("Getting status of ["+ siteUrl +"]");
 		try {
 
-			Status siteStatus = CloneCommand.getSiteStatus(site.get(0), token);
+			Status siteStatus = CloneCommand.getSiteStatus(siteUrl, token);
 
 			boolean branchSame = false;
 			boolean revisionSame = false;
 			boolean forceUpdate = force;
+			boolean isTag = false;
 
 			String currentRevision = siteStatus.getRevision();
 			String currentBranch = siteStatus.getBranch();
 
+			if(tag != null) {
+				
+			}
 
 			log.info("branch = {}, and currentBranch = {}", branch, currentBranch);
 
@@ -84,7 +92,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 			if(branchSame && revisionSame && !forceUpdate) {
 
-				System.out.println("The site [" + site  + "] is already on branch [" + branch  + "] and revision [" + revision  + "].");
+				System.out.println("The site [" + siteUrl  + "] is already on branch [" + branch + "] and revision [" + revision  + "].");
 			}
 			else {				
 
@@ -123,7 +131,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		} 
 		catch (Exception e) {
 
-			System.err.println("Failed to updated site [" + site  + "] to branch [" + branch  + "] and revision [" + revision  + "].");
+			System.err.println("Failed to updated site [" + siteUrl  + "] to branch [" + branch  + "] and revision [" + revision  + "].");
 		}
 
 	}
