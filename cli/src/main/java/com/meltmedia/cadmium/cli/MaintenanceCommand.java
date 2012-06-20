@@ -21,11 +21,11 @@ import com.beust.jcommander.Parameters;
 @Parameters(commandDescription = "Toggles on and off maintenance page", separators="=")
 public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCommand {
 
-	@Parameter(description="[on|off] <site>", required=true)
+	@Parameter(description="<on|off> <site>", required=true)
 	private List<String> paramList;
 
-	@Parameter(names="--comment", description="Comment", required=true)
-	private String comment;
+	@Parameter(names={"--message", "-m"}, description="Comment", required=true)
+	private String message;
 
 	private String site;
 	private String state;
@@ -34,18 +34,18 @@ public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCom
 	public void execute() throws ClientProtocolException, IOException {
 
 		DefaultHttpClient client = new DefaultHttpClient();
-		String url = site + JERSEY_ENDPOINT;
 
 		if(paramList.size() == 2) {
 			state = paramList.get(0);
 			site = paramList.get(1);
+			String url = site + JERSEY_ENDPOINT;
 			if(state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off")) {
 				HttpPost post = new HttpPost(url);
 		    addAuthHeader(post);
 		    
 				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
 				nvps.add(new BasicNameValuePair("state", state.trim()));
-				nvps.add(new BasicNameValuePair("comment", comment.trim()));
+				nvps.add(new BasicNameValuePair("comment", message.trim()));
 	
 				post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
 				HttpResponse response = client.execute(post);
