@@ -35,8 +35,8 @@
     </dependency>
     
     <dependency>
-      <groupId>jgroups</groupId>
-      <artifactId>jgroups-all</artifactId>
+      <groupId>org.jgroups</groupId>
+      <artifactId>jgroups</artifactId>
     </dependency>
     
     <dependency>

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,6 +45,11 @@ public class HistoryManagerTest {
     manager = new HistoryManager(testDirectory);
   }
   
+  @After
+  public void cleanUp() throws Exception {
+    historyFile.delete();
+  }
+  
   @Test
   public void testNoLogConstructor() throws Exception {
     new HistoryManager("./target");
@@ -67,7 +73,8 @@ public class HistoryManagerTest {
     List<HistoryEntry> history = manager.getHistory(2, false);
     
     assertTrue("The incorrect number of history items were returned.", history.size() == 2);
-    assertTrue("History order wrong", history.get(0).getTimeLive() == 1000l && history.get(1).getTimeLive() == 0l);
+    System.err.println("History[0].timeLive="+history.get(0).getTimeLive() + ", History[1].timeLive=" + history.get(1).getTimeLive());
+    assertTrue("History order wrong", history.get(0).getTimeLive() >= 500l && history.get(1).getTimeLive() == 0l);
     
     history = manager.getHistory(2, true);
     
