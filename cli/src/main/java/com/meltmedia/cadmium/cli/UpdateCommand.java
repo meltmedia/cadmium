@@ -65,30 +65,40 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 			boolean branchSame = false;
 			boolean revisionSame = false;
 			boolean forceUpdate = force;
-			boolean isTag = false;
-
+			boolean isTagAlone = false;
+			
+			//if tag is NOT null and either the branch or the revision are NOT null, error out, else continue
+			if(tag != null && branch == null && revision == null) {
+				
+				log.debug("Tag was inputted by itself.");
+				isTagAlone = true;
+			}
+			else if(tag != null) {	
+				
+				System.err.println("Tag was inputted with either a branch or a revision.");
+				System.err.println("Please input the tag without a branch and revision.");
+				System.exit(1);
+			}
+			
 			String currentRevision = siteStatus.getRevision();
 			String currentBranch = siteStatus.getBranch();
+			
 
-			if(tag != null) {
-				
-			}
-
-			log.info("branch = {}, and currentBranch = {}", branch, currentBranch);
-
+			log.debug("branch = {}, and currentBranch = {}", branch, currentBranch);
+			
 			if(branch != null && branch.trim().equals(currentBranch.trim())) {
 								
 				branchSame = true;
 			}
 
-			log.info("revision = {}, and currentRevision = {}", revision, currentRevision);
+			log.debug("revision = {}, and currentRevision = {}", revision, currentRevision);
 
 			if(revision != null && revision.trim().equals(currentRevision.trim())) {
 							
 				revisionSame = true;
 			}
 
-			log.info("branchSame = {}, and revisionSame = {}", branchSame, revisionSame);
+			log.debug("branchSame = {}, and revisionSame = {}", branchSame, revisionSame);
 
 			if(branchSame && revisionSame && !forceUpdate) {
 
@@ -99,16 +109,25 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 				HttpPost post = new HttpPost(url);
 				addAuthHeader(post);
 				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
-
-				if(branch != null) {
-
-					nvps.add(new BasicNameValuePair("branch", branch.trim()));
+					
+				//check to see if tag was inputted without branch and revision
+				if(isTagAlone) {
+					
+					nvps.add(new BasicNameValuePair("branch", tag.trim()));					
 				}
-
-				if(revision != null) {
-
-					nvps.add(new BasicNameValuePair("sha", revision.trim()));
+				else {
+					
+					if(branch != null) {
+						
+						nvps.add(new BasicNameValuePair("branch", branch.trim()));
+					}
+	
+					if(revision != null) {
+	
+						nvps.add(new BasicNameValuePair("sha", revision.trim()));
+					}					
 				}
+				
 				nvps.add(new BasicNameValuePair("comment", message.trim()));
 
 				post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
@@ -131,7 +150,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		} 
 		catch (Exception e) {
 
-			System.err.println("Failed to updated site [" + siteUrl  + "] to branch [" + branch  + "] and revision [" + revision  + "].");
+			System.err.println("Failed to updated site [" + siteUrl  + "] to branch [" + branch  + "] and revision [" + revision  + "], or tag [" + tag + "].");
 		}
 
 	}

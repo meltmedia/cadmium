@@ -41,7 +41,7 @@ public class InitializeWarCommand implements CliCommand {
 	private String repoUri;  
 
 
-	@Parameter(names={"--branch","--tag"}, description="Initial branch to serve content from.", required=false)
+	@Parameter(names={"--branch", "-b","--tag", "-t"}, description="Initial branch to serve content from.", required=false)
 	private String branch;
 
 	@Parameter(names="--domain", description="Sets the domain name that this war will bind to.", required=false)

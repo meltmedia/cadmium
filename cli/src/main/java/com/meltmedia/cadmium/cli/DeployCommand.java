@@ -35,7 +35,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	@Parameter(names="--branch", description="The branch from which cadmium will serve content initially", required=true)
 	private String branch;
 	
-	@Parameter(description="The branch from which cadmium will serve content initially", required=true)
+	@Parameter(description="<site>", required=true)
 	private List<String> site;
 
 	public static final String JERSEY_ENDPOINT = "/deploy";

@@ -27,7 +27,7 @@ import com.meltmedia.cadmium.status.Status;
 public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
   public static final String UPDATE_ENDPOINT = "/system/update";
 
-  @Parameter(description="<source-site> <destination-site>", required=true)
+  @Parameter(description="<source-site> <target-site>", required=true)
   private List<String> sites;
   
   @Parameter(names="--repo", description="Overrides the repository url from the server.", required=false)
