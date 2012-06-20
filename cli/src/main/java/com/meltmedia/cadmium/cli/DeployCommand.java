@@ -35,18 +35,18 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	@Parameter(names="--branch", description="The branch from which cadmium will serve content initially", required=true)
 	private String branch;
 	
-	@Parameter(names="--site", description="The branch from which cadmium will serve content initially", required=true)
-	private String site;
-	
+	@Parameter(description="The branch from which cadmium will serve content initially", required=true)
+	private List<String> site;
 
 	public static final String JERSEY_ENDPOINT = "/deploy";
 
 	public void execute() throws ClientProtocolException, IOException {
 
 		DefaultHttpClient client = new DefaultHttpClient();
-		String url = site + JERSEY_ENDPOINT;	
+		String siteUrl = site.get(0);
+		String url = siteUrl + JERSEY_ENDPOINT;	
 
-		log.debug("site + JERSEY_ENDPOINT = {}", url);
+		log.debug("siteUrl + JERSEY_ENDPOINT = {}", url);
 
 		try {
 			
