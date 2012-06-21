@@ -24,15 +24,15 @@ public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCom
 	@Parameter(description="<on|off> <site>", required=true)
 	private List<String> paramList;
 
-	@Parameter(names={"--message", "-m"}, description="Comment", required=true)
-	private String message;
+	@Parameter(names={"--message", "-m"}, description="Comment", required=false)
+	private String message = "toggling maintenance page";
 
 	private String site;
 	private String state;
 	private final String JERSEY_ENDPOINT = "/system/maintenance";
 
 	public void execute() throws ClientProtocolException, IOException {
-
+		
 		DefaultHttpClient client = new DefaultHttpClient();
 
 		if(paramList.size() == 2) {

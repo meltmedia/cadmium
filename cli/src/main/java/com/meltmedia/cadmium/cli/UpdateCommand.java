@@ -26,10 +26,10 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Parameter(names={"--branch", "-b", "--tag", "-t"}, description="The branch that you are updating", required=false)
+	@Parameter(names={"--branch", "-b"}, description="The branch that you are updating to", required=false)
 	private String branch;
 	
-	@Parameter(names={"--tag", "-t"}, description="The branch that you are updating", required=false)
+	@Parameter(names={"--tag", "-t"}, description="The tag that you are updating to - should not be used with a branch or with a revision", required=false)
 	private String tag;
 
 	@Parameter(names={"--revision", "-r"}, description="The revision that you are updating to", required=false)
@@ -113,18 +113,21 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 				//check to see if tag was inputted without branch and revision
 				if(isTagAlone) {
 					
-					nvps.add(new BasicNameValuePair("branch", tag.trim()));					
+					nvps.add(new BasicNameValuePair("branch", tag.trim()));	
+					log.debug("revision being added = {}", revision);
 				}
 				else {
 					
 					if(branch != null) {
 						
 						nvps.add(new BasicNameValuePair("branch", branch.trim()));
+						log.debug("branch being added = {}", branch);
 					}
 	
 					if(revision != null) {
 	
 						nvps.add(new BasicNameValuePair("sha", revision.trim()));
+						log.debug("revision being added = {}", revision);
 					}					
 				}
 				
