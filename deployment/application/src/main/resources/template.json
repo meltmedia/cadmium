@@ -1,0 +1,212 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09", 
+    "Description": "Starts a Cadmium Instance", 
+    "Parameters": {
+        "AvailabilityZone": {
+            "Type": "String"
+        }, 
+        "Environment": {
+            "Description": "The type of environment to create.", 
+            "Type": "String"
+        }, 
+        "Host": {
+            "Description": "The host name for the cluster.", 
+            "Type": "String"
+        }, 
+        "KeyName": {
+            "Description": "The name of the key for accessing the nodes.", 
+            "Type": "String"
+        }, 
+        "SecurityGroup": {
+            "Description": "Specify an external security group to add the nodes into.", 
+            "Type": "String"
+        }
+    }, 
+    "Resources": {
+        "CadmiumControllerCName": {
+            "Description": "The CNAME record for the domain controller.", 
+            "Properties": {
+                "HostedZoneId": "/hostedzone/ZCD7YP7AJKBS4", 
+                "Name": {
+                    "Fn::Join": [
+                        "", 
+                        [
+                            {
+                                "Ref": "Host"
+                            }, 
+                            "."
+                        ]
+                    ]
+                }, 
+                "ResourceRecords": [
+                    {
+                        "Ref": "CadmiumELB"
+                    }
+                ], 
+                "TTL": "20", 
+                "Type": "CNAME"
+            }, 
+            "Type": "AWS::Route53::RecordSet"
+        }, 
+        "CadmiumELB": {
+            "Properties": {
+                "AvailabilityZones": [
+                    {
+                        "Ref": "AvailabilityZone"
+                    }
+                ], 
+                "HealthCheck": {
+                    "HealthyThreshold": "2", 
+                    "Interval": "6", 
+                    "Target": "HTTP:8080/index.html", 
+                    "Timeout": "5", 
+                    "UnhealthyThreshold": "2"
+                }, 
+                "Instances": [
+                    {
+                        "Ref": "CadmiumNode1"
+                    }, 
+                    {
+                        "Ref": "CadmiumNode2"
+                    }
+                ], 
+                "Listeners": [
+                    {
+                        "InstancePort": "8080", 
+                        "LoadBalancerPort": "80", 
+                        "PolicyNames": [], 
+                        "Protocol": "HTTP"
+                    }
+                ]
+            }, 
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer"
+        }, 
+        "CadmiumElbIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+            "FromPort": "8080", 
+            "GroupName": {
+                "Ref": "CadmiumSecurityGroup"
+            }, 
+            "IpProtocol": "tcp", 
+            "SourceSecurityGroupName": {
+                "Fn::GetAtt": [
+                    "CadmiumELB", 
+                    "SourceSecurityGroup.GroupName"
+                ]
+            }, 
+            "SourceSecurityGroupOwnerId": {
+                "Fn::GetAtt": [
+                    "CadmiumELB", 
+                    "SourceSecurityGroup.OwnerAlias"
+                ]
+            }, 
+            "ToPort": "8080"
+          }
+        }, 
+        "CadmiumNode1": {
+            "Properties": {
+                "AvailabilityZone": {
+                    "Ref": "AvailabilityZone"
+                }, 
+                "DisableApiTermination": "FALSE", 
+                "ImageId": "ami-0fc59d4a", 
+                "InstanceType": "m1.small", 
+                "KernelId": "aki-8d396bc8", 
+                "KeyName": {
+                    "Ref": "KeyName"
+                }, 
+                "Monitoring": "false", 
+                "SecurityGroups": [
+                    {
+                        "Ref": "CadmiumSecurityGroup"
+                    }, 
+                    {
+                        "Ref": "SecurityGroup"
+                    }
+                ], 
+                "Tags": [
+                    {
+                        "Key": "Type", 
+                        "Value": "Cadmium"
+                    }, 
+                    {
+                        "Key": "Environment", 
+                        "Value": {
+                            "Ref": "Environment"
+                        }
+                    }
+                ]
+            }, 
+            "Type": "AWS::EC2::Instance"
+        }, 
+        "CadmiumNode2": {
+            "Properties": {
+                "AvailabilityZone": {
+                    "Ref": "AvailabilityZone"
+                }, 
+                "DisableApiTermination": "FALSE", 
+                "ImageId": "ami-0fc59d4a", 
+                "InstanceType": "m1.small", 
+                "KernelId": "aki-8d396bc8", 
+                "KeyName": {
+                    "Ref": "KeyName"
+                }, 
+                "Monitoring": "false", 
+                "SecurityGroups": [
+                    {
+                        "Ref": "CadmiumSecurityGroup"
+                    }, 
+                    {
+                        "Ref": "SecurityGroup"
+                    }
+                ], 
+                "Tags": [
+                    {
+                        "Key": "Type", 
+                        "Value": "Cadmium"
+                    }, 
+                    {
+                        "Key": "Environment", 
+                        "Value": {
+                            "Ref": "Environment"
+                        }
+                    }
+                ]
+            }, 
+            "Type": "AWS::EC2::Instance"
+        }, 
+        "CadmiumSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "A group that allows the load balancer to talk to the cadmium nodes."
+            }, 
+            "Type": "AWS::EC2::SecurityGroup"
+        }, 
+        "CadmiumWildcardCName": {
+            "Description": "The wildcard CNAME record for deployed applications.", 
+            "Properties": {
+                "HostedZoneId": "/hostedzone/ZCD7YP7AJKBS4", 
+                "Name": {
+                    "Fn::Join": [
+                        "", 
+                        [
+                            "\\052.", 
+                            {
+                                "Ref": "Host"
+                            }, 
+                            "."
+                        ]
+                    ]
+                }, 
+                "ResourceRecords": [
+                    {
+                        "Ref": "CadmiumELB"
+                    }
+                ], 
+                "TTL": "20", 
+                "Type": "CNAME"
+            }, 
+            "Type": "AWS::Route53::RecordSet"
+        }
+    }
+}
