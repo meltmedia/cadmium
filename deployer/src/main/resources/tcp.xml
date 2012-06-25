@@ -1,6 +1,6 @@
 <config>
     <TCP loopback="true"></TCP>
-    <JDBC_PING datasource_jndi_name="java:/gene/unified_sling/DataSource"></JDBC_PING>
+    <MPING timeout="3000" num_initial_members="3"></MPING>
     <MERGE2 min_interval="5000" max_interval="10000"></MERGE2>
     <FD timeout="2500" max_tries="5"></FD>
     <VERIFY_SUSPECT timeout="1500"></VERIFY_SUSPECT>

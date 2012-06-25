@@ -42,12 +42,20 @@
   
   <dependencies>
     <dependency>
+      <groupId>org.jgroups</groupId>
+      <artifactId>jgroups</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
       <artifactId>cadmium-servlets</artifactId>
     </dependency>
     <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
       <artifactId>cadmium-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
     </dependency>
     <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
