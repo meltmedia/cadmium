@@ -1,10 +1,12 @@
 package com.meltmedia.cadmium.servlets.jersey;
 
+import java.io.FileInputStream;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.github.ApiClient;
 
 public class AuthorizationService {
@@ -21,10 +23,23 @@ public class AuthorizationService {
       gitClient = new ApiClient(authString);
       String env = System.getProperty("com.meltmedia.cadmium.environment", "dev");
       Properties teamsProps = new Properties();
+      String teamsFile = System.getProperty("com.meltmedia.cadmium.teams.properties");
+      FileInputStream inStream = null;
       try {
-        teamsProps.load(getClass().getClassLoader().getResourceAsStream("teams.properties"));
+        if(teamsFile != null && FileSystemManager.canRead(teamsFile)) {
+          inStream = new FileInputStream(teamsFile);
+          teamsProps.load(inStream);
+        } else {
+          teamsProps.load(getClass().getClassLoader().getResourceAsStream("teams.properties"));
+        }
       } catch(Exception e){
         log.warn("Failed to load a team.properties file, skipping team based authentication.", e);
+      } finally {
+        if(inStream != null) {
+          try {
+            inStream.close();
+          } catch(Exception e){}
+        }
       }
       String defaultId = teamsProps.getProperty("default");
       String teamIdString = teamsProps.getProperty(env);
