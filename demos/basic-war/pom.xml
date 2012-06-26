@@ -36,5 +36,9 @@
       <groupId>com.google.inject.extensions</groupId>
       <artifactId>guice-servlet</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.meltmedia.jgroups.aws</groupId>
+      <artifactId>jgroups-aws</artifactId>
+    </dependency>
   </dependencies>
 </project>

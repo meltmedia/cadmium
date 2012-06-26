@@ -8,15 +8,13 @@
          ucast_recv_buf_size="80000"  
          loopback="true"  
          max_bundle_size="60000"  
-         max_bundle_timeout="30" 
-         use_incoming_packet_handler="false" 
-         use_outgoing_packet_handler="false" 
+         max_bundle_timeout="30"  
          enable_bundling="false"></UDP>
     <MPING timeout="3000" num_initial_members="3"></MPING>
     <MERGE2 min_interval="5000" max_interval="10000"></MERGE2>
     <FD timeout="2500" max_tries="5"></FD>
     <VERIFY_SUSPECT timeout="1500"></VERIFY_SUSPECT>
-    <pbcast.NAKACK gc_lag="100" retransmit_timeout="3000"></pbcast.NAKACK>
+    <pbcast.NAKACK retransmit_timeout="3000"></pbcast.NAKACK>
     <pbcast.STABLE desired_avg_gossip="20000"></pbcast.STABLE>
     <pbcast.GMS join_timeout="5000"
                 print_local_addr="false"></pbcast.GMS>

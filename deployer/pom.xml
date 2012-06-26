@@ -69,5 +69,9 @@
       <type>war</type>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.meltmedia.jgroups.aws</groupId>
+      <artifactId>jgroups-aws</artifactId>
+    </dependency>
   </dependencies>
 </project>
