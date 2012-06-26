@@ -27,34 +27,25 @@ import com.meltmedia.cadmium.status.Status;
 public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
   public static final String UPDATE_ENDPOINT = "/system/update";
 
-  @Parameter(names="--site1", description="The url to the site to clone from.", required=true)
-  private String site1;
-
-  @Parameter(names="--site2", description="The url to the site to clone to.", required=true)
-  private String site2;
+  @Parameter(description="<source-site> <target-site>", required=true)
+  private List<String> sites;
   
   @Parameter(names="--repo", description="Overrides the repository url from the server.", required=false)
   private String repo;
   
-  @Parameter(names="--tagname", description="The name of a tag to create to serve site2 from.", required=false)
+  @Parameter(names={"--tag", "-t"}, description="The name of a tag to create to serve site2 from.", required=false)
   private String tagname;
   
-  @Parameter(description="comment", required=true)
-  private List<String> comments;
-  
+  @Parameter(names={"--message", "-m"}, description="comment", required=true)
   private String comment;
   
   public void execute() throws Exception {
     GitService site1Service = null;
-    GitService site2Service = null;
-    for(String comment : comments) {
-      if(this.comment == null) {
-        this.comment = "";
-      } else {
-        this.comment += " ";
-      }
-      this.comment += comment;
-    }
+    GitService site2Service = null;    
+    
+    String site1 = sites.get(0);
+    String site2 = sites.get(1);
+    
     try{
       System.out.println("Getting status of ["+site1+"]");
       Status site1Status = getSiteStatus(site1, token);

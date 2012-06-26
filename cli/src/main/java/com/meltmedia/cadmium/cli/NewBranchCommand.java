@@ -11,7 +11,7 @@ public class NewBranchCommand implements CliCommand {
   @Parameter(names="--repo", description="Repository URI", required=true)
   private String repo;
   
-  @Parameter(description="\"New branch name\"", required=true)
+  @Parameter(description="<newBranchName>", required=true)
   private List<String> basename;
   
   public void execute() throws Exception {

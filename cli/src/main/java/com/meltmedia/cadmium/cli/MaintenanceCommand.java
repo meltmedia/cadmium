@@ -21,46 +21,51 @@ import com.beust.jcommander.Parameters;
 @Parameters(commandDescription = "Toggles on and off maintenance page", separators="=")
 public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCommand {
 
-	@Parameter(names="--state", description="The state of the maintenance page", required=true)
-	private String state;
+	@Parameter(description="<on|off> <site>", required=true)
+	private List<String> paramList;
 
-	@Parameter(names="--site", description="Site whos maintenance page is being Toggled", required=true)
+	@Parameter(names={"--message", "-m"}, description="Comment", required=false)
+	private String message = "toggling maintenance page";
+
 	private String site;
-
-	@Parameter(names="--comment", description="Comment", required=true)
-	private String comment;
-
+	private String state;
 	private final String JERSEY_ENDPOINT = "/system/maintenance";
 
 	public void execute() throws ClientProtocolException, IOException {
-
+		
 		DefaultHttpClient client = new DefaultHttpClient();
-		String url = site + JERSEY_ENDPOINT;
 
-		if(state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off")) {
-			HttpPost post = new HttpPost(url);
-	    addAuthHeader(post);
-	    
-			List <NameValuePair> nvps = new ArrayList <NameValuePair>();
-			nvps.add(new BasicNameValuePair("state", state.trim()));
-			nvps.add(new BasicNameValuePair("comment", comment.trim()));
-
-			post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
-			HttpResponse response = client.execute(post);
-
-      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-        HttpEntity entity = response.getEntity();
-        String resp = EntityUtils.toString(entity);
-        if(resp.equalsIgnoreCase("ok")) {
-          System.out.println("Success!");
-        } else {
-          System.out.println(resp);
-        }
-      } else {
-        System.out.println(response.toString());
-      }
+		if(paramList.size() == 2) {
+			state = paramList.get(0);
+			site = paramList.get(1);
+			String url = site + JERSEY_ENDPOINT;
+			if(state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off")) {
+				HttpPost post = new HttpPost(url);
+		    addAuthHeader(post);
+		    
+				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
+				nvps.add(new BasicNameValuePair("state", state.trim()));
+				nvps.add(new BasicNameValuePair("comment", message.trim()));
+	
+				post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
+				HttpResponse response = client.execute(post);
+	
+	      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+	        HttpEntity entity = response.getEntity();
+	        String resp = EntityUtils.toString(entity);
+	        if(resp.equalsIgnoreCase("ok")) {
+	          System.out.println("Success!");
+	        } else {
+	          System.out.println(resp);
+	        }
+	      } else {
+	        System.out.println(response.toString());
+	      }
+			} else {
+				System.err.println("Invalid State. Please use 'on' or 'off'.");
+			}
 		} else {
-			System.err.println("Invalid State. Please use 'on' or 'off'.");
+			System.err.println("Invalid Number of Parameters");
 		}
 	}
 

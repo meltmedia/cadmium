@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.apache.commons.logging.Log;
 import org.jgroups.Address;
 import org.jgroups.ChannelClosedException;
 import org.jgroups.ChannelException;
@@ -46,17 +45,7 @@ public class DummyJChannel extends JChannel {
   }
 
   @Override
-  protected void checkNotConnected() throws ChannelNotConnectedException {
-  }
-
-  @Override
   public synchronized void close() {
-  }
-
-  @Override
-  public synchronized boolean connect(String cluster_name, Address target,
-      String state_id, long timeout) throws ChannelException {
-    return true;
   }
 
   @Override
@@ -77,7 +66,7 @@ public class DummyJChannel extends JChannel {
     return null;
   }
 
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   public Map dumpStats() {
     return null;
@@ -121,11 +110,6 @@ public class DummyJChannel extends JChannel {
   
   public void setLocalAddress(Address local) {
     this.localAddress = local;
-  }
-
-  @Override
-  protected Log getLog() {
-    return null;
   }
 
   @Override
@@ -266,11 +250,6 @@ public class DummyJChannel extends JChannel {
   }
 
   @Override
-  public boolean startFlush(long arg0, int arg1, boolean arg2) {
-    return true;
-  }
-
-  @Override
   public boolean statsEnabled() {
     return true;
   }
@@ -282,10 +261,6 @@ public class DummyJChannel extends JChannel {
   @Override
   public String toString(boolean details) {
     return null;
-  }
-
-  @Override
-  public void up(Event arg0) {
   }
 
 }

@@ -19,11 +19,10 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
   @Parameter(names="-n", description="Specifies which history item to revert to. (Not to be used with -i option)", required=false)
   private Long index;
   
-  @Parameter(names="--site", description="The url to the site to revert.", required=true)
-  private String site;
+  @Parameter(description="<site>", required=true)
+  private List<String> site;
   
-  @Parameter(description="comment", required=true)
-  private List<String> commentLines;
+  @Parameter(names={"--message", "-m"}, description="comment", required=true)  
   private String comment;
   
   public void execute() throws Exception {
@@ -32,16 +31,9 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
       System.exit(1);
     }
     
-    for(String commentLine : commentLines) {
-      if(comment == null) {
-        comment = "";
-      } else {
-        comment += " ";
-      }
-      comment += commentLine;
-    }
+    String siteUrl = site.get(0);
     
-    List<HistoryEntry> history = HistoryCommand.getHistory(site, -1, false, token);
+    List<HistoryEntry> history = HistoryCommand.getHistory(siteUrl, -1, false, token);
     HistoryEntry selectedEntry = null;
     if(interactive && history != null && history.size() > 0) {
       HistoryCommand.displayHistory(history, true, 5);
@@ -57,16 +49,16 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
         }
       }
     } else if(history == null || history.isEmpty()) {
-      System.err.println("No history returned by ["+site+"]");
+      System.err.println("No history returned by ["+siteUrl+"]");
     } else {
       selectedEntry = processIndex(history);
     }
     if(selectedEntry != null) {
       if(interactive) {
-        System.out.println("Switching content on ["+site+"]");
+        System.out.println("Switching content on ["+siteUrl+"]");
       }
       log.debug("Reverting to branch {}, revision {}, comment [{}]", new Object [] {selectedEntry.getBranch(), selectedEntry.getRevision(), selectedEntry.getComment()});
-      CloneCommand.sendUpdateMessage(site, selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token);
+      CloneCommand.sendUpdateMessage(siteUrl, selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token);
     } else {
       System.exit(1);
     }

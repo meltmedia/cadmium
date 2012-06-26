@@ -127,6 +127,9 @@ public class CadmiumCli {
     	      try {
       	      String fileName = classFileName.replace("/", ".");
       	      Class<?> classInPackage = Class.forName(fileName);
+      	      
+      	      //System.out.println("classFileName: " + classFileName);
+      	      
       	      if(CliCommand.class.isAssignableFrom(classInPackage) && !classInPackage.isInterface()) {
       	        CliCommand command = (CliCommand) classInPackage.newInstance();
       	        
