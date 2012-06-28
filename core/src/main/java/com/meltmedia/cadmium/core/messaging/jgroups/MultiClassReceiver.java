@@ -1,5 +1,8 @@
 package com.meltmedia.cadmium.core.messaging.jgroups;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -45,18 +48,23 @@ public class MultiClassReceiver implements Receiver, MessageListener, Membership
   }
 
   @Override
-  public byte[] getState() {
-    return messageListener.getState();
-  }
-
-  @Override
   public void receive(Message arg0) {
     log.trace("Received message deligating to {"+this.messageListener+"}");
     messageListener.receive(arg0);
   }
 
   @Override
-  public void setState(byte[] arg0) {
+  public void unblock() {
+    membershipListener.unblock();
+  }
+
+  @Override
+  public void getState(OutputStream arg0) throws Exception {
+    messageListener.getState(arg0);
+  }
+
+  @Override
+  public void setState(InputStream arg0) throws Exception {
     messageListener.setState(arg0);
   }
 

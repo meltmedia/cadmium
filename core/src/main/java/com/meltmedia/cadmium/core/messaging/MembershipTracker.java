@@ -10,13 +10,13 @@ import javax.inject.Singleton;
 
 import org.jgroups.Address;
 import org.jgroups.JChannel;
+import org.jgroups.MembershipListener;
 import org.jgroups.View;
-import org.jgroups.blocks.MembershipListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-public class MembershipTracker extends MembershipListenerAdapter {
+public class MembershipTracker implements MembershipListener {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   protected MessageSender sender;
@@ -38,7 +38,6 @@ public class MembershipTracker extends MembershipListenerAdapter {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public void viewAccepted(View new_view) {
     if(this.members != null) {
@@ -149,7 +148,7 @@ public class MembershipTracker extends MembershipListenerAdapter {
   
   private boolean isMine(Address newAddress) {
     boolean mine = false;
-    if(newAddress != null && newAddress.toString().equals(channel.getLocalAddress().toString())) {
+    if(newAddress != null && newAddress.toString().equals(channel.getAddress().toString())) {
       mine = true;
     }
     return mine;
@@ -164,6 +163,21 @@ public class MembershipTracker extends MembershipListenerAdapter {
       }
     }
     return null;
+  }
+
+  @Override
+  public void block() {
+    
+  }
+
+  @Override
+  public void suspect(Address arg0) {
+    
+  }
+
+  @Override
+  public void unblock() {
+    
   }
 
 }

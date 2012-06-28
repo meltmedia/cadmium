@@ -1,6 +1,8 @@
 package com.meltmedia.cadmium.deployer;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,24 +99,31 @@ public class JGroupsMessagingListener implements ServletContextListener, Receive
   }
 
   @Override
-  public byte[] getState() {
-    return null;
-  }
-
-  @Override
-  public void setState(byte[] arg0) {}
-
-  @Override
   public void block() {}
 
   @Override
   public void suspect(Address arg0) {
-    logger.info("Deployer node is suspected of being down {}", arg0);
+    logger.debug("Deployer node is suspected of being down {}", arg0);
   }
 
   @Override
   public void viewAccepted(View arg0) {
-    logger.info("Deployer; new view accepted {}", arg0);
+    logger.debug("Deployer; new view accepted {}", arg0);
+  }
+
+  @Override
+  public void getState(OutputStream arg0) throws Exception {
+    
+  }
+
+  @Override
+  public void setState(InputStream arg0) throws Exception {
+    
+  }
+
+  @Override
+  public void unblock() {
+    
   }
 
 }
