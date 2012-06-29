@@ -1,6 +1,23 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09", 
     "Description": "Starts a Cadmium Instance", 
+    "Outputs": {
+        "URL": {
+            "Description": "URL", 
+            "Value": {
+                "Fn::Join": [
+                    "", 
+                    [
+                        "http://", 
+                        {
+                            "Ref": "Host"
+                        }, 
+                        "/"
+                    ]
+                ]
+            }
+        }
+    }, 
     "Parameters": {
         "AvailabilityZone": {
             "Type": "String"
@@ -19,8 +36,19 @@
         }, 
         "SecurityGroup": {
             "Description": "Specify an external security group to add the nodes into.", 
-            "Type": "String"
-        }
+            "Type": "String",
+            "Default": "default"
+        },
+        "AWSAccessKey" : {
+          "Description": "The access key that will be used during initialization of the nodes.",
+          "NoEcho": "TRUE",
+          "Type": "String"
+        },
+        "AWSSecretKey" : {
+          "Description": "The secret key that will be used during initialization of the nodes.",
+          "NoEcho": "TRUE",
+          "Type": "String"
+         }
     }, 
     "Resources": {
         "CadmiumControllerCName": {
@@ -82,27 +110,27 @@
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer"
         }, 
         "CadmiumElbIngress": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
             "Properties": {
-            "FromPort": "8080", 
-            "GroupName": {
-                "Ref": "CadmiumSecurityGroup"
+                "FromPort": "8080", 
+                "GroupName": {
+                    "Ref": "CadmiumSecurityGroup"
+                }, 
+                "IpProtocol": "tcp", 
+                "SourceSecurityGroupName": {
+                    "Fn::GetAtt": [
+                        "CadmiumELB", 
+                        "SourceSecurityGroup.GroupName"
+                    ]
+                }, 
+                "SourceSecurityGroupOwnerId": {
+                    "Fn::GetAtt": [
+                        "CadmiumELB", 
+                        "SourceSecurityGroup.OwnerAlias"
+                    ]
+                }, 
+                "ToPort": "8080"
             }, 
-            "IpProtocol": "tcp", 
-            "SourceSecurityGroupName": {
-                "Fn::GetAtt": [
-                    "CadmiumELB", 
-                    "SourceSecurityGroup.GroupName"
-                ]
-            }, 
-            "SourceSecurityGroupOwnerId": {
-                "Fn::GetAtt": [
-                    "CadmiumELB", 
-                    "SourceSecurityGroup.OwnerAlias"
-                ]
-            }, 
-            "ToPort": "8080"
-          }
+            "Type": "AWS::EC2::SecurityGroupIngress"
         }, 
         "CadmiumNode1": {
             "Properties": {
@@ -136,7 +164,43 @@
                             "Ref": "Environment"
                         }
                     }
-                ]
+                ], 
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "", 
+                            [
+                                "#!/bin/bash -ex", 
+                                "\n", 
+                                "apt-get update\n", 
+                                "apt-get -y install python-setuptools\n", 
+                                "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.1.tar.gz\n", 
+                                "cfn-init --region ", 
+                                {
+                                    "Ref": "AWS::Region"
+                                }, 
+                                "    -s ", 
+                                {
+                                    "Ref": "AWS::StackName"
+                                }, 
+                                " -r ApplicationEC2Instance ", 
+                                "         --access-key ", 
+                                {
+                                    "Ref": "AWSAccessKey"
+                                }, 
+                                "         --secret-key ", 
+                                {
+                                    "Ref": "AWSSecretKey"
+                                }, 
+                                " || error_exit 'Failed to run cfn-init'\n", 
+                                "# Fixup path and links for the bootstrap script\n", 
+                                "export PATH=$PATH:/var/lib/gems/1.8/bin\n", 
+                                "mkdir -p /var/log/chef /var/lib/chef /var/cache/chef /var/backups/chef /var/run/chef\n", 
+                                "chef-client -d -j /etc/chef/roles.json -L /var/log/chef/client.log -i 1800 -s 20 -N cadmium-`curl http://169.254.169.254/latest/meta-data/instance-id`\n"
+                            ]
+                        ]
+                    }
+                }
             }, 
             "Type": "AWS::EC2::Instance"
         }, 
@@ -172,16 +236,64 @@
                             "Ref": "Environment"
                         }
                     }
-                ]
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -ex",
+                                "\n",
+                                "apt-get update\n",
+                                "apt-get -y install python-setuptools\n",
+                                "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.1.tar.gz\n",
+                                "cfn-init --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "    -s ",
+                                {
+                                    "Ref": "AWS::StackName"
+                                },
+                                " -r ApplicationEC2Instance ",
+                                "         --access-key ",
+                                {
+                                    "Ref": "AWSAccessKey"
+                                },
+                                "         --secret-key ",
+                                {
+                                    "Ref": "AWSSecretKey"
+                                },
+                                " || error_exit 'Failed to run cfn-init'\n",
+                                "# Fixup path and links for the bootstrap script\n",
+                                "export PATH=$PATH:/var/lib/gems/1.8/bin\n",
+                                "mkdir -p /var/log/chef /var/lib/chef /var/cache/chef /var/backups/chef /var/run/chef\n",
+                                "chef-client -d -j /etc/chef/roles.json -L /var/log/chef/client.log -i 1800 -s 20 -N cadmium-`curl http://169.254.169.254/latest/meta-data/instance-id`\n"
+                            ]
+                        ]
+                    }
+                }
             }, 
             "Type": "AWS::EC2::Instance"
         }, 
         "CadmiumSecurityGroup": {
+            "Description": "The security group that all of the Cadmium Nodes belong to.",
             "Properties": {
                 "GroupDescription": "A group that allows the load balancer to talk to the cadmium nodes."
             }, 
             "Type": "AWS::EC2::SecurityGroup"
-        }, 
+        },
+        "CadmiumClusterIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Description": "Addes TCP access for all EC2 Resources belonging to the CadmiumSecurityGroup.  This is required to cluster.",
+            "Properties": {
+              "GroupId" : {"Ref" : "CadmiumSecurityGroup" }
+              "IpProtocol" : "TCP",
+              "SourceSecurityGroupId" : { "Ref": "CadmiumSecurityGroup" },
+              "FromPort" : 0,
+              "ToPort" : 65535
+            }
+        },
         "CadmiumWildcardCName": {
             "Description": "The wildcard CNAME record for deployed applications.", 
             "Properties": {
