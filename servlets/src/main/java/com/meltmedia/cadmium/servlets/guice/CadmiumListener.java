@@ -61,6 +61,7 @@ import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
+import com.meltmedia.cadmium.email.jersey.EmailService;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
@@ -99,6 +100,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String warName;
   private String repoUri;
   private String channelConfigUrl;
+  private String mailJNDIName;
 
   private Injector injector = null;
 
@@ -217,6 +219,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
     String branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
+    mailJNDIName = cadmiumProperties.getProperty("com.meltmedia.email.jndi");
     
     if(repoUri != null && branch != null) {
       GitService cloned = null;
@@ -442,6 +445,11 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(MaintenanceService.class).asEagerSingleton();
         bind(HistoryService.class).asEagerSingleton();
         bind(StatusService.class).asEagerSingleton();
+        
+        // bind email services
+        bind(String.class).annotatedWith(Names.named("com.meltmedia.email.jndi")).toInstance(mailJNDIName);
+        bind(com.meltmedia.cadmium.mail.internal.EmailServiceImpl.class).asEagerSingleton();
+        bind(EmailService.class).asEagerSingleton();
       }
     };
   }

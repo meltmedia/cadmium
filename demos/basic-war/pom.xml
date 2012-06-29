@@ -40,5 +40,21 @@
       <groupId>com.meltmedia.jgroups.aws</groupId>
       <artifactId>jgroups-aws</artifactId>
     </dependency>
+    
+    <dependency>
+      <groupId>com.meltmedia.cadmium.mail</groupId>
+      <artifactId>meltmedia-cadmium-email</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>xml-apis</groupId>
+          <artifactId>xmlParserAPIs</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 </project>

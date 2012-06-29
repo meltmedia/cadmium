@@ -60,4 +60,9 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
     return contentType;
   }
 
+	@Override
+	public String getContentRoot() {		
+		return getBasePath();
+	}
+
 }

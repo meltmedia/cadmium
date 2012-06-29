@@ -11,4 +11,10 @@ public class DummyContentService implements ContentService {
     switched = true;
   }
 
+	@Override
+	public String getContentRoot() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
