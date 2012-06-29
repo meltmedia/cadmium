@@ -15,8 +15,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.meltmedia.cadmium.core.SiteDownService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Singleton
 public class MaintenanceFilter implements Filter, SiteDownService {
+  private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public volatile boolean on = false;
 	private String ignorePath;
@@ -46,6 +50,7 @@ public class MaintenanceFilter implements Filter, SiteDownService {
 			uri = uri.substring(contextPath.length());
 		}
 		if( !on || (ignorePath != null && uri.startsWith(ignorePath)) ) {
+      logger.debug("Serving request server:{}, uri:{}", httpReq.getServerName(), uri);
 			chain.doFilter(req, res);
 			return;
 		}

@@ -103,12 +103,12 @@ public class JGroupsMessagingListener implements ServletContextListener, Receive
 
   @Override
   public void suspect(Address arg0) {
-    logger.info("Deployer node is suspected of being down {}", arg0);
+    logger.debug("Deployer node is suspected of being down {}", arg0);
   }
 
   @Override
   public void viewAccepted(View arg0) {
-    logger.info("Deployer; new view accepted {}", arg0);
+    logger.debug("Deployer; new view accepted {}", arg0);
   }
 
   @Override
