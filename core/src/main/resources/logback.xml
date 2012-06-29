@@ -2,10 +2,10 @@
 <configuration>
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>log/cadmium.log</file>
+    <file>cadmium.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- daily rollover -->
-      <fileNamePattern>log/cadmium.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>cadmium.%d{yyyy-MM-dd}.log</fileNamePattern>
 
       <!-- keep 30 days' worth of history -->
       <maxHistory>30</maxHistory>
