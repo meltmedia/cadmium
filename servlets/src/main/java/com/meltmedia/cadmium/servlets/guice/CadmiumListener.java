@@ -100,7 +100,11 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String warName;
   private String repoUri;
   private String channelConfigUrl;
+  
+  // Email config
   private String mailJNDIName;
+  private String mailSessionStrategy;
+  private String mailMessageTransformer;
 
   private Injector injector = null;
 
@@ -220,6 +224,8 @@ public class CadmiumListener extends GuiceServletContextListener {
     repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
     String branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
     mailJNDIName = cadmiumProperties.getProperty("com.meltmedia.email.jndi");
+    mailMessageTransformer = cadmiumProperties.getProperty("melt.mail.messagetransformer");
+    mailSessionStrategy = cadmiumProperties.getProperty("melt.mail.sessionstrategy");
     
     if(repoUri != null && branch != null) {
       GitService cloned = null;
@@ -448,6 +454,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         // bind email services
         bind(String.class).annotatedWith(Names.named("com.meltmedia.email.jndi")).toInstance(mailJNDIName);
+        bind(String.class).annotatedWith(Names.named("melt.mail.messagetransformer")).toInstance(mailMessageTransformer);
+        bind(String.class).annotatedWith(Names.named("melt.mail.sessionstrategy")).toInstance(mailSessionStrategy);
         bind(com.meltmedia.cadmium.mail.internal.EmailServiceImpl.class).asEagerSingleton();
         bind(EmailService.class).asEagerSingleton();
       }
