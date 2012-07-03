@@ -9,7 +9,6 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -35,15 +34,20 @@ public class EmailService {
 	@Inject
 	private ContentService contentService;
 	
-  @POST
-  @Path("/{dir}")
+	@GET
+	@Path("getTest")
+	public String test() {
+		return "Hey Dude";
+	}
+	
+	@POST
   @Consumes("application/x-www-form-urlencoded")
   @Produces(MediaType.APPLICATION_JSON)
-	public Response emailThisPage(@Context HttpServletRequest request,@PathParam("dir") String dir,@FormParam("toName") String toName,
+	public Response emailThisPage(@Context HttpServletRequest request,@FormParam("dir") String dir,@FormParam("toName") String toName,
 			                          @FormParam("toAddress") String toAddress,@FormParam("fromName") String fromName,
 			                          @FormParam("fromAddress") String fromAddress,@FormParam("message") String message,
 			                          @FormParam("pagePath") String pagePath) {
-  	
+
   	log.info("Entering Email This Method");
   	VelocityHtmlTextEmail email = new VelocityHtmlTextEmail();
   	
@@ -85,11 +89,12 @@ public class EmailService {
 		  	emailService.send(email);
 		  	log.info("After Sending Email");
 			} catch (EmailException e) {
-				Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+				log.info("EmailException Caught");
+				return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 			} catch (ValidationException e) {
 				log.info("ValidationException Caught");
 				log.info("First Error {}",e.getErrors()[0].getMessage());
-				Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
+				return Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
 			} 	
 			return Response.ok().build();
   	} else {
