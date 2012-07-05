@@ -52,7 +52,12 @@ public class StatusService extends AuthorizationService {
 	@Named("contentDir")
 	protected String initialContentDir;
 
-	
+	@GET
+	@Path("/Ping")
+	@Produces("text/plain")
+	public String ping() {
+	  return "Ok";
+	}
 	
 	@GET	
 	@Produces("application/json")
