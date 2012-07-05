@@ -1,6 +1,11 @@
 package com.meltmedia.cadmium.email.jersey;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -34,12 +39,6 @@ public class EmailService {
 	@Inject
 	private ContentService contentService;
 	
-	@GET
-	@Path("getTest")
-	public String test() {
-		return "Hey Dude";
-	}
-	
 	@POST
   @Consumes("application/x-www-form-urlencoded")
   @Produces(MediaType.APPLICATION_JSON)
@@ -53,54 +52,95 @@ public class EmailService {
   	
   	// Setting up template location/files
   	File absoluteTemplateDir = new File(contentService.getContentRoot(),"META-INF");
-  	log.info("absolutePath: {}", absoluteTemplateDir.getPath());
   	absoluteTemplateDir = new File(absoluteTemplateDir,dir);
-  	log.info("absolutePath: {}", absoluteTemplateDir.getPath());
 	  File textTemplateFile = new File(absoluteTemplateDir,"email-this-page.txt");
 	  log.info("textTemplateFile: {}", textTemplateFile.getPath());
   	File htmlTemplateFile = new File(absoluteTemplateDir,"email-this-page.html");
   	log.info("htmlTemplateFile: {}", htmlTemplateFile.getPath());
-  	if (textTemplateFile.exists() && htmlTemplateFile.exists()) { 		
-	  	try {
-	  		EmailForm emailForm = new EmailForm(toName, toAddress, fromName, fromAddress, message, pagePath);
-				EmailFormValidator.validate(emailForm);
-		  	
-		  	email.addTo(emailForm.getToAddress());
-		  	email.setFrom(emailForm.getFromAddress()); 
-		  	// Set HTML Template
-		  	email.setHtml(htmlTemplateFile.getAbsolutePath());
-		  	
-		  	// Set Text Template
-		  	email.setText(textTemplateFile.getAbsolutePath());
-		  	
-		  	// Set Properties
-		  	email.setProperty("toName", emailForm.getToName());
-		  	email.setProperty("fromName", emailForm.getFromName());
-		  	email.setProperty("fromAddress", emailForm.getFromAddress());
-		  	email.setProperty("message", emailForm.getMessage());
-		  	
-		  	// Set up link
-		  	String link = request.getServerName() + "/"  + emailForm.getPagePath();
-		  	log.info("Email This Page Link: {}",link);
-		  	email.setProperty("link",link);
-							  	
-		  	// Send Email
-		  	log.info("Before Sending Email");  		
-		  	emailService.send(email);
-		  	log.info("After Sending Email");
-			} catch (EmailException e) {
-				log.info("EmailException Caught");
-				return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-			} catch (ValidationException e) {
-				log.info("ValidationException Caught");
-				log.info("First Error {}",e.getErrors()[0].getMessage());
-				return Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
-			} 	
-			return Response.ok().build();
+  	if (textTemplateFile.exists() && htmlTemplateFile.exists()) {
+  		if (pageExists(pagePath)) {
+		  	try { 
+		  		EmailForm emailForm = new EmailForm(toName, toAddress, fromName, fromAddress, message, pagePath);
+					EmailFormValidator.validate(emailForm);
+			  	
+			  	email.addTo(emailForm.getToAddress());
+			  	email.setFrom(emailForm.getFromAddress()); 
+			  	// Set HTML Template
+			  	email.setHtml(readFromFile(htmlTemplateFile.getAbsolutePath()));
+			  	
+			  	// Set Text Template
+			  	email.setText(readFromFile(textTemplateFile.getAbsolutePath()));
+			  	
+			  	// Set Properties
+			  	email.setProperty("toName", emailForm.getToName());
+			  	email.setProperty("fromName", emailForm.getFromName());
+			  	email.setProperty("fromAddress", emailForm.getFromAddress());
+			  	email.setProperty("message", emailForm.getMessage());
+			  	
+			  	// Set up link
+			  	String link = "http://" + request.getServerName() + "/"  + emailForm.getPagePath();
+			  	log.info("Email This Page Link: {}",link);
+			  	email.setProperty("link",link);
+								  	
+			  	// Send Email
+			  	log.debug("Before Sending Email");  		
+			  	emailService.send(email);
+			  	log.debug("After Sending Email");
+				} catch (EmailException e) {
+					log.info("EmailException Caught");
+					return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+				} catch (ValidationException e) {
+					log.info("ValidationException Caught");
+					log.info("First Error {}",e.getErrors()[0].getMessage());
+					return Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
+				} 	
+				return Response.ok().build();
+  		} else {
+    		log.info("Invalid Page");
+    		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Page").build();	
+  		}
   	} else {
   		log.info("Couldn't Find Email Templates");
   		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Template Location").build();		  		
   	}
 	}
+	
+	private boolean pageExists(String pagePath) {
+		if (pagePath.contains("-INF")) {
+			return false;
+		}
+		File pagePathFile = new File(contentService.getContentRoot(),pagePath);
+		return pagePathFile.exists();
+	}
+
+	/*
+   * Reads data from a given file
+   */
+  public String readFromFile(String fileName) {
+    String content = null;
+    BufferedReader br = null;
+    try {
+      File inFile = new File(fileName);
+      br = new BufferedReader(new InputStreamReader(
+          new FileInputStream(inFile)));
+      content = "";
+      while(br.ready()) {
+      	content += br.readLine();
+      }
+      br.close();
+    } catch (FileNotFoundException ex) {
+    	log.error("Failed to find file.", ex);
+    } catch (IOException ex) {
+    	log.error("Failed to read file.", ex);
+    } finally {
+    	if(br != null) {
+    		try {
+    			br.close();
+    		} catch(Exception e){}
+    	}
+    }
+    return content;
+
+  }
   
 }
