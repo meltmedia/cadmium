@@ -384,7 +384,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         serve("/system/*").with(GuiceContainer.class);
 
-       // serve("/*").with(FileServlet.class, fileParams);
+        serve("/*").with(FileServlet.class, fileParams);
 
         filter("/*").through(MaintenanceFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
