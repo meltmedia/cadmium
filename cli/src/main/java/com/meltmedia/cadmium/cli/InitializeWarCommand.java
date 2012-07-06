@@ -45,10 +45,10 @@ public class InitializeWarCommand implements CliCommand {
 	private String branch;
 
 	@Parameter(names="--domain", description="Sets the domain name that this war will bind to.", required=false)
-	private String domain;
+	private String domain = "localhost";
 
   @Parameter(names="--context", description="Sets the context root that this war will bind to.", required=false)
-  private String context;
+  private String context = "/";
 
 	@Parameter(description="\"new war name\"", required=true, arity=1)
 	private List<String> newWarNames;

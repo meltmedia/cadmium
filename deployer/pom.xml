@@ -123,5 +123,24 @@
         </exclusion>
       </exclusions>
     </dependency>
+    
+    <dependency>
+      <groupId>org.jboss.jbossas</groupId>
+      <artifactId>jboss-as-j2se</artifactId>
+      <version>5.0.1.GA</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>oswego-concurrent</groupId>
+          <artifactId>concurrent</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>jboss.web</groupId>
+      <artifactId>jbossweb</artifactId>
+      <version>2.1.7.GA</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>
