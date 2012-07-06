@@ -88,7 +88,8 @@ public class JGroupsMessagingListener implements ServletContextListener, Receive
           if( !aliasFound ) {
             logger.info("Adding vHost {} to jboss", params.get("domain"));
             Host host = (Host) server.instantiate("org.apache.catalina.core.StandardHost");
-            host.setName(params.get("domain"));
+            host.setName(params.get("domain").split(".")[0]);
+            host.addAlias(params.get("domain"));
 
             server.invoke(new ObjectName("jboss.web:type=Engine"), "addChild", new Object[] { host }, new String[] { "org.apache.catalina.Container" });
           }
