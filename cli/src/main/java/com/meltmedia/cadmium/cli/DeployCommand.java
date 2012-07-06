@@ -26,8 +26,11 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Parameter(names="--domain", description="The domain where the cadmium application will be deployed", required=true)
+	@Parameter(names="--domain", description="The domain where the cadmium application will be deployed", required=false)
 	private String domain;
+	
+  @Parameter(names="--context", description="The context root where the cadmium application will be deployed", required=false)
+  private String context;
 	
 	@Parameter(names="--repo", description="The repo from which cadmium will serve content initially", required=true)
 	private String repo;
@@ -41,7 +44,10 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	public static final String JERSEY_ENDPOINT = "/deploy";
 
 	public void execute() throws ClientProtocolException, IOException {
-
+	  if(domain == null && context == null) {
+	    System.err.println("Please specify either --domain and/or --context");
+	    System.exit(1);
+	  }
 		DefaultHttpClient client = new DefaultHttpClient();
 		String siteUrl = site.get(0);
 		String url = siteUrl + JERSEY_ENDPOINT;	
@@ -56,9 +62,14 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 		  List<NameValuePair> params = new ArrayList<NameValuePair>();
       params.add(new BasicNameValuePair("branch", branch));
 		  params.add(new BasicNameValuePair("repo", repo));
+		  if(domain != null) {
 		  params.add(new BasicNameValuePair("domain", domain));
+		  }
+		  if(context != null) {
+		    params.add(new BasicNameValuePair("context", context));
+		  }
 		  
-		  post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+ 		  post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 			
 			HttpResponse response = client.execute(post);
 			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {

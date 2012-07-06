@@ -74,10 +74,15 @@ public class JGroupsMessagingListener implements ServletContextListener, Receive
   
       InitializeWarCommand initCommand = new InitializeWarCommand();
       
-      logger.info("Beginning war creation. branch: {}, repo {}, domain {}", new String[]{params.get("branch"), params.get("repo"), params.get("domain")});
+      logger.info("Beginning war creation. branch: {}, repo {}, domain {}, context {}", new String[]{params.get("branch"), params.get("repo"), params.get("domain"), params.get("context")});
       
       initCommand.setBranch(params.get("branch"));
-      initCommand.setDomain(params.get("domain"));
+      if(params.containsKey("domain") && params.get("domain").length() > 0) {
+        initCommand.setDomain(params.get("domain"));
+      }
+      if(params.containsKey("context") && params.get("context").length() > 0) {
+        initCommand.setContext(params.get("context"));
+      }
       initCommand.setRepoUri(params.get("repo"));
       
       
