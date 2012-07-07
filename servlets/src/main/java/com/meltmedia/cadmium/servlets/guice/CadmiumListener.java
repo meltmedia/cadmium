@@ -62,6 +62,7 @@ import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.email.jersey.EmailService;
+import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
@@ -389,6 +390,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         filter("/*").through(MaintenanceFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
         filter("/*").through(SslRedirectFilter.class);
+        filter("/*").through(ErrorPageFilter.class);
 
         String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
         

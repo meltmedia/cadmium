@@ -98,14 +98,14 @@ public final class FileSystemManager {
   }
   
   public static String[] getFilesInDirectory(String directory, final String ext) {
-    File dir = new File(directory);
-    if(dir.isDirectory()) {
+    File dir = new File(directory);    
+    if(dir.isDirectory()) {      
       String files[] = null;
       if(ext != null && ext.length() > 0) {
         files = dir.list(new FilenameFilter(){
 
           @Override
-          public boolean accept(File file, String name) {
+          public boolean accept(File file, String name) {            
             return !file.isDirectory() && name.endsWith("."+ext);
           }
           
@@ -113,10 +113,11 @@ public final class FileSystemManager {
       } else {
         files = dir.list();
       }
-      if(files != null) {
+      if(files != null) {        
         return files;
       }
     }
+    
     return new String[] {};
   }
 
