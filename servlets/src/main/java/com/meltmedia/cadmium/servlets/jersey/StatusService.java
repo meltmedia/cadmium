@@ -82,9 +82,7 @@ public class StatusService extends AuthorizationService {
 		String repo = repoUri;
 		
 		// Get source project info (branch, repo and revision)
-		String sourceRev = "";
-		String sourceBranch = "";
-		String sourceRepo = "";
+		String source = configProperties.getProperty("source", "{}");
 		
 		
 		
@@ -139,6 +137,7 @@ public class StatusService extends AuthorizationService {
 		returnObj.put("revision", rev);		
 		returnObj.put("repo", repo);
 		returnObj.put("maintPageState", maintStatus);
+		returnObj.put("source", source);
 		
 		return new Gson().toJson(returnObj);
 	}

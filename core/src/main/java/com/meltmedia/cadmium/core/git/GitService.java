@@ -202,6 +202,18 @@ public class GitService {
       configProperties.setProperty("branch", cloned.getBranchName());
       configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
       
+
+      String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
+      if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
+        try {
+          configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
+        } catch(Exception e) {
+          log.warn("Failed to read source file {}", sourceFilePath);
+        }
+      } else {
+        configProperties.setProperty("source", "{}");
+      }
+      
       HistoryManager historyManager = new HistoryManager(warDir);
       
       

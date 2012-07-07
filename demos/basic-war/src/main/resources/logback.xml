@@ -15,10 +15,10 @@
     </encoder>
   </appender>
 
-  <logger name="com.meltmedia" level="DEBUG"/>
+  <logger name="com.meltmedia.cadmium" level="INFO"/>
 
 
-  <root level="debug">
+  <root level="WARN">
     <appender-ref ref="FILE" />
   </root>
 </configuration>

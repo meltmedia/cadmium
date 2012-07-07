@@ -8,9 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.apache.catalina.Host;
+import org.jboss.mx.util.MBeanServerLocator;
 import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
@@ -74,10 +78,28 @@ public class JGroupsMessagingListener implements ServletContextListener, Receive
   
       InitializeWarCommand initCommand = new InitializeWarCommand();
       
-      logger.info("Beginning war creation. branch: {}, repo {}, domain {}", new String[]{params.get("branch"), params.get("repo"), params.get("domain")});
+      logger.info("Beginning war creation. branch: {}, repo {}, domain {}, context {}", new String[]{params.get("branch"), params.get("repo"), params.get("domain"), params.get("context")});
       
       initCommand.setBranch(params.get("branch"));
-      initCommand.setDomain(params.get("domain"));
+      if(params.containsKey("domain") && params.get("domain").length() > 0) {
+        try {
+          MBeanServer server = MBeanServerLocator.locateJBoss();
+          boolean aliasFound = server.isRegistered(new ObjectName("jboss.web:type=Host,host="+params.get("domain")));
+          if( !aliasFound ) {
+            logger.info("Adding vHost {} to jboss", params.get("domain"));
+            Host host = (Host) server.instantiate("org.apache.catalina.core.StandardHost");
+            host.setName(params.get("domain"));
+
+            server.invoke(new ObjectName("jboss.web:type=Engine"), "addChild", new Object[] { host }, new String[] { "org.apache.catalina.Container" });
+          }
+        } catch(Throwable t) {
+          logger.warn("Failed to add vHost", t);
+        }
+        initCommand.setDomain(params.get("domain"));
+      }
+      if(params.containsKey("context") && params.get("context").length() > 0) {
+        initCommand.setContext(params.get("context"));
+      }
       initCommand.setRepoUri(params.get("repo"));
       
       

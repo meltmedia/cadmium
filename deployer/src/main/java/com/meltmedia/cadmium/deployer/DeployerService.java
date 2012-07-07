@@ -29,7 +29,7 @@ public class DeployerService extends AuthorizationService {
 	@POST
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces("text/plain")
-	public String deploy(@FormParam("branch") String branch, @FormParam("repo") String repo, @FormParam("domain") String domain, @HeaderParam("Authorization") @DefaultValue("no token") String auth, @Context ServletContext context) throws Exception {
+	public String deploy(@FormParam("branch") String branch, @FormParam("repo") String repo, @FormParam("domain") @DefaultValue("localhost") String domain, @FormParam("context") @DefaultValue("/") String contextRoot, @HeaderParam("Authorization") @DefaultValue("no token") String auth, @Context ServletContext context) throws Exception {
 	  if(!this.isAuth(auth)) {
 	    throw new Exception("Unauthorized!");
     }
@@ -37,6 +37,7 @@ public class DeployerService extends AuthorizationService {
 		parameters.put("branch", branch);
 		parameters.put("repo", repo);
 		parameters.put("domain", domain);
+		parameters.put("context", contextRoot);
 		
 		String message = new Gson().toJson(parameters);
 		logger.debug("Sending [{}] over jgroups", message);

@@ -45,7 +45,10 @@ public class InitializeWarCommand implements CliCommand {
 	private String branch;
 
 	@Parameter(names="--domain", description="Sets the domain name that this war will bind to.", required=false)
-	private String domain;
+	private String domain = "localhost";
+
+  @Parameter(names="--context", description="Sets the context root that this war will bind to.", required=false)
+  private String context = "/";
 
 	@Parameter(description="\"new war name\"", required=true, arity=1)
 	private List<String> newWarNames;
@@ -92,7 +95,7 @@ public class InitializeWarCommand implements CliCommand {
 					ZipEntry e = entries.nextElement();
 					if(e.getName().equals(cadmiumPropertiesEntry.getName())) {
 						storeProperties(outZip, cadmiumPropertiesEntry, cadmiumProps);
-					} else if (domain != null && e.getName().equals(jbossWeb.getName())) {
+					} else if (((domain != null && domain.length() > 0) || (context != null && context.length() > 0)) && e.getName().equals(jbossWeb.getName())) {
 						updateDomain(inZip, outZip, jbossWeb);
 					} else {
 						outZip.putNextEntry(e);
@@ -151,17 +154,20 @@ public class InitializeWarCommand implements CliCommand {
 			rootNode = (Element) nodes.item(0);
 		}
 
-		Element vHost = doc.createElement("virtual-host");
-		vHost.appendChild(doc.createTextNode(domain));
+		if(domain != null && domain.length() > 0) {
+  		Element vHost = doc.createElement("virtual-host");
+      removeNodesByTagName(rootNode, "virtual-host");
+  		vHost.appendChild(doc.createTextNode(domain));
+      rootNode.appendChild(vHost);
+		}
 
-		Element cRoot = doc.createElement("context-root");
-		cRoot.appendChild(doc.createTextNode("/"));
+		if(context != null && context.length() > 0) {
+	    Element cRoot = doc.createElement("context-root");
+	    removeNodesByTagName(rootNode, "context-root");
+		  cRoot.appendChild(doc.createTextNode(context));
+	    rootNode.appendChild(cRoot);
+		}
 
-		removeNodesByTagName(rootNode, "context-root");
-		removeNodesByTagName(rootNode, "virtual-host");
-
-		rootNode.appendChild(cRoot);
-		rootNode.appendChild(vHost);
 
 		storeXmlDocument(outZip, jbossWeb, doc);
 	}
@@ -237,7 +243,15 @@ public class InitializeWarCommand implements CliCommand {
 		this.domain = domain;
 	}
 	
-	public List<String> getNewWarNames() {
+	public String getContext() {
+    return context;
+  }
+
+  public void setContext(String context) {
+    this.context = context;
+  }
+
+  public List<String> getNewWarNames() {
 		return newWarNames;
 	}
 
