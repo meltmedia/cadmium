@@ -1,5 +1,9 @@
 package com.meltmedia.cadmium.servlets;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -64,5 +68,13 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	public String getContentRoot() {		
 		return getBasePath();
 	}
+
+  @Override
+  public InputStream getResourceAsStream(String path) throws IOException {
+    if( path.charAt(0) != '/' ) throw new IllegalArgumentException("The path "+path+" does not start with a '/' character.");
+    File file = new File(getContentRoot(), "."+path);
+    if( !file.exists() ) return null;
+    return new FileInputStream(file);
+  }
 
 }

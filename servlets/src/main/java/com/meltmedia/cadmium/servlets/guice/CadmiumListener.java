@@ -388,9 +388,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         serve("/*").with(FileServlet.class, fileParams);
 
         filter("/*").through(MaintenanceFilter.class, maintParams);
+        filter("/*").through(ErrorPageFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
         filter("/*").through(SslRedirectFilter.class);
-        filter("/*").through(ErrorPageFilter.class);
 
         String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
         
