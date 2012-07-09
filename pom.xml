@@ -170,6 +170,7 @@
     <module>deployer</module>
     <module>vault</module>
     <module>email</module>
+    <module>search</module>
   </modules>
 
   <name>cadmium :: Parent POM</name>
