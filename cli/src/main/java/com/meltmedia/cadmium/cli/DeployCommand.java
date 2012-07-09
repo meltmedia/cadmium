@@ -1,6 +1,7 @@
 package com.meltmedia.cadmium.cli;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,33 +27,47 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Parameter(names="--domain", description="The domain where the cadmium application will be deployed", required=false)
-	private String domain;
+	//@Parameter(names="--domain", description="The domain where the cadmium application will be deployed", required=false)
+	//private String domain;
 	
-  @Parameter(names="--context", description="The context root where the cadmium application will be deployed", required=false)
-  private String context;
+  //@Parameter(names="--context", description="The context root where the cadmium application will be deployed", required=false)
+  //private String context;
 	
-	@Parameter(names="--repo", description="The repo from which cadmium will serve content initially", required=true)
-	private String repo;
+	//@Parameter(names="--repo", description="The repo from which cadmium will serve content initially", required=true)
+	//private String repo;
 	
-	@Parameter(names="--branch", description="The branch from which cadmium will serve content initially", required=true)
+	@Parameter(names="--branch", description="The branch from which cadmium will serve content initially", required=false)
 	private String branch;
 	
-	@Parameter(description="<site>", required=true)
-	private List<String> site;
+	//@Parameter(description="<site>", required=true)
+	//private List<String> site;
+	
+	@Parameter(description="<site> <repo>", required=true)
+  private List<String> parameters;
 
-	public static final String JERSEY_ENDPOINT = "/deploy";
+	//public static final String JERSEY_ENDPOINT = "/deploy";
 
 	public void execute() throws ClientProtocolException, IOException {
-	  if(domain == null && context == null) {
-	    System.err.println("Please specify either --domain and/or --context");
+	  //if(domain == null && context == null) {
+	  //  System.err.println("Please specify either --domain and/or --context");
+	  //  System.exit(1);
+	  //}
+	  if( parameters.size() < 2 ) {
+	    System.err.println("The site and repository must be specified.");
 	    System.exit(1);
 	  }
-		DefaultHttpClient client = new DefaultHttpClient();
-		String siteUrl = site.get(0);
-		String url = siteUrl + JERSEY_ENDPOINT;	
+	  
 
-		log.debug("siteUrl + JERSEY_ENDPOINT = {}", url);
+    String repo = parameters.get(0);
+	  String site = parameters.get(1);
+	  if( !site.endsWith("/") ) site = site+"/";
+	  if( branch == null ) branch = "master";
+	  String domain = URI.create(site).getHost();
+	  String url = removeSubDomain(site)+"system/deploy";
+	  System.out.println(url);
+    log.debug("siteUrl + JERSEY_ENDPOINT = {}", url);
+	  
+		DefaultHttpClient client = new DefaultHttpClient();
 
 		try {
 			
@@ -62,12 +77,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 		  List<NameValuePair> params = new ArrayList<NameValuePair>();
       params.add(new BasicNameValuePair("branch", branch));
 		  params.add(new BasicNameValuePair("repo", repo));
-		  if(domain != null) {
 		  params.add(new BasicNameValuePair("domain", domain));
-		  }
-		  if(context != null) {
-		    params.add(new BasicNameValuePair("context", context));
-		  }
 		  
  		  post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 			
@@ -77,7 +87,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
   			String resp = EntityUtils.toString(entity);
   			if(resp.equalsIgnoreCase("ok")) {
     			log.debug("entity content type: {}", entity.getContentType().getValue());
-    			System.out.println("Successfully deployed cadmium application to [" + domain + "], with repo [" + repo + "] and branch [" + branch + "]");
+    			System.out.println("Successfully deployed cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
   			} else {
   			  throw new Exception("");
   			}
@@ -87,7 +97,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 		} 
 		catch (Exception e) {
 		  e.printStackTrace();
-			System.err.println("Failed to deploy cadmium application to [" + domain + "], with repo [" + repo + "] and branch [" + branch + "]");
+			System.err.println("Failed to deploy cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
 			System.exit(1);
 		}		
 
@@ -97,5 +107,8 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
   public String getCommandName() {
     return "deploy";
   }
-
+  
+  static String removeSubDomain(String url) {
+    return url.replaceAll("\\A([^:]+://)[^\\.]+\\.(.*)\\Z", "$1$2");
+  }
 }

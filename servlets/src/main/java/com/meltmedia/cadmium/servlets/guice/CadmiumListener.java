@@ -2,6 +2,7 @@ package com.meltmedia.cadmium.servlets.guice;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 import org.jgroups.JChannel;
@@ -19,6 +21,11 @@ import org.jgroups.MessageListener;
 import org.jgroups.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.util.StatusPrinter;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -462,5 +469,19 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(EmailService.class).asEagerSingleton();
       }
     };
+  }
+  
+  public void configureLogback( ServletContext servletContext, File logDir ) throws IOException {
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    try {
+      JoranConfigurator configurator = new JoranConfigurator();
+      configurator.setContext(context);
+      context.reset(); 
+      context.putProperty("logDir", logDir.getCanonicalPath());
+      configurator.doConfigure(servletContext.getResource("WEB-INF/context-logback.xml"));
+    } catch (JoranException je) {
+      // StatusPrinter will handle this
+    }
+    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
   }
 }

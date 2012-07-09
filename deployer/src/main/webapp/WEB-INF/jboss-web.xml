@@ -1,0 +1,4 @@
+<jboss-web>
+    <context-root>/</context-root>
+    <virtual-host>cadmium.localhost</virtual-host>
+</jboss-web>
