@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.search;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.queryParser.QueryParser;
@@ -23,12 +24,15 @@ public class SearchServiceTest {
   
   private SearchService service;
   private Document docs[];
+  private IndexSearcherProvider searcherProvider;
   
   @SuppressWarnings("serial")
   @Before
   public void setupIndexReader() throws Exception {
+    searcherProvider = mock(IndexSearcherProvider.class);
     index = mock(IndexSearcher.class);
     parser = mock(QueryParser.class);
+
     when(parser.parse("good_query")).thenReturn(new Query(){
 
       @Override
@@ -73,9 +77,14 @@ public class SearchServiceTest {
     when(index.doc(4)).thenReturn(four);
     when(index.doc(5)).thenReturn(five);
     
-    service = new SearchService();
-    service.setIndex(index);
-    service.setParser(parser);
+    when(searcherProvider.startSearch()).thenReturn(index);
+    
+    service = new SearchService() {
+      @Override QueryParser createParser(Analyzer analyzer) {
+        return parser;
+      }
+    };
+    service.setIndexSearchProvider(searcherProvider);
   }
   
   @SuppressWarnings("unchecked")
