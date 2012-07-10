@@ -16,6 +16,7 @@ public class TestEmailFormValidator  extends EmailFormValidator {
 		emailForm.setPagePath("hcp/index.html");
 		emailForm.setToAddress("toAddress@domain.com");
 		emailForm.setToName("To");
+		emailForm.setSubject("subject");
 		
 		// Positive Test
 		try {

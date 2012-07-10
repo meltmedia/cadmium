@@ -8,6 +8,7 @@ public class EmailForm {
 	private String fromAddress;
 	private String message;
 	private String pagePath;
+	private String subject;
 	
 	public EmailForm() {
 		this.toName = "";
@@ -16,16 +17,18 @@ public class EmailForm {
 		this.fromAddress = "";
 		this.message = "";
 		this.pagePath = "";
+		this.subject = "";
 	}
 	
 	public EmailForm(String toName, String toAddress, String fromName,
-			String fromAddress, String message, String pagePath) {
+			String fromAddress, String message, String pagePath,String subject) {
 		this.toName = toName;
 		this.toAddress = toAddress;
 		this.fromName = fromName;
 		this.fromAddress = fromAddress;
 		this.message = message;
 		this.pagePath = pagePath;
+		this.subject = subject;
 	}
 	public String getToName() {
 		return toName;
@@ -62,5 +65,11 @@ public class EmailForm {
 	}
 	public void setPagePath(String pagePath) {
 		this.pagePath = pagePath;
+	}
+	public String getSubject() {
+		return subject;
+	}
+	public void setSubject(String subject) {
+		this.subject = subject;
 	}
 }
