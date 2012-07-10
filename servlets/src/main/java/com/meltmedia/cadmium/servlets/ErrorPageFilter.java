@@ -196,6 +196,10 @@ public class ErrorPageFilter implements Filter {
         IOUtils.closeQuietly(response.getWriter());
       }
     }
+    else {
+      if( message == null ) response.sendError(sc);
+      else response.sendError(sc, message);
+    }
   }
 }
 

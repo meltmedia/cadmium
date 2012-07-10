@@ -69,6 +69,7 @@ import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.email.jersey.EmailService;
+import com.meltmedia.cadmium.search.guice.SearchModule;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
@@ -451,6 +452,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
         
         install(new VaultModule());
+        install(new SearchModule());
         
         //bind vault cache-directory
         bind(String.class).annotatedWith(Names.named(VaultConstants.CACHE_DIRECTORY)).toInstance(new File(applicationContentRoot, "vault").getAbsoluteFile().getAbsolutePath());
