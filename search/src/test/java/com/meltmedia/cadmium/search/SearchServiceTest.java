@@ -12,12 +12,10 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Ignore;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
-@Ignore
 public class SearchServiceTest {
 
   private IndexSearcher index;
@@ -57,15 +55,15 @@ public class SearchServiceTest {
     when(index.search(parser.parse("good_query"), null, 100000)).thenReturn(hasResults);
     when(index.search(parser.parse("bad_query"), null, 100000)).thenReturn(noResults);
     Document one = new Document();
-    one.add(new Field("path", "1".getBytes()));
+    one.add(new Field("path", "1", Field.Store.YES, Field.Index.ANALYZED));
     Document two = new Document();
-    two.add(new Field("path", "2".getBytes()));
+    two.add(new Field("path", "2", Field.Store.YES, Field.Index.ANALYZED));
     Document three = new Document();
-    three.add(new Field("path", "3".getBytes()));
+    three.add(new Field("path", "3", Field.Store.YES, Field.Index.ANALYZED));
     Document four = new Document();
-    four.add(new Field("path", "4".getBytes()));
+    four.add(new Field("path", "4", Field.Store.YES, Field.Index.ANALYZED));
     Document five = new Document();
-    five.add(new Field("path", "5".getBytes()));
+    five.add(new Field("path", "5", Field.Store.YES, Field.Index.ANALYZED));
     
     docs = new Document[] {one, two, three, four, five};
     
@@ -86,6 +84,8 @@ public class SearchServiceTest {
     Map<String, Object> results = service.search("good_query");
     
     assertTrue("Should not be empty", !results.isEmpty());
+    assertTrue("Should be set", results.containsKey("number-hits"));
+    assertTrue("Should be integer", results.get("number-hits") instanceof Integer);
     assertTrue("Should say 5", new Integer(5).equals(results.get("number-hits")));
     assertTrue("Should have results entry", results.containsKey("results"));
     assertTrue("Should have 5 result entries", ((List<Map<String, Object>>)results.get("results")).size() == 5);
@@ -104,6 +104,8 @@ public class SearchServiceTest {
     Map<String, Object> results = service.search("bad_query");
     
     assertTrue("Should not be empty", !results.isEmpty());
+    assertTrue("Should be set", results.containsKey("number-hits"));
+    assertTrue("Should be integer", results.get("number-hits") instanceof Integer);
     assertTrue("Should say 0", new Integer(0).equals(results.get("number-hits")));
     assertTrue("Should have results entry", results.containsKey("results"));
     assertTrue("Should have no result entries", ((List<Map<String, Object>>)results.get("results")).isEmpty());
