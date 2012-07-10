@@ -1,13 +1,14 @@
 package com.meltmedia.cadmium.search;
 
-import static jodd.lagarto.dom.jerry.Jerry.jerry;
-
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -20,13 +21,11 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Version;
 
 import jodd.lagarto.dom.jerry.Jerry;
 
-import com.google.inject.Inject;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 
 public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider {
@@ -116,27 +115,28 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   
   private File indexDir;
   private File dataDir;
-  private Directory liveDirectory = null;
-  private IndexReader liveIndexReader = null;
-  private Directory stagedDirectory = null;
-  private IndexReader stagedIndexReader = null;
+  private SearchHolder liveSearch = null;
+  private SearchHolder stagedSearch = null;
   private static Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_36);
+  private final ReentrantReadWriteLock locker = new ReentrantReadWriteLock();
+  private final ReadLock readLock = locker.readLock();
+  private final WriteLock writeLock = locker.writeLock();
   
 
   @Override
   public synchronized void processFromDirectory(String metaDir) throws Exception {
-    IOUtils.closeQuietly(stagedDirectory);
-    IOUtils.closeQuietly(stagedIndexReader);
-    stagedDirectory = new NIOFSDirectory(indexDir);
+    SearchHolder newStagedSearcher = new SearchHolder();
+    newStagedSearcher.directory = new NIOFSDirectory(indexDir);
     IndexWriter iwriter = null;
     try {
-      iwriter = new IndexWriter(stagedDirectory, new IndexWriterConfig(Version.LUCENE_36, analyzer).setRAMBufferSizeMB(5));
+      iwriter = new IndexWriter(newStagedSearcher.directory, new IndexWriterConfig(Version.LUCENE_36, analyzer).setRAMBufferSizeMB(5));
       writeIndex(iwriter, new File(metaDir).getParentFile());
     }
     finally {
       IOUtils.closeQuietly(iwriter);
     }
-    stagedIndexReader = IndexReader.open(stagedDirectory);
+    newStagedSearcher.indexReader = IndexReader.open(newStagedSearcher.directory);
+    stagedSearch = newStagedSearcher;
   }
   
   void writeIndex( final IndexWriter indexWriter, File contentDir ) throws Exception {
@@ -158,41 +158,56 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
 
   @Override
   public synchronized void makeLive() {
-    //  TODO: start write lock.
-    if( stagedDirectory != null && stagedIndexReader != null) {
-      IOUtils.closeQuietly(liveDirectory);
-      IOUtils.closeQuietly(liveIndexReader);
-      liveDirectory = stagedDirectory;
-      liveIndexReader = stagedIndexReader;
-      stagedDirectory = null;
-      stagedIndexReader = null;
+    writeLock.lock();
+    if( this.stagedSearch != null && this.stagedSearch.directory != null && this.stagedSearch.indexReader != null && this.liveSearch != null) {
+      SearchHolder oldLive = liveSearch;
+      liveSearch = stagedSearch;
+      oldLive.close();
+      stagedSearch = null;
     }
-    //  TODO: end write lock.
+    writeLock.unlock();
   }
   
   public void finalize() {
-    IOUtils.closeQuietly(stagedDirectory);
-    IOUtils.closeQuietly(stagedIndexReader);
-    IOUtils.closeQuietly(liveIndexReader);
-    IOUtils.closeQuietly(liveDirectory);
+    IOUtils.closeQuietly(liveSearch);
+    IOUtils.closeQuietly(stagedSearch);
  }
 
   @Override
   public IndexSearcher startSearch() {
-    //  TODO: start read on read/write lock.
-    //  TODO: return the current searcher.
+    readLock.lock();
+    if(this.liveSearch != null) {
+      if(this.liveSearch.indexSearcher == null) {
+        IndexSearcher searcher = new IndexSearcher(this.liveSearch.indexReader);
+        this.liveSearch.indexSearcher = searcher;
+      }
+      return this.liveSearch.indexSearcher;
+    }
     return null;
   }
 
   @Override
   public void endSearch() {
-    // TODO: release read lock.    
+    readLock.unlock();
   }
 
   @Override
   public Analyzer getAnalyzer() {
-    // TODO Return the analyzer
-    return null;
+    return analyzer;
+  }
+  
+  private class SearchHolder implements Closeable {
+    private Directory directory = null;
+    private IndexReader indexReader = null;
+    private IndexSearcher indexSearcher = null;
+    public void close() {
+      IOUtils.closeQuietly(indexSearcher);
+      IOUtils.closeQuietly(indexReader);
+      IOUtils.closeQuietly(directory);
+    }
+    public void finalize() {
+      close();
+    }
   }
 
 }
