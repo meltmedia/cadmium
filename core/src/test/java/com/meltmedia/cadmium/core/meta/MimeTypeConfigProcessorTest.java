@@ -2,6 +2,8 @@ package com.meltmedia.cadmium.core.meta;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.Map;
+
 import org.junit.Test;
 
 public class MimeTypeConfigProcessorTest {
@@ -9,9 +11,7 @@ public class MimeTypeConfigProcessorTest {
   @Test
   public void getContentTypeTest() throws Exception {
     MimeTypeConfigProcessor proc = new MimeTypeConfigProcessor();
-    proc.liveMimeTypes.add(new MimeType());
-    proc.liveMimeTypes.get(0).setContentType("text/html");
-    proc.liveMimeTypes.get(0).setExtension("html");
+    proc.mimeTypes.put("html", "text/html");
    
     String html = proc.getContentType("index.html");
     assertTrue("Incorrect content type returned", html != null && html.equals("text/html"));
@@ -20,23 +20,20 @@ public class MimeTypeConfigProcessorTest {
   @Test
   public void makeLiveTest() throws Exception {
     MimeTypeConfigProcessor proc = new MimeTypeConfigProcessor();
-    proc.stagedMimeTypes.add(new MimeType());
-    proc.stagedMimeTypes.get(0).setContentType("text/html");
-    proc.stagedMimeTypes.get(0).setExtension("html");
+    proc.stagedMimeTypes.put("html", "text/html");
     proc.makeLive();
     
-    assertTrue("Not Promoted", proc.liveMimeTypes.size() == 1);
-    assertTrue("Not Promoted correctly", proc.liveMimeTypes.get(0) == proc.stagedMimeTypes.get(0));
+    assertTrue("Not Promoted", proc.mimeTypes.size() == 1);
   }
   
   @Test
   public void processFromDirectoryTest() throws Exception {
     MimeTypeConfigProcessor proc = new MimeTypeConfigProcessor();
     proc.processFromDirectory("./src/test/resources");
-    
-    assertTrue("File not parsed", proc.stagedMimeTypes.size() == 3);
-    for(MimeType mime : proc.stagedMimeTypes) {
-      assertTrue("Mime Type not processed", mime.getExtension() != null && mime.getExtension().length() > 0 && mime.getContentType() != null && mime.getContentType().length() > 0);
+    assertTrue("There should be more content types, due to the default file.", proc.stagedMimeTypes.size() > 850);
+    for( Map.Entry<String, String> entry : proc.stagedMimeTypes.entrySet() ) {
+      assertTrue("A zero length extension was found.", entry.getKey().length() > 0);
+      assertTrue("A zero length content type was found.", entry.getValue().length() > 0);
     }
   }
 }
