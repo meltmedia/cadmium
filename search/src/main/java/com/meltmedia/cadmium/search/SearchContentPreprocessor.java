@@ -10,6 +10,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import javax.inject.Singleton;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -26,9 +28,9 @@ import org.apache.lucene.util.Version;
 
 import jodd.lagarto.dom.jerry.Jerry;
 
-import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 
+@Singleton
 public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider {
   
   public static FileFilter HTML_FILE_FILTER = new FileFilter() {
@@ -153,7 +155,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
         Document doc = new Document();
         doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
         doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
-        doc.add(new Field("path", file.getPath(), Field.Store.YES, Field.Index.NOT_ANALYZED));
+        doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.NOT_ANALYZED));
         indexWriter.addDocument(doc);
       }
     }.scan(contentDir); 
@@ -163,7 +165,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   @Override
   public synchronized void makeLive() {
     writeLock.lock();
-    if( this.stagedSearch != null && this.stagedSearch.directory != null && this.stagedSearch.indexReader != null && this.liveSearch != null) {
+    if( this.stagedSearch != null && this.stagedSearch.directory != null && this.stagedSearch.indexReader != null ) {
       SearchHolder oldLive = liveSearch;
       liveSearch = stagedSearch;
       IOUtils.closeQuietly(oldLive);

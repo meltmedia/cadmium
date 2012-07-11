@@ -322,7 +322,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         Map<String, String> fileParams = new HashMap<String, String>();
         fileParams.put("basePath", contentDir);
 
-        serve("/system/*").with(GuiceContainer.class);
+        serve("/system/*", "/api/*").with(GuiceContainer.class);
 
         serve("/*").with(FileServlet.class, fileParams);
 
