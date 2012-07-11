@@ -151,7 +151,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
         Jerry jerry = Jerry.jerry(FileUtils.readFileToString(file, "UTF-8"));
         String title = jerry.$("html > head > title").text();
         String textContent = jerry.$("html > body").text();
-        
+
         Document doc = new Document();
         doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
         doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
