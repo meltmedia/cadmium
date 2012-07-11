@@ -26,6 +26,7 @@ import org.apache.lucene.util.Version;
 
 import jodd.lagarto.dom.jerry.Jerry;
 
+import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 
 public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider {
@@ -33,7 +34,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   public static FileFilter HTML_FILE_FILTER = new FileFilter() {
     @Override
     public boolean accept(File pathname) {
-      return pathname.isFile() && pathname.getPath().matches("\\.htm[l]?\\Z");
+      return pathname.isFile() && pathname.getPath().matches(".*\\.htm[l]?\\Z");
     }
   };
   
@@ -47,7 +48,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   public static FileFilter NOT_INF_DIR_FILTER = new FileFilter() {
     @Override
     public boolean accept(File pathname) {
-      return pathname.isDirectory() && pathname.getName().endsWith("-INF");
+      return pathname.isDirectory() && !pathname.getName().endsWith("-INF");
     }
   };
   
@@ -75,7 +76,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     public void scan( File contentRoot ) throws Exception {
       // create the frontier and add the content root.
       LinkedList<File> frontier = new LinkedList<File>();
-
+      
       // scan the content root dir for html files.
       for( File htmlFile : contentRoot.listFiles(contentFilter)) {
         handleFile(htmlFile);
@@ -126,11 +127,13 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   @Override
   public synchronized void processFromDirectory(String metaDir) throws Exception {
     SearchHolder newStagedSearcher = new SearchHolder();
+    indexDir = new File(metaDir, "lucene-index");
+    dataDir = new File(metaDir).getParentFile();
     newStagedSearcher.directory = new NIOFSDirectory(indexDir);
     IndexWriter iwriter = null;
     try {
       iwriter = new IndexWriter(newStagedSearcher.directory, new IndexWriterConfig(Version.LUCENE_36, analyzer).setRAMBufferSizeMB(5));
-      writeIndex(iwriter, new File(metaDir).getParentFile());
+      writeIndex(iwriter, dataDir);
     }
     finally {
       IOUtils.closeQuietly(iwriter);
@@ -143,13 +146,14 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     new ContentScanTemplate(HTML_FILE_FILTER) {
       @Override
       public void handleFile(File file) throws Exception {
-        Jerry jerry = new Jerry.JerryParser().enableHtmlMode().parse(FileUtils.readFileToString(file, "UTF-8"));
-        String title = jerry.$("/html/head/title").text();
-        String textContent = jerry.$("/html/body").text();
+        Jerry jerry = Jerry.jerry(FileUtils.readFileToString(file, "UTF-8"));
+        String title = jerry.$("html > head > title").text();
+        String textContent = jerry.$("html > body").text();
         
         Document doc = new Document();
         doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
         doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
+        doc.add(new Field("path", file.getPath(), Field.Store.YES, Field.Index.NOT_ANALYZED));
         indexWriter.addDocument(doc);
       }
     }.scan(contentDir); 
@@ -162,7 +166,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     if( this.stagedSearch != null && this.stagedSearch.directory != null && this.stagedSearch.indexReader != null && this.liveSearch != null) {
       SearchHolder oldLive = liveSearch;
       liveSearch = stagedSearch;
-      oldLive.close();
+      IOUtils.closeQuietly(oldLive);
       stagedSearch = null;
     }
     writeLock.unlock();
@@ -196,6 +200,14 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     return analyzer;
   }
   
+  public File getIndexDir() {
+    return indexDir;
+  }
+
+  public File getDataDir() {
+    return dataDir;
+  }
+
   private class SearchHolder implements Closeable {
     private Directory directory = null;
     private IndexReader indexReader = null;

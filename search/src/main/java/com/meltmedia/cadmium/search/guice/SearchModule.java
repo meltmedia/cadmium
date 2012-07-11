@@ -1,14 +1,14 @@
 package com.meltmedia.cadmium.search.guice;
 
-import com.google.inject.servlet.ServletModule;
+import com.google.inject.AbstractModule;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.search.SearchContentPreprocessor;
 
-public class SearchModule extends ServletModule {
+public class SearchModule extends AbstractModule {
 
   @Override
-  protected void configureServlets() {
-    super.configureServlets();
+  protected void configure() {
+    
     
     bind(ConfigProcessor.class).to(SearchContentPreprocessor.class).asEagerSingleton();
   }

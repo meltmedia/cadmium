@@ -27,8 +27,10 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
@@ -301,7 +303,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       }
     }
 
-    injector = Guice.createInjector(createServletModule());
+    injector = Guice.createInjector(createServletModule(), createModule());
     super.contextInitialized(servletContextEvent);
   }
 
@@ -314,7 +316,29 @@ public class CadmiumListener extends GuiceServletContextListener {
     return new ServletModule() {
       @Override
       protected void configureServlets() {
+        Map<String, String> maintParams = new HashMap<String, String>();
+        maintParams.put("ignorePrefix", "/system");
         
+        Map<String, String> fileParams = new HashMap<String, String>();
+        fileParams.put("basePath", contentDir);
+
+        serve("/system/*").with(GuiceContainer.class);
+
+        serve("/*").with(FileServlet.class, fileParams);
+
+        filter("/*").through(MaintenanceFilter.class, maintParams);
+        filter("/*").through(ErrorPageFilter.class, maintParams);
+        filter("/*").through(RedirectFilter.class);
+        filter("/*").through(SslRedirectFilter.class);
+        
+      }
+    };
+  }
+  
+  private Module createModule() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
         Properties configProperties = new Properties();
         configProperties.putAll(System.getenv());
         configProperties.putAll(System.getProperties());
@@ -383,22 +407,9 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(new TypeLiteral<Map<ProtocolMessage, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
 
-        Map<String, String> fileParams = new HashMap<String, String>();
-        fileParams.put("basePath", contentDir);
+        
         
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
-
-        Map<String, String> maintParams = new HashMap<String, String>();
-        maintParams.put("ignorePrefix", "/system");
-
-        serve("/system/*").with(GuiceContainer.class);
-
-        serve("/*").with(FileServlet.class, fileParams);
-
-        filter("/*").through(MaintenanceFilter.class, maintParams);
-        filter("/*").through(ErrorPageFilter.class, maintParams);
-        filter("/*").through(RedirectFilter.class);
-        filter("/*").through(SslRedirectFilter.class);
 
         String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
         
