@@ -69,6 +69,9 @@ import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.email.jersey.EmailService;
+import com.meltmedia.cadmium.epsilon.client.impl.HcpEpsilonClientImpl;
+import com.meltmedia.cadmium.epsilon.ws.impl.HcpPortPoolImpl;
+import com.meltmedia.cadmium.hcpregform.jersey.resource.RegisterResource;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
@@ -115,6 +118,8 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String mailMessageTransformer;
 
   private Injector injector = null;
+  
+  private Properties epsilonProperties;
 
   @Override
   public void contextDestroyed(ServletContextEvent event) {
@@ -164,6 +169,26 @@ public class CadmiumListener extends GuiceServletContextListener {
         }
       }
     }
+    
+    //Epsilon Props
+    epsilonProperties = new Properties();
+    String epsilonPropsFile = servletContextEvent.getServletContext().getRealPath("/WEB-INF/epsilon.properties");
+    if(FileSystemManager.canRead(epsilonPropsFile)){
+      FileReader reader = null;
+      try{
+        reader = new FileReader(epsilonPropsFile);
+        epsilonProperties.load(reader);
+      } catch(Exception e) {
+        log.warn("Failed to load epsilon.properties file");
+      } finally {
+        if(reader != null) {
+          try{
+            reader.close();
+          } catch(Exception e){}
+        }
+      }
+    }
+    
     
     Properties configProperties = new Properties();
     configProperties.putAll(System.getenv());
@@ -467,6 +492,15 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named("melt.mail.sessionstrategy")).toInstance(mailSessionStrategy);
         bind(com.meltmedia.cadmium.mail.internal.EmailServiceImpl.class).asEagerSingleton();
         bind(EmailService.class).asEagerSingleton();
+        
+        // bind Epsilon 
+        bind(Properties.class).annotatedWith(Names.named("com.meltmedia.cadmium.epsilon.props")).toInstance(epsilonProperties);
+        bind(HcpPortPoolImpl.class).asEagerSingleton();                
+        bind(HcpEpsilonClientImpl.class).asEagerSingleton();
+        
+        // HCP Reg Form
+        bind(RegisterResource.class).asEagerSingleton();
+        
       }
     };
   }
