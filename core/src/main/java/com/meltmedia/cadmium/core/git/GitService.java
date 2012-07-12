@@ -1,9 +1,10 @@
 package com.meltmedia.cadmium.core.git;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -18,14 +19,11 @@ import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.RmCommand;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTag;
-import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.SshSessionFactory;
@@ -36,7 +34,9 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 
-public class GitService {
+public class GitService
+  implements Closeable
+{
   private static final Logger log = LoggerFactory.getLogger(GitService.class);
   
   protected Repository repository;
@@ -451,10 +451,11 @@ public class GitService {
   
   public String getBranchName() throws Exception {
     if(ObjectId.isId(repository.getFullBranch()) && repository.getFullBranch().equals(repository.resolve("HEAD").getName())) {
+      RevWalk revs = null;
       try {
         log.debug("Trying to resolve tagname: {}", repository.getFullBranch());
         ObjectId tagRef = ObjectId.fromString(repository.getFullBranch());
-        RevWalk revs = new RevWalk(repository);
+        revs = new RevWalk(repository);
         RevCommit commit = revs.parseCommit(tagRef);
         Map<String, Ref> allTags = repository.getTags();
         for(String key : allTags.keySet()) {
@@ -467,6 +468,8 @@ public class GitService {
         }
       } catch(Exception e) {
         log.warn("Invalid id: {}", repository.getFullBranch(), e);
+      } finally {
+        revs.release();
       }
     }
     return repository.getBranch();
@@ -476,7 +479,7 @@ public class GitService {
     return repository.getRef(getBranchName()).getObjectId().getName();
   }
   
-  public void close() throws Exception {
+  public void close() throws IOException {
     this.repository.close();
   }
 }
