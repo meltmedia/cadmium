@@ -25,6 +25,10 @@ public class MetaConfigProvider implements Provider<List<ConfigProcessor>> {
   @Named("other.config.processor")
   protected ConfigProcessor otherConfig;
   
+  @Inject(optional=true)
+  @Named("search.processor")
+  protected ConfigProcessor searchConfig;
+  
   private List<ConfigProcessor> processors = null;
   
   @Override
@@ -37,6 +41,10 @@ public class MetaConfigProvider implements Provider<List<ConfigProcessor>> {
       
       if(otherConfig != null) {
         processors.add(otherConfig);
+      }
+      
+      if(searchConfig != null) {
+        processors.add(searchConfig);
       }
     }
     return processors;

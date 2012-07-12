@@ -16,27 +16,31 @@ public class EmailFormValidator {
   	ArrayList<ValidationError> errors = new ArrayList<ValidationError>();
   	
   	if (!isValidEmailAddress(emailForm.getToAddress())) {
-    	errors.add(new ValidationError("toAddress","Please Use a Valid To Email Address."));
+    	errors.add(new ValidationError(Constants.TO_ADDRESS,"Please Use a Valid To Email Address."));
     }
   	
   	if (!isValidEmailAddress(emailForm.getFromAddress())) {
-    	errors.add(new ValidationError("fromAddress","Please Use a Valid From Email Address."));
+    	errors.add(new ValidationError(Constants.FROM_ADDRESS,"Please Use a Valid From Email Address."));
     }
   	
   	if (StringUtils.isEmpty(emailForm.getToName())) {
-  		errors.add(new ValidationError("toName", "To Name is required."));
+  		errors.add(new ValidationError(Constants.TO_NAME, "To Name is required."));
   	}
   	
   	if (StringUtils.isEmpty(emailForm.getFromName())) {
-  		errors.add(new ValidationError("fromName", "From Name is required."));
+  		errors.add(new ValidationError(Constants.FROM_NAME, "From Name is required."));
   	}
   	
   	if (StringUtils.isEmpty(emailForm.getMessage())) {
-  		errors.add(new ValidationError("message", "message is required."));
+  		errors.add(new ValidationError(Constants.MESSAGE, "message is required."));
   	}
   	
   	if (StringUtils.isEmpty(emailForm.getPagePath())) {
-  		errors.add(new ValidationError("pagePath", "Page Path is required."));
+  		errors.add(new ValidationError(Constants.PAGE_PATH, "Page Path is required."));
+  	}
+  	
+  	if (StringUtils.isEmpty(emailForm.getSubject())) {
+  		errors.add(new ValidationError(Constants.SUBJECT, "Page Path is required."));
   	}
   	
   	 if (errors.size() > 0) {

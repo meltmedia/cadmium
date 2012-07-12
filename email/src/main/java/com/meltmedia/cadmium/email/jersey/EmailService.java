@@ -28,7 +28,7 @@ import com.meltmedia.cadmium.mail.EmailException;
 import com.meltmedia.cadmium.mail.VelocityHtmlTextEmail;
 import com.meltmedia.cadmium.mail.internal.EmailServiceImpl;
 
-@Path("/api/email")
+@Path("/email")
 public class EmailService {
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
@@ -38,14 +38,15 @@ public class EmailService {
 	
 	@Inject
 	private ContentService contentService;
-	
+
+ 	
 	@POST
   @Consumes("application/x-www-form-urlencoded")
   @Produces(MediaType.APPLICATION_JSON)
-	public Response emailThisPage(@Context HttpServletRequest request,@FormParam("dir") String dir,@FormParam("toName") String toName,
-			                          @FormParam("toAddress") String toAddress,@FormParam("fromName") String fromName,
-			                          @FormParam("fromAddress") String fromAddress,@FormParam("message") String message,
-			                          @FormParam("pagePath") String pagePath) {
+	public Response emailThisPage(@Context HttpServletRequest request,@FormParam(Constants.DIR) String dir,@FormParam(Constants.TO_NAME) String toName,
+			                          @FormParam(Constants.TO_ADDRESS) String toAddress,@FormParam(Constants.FROM_NAME) String fromName,
+			                          @FormParam(Constants.FROM_ADDRESS) String fromAddress,@FormParam(Constants.MESSAGE) String message,
+			                          @FormParam(Constants.PAGE_PATH) String pagePath,@FormParam(Constants.SUBJECT) String subject) {
 
   	log.info("Entering Email This Method");
   	VelocityHtmlTextEmail email = new VelocityHtmlTextEmail();
@@ -53,18 +54,20 @@ public class EmailService {
   	// Setting up template location/files
   	File absoluteTemplateDir = new File(contentService.getContentRoot(),"META-INF");
   	absoluteTemplateDir = new File(absoluteTemplateDir,dir);
-	  File textTemplateFile = new File(absoluteTemplateDir,"email-this-page.txt");
+	  File textTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".txt");
 	  log.info("textTemplateFile: {}", textTemplateFile.getPath());
-  	File htmlTemplateFile = new File(absoluteTemplateDir,"email-this-page.html");
+  	File htmlTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".html");
   	log.info("htmlTemplateFile: {}", htmlTemplateFile.getPath());
   	if (textTemplateFile.exists() && htmlTemplateFile.exists()) {
   		if (pageExists(pagePath)) {
 		  	try { 
-		  		EmailForm emailForm = new EmailForm(toName, toAddress, fromName, fromAddress, message, pagePath);
+		  		EmailForm emailForm = new EmailForm(toName, toAddress, fromName, fromAddress, message, pagePath,subject);
 					EmailFormValidator.validate(emailForm);
 			  	
 			  	email.addTo(emailForm.getToAddress());
+			  	email.setReplyTo(emailForm.getFromAddress());
 			  	email.setFrom(emailForm.getFromAddress()); 
+			  	email.setSubject(emailForm.getSubject());
 			  	// Set HTML Template
 			  	email.setHtml(readFromFile(htmlTemplateFile.getAbsolutePath()));
 			  	
@@ -72,15 +75,14 @@ public class EmailService {
 			  	email.setText(readFromFile(textTemplateFile.getAbsolutePath()));
 			  	
 			  	// Set Properties
-			  	email.setProperty("toName", emailForm.getToName());
-			  	email.setProperty("fromName", emailForm.getFromName());
-			  	email.setProperty("fromAddress", emailForm.getFromAddress());
-			  	email.setProperty("message", emailForm.getMessage());
+			  	email.setProperty(Constants.TO_NAME, emailForm.getToName());
+			  	email.setProperty(Constants.FROM_NAME, emailForm.getFromName());
+			  	email.setProperty(Constants.MESSAGE, emailForm.getMessage());
 			  	
 			  	// Set up link
 			  	String link = "http://" + request.getServerName() + "/"  + emailForm.getPagePath();
 			  	log.info("Email This Page Link: {}",link);
-			  	email.setProperty("link",link);
+			  	email.setProperty(Constants.LINK,link);
 								  	
 			  	// Send Email
 			  	log.debug("Before Sending Email");  		
@@ -140,7 +142,6 @@ public class EmailService {
     	}
     }
     return content;
-
   }
   
 }
