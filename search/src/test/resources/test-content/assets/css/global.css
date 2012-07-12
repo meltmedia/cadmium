@@ -1,0 +1,147 @@
+/*------------------------
+Fonts
+------------------------*/
+
+body { font-family: Helvetica, Arial, sans-serif; }
+
+/*------------------------
+Global styles
+------------------------*/
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: url(../images/bg-grid.jpg) repeat 0 0;
+  color: #666;
+}
+
+a {
+  color: #6d9ac3;
+}
+
+h1 {
+  color: #444;
+  font-size: 19px;
+}
+
+h2 {
+  font-size: 17px;
+}
+
+h3 {
+  font-size: 16px;
+}
+
+p, ul, ol {
+  font-size: 13px;
+  line-height: 20px;
+  margin: 20px 0;
+}
+
+ul li, ol li {
+  margin: 10px 0;
+}
+
+#container {
+  background: #fff;
+  box-shadow: 0 0 4px rgba(0,0,0,.3);
+  margin: 50px auto;
+  min-height: 500px;
+  max-width: 900px;
+  padding: 3px;
+}
+
+header {
+  margin-bottom: 15px;
+}
+
+#logo {
+  background: url(../images/meltmedia-sphere.png) no-repeat 0 0;
+  background-size: 100px auto;
+  display: block;
+  height: 100px;
+  margin: 15px 0 0 15px;
+  text-indent: -9999em;
+  width: 100px;
+}
+
+nav {
+  background: #fbfbfb;
+  border-top: 1px dotted #ccc;
+  font-size: 16px;
+  padding: 15px; 0;
+  margin: 15px 0 0;
+}
+
+nav a {
+  display: inline-block;
+  margin: 0 10px 0;
+  text-decoration: none;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+#content {
+  border-top: 1px dotted #ccc;
+}
+
+#content section {
+  float: left;
+  padding: 15px 3%;
+}
+
+#content img {
+  background: #f1f1f1;
+  border: 1px solid #ccc;
+  padding:1%;
+  width: 98%;
+}
+
+#main {
+  border-right: 1px dotted #ccc;
+  width: 55%;
+}
+
+#sidebar {
+  width: 32%;
+}
+
+/*------------------------
+Clearfix
+------------------------*/
+
+.clearfix:after {
+  visibility: hidden;
+  display: block;
+  font-size: 0;
+  content: " ";
+  clear: both;
+  height: 0;
+}
+
+/*********************************/
+/* --- Max Screen 630px wide --- */
+/* ----------------------------- */
+
+@media only screen 
+and (max-width: 630px) {
+
+#content section {
+  float: none;
+}
+
+#main, #sidebar {
+  border: none;
+  width: 94%;
+}
+
+#main {
+  border-bottom: 1px dotted #ccc;
+}
+
+} /* end 630px wide */
