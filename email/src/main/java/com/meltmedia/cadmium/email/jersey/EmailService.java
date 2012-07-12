@@ -28,7 +28,7 @@ import com.meltmedia.cadmium.mail.EmailException;
 import com.meltmedia.cadmium.mail.VelocityHtmlTextEmail;
 import com.meltmedia.cadmium.mail.internal.EmailServiceImpl;
 
-@Path("/api/email")
+@Path("/email")
 public class EmailService {
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
@@ -65,6 +65,7 @@ public class EmailService {
 					EmailFormValidator.validate(emailForm);
 			  	
 			  	email.addTo(emailForm.getToAddress());
+			  	email.setReplyTo(emailForm.getFromAddress());
 			  	email.setFrom(emailForm.getFromAddress()); 
 			  	email.setSubject(emailForm.getSubject());
 			  	// Set HTML Template
