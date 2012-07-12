@@ -29,8 +29,13 @@ public class SwitchBranchTask implements Callable<Boolean> {
         throw new Exception("Previous task failed");
       }
     }
-    log.info("Switching branch to {}",branch);
-    service.switchBranch(branch);
+    service.fetchRemotes();
+    if(service.isBranch(branch) || service.isTag(branch)) {
+      log.info("Switching branch to {}",branch);
+      service.switchBranch(branch);
+    } else {
+      throw new Exception("The branch ["+branch+"] does not exist");
+    }
     return true;
   }
 

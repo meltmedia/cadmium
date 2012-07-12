@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.core.git;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -17,9 +18,15 @@ import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.RmCommand;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTag;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.TagOpt;
@@ -278,18 +285,17 @@ public class GitService {
     if(branchName != null && !repository.getBranch().equals(branchName)) {
       log.info("Switching branch from {} to {}", repository.getBranch(), branchName);
       CheckoutCommand checkout = git.checkout();
-      checkout.setName("refs/heads/"+branchName);
-      if(this.repository.getRef("refs/heads/"+ branchName) == null) {
-        CreateBranchCommand create = git.branchCreate();
-        create.setName(branchName);
-        create.setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM);
-        if(!isTag(branchName)) {
+      if(isTag(branchName)) {
+        checkout.setName(branchName);
+      } else {
+        checkout.setName("refs/heads/"+branchName);
+        if(this.repository.getRef("refs/heads/"+ branchName) == null) {
+          CreateBranchCommand create = git.branchCreate();
+          create.setName(branchName);
+          create.setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM);
           create.setStartPoint("origin/"+branchName);
-        } else {
-          log.info("Switching to tag ["+branchName+"]");
-          create.setStartPoint(branchName);
+          create.call();
         }
-        create.call();
       }
       checkout.call();
     }
@@ -299,6 +305,30 @@ public class GitService {
     if(revision != null) {
       log.info("Resetting to sha {}", revision);
       git.reset().setMode(ResetType.HARD).setRef(revision).call();
+    }
+  }
+
+  public boolean checkRevision(String revision) throws Exception {
+    String oldRevision = null;
+    try {
+      log.info("Checking if revision is on current branch.");
+      oldRevision = getCurrentRevision();
+      resetToRev("refs/remotes/origin/"+getBranchName());
+      boolean found = false;
+      for(RevCommit commit : git.log().call()){
+        if(commit.getId().getName().equals(revision)) {
+          found = true;
+          break;
+        }
+      }
+      return found;
+    } catch(Exception e){
+      log.error("Failed to read repository state.", e);
+      throw e;
+    } finally {
+      if(oldRevision != null && !getCurrentRevision().equals(oldRevision)) {
+        resetToRev(oldRevision);
+      }
     }
   }
   
@@ -394,14 +424,10 @@ public class GitService {
   }
   
   public boolean isTag(String tagname) throws Exception {
-    try{
-      git.fetch().setTagOpt(TagOpt.FETCH_TAGS).call();
-    } catch(Exception e) {
-      log.debug("Fetch from origin failed.", e);
-    }
     Map<String, Ref> allRefs = repository.getTags();
     for(String key : allRefs.keySet()) {
       Ref ref = allRefs.get(key);
+      log.debug("Checking tag key{}, ref{}", key, ref.getName());
       if(key.equals(tagname) && ref.getName().equals("refs/tags/" + tagname)) {
         return true;
       }
@@ -409,7 +435,40 @@ public class GitService {
     return false;
   }
   
+  public void fetchRemotes() throws Exception {
+    git.fetch().setTagOpt(TagOpt.FETCH_TAGS).setCheckFetchedObjects(false).setRemoveDeletedRefs(true).call();
+  }
+  
+  public boolean isBranch(String branchname) throws Exception {
+    for(Ref ref : git.branchList().setListMode(ListMode.ALL).call()){
+      log.debug("Checking {}, {}", ref.getName(), branchname);
+      if(ref.getName().equals("refs/heads/"+branchname) || ref.getName().equals("refs/remotes/origin/"+branchname)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public String getBranchName() throws Exception {
+    if(ObjectId.isId(repository.getFullBranch()) && repository.getFullBranch().equals(repository.resolve("HEAD").getName())) {
+      try {
+        log.debug("Trying to resolve tagname: {}", repository.getFullBranch());
+        ObjectId tagRef = ObjectId.fromString(repository.getFullBranch());
+        RevWalk revs = new RevWalk(repository);
+        RevCommit commit = revs.parseCommit(tagRef);
+        Map<String, Ref> allTags = repository.getTags();
+        for(String key : allTags.keySet()) {
+          Ref ref = allTags.get(key);
+          RevTag tag = revs.parseTag(ref.getObjectId());
+          log.debug("Checking ref {}, {}", commit.getName(), tag.getObject());
+          if(tag.getObject().equals(commit)) {
+            return key;
+          }
+        }
+      } catch(Exception e) {
+        log.warn("Invalid id: {}", repository.getFullBranch(), e);
+      }
+    }
     return repository.getBranch();
   }
   

@@ -16,6 +16,8 @@ public class GitServiceTest {
   private GitService git1;
   private File gitRepo2;
   private GitService git2;
+  private File gitRepo3;
+  private GitService git3;
   private File localGitRepo;
   private GitService localGit;
   private File localGitRepoCloned;
@@ -31,6 +33,9 @@ public class GitServiceTest {
         
         gitRepo2 = new File(testDir, "checkout2");
         git2 = GitService.cloneRepo("git://github.com/meltmedia/test-content-repo.git", gitRepo2.getAbsolutePath());
+        
+        gitRepo3 = new File(testDir, "checkout3");
+        git3 = GitService.cloneRepo("git://github.com/meltmedia/test-content-repo.git", gitRepo3.getAbsolutePath());
         localGitRepo = new File(testDir, "local-git");
         localGitRepo.mkdirs();
         new File(localGitRepo, "delete.me").createNewFile();
@@ -58,6 +63,9 @@ public class GitServiceTest {
       
       gitRepo2 = new File(testDir, "checkout2");
       git2 = GitService.createGitService(new File(gitRepo2, ".git").getAbsolutePath());
+      
+      gitRepo3 = new File(testDir, "checkout3");
+      git3 = GitService.createGitService(new File(gitRepo3, ".git").getAbsolutePath());
       
       localGitRepo = new File(testDir, "local-git");
       localGit = GitService.createGitService(new File(localGitRepo, ".git").getAbsolutePath());
@@ -95,6 +103,7 @@ public class GitServiceTest {
   public void closeGitServices() throws Exception {
     git1.close();
     git2.close();
+    git3.close();
     localGit.close();
     localClone.close();
   }
@@ -126,6 +135,13 @@ public class GitServiceTest {
     assertTrue("Revision not reset to previous revision ["+git2.getCurrentRevision()+"]", git2.getCurrentRevision().equals(prevRev));
     git2.resetToRev(currentRev);
     assertTrue("Revision not reset to current revision ["+git2.getCurrentRevision()+"]", git2.getCurrentRevision().equals(currentRev));
+  }
+  
+  @Test
+  public void testCheckRef() throws Exception {
+    git2.switchBranch("master");
+    assertTrue("Revision should not exist", !git2.checkRevision("c81161f84d24b5b43c5969e6498c3b24d372b4e9"));
+    assertTrue("Revision should exist", git2.checkRevision("41fb29368e8649c1ee2ea74228414553dd1f2d45"));
   }
   
   @Test
@@ -225,6 +241,7 @@ public class GitServiceTest {
     
     assertTrue("Tag not created", localGit.repository.getRef("refs/tags/release-1.0") != null);
     
+    localClone.fetchRemotes();
     localClone.switchBranch("release-1.0");
     System.out.println("getBranchName for a tag ["+localClone.getBranchName()+"]");
   }
@@ -244,6 +261,20 @@ public class GitServiceTest {
   }
   
   @Test
+  public void testIsBranch() throws Exception {
+    if(!localGit.getBranchName().equals("test")){
+      localGit.git.checkout().setName("test").call();
+    }
+       
+    assertTrue("Master is a branch", localGit.isBranch("master"));
+    
+    assertTrue("test is a branch", localGit.isBranch("test"));
+    
+    assertTrue("test-65 is not a branch", !localGit.isBranch("test-65"));
+    
+  }
+  
+  @Test
   public void testNewLocalBranch() throws Exception {
     localGit.newLocalBranch("test-local");
     
@@ -257,6 +288,11 @@ public class GitServiceTest {
     localGit.deleteLocalBranch("test-delete");
     
     assertTrue("Branch not delete", localGit.repository.getRef("refs/heads/test-delete") == null);
+  }
+  
+  @Test
+  public void testFetch() throws Exception {
+    git3.fetchRemotes();
   }
 }
 

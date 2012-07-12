@@ -14,6 +14,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
@@ -26,6 +27,9 @@ public class CoordinatedWorkerImplTest {
   
   @Before
   public void setupForTest() throws Exception {
+    if(FileSystemManager.exists("./target/worker-test")) {
+      FileSystemManager.deleteDeep("./target/worker-test");
+    }
     baseDir = new File("./target/worker-test");
     baseDir.mkdirs();
     service = GitService.cloneRepo("git://github.com/meltmedia/test-content-repo.git", new File(baseDir, "git-checkout").getAbsolutePath());
@@ -52,10 +56,10 @@ public class CoordinatedWorkerImplTest {
   @Test
   public void testBeginPullUpdates() throws Exception {
     Properties configProperties = new Properties();
-    configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", new File(baseDir, "renderedContent_4").getAbsolutePath());
+    configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", new File(baseDir, "renderedContent_3").getAbsolutePath());
     
     Map<String,String> properties = new HashMap<String, String>();
-    properties.put("branch", "other-branch");
+    properties.put("branch", "cd-dev-testing");
     properties.put("sha", "41fb29368e8649c1ee2ea74228414553dd1f2d45");
     
     DummyMessageSender sender = new DummyMessageSender();

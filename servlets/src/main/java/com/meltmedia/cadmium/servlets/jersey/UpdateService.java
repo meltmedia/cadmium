@@ -45,7 +45,7 @@ public class UpdateService extends AuthorizationService {
   @POST
   @Consumes("application/x-www-form-urlencoded")
   @Produces("text/plain")
-  public String update(@FormParam("branch") String branch, @FormParam("sha") String sha, @FormParam("comment") String comment, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+  public String update(@FormParam("branch") @DefaultValue("") String branch, @FormParam("sha") @DefaultValue("") String sha, @FormParam("comment") String comment, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }

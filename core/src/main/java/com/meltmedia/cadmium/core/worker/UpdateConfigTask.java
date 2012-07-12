@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
@@ -33,67 +36,88 @@ public class UpdateConfigTask implements Callable<Boolean> {
 
   @Override
   public Boolean call() throws Exception {
-    if(previousTask != null) {
-      Boolean lastResponse = previousTask.get();
-      if(lastResponse != null && !lastResponse.booleanValue() ) {
-        throw new Exception("Previous task failed");
+    final String branch = configProperties.getProperty("branch");
+    final String revision = service.isTag(branch) ? null : configProperties.getProperty("git.ref.sha");
+    try {
+      if(previousTask != null) {
+        Boolean lastResponse = previousTask.get();
+        if(lastResponse != null && !lastResponse.booleanValue() ) {
+          throw new ExecutionException("Previous task failed", new Exception());
+        }
       }
-    }
-    log.info("Updating config.properties file");
-    String lastUpdatedDir = properties.get("nextDirectory");
-    
-    String baseDirectory = FileSystemManager.getParent(service.getBaseDirectory());
-    
-    Properties updatedProperties = new Properties();
-    
-    if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
-      updatedProperties.setProperty("com.meltmedia.cadmium.previous", configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
-    }
-    updatedProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
-    configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
-    if(configProperties.containsKey("branch")) {
-      updatedProperties.setProperty("branch.last", configProperties.getProperty("branch"));
-    }
-    updatedProperties.setProperty("branch", service.getBranchName());
-    configProperties.setProperty("branch", service.getBranchName());
-    if(configProperties.containsKey("git.ref.sha")) {
-      updatedProperties.setProperty("git.ref.sha.last", configProperties.getProperty("git.ref.sha"));
-    }
-    updatedProperties.setProperty("git.ref.sha", service.getCurrentRevision());
-    configProperties.setProperty("git.ref.sha", service.getCurrentRevision());
-    
-    if(manager != null) {
-      try {
-        manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), lastUpdatedDir, properties.get("comment"), !new Boolean(properties.get("nonRevertible")));
-      } catch(Exception e){
-        log.warn("Failed to update log", e);
+      log.info("Updating config.properties file");
+      String lastUpdatedDir = properties.get("nextDirectory");
+      
+      String baseDirectory = FileSystemManager.getParent(service.getBaseDirectory());
+      
+      Properties updatedProperties = new Properties();
+      
+      if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
+        updatedProperties.setProperty("com.meltmedia.cadmium.previous", configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
       }
-    }
-    if(configProperties.containsKey("updating.to.sha")) {
-      configProperties.remove("updating.to.sha");
-    }
-    if(configProperties.containsKey("updating.to.branch")) {
-      configProperties.remove("updating.to.branch");
-    }
-    
-    String sourceFilePath = lastUpdatedDir + File.separator + "MET-INF" + File.separator + "source";
-    if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
-      try {
-        configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
+      updatedProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
+      configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
+      if(configProperties.containsKey("branch")) {
+        updatedProperties.setProperty("branch.last", configProperties.getProperty("branch"));
+      }
+      updatedProperties.setProperty("branch", service.getBranchName());
+      configProperties.setProperty("branch", service.getBranchName());
+      if(configProperties.containsKey("git.ref.sha")) {
+        updatedProperties.setProperty("git.ref.sha.last", configProperties.getProperty("git.ref.sha"));
+      }
+      updatedProperties.setProperty("git.ref.sha", service.getCurrentRevision());
+      configProperties.setProperty("git.ref.sha", service.getCurrentRevision());
+      
+      if(manager != null) {
+        try {
+          manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), lastUpdatedDir, properties.get("comment"), !new Boolean(properties.get("nonRevertible")));
+        } catch(Exception e){
+          log.warn("Failed to update log", e);
+        }
+      }
+      if(configProperties.containsKey("updating.to.sha")) {
+        configProperties.remove("updating.to.sha");
+      }
+      if(configProperties.containsKey("updating.to.branch")) {
+        configProperties.remove("updating.to.branch");
+      }
+      
+      String sourceFilePath = lastUpdatedDir + File.separator + "MET-INF" + File.separator + "source";
+      if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
+        try {
+          configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
+        } catch(Exception e) {
+          log.warn("Failed to read source file {}", sourceFilePath);
+        }
+      } else {
+        configProperties.setProperty("source", "{}");
+      }
+      
+      try{
+        updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
       } catch(Exception e) {
-        log.warn("Failed to read source file {}", sourceFilePath);
+        log.warn("Failed to write out config file", e);
       }
-    } else {
-      configProperties.setProperty("source", "{}");
+      
+      return true;
+    } catch(ExecutionException e) {
+      new Timer().schedule(new TimerTask() {
+        public void run() {
+          try {
+            log.info("Reverting to last branch["+branch+"] and revision ["+revision+"]!");
+            if(!service.getBranchName().equals(branch)) {
+              service.switchBranch(branch);
+            }
+            if(revision != null && !service.getCurrentRevision().equals(revision)) {
+              service.resetToRev(revision);
+            }
+          } catch(Exception e1) {
+            log.error("Failed to revert", e1);
+          }
+        }
+      }, 250l);
+      throw e;
     }
-    
-    try{
-      updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
-    } catch(Exception e) {
-      log.warn("Failed to write out config file", e);
-    }
-    
-    return true;
   }
 
 }

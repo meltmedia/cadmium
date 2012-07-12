@@ -37,7 +37,7 @@ public class PullUpdateTask implements Callable<Boolean> {
       configProperties.setProperty("updating.to.branch", service.getBranchName());
       return retVal;
     } else {
-      configProperties.setProperty("updating.to.sha", service.getCurrentRevision());
+      //configProperties.setProperty("updating.to.sha", service.getCurrentRevision());
       configProperties.setProperty("updating.to.branch", service.getBranchName());
       log.info("Skipping pull since tags cannot update.");
       return true;

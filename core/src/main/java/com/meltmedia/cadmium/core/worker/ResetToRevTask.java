@@ -33,9 +33,16 @@ public class ResetToRevTask implements Callable<Boolean> {
       }
     }
     log.info("Resetting to revision {}", revision);
-    configProperties.setProperty("updating.to.sha", revision);
-    configProperties.setProperty("updating.to.branch", service.getBranchName());
-    service.resetToRev(revision);
+    boolean isBranch = service.isBranch(service.getBranchName());
+    if(isBranch && service.checkRevision(revision)) {
+      configProperties.setProperty("updating.to.sha", revision);
+      configProperties.setProperty("updating.to.branch", service.getBranchName());
+      service.resetToRev(revision);
+    } else if (!isBranch){
+      throw new Exception("Cannot switch to ["+revision+"] when on a tag ["+service.getBranchName()+"]");
+    } else {
+      throw new Exception("The revision ["+revision+"] does not exist on the current branch ["+service.getBranchName()+"]");
+    }
     return true;
   }
 

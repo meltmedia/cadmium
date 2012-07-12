@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
 @Parameters(commandDescription = "Instructs a site to update its content.", separators="=")
@@ -58,6 +60,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 
 		System.out.println("Getting status of ["+ siteUrl +"]");
+    GitService gitValidation = null;
 		try {
 
 			Status siteStatus = CloneCommand.getSiteStatus(siteUrl, token);
@@ -70,13 +73,13 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 			//if tag is NOT null and either the branch or the revision are NOT null, error out, else continue
 			if(tag != null && branch == null && revision == null) {
 				
-				log.debug("Tag was inputted by itself.");
+				log.debug("Tag was specified by itself.");
 				isTagAlone = true;
 			}
 			else if(tag != null) {	
 				
-				System.err.println("Tag was inputted with either a branch or a revision.");
-				System.err.println("Please input the tag without a branch and revision.");
+				System.err.println("Tag was either specified with a branch or a revision.");
+				System.err.println("Please specify a tag without branch or revision.");
 				System.exit(1);
 			}
 			
@@ -109,25 +112,41 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 				HttpPost post = new HttpPost(url);
 				addAuthHeader(post);
 				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
-					
-				//check to see if tag was inputted without branch and revision
+				gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
+				
+				//check to see if tag was specified without branch or revision
 				if(isTagAlone) {
-					
-					nvps.add(new BasicNameValuePair("branch", tag.trim()));	
-					log.debug("revision being added = {}", revision);
+					if(gitValidation.isTag(tag)){
+  					nvps.add(new BasicNameValuePair("branch", tag.trim()));	
+  					log.debug("tag being added = {}", tag);
+					} else {
+					  System.err.println("The tag ["+tag+"] specified is not a tag.");
+            throw new Exception("");
+					}
 				}
 				else {
-					
+				  if(branch == null || branch.length() == 0) {
+            gitValidation.switchBranch(siteStatus.getBranch());
+          }
 					if(branch != null) {
-						
-						nvps.add(new BasicNameValuePair("branch", branch.trim()));
-						log.debug("branch being added = {}", branch);
+						if(gitValidation.isBranch(branch)) {
+						  gitValidation.switchBranch(branch);
+  						nvps.add(new BasicNameValuePair("branch", branch.trim()));
+  						log.debug("branch being added = {}", branch);
+						} else {
+						  System.err.println("The branch ["+branch+"] does not exist.");
+						  throw new Exception("");
+						}
 					}
 	
 					if(revision != null) {
-	
-						nvps.add(new BasicNameValuePair("sha", revision.trim()));
-						log.debug("revision being added = {}", revision);
+					  if(gitValidation.checkRevision(revision)){
+  						nvps.add(new BasicNameValuePair("sha", revision.trim()));
+  						log.debug("revision being added = {}", revision);
+					  } else {  
+					    System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
+              throw new Exception("");
+					  }
 					}					
 				}
 				
@@ -154,6 +173,13 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		catch (Exception e) {
 
 			System.err.println("Failed to updated site [" + siteUrl  + "] to branch [" + branch  + "] and revision [" + revision  + "], or tag [" + tag + "].");
+		} finally {
+      if(gitValidation != null) {
+        try {
+          FileSystemManager.deleteDeep(gitValidation.getBaseDirectory());
+        } catch (Exception e) {
+        }
+      }
 		}
 
 	}
