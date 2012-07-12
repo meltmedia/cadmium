@@ -177,7 +177,15 @@ public class ErrorPageFilter implements Filter {
 
         // get the default page.
         if (errorPageIn == null) {
-          // TODO: do some defaulting.
+          for (String fileName : fileNames) {
+            if ((errorPageIn = ErrorPageFilter.class.getResourceAsStream(fileName)) != null)
+              break;
+          }
+        }
+        
+        if( errorPageIn == null ) {
+          if( message == null ) response.sendError(sc);
+          else response.sendError(sc, message);
           return;
         }
 

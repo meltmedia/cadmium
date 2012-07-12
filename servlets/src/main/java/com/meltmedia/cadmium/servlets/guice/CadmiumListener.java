@@ -111,11 +111,14 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String warName;
   private String repoUri;
   private String channelConfigUrl;
+  private MaintenanceFilter maintenanceFilter;
   
   // Email config
   private String mailJNDIName;
   private String mailSessionStrategy;
   private String mailMessageTransformer;
+  
+  private ServletContext context;
 
   private Injector injector = null;
 
@@ -150,6 +153,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
+    context = servletContextEvent.getServletContext();
     Properties cadmiumProperties = new Properties();
     String cadmiumPropsFile = servletContextEvent.getServletContext().getRealPath("/WEB-INF/cadmium.properties");
     if(FileSystemManager.canRead(cadmiumPropsFile)){
@@ -304,6 +308,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
 
     injector = Guice.createInjector(createServletModule(), createModule());
+    maintenanceFilter.stop();
     super.contextInitialized(servletContextEvent);
   }
 
@@ -326,7 +331,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         serve("/*").with(FileServlet.class, fileParams);
 
-        filter("/*").through(MaintenanceFilter.class, maintParams);
+        //filter("/*").through(MaintenanceFilter.class, maintParams);
         filter("/*").through(ErrorPageFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
         filter("/*").through(SslRedirectFilter.class);
@@ -353,7 +358,7 @@ public class CadmiumListener extends GuiceServletContextListener {
           }
         }
 
-        bind(MaintenanceFilter.class).in(Scopes.SINGLETON);
+        bind(MaintenanceFilter.class).toInstance(maintenanceFilter = (MaintenanceFilter)context.getAttribute(MaintenanceFilter.class.getName()));
         bind(SiteDownService.class).to(MaintenanceFilter.class);
 
         bind(FileServlet.class).in(Scopes.SINGLETON);

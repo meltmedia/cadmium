@@ -1,6 +1,8 @@
 package com.meltmedia.cadmium.servlets;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 import javax.inject.Singleton;
@@ -15,14 +17,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.meltmedia.cadmium.core.SiteDownService;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-public class MaintenanceFilter implements Filter, SiteDownService {
+public class MaintenanceFilter extends HttpFilter implements Filter, SiteDownService {
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	public volatile boolean on = false;
+	public volatile boolean on = true;
 	private String ignorePath;
 
 
@@ -32,6 +35,7 @@ public class MaintenanceFilter implements Filter, SiteDownService {
 		if(config.getInitParameter("ignorePrefix") != null) {
 			ignorePath = config.getInitParameter("ignorePrefix");
 		}
+		config.getServletContext().setAttribute(this.getClass().getName(), this);
 	}
 
 	@Override
@@ -40,10 +44,8 @@ public class MaintenanceFilter implements Filter, SiteDownService {
 	}
 
 	@Override
-	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+	public void doFilter(HttpServletRequest httpReq, HttpServletResponse httpRes, FilterChain chain)
 	throws IOException, ServletException {
-		HttpServletResponse httpRes = (HttpServletResponse)res;
-		HttpServletRequest httpReq = (HttpServletRequest)req;
 		String contextPath = httpReq.getContextPath();
 		String uri = httpReq.getRequestURI();
 		if(contextPath != null && contextPath.trim().length() > 0 && uri.startsWith(contextPath)) {
@@ -51,14 +53,21 @@ public class MaintenanceFilter implements Filter, SiteDownService {
 		}
 		if( !on || (ignorePath != null && uri.startsWith(ignorePath)) ) {
       logger.debug("Serving request server:{}, uri:{}", httpReq.getServerName(), uri);
-			chain.doFilter(req, res);
+			chain.doFilter(httpReq, httpRes);
 			return;
 		}
 
 		httpRes.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-		PrintWriter writer = httpRes.getWriter();
-		writer.append("<html><body><div>This server is under maintenance.</div></body></html>");
-		writer.close();
+		InputStream in = null;
+		try {
+		  in = MaintenanceFilter.class.getResourceAsStream("maintenace.html");
+		  InputStreamReader reader = new InputStreamReader(in, "UTF-8");
+		  IOUtils.copy(reader, httpRes.getWriter()); 
+		}
+		finally {
+		  IOUtils.closeQuietly(in);
+		  IOUtils.closeQuietly(httpRes.getWriter());
+		}
 	}
 
 	@Override

@@ -9,11 +9,23 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns
   </listener>
   
   <filter>
+    <filter-name>maintFilter</filter-name>
+    <filter-class>com.meltmedia.cadmium.servlets.MaintenanceFilter</filter-class>
+    <init-param><param-name>ignorePrefix</param-name>
+    <param-value>/system</param-value></init-param>
+  </filter>
+  
+  <filter>
     <filter-name>guiceFilter</filter-name>
     <filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
   </filter>
 
   <filter-mapping>
+    <filter-name>maintFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  
+   <filter-mapping>
     <filter-name>guiceFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
