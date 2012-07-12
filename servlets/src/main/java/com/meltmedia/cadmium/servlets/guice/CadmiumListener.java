@@ -3,6 +3,8 @@ package com.meltmedia.cadmium.servlets.guice;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.Properties;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
+import org.apache.commons.io.IOUtils;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
@@ -153,86 +156,24 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
+    maintenanceFilter = new MaintenanceFilter();
     context = servletContextEvent.getServletContext();
-    Properties cadmiumProperties = new Properties();
-    String cadmiumPropsFile = servletContextEvent.getServletContext().getRealPath("/WEB-INF/cadmium.properties");
-    if(FileSystemManager.canRead(cadmiumPropsFile)){
-      FileReader reader = null;
-      try{
-        reader = new FileReader(cadmiumPropsFile);
-        cadmiumProperties.load(reader);
-      } catch(Exception e) {
-        log.warn("Failed to load cadmium.properties file");
-      } finally {
-        if(reader != null) {
-          try{
-            reader.close();
-          } catch(Exception e){}
-        }
-      }
-    }
+    Properties cadmiumProperties = loadProperties(new Properties(), context, "/WEB-INF/cadmium.properties", log);
     
     Properties configProperties = new Properties();
     configProperties.putAll(System.getenv());
     configProperties.putAll(System.getProperties());
 
-    if (configProperties.containsKey(BASE_PATH_ENV)) {
-      sharedContentRoot = new File(configProperties.getProperty(BASE_PATH_ENV));
-      if (!sharedContentRoot.exists() || !sharedContentRoot.canRead()
-          || !sharedContentRoot.canWrite()) {
-        if (!sharedContentRoot.mkdirs()) {
-          sharedContentRoot = null;
-        }
-      }
-    }
-
-    if (sharedContentRoot == null) {
-      log.warn("Could not access cadmium content root.  Using the tempdir.");
-      sharedContentRoot = (File) servletContextEvent.getServletContext()
-          .getAttribute("javax.servlet.context.tempdir");
-    }
+    sharedContentRoot = sharedContextRoot(configProperties, context, log);
 
     // compute the directory for this application, based on the war name.
-    String path;
-    path = servletContextEvent.getServletContext().getRealPath("/WEB-INF/web.xml");
-    String[] pathSegments = path.split("/");
-    String warName = pathSegments[pathSegments.length - 3];
-    this.warName = warName;
-    applicationContentRoot = new File(sharedContentRoot, warName);
-    if (!applicationContentRoot.exists())
-      applicationContentRoot.mkdir();
+    warName = getWarName(context);
+    
+    applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
+    
+    loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE), log);
 
-    if (applicationContentRoot == null) {
-      throw new RuntimeException("Could not make application content root.");
-    } else {
-      log.info("Application content root:"
-          + applicationContentRoot.getAbsolutePath());
-    }
-
-    if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
-      try {
-        configProperties.load(new FileReader(new File(
-            applicationContentRoot, CONFIG_PROPERTIES_FILE)));
-      } catch (Exception e) {
-        log.warn("Failed to load properties file ["
-            + CONFIG_PROPERTIES_FILE + "] from content directory.", e);
-      }
-    }
-
-    if (configProperties.containsKey(SSH_PATH_ENV)) {
-      sshDir = new File(configProperties.getProperty(SSH_PATH_ENV));
-      if (!sshDir.exists() && !sshDir.isDirectory()) {
-        sshDir = null;
-      }
-    }
-    if (sshDir == null) {
-      sshDir = new File(sharedContentRoot, ".ssh");
-      if (!sshDir.exists() && !sshDir.isDirectory()) {
-        sshDir = null;
-      }
-    }
-
-    if (sshDir != null) {
+    if ((sshDir = getSshDir(configProperties, sharedContentRoot )) != null) {
       GitService.setupSsh(sshDir.getAbsolutePath());
     }
     
@@ -249,9 +190,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       } catch(Exception e) {
         throw new RuntimeException(e);
       } finally {
-        try{
-          cloned.close();
-        } catch(Exception e){}
+        IOUtils.closeQuietly(cloned);
       }
     }
 
@@ -331,7 +270,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         serve("/*").with(FileServlet.class, fileParams);
 
-        //filter("/*").through(MaintenanceFilter.class, maintParams);
+        filter("/*").through(maintenanceFilter, maintParams);
         filter("/*").through(ErrorPageFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
         filter("/*").through(SslRedirectFilter.class);
@@ -358,8 +297,9 @@ public class CadmiumListener extends GuiceServletContextListener {
           }
         }
 
-        bind(MaintenanceFilter.class).toInstance(maintenanceFilter = (MaintenanceFilter)context.getAttribute(MaintenanceFilter.class.getName()));
-        bind(SiteDownService.class).to(MaintenanceFilter.class);
+
+        bind(MaintenanceFilter.class).toInstance(maintenanceFilter);
+        bind(SiteDownService.class).toInstance(maintenanceFilter);
 
         bind(FileServlet.class).in(Scopes.SINGLETON);
         bind(ContentService.class).to(FileServlet.class);
@@ -501,5 +441,89 @@ public class CadmiumListener extends GuiceServletContextListener {
       // StatusPrinter will handle this
     }
     StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+  }
+  
+  public static Properties loadProperties( Properties properties, ServletContext context, String path, Logger log ) {
+    Reader reader = null;
+    try{
+      reader = new InputStreamReader(context.getResourceAsStream(path), "UTF-8");
+      properties.load(reader);
+    } catch(Exception e) {
+      log.warn("Failed to load "+path);
+    } finally {
+      IOUtils.closeQuietly(reader);
+    }
+    return properties;
+  }
+  
+  public static Properties loadProperties( Properties properties, File configFile, Logger log ) {
+    if( !configFile.exists() || !configFile.canRead()) return properties;
+    
+    Reader reader = null;
+    try{
+      reader = new FileReader(configFile);
+      properties.load(reader);
+    } catch(Exception e) {
+      log.warn("Failed to load "+configFile.getAbsolutePath());
+    } finally {
+      IOUtils.closeQuietly(reader);
+    }
+    return properties;
+  }
+  
+  public static File sharedContextRoot( Properties configProperties, ServletContext context, Logger log ) {
+    File sharedContentRoot = null;
+    
+    if (configProperties.containsKey(BASE_PATH_ENV)) {
+      sharedContentRoot = new File(configProperties.getProperty(BASE_PATH_ENV));
+      if (!sharedContentRoot.exists() || !sharedContentRoot.canRead() || !sharedContentRoot.canWrite()) {
+        if (!sharedContentRoot.mkdirs()) {
+          sharedContentRoot = null;
+        }
+      }
+    }
+    
+    if (sharedContentRoot == null) {
+      log.warn("Could not access cadmium content root.  Using the tempdir.");
+      sharedContentRoot = (File) context.getAttribute("javax.servlet.context.tempdir");
+    }
+    return sharedContentRoot;
+  }
+  
+  public static String getWarName( ServletContext context ) {
+    String[] pathSegments = context.getRealPath("/WEB-INF/web.xml").split("/");
+    return pathSegments[pathSegments.length - 3];
+  }
+  
+  public static File applicationContentRoot(File sharedContentRoot, String warName, Logger log) {
+    File applicationContentRoot = new File(sharedContentRoot, warName);
+    if (!applicationContentRoot.exists())
+      applicationContentRoot.mkdir();
+
+    if (applicationContentRoot == null) {
+      throw new RuntimeException("Could not make application content root.");
+    } else {
+      log.info("Application content root:"
+          + applicationContentRoot.getAbsolutePath());
+    }
+    return applicationContentRoot;
+
+  }
+  
+  public static File getSshDir(Properties configProperties, File sharedContentRoot ) {
+    File sshDir = null;
+    if (configProperties.containsKey(SSH_PATH_ENV)) {
+      sshDir = new File(configProperties.getProperty(SSH_PATH_ENV));
+      if (!sshDir.exists() && !sshDir.isDirectory()) {
+        sshDir = null;
+      }
+    }
+    if (sshDir == null) {
+      sshDir = new File(sharedContentRoot, ".ssh");
+      if (!sshDir.exists() && !sshDir.isDirectory()) {
+        sshDir = null;
+      }
+    }
+    return sshDir;
   }
 }

@@ -1,8 +1,10 @@
 package com.meltmedia.cadmium.core.git;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -29,7 +31,9 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 
-public class GitService {
+public class GitService
+  implements Closeable
+{
   private static final Logger log = LoggerFactory.getLogger(GitService.class);
   
   protected Repository repository;
@@ -417,7 +421,7 @@ public class GitService {
     return repository.getRef(getBranchName()).getObjectId().getName();
   }
   
-  public void close() throws Exception {
+  public void close() throws IOException {
     this.repository.close();
   }
 }

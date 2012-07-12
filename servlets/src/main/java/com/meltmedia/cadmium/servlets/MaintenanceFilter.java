@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class MaintenanceFilter extends HttpFilter implements Filter, SiteDownService {
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	public volatile boolean on = true;
+	public volatile boolean on = false;
 	private String ignorePath;
 
 
@@ -60,7 +60,7 @@ public class MaintenanceFilter extends HttpFilter implements Filter, SiteDownSer
 		httpRes.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
 		InputStream in = null;
 		try {
-		  in = MaintenanceFilter.class.getResourceAsStream("maintenace.html");
+		  in = MaintenanceFilter.class.getResourceAsStream("./maintenance.html");
 		  InputStreamReader reader = new InputStreamReader(in, "UTF-8");
 		  IOUtils.copy(reader, httpRes.getWriter()); 
 		}
