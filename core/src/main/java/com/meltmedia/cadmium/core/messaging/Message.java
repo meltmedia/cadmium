@@ -6,10 +6,10 @@ import java.util.Map;
 public class Message {
   private ProtocolMessage command;
   private Map<String, String> protocolParameters = new HashMap<String, String>();
-  private String requestTime;
+  private Long requestTime;
   
   public Message() {
-    this.requestTime = Long.toString(System.currentTimeMillis());
+    this.requestTime = System.currentTimeMillis();
   }
 
   public ProtocolMessage getCommand() {
@@ -20,11 +20,11 @@ public class Message {
     this.command = command;
   }
   
-  public String getRequestTime() {
+  public Long getRequestTime() {
     return requestTime;
   }
   
-  public void setRequestTime( String requestTime ) {
+  public void setRequestTime( Long requestTime ) {
     this.requestTime = requestTime;
   }
 

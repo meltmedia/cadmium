@@ -67,12 +67,10 @@ public class SyncCommandAction implements CommandAction {
       final CoordinatedWorkerListener oldListener = worker.getListener();
       worker.setListener(new CoordinatedWorkerListener() {
         
-        Long requestTime = Long.valueOf(ctx.getMessage().getRequestTime());
-
-        @Override
+       @Override
         public void workDone() {
           log.info("Sync done");
-          fileServlet.switchContent(requestTime);
+          fileServlet.switchContent(ctx.getMessage().getRequestTime());
           maintFilter.stop();
           worker.setListener(oldListener);
         }

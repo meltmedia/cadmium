@@ -8,11 +8,11 @@ import java.util.LinkedHashMap;
 import org.junit.Test;
 
 public class MessageConverterTest {
-  private static final String serializedMessage = "{\"command\":\"UPDATE\",\"protocolParameters\":{\"branch\":\"master\",\"rev\":\"HEAD\"},\"requestTime\":\"233434800\"}";
+  private static final String serializedMessage = "{\"command\":\"UPDATE\",\"protocolParameters\":{\"branch\":\"master\",\"rev\":\"HEAD\"},\"requestTime\":233434800}";
   private static final Message deserializedMessage = new Message();
   static {
     deserializedMessage.setCommand(ProtocolMessage.UPDATE);
-    deserializedMessage.setRequestTime("233434800");
+    deserializedMessage.setRequestTime(new Long(233434800));
     deserializedMessage.setProtocolParameters(new LinkedHashMap<String, String>());
     deserializedMessage.getProtocolParameters().put("branch", "master");
     deserializedMessage.getProtocolParameters().put("rev", "HEAD");
