@@ -40,9 +40,10 @@ public class StateUpdateCommandAction implements CommandAction {
           lifecycleService.updateState(new ChannelMember(ctx.getSource()), newState);
         }
         if(lifecycleService.getCurrentState() == UpdateState.WAITING && lifecycleService.allEquals(UpdateState.WAITING)) {
+          Long requestTime = Long.valueOf(ctx.getMessage().getRequestTime());
           log.info("Done updating content now switching content.");
           maintFilter.start();
-          fileServlet.switchContent();
+          fileServlet.switchContent(requestTime);
           if(processor != null) {
             processor.makeLive();
           }

@@ -36,12 +36,13 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	}	
 
   @Override
-	public void switchContent() {
+	public void switchContent(Long requestTime) {
 		
 		try {
 		  if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
 		    log.info("Switching to new directory ["+configProperties.getProperty("com.meltmedia.cadmium.lastUpdated")+"]");
 		    this.setBasePath(configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
+		    this.setLastModified(requestTime);
 		  } else {
 		    log.error("Failed to get last updated path");
 		  }

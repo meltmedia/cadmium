@@ -11,7 +11,7 @@ import java.io.InputStream;
  *
  */
 public interface ContentService {
-  public void switchContent();
+  public void switchContent(Long requestTime);
   public String getContentRoot();
   
   /**
@@ -24,4 +24,5 @@ public interface ContentService {
    */
   public InputStream getResourceAsStream( String path )
     throws IOException;
+  
 }

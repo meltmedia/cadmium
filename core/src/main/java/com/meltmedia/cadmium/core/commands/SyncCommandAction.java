@@ -54,7 +54,7 @@ public class SyncCommandAction implements CommandAction {
     return true;
   }
 
-  private void handleCommandAsNonCoordinator(CommandContext ctx) {
+  private void handleCommandAsNonCoordinator(final CommandContext ctx) {
     log.info("Received SYNC request from coordinator");
     boolean update = false;
     if(ctx.getMessage().getProtocolParameters().containsKey("branch") || ctx.getMessage().getProtocolParameters().containsKey("sha")) {
@@ -66,11 +66,13 @@ public class SyncCommandAction implements CommandAction {
       maintFilter.start();
       final CoordinatedWorkerListener oldListener = worker.getListener();
       worker.setListener(new CoordinatedWorkerListener() {
+        
+        Long requestTime = Long.valueOf(ctx.getMessage().getRequestTime());
 
         @Override
         public void workDone() {
           log.info("Sync done");
-          fileServlet.switchContent();
+          fileServlet.switchContent(requestTime);
           maintFilter.stop();
           worker.setListener(oldListener);
         }

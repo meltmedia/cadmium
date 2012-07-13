@@ -10,7 +10,7 @@ public class DummyContentService implements ContentService {
   public boolean switched = false;
 
   @Override
-  public void switchContent() {
+  public void switchContent(Long requestTime) {
     switched = true;
   }
 
