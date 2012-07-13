@@ -57,6 +57,25 @@
         </exclusion>
       </exclusions>
     </dependency>
+    
+   <!-- <dependency>      
+     <groupId>xerces</groupId>
+     <artifactId>xercesImpl</artifactId>
+     <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>xml-apis</groupId>
+      <artifactId>xmlParserAPIs</artifactId>
+      <scope>provided</scope>
+    </dependency> -->
+    <dependency>
+      <groupId>stax</groupId>
+      <artifactId>stax-api</artifactId>
+      <version>1.0.1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    
 
   </dependencies>
 </project>

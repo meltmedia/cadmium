@@ -18,6 +18,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 import org.apache.commons.io.IOUtils;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
@@ -74,6 +75,10 @@ import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.email.jersey.EmailService;
+import com.meltmedia.cadmium.epsilon.client.impl.HcpEpsilonClientImpl;
+import com.meltmedia.cadmium.epsilon.ws.WebServicePool;
+import com.meltmedia.cadmium.epsilon.ws.impl.HcpPortPoolImpl;
+import com.meltmedia.cadmium.hcpregform.jersey.resource.RegisterResource;
 import com.meltmedia.cadmium.search.guice.SearchModule;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
@@ -287,6 +292,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         Map<String, String> fileParams = new HashMap<String, String>();
         fileParams.put("basePath", contentDir);
+        
+        // hook Jackson into Jersey as the POJO <-> JSON mapper
+        bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
 
         serve("/system/*", "/api/*").with(GuiceContainer.class);
 
@@ -449,12 +457,12 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(EmailService.class).asEagerSingleton();
         
         // bind Epsilon 
-       /* bind(Properties.class).annotatedWith(Names.named("com.meltmedia.cadmium.epsilon.props")).toInstance(epsilonProperties);
-        bind(HcpPortPoolImpl.class).asEagerSingleton();                
+        bind(Properties.class).annotatedWith(Names.named("com.meltmedia.cadmium.epsilon.props")).toInstance(epsilonProperties);
+        bind(WebServicePool.class).to(HcpPortPoolImpl.class).asEagerSingleton();              
         bind(HcpEpsilonClientImpl.class).asEagerSingleton();
         
         // HCP Reg Form
-        bind(RegisterResource.class).asEagerSingleton();*/
+        bind(RegisterResource.class).asEagerSingleton();
         
       }
     };
