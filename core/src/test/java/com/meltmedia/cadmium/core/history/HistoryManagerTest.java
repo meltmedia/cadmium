@@ -1,11 +1,13 @@
 package com.meltmedia.cadmium.core.history;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,9 +38,7 @@ public class HistoryManagerTest {
         writer.flush();
       } catch(Exception e){
       } finally {
-        try{
-          writer.close();
-        } catch(Exception e){}
+        IOUtils.closeQuietly(writer);
       }
     }
     
@@ -72,7 +72,7 @@ public class HistoryManagerTest {
   public void testGetHistory() throws Exception {
     List<HistoryEntry> history = manager.getHistory(2, false);
     
-    assertTrue("The incorrect number of history items were returned.", history.size() == 2);
+    assertEquals("The incorrect number of history items were returned.", 2, history.size());
     System.err.println("History[0].timeLive="+history.get(0).getTimeLive() + ", History[1].timeLive=" + history.get(1).getTimeLive());
     assertTrue("History order wrong", history.get(0).getTimeLive() >= 500l && history.get(1).getTimeLive() == 0l);
     
