@@ -55,14 +55,8 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
   
   @Override
   protected String resolveMimeType(String filename) {
-    String contentType = super.resolveMimeType(filename);
-    if(mimeTypes != null) {
-      String ctype = mimeTypes.getContentType(filename);
-      if(ctype != null && ctype.length() > 0) {
-        contentType = ctype;
-      }
-    }
-    return contentType;
+    if( mimeTypes == null) throw new RuntimeException("The mime type processor is not set!.");
+    return mimeTypes.getContentType(filename);
   }
 
 	@Override
