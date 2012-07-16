@@ -78,7 +78,7 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
             		"Repo URL         => [" + statusObj.getRepo() + "]\n" +
             		"Branch           => [" + statusObj.getBranch() + "]\n" +
             		"Revision         => [" + statusObj.getRevision() + "]\n" +
-            		"Content Source   => [" + statusObj.getSource() + "]\n" +
+            		"Content Source   => [" + statusObj.getSource().replace("\n", "                     \n") + "]\n" +
             		"Maint Page State => [" + statusObj.getMaintPageState() +"]\n");  
             
             System.out.println();

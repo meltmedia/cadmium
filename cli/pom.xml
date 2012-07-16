@@ -74,7 +74,7 @@
     
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>cadmium-basic-war</artifactId>
+      <artifactId>cadmium-war</artifactId>
       <version>${project.version}</version>
       <type>war</type>
       <scope>provided</scope>

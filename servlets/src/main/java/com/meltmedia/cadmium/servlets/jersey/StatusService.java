@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,7 +30,11 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.Gson;
+import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
@@ -37,6 +42,7 @@ import com.meltmedia.cadmium.core.messaging.MessageSender;
 
 @Path("/status")
 public class StatusService extends AuthorizationService {
+  private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	//constants
 	public final String ENVIRON_DEV = "dev";
@@ -80,7 +86,6 @@ public class StatusService extends AuthorizationService {
 	  if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-    
 		Map<String, Object> returnObj = new LinkedHashMap<String, Object>();
 		
 		// Get content directory
@@ -97,7 +102,14 @@ public class StatusService extends AuthorizationService {
 		String repo = repoUri;
 		
 		// Get source project info (branch, repo and revision)
-		String source = configProperties.getProperty("source", "{}");
+		String sourceFile = contentDir + File.separator + "META-INF" + File.separator + "source";
+		String source = "{}";
+		if(FileSystemManager.canRead(sourceFile)) {
+		  source = FileSystemManager.getFileContents(sourceFile);
+		} else {
+		  logger.debug("No source file [{}]", sourceFile);
+		}
+    logger.debug("Source [{}] is from [{}]", source, sourceFile);
 		
 		
 		

@@ -47,7 +47,7 @@ public class InitializeWarCommand implements CliCommand {
 
 	public void execute() throws Exception {
 		if(war == null || FileSystemManager.canRead(war)) {
-	    updateWar("cadmium-basic-war.war", war, newWarNames, repoUri, branch, domain, context);
+	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, domain, context);
 		} else {
 			System.err.println("ERROR: \""+war+"\" does not exist or cannot be read.");
 			System.exit(1);

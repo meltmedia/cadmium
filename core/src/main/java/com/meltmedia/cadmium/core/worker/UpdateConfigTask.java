@@ -97,17 +97,6 @@ public class UpdateConfigTask implements Callable<Boolean> {
         configProperties.remove("updating.to.branch");
       }
       
-      String sourceFilePath = lastUpdatedDir + File.separator + "META-INF" + File.separator + "source";
-      if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
-        try {
-          configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
-        } catch(Exception e) {
-          log.warn("Failed to read source file {}", sourceFilePath);
-        }
-      } else {
-        configProperties.setProperty("source", "{}");
-      }
-      
       try{
         updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
       } catch(Exception e) {
