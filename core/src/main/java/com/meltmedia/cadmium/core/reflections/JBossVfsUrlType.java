@@ -40,12 +40,10 @@ public class JBossVfsUrlType implements UrlType {
   public static class VfsFileDir
     implements Dir
   {
-    private URL vfsUrl;
     VirtualFileURLConnection vfConn;
     VirtualFile vFile;
 
     public VfsFileDir( URL vfsUrl ) throws IOException {
-      this.vfsUrl = vfsUrl;
       vfConn = (VirtualFileURLConnection)vfsUrl.openConnection();
       vFile = vfConn.getContent();
     }

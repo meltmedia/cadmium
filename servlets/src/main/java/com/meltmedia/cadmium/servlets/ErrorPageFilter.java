@@ -1,11 +1,9 @@
 package com.meltmedia.cadmium.servlets;
 
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.io.Reader;
 
 import javax.inject.Inject;
@@ -13,7 +11,6 @@ import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -23,9 +20,6 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import org.apache.commons.io.IOUtils;
 
 import com.meltmedia.cadmium.core.ContentService;
-import com.meltmedia.cadmium.core.FileSystemManager;
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,8 +64,6 @@ public class ErrorPageFilter implements Filter {
   void setContentService( ContentService contentService ) {
     this.contentService = contentService;
   }
-
-  private final String DEFAULT_ERROR_PAGE = "defaultError.html";
 
   private String ignorePath;
 
@@ -158,6 +150,7 @@ public class ErrorPageFilter implements Filter {
    * @param response the response that the error will be written to.
    * @throws IOException if there is a problem rendering the error page.
    */
+  @SuppressWarnings("deprecation")
   protected void sendError( int sc, String message, HttpServletRequest request, HttpServletResponse response )
     throws IOException
   {

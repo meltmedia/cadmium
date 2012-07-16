@@ -13,7 +13,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,6 @@ import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
 import org.jgroups.Receiver;
 import org.reflections.Reflections;
-import org.reflections.vfs.UrlTypeVFS;
 import org.reflections.vfs.Vfs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,19 +56,10 @@ import com.google.inject.servlet.ServletModule;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
-import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
-import com.meltmedia.cadmium.core.commands.CurrentStateCommandAction;
-import com.meltmedia.cadmium.core.commands.MaintenanceCommandAction;
-import com.meltmedia.cadmium.core.commands.HistoryRequestCommandAction;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
-import com.meltmedia.cadmium.core.commands.StateUpdateCommandAction;
-import com.meltmedia.cadmium.core.commands.SyncCommandAction;
-import com.meltmedia.cadmium.core.commands.UpdateCommandAction;
-import com.meltmedia.cadmium.core.commands.UpdateDoneCommandAction;
-import com.meltmedia.cadmium.core.commands.UpdateFailedCommandAction;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -83,10 +72,7 @@ import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
-import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
-import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
-import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.email.jersey.EmailService;
@@ -100,10 +86,6 @@ import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SslRedirectFilter;
-import com.meltmedia.cadmium.servlets.jersey.MaintenanceService;
-import com.meltmedia.cadmium.servlets.jersey.HistoryService;
-import com.meltmedia.cadmium.servlets.jersey.StatusService;
-import com.meltmedia.cadmium.servlets.jersey.UpdateService;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 import com.meltmedia.cadmium.vault.guice.VaultModule;
@@ -527,12 +509,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     if (!applicationContentRoot.exists())
       applicationContentRoot.mkdir();
 
-    if (applicationContentRoot == null) {
-      throw new RuntimeException("Could not make application content root.");
-    } else {
-      log.info("Application content root:"
-          + applicationContentRoot.getAbsolutePath());
-    }
+    log.info("Application content root:" + applicationContentRoot.getAbsolutePath());
     return applicationContentRoot;
 
   }
