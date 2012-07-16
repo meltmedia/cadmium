@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.github.ApiClient;
@@ -39,7 +40,6 @@ public class CadmiumCli {
 	 */
 	public static void main(String[] args) {
 		try {
-		  setupSsh();
 		  
 		  jCommander = new JCommander();
 		  
@@ -49,8 +49,12 @@ public class CadmiumCli {
 		  jCommander.addCommand("help", helpCommand);
       
       Map<String, CliCommand> commands = wireCommands(jCommander);
-		  
-		  jCommander.parse(args);
+		  try {
+		    jCommander.parse(args);
+		  } catch(ParameterException pe) {
+		    System.err.println(pe.getMessage());
+		    System.exit(1);
+		  }
 		  
 		  String commandName = jCommander.getParsedCommand();
 		  if( commandName == null ) {
@@ -78,6 +82,7 @@ public class CadmiumCli {
 		  else if(commands.containsKey(commandName)){
 		    CliCommand command = commands.get(commandName);
 		    if(command instanceof AuthorizedOnly) {
+		      setupSsh(((AuthorizedOnly) command).isAuthQuiet());
 		      setupAuth((AuthorizedOnly) command);
 		    }
 		    command.execute();
@@ -85,16 +90,17 @@ public class CadmiumCli {
 		
 		}
 		catch( Exception e ) {
-			System.out.println(e.getMessage());
-			e.printStackTrace();
+			System.err.println("Error: " + e.getMessage());
+			//e.printStackTrace();
+			System.exit(1);
 		}
 
 	}
 
-	private static void setupSsh() {
+	private static void setupSsh(boolean noPrompt) {
 		File sshDir = new File(System.getProperty("user.home"), ".ssh");
 		if(sshDir.exists()) {
-			GitService.setupLocalSsh(sshDir.getAbsolutePath());
+			GitService.setupLocalSsh(sshDir.getAbsolutePath(), noPrompt);
 		}
 	}
 	
@@ -107,7 +113,7 @@ public class CadmiumCli {
 	      token = null;
 	    }
 	  }
-	  if(token == null) {
+	  if(token == null && !authCmd.isAuthQuiet()) {
 	    String username = System.console().readLine("Username [github]: ");
 	    String password = new String(System.console().readPassword("Password: "));
 	    List<String> scopes = new ArrayList<String>();
@@ -152,6 +158,7 @@ public class CadmiumCli {
       	        jCommander.addCommand(command.getCommandName(), command);
       	      }
     	      } catch(Throwable e) {
+    	        //e.printStackTrace();
     	        // I can't autowire this class.
     	      }
     	    }

@@ -34,11 +34,13 @@ public class LocalConfigSessionFactory extends JschConfigSessionFactory {
 	private String privateKeyFile;
 	private String knownHostsFile;
 	private String sshDir;
+	private boolean noPrompt = false;
 	
-	public LocalConfigSessionFactory( String sshDir ) {
+	public LocalConfigSessionFactory( String sshDir, boolean noPrompt ) {
 		this.privateKeyFile = sshDir+"/meltmedia-gene-deploy";
 		this.knownHostsFile = sshDir+"/known_hosts";
 		this.sshDir = sshDir;
+		this.noPrompt = noPrompt;
 	}
 	
 	@Override
@@ -47,23 +49,35 @@ public class LocalConfigSessionFactory extends JschConfigSessionFactory {
 
 			@Override
 			public String getPassphrase() {
-				return new String(System.console().readPassword());
+			  if(noPrompt) {
+			    return "";
+			  } else {
+			    return new String(System.console().readPassword());
+			  }
 			}
 
 			@Override
 			public String getPassword() {
-				return new String(System.console().readPassword());
+        if(noPrompt) {
+          return "";
+        } else {
+          return new String(System.console().readPassword());
+        }
 			}
 
 			@Override
 			public boolean promptPassphrase(String arg0) {
-        System.err.print("Enter "+arg0+": ");
+			  if(!noPrompt) {
+	        System.err.print("Enter "+arg0+": ");
+			  }
 				return true;
 			}
 
 			@Override
 			public boolean promptPassword(String arg0) {
-        System.err.print("Enter "+arg0+": ");
+        if(!noPrompt) {
+          System.err.print("Enter "+arg0+": ");
+        }
 				return true;
 			}
 

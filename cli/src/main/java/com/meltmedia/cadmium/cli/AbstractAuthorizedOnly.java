@@ -39,4 +39,9 @@ public class AbstractAuthorizedOnly implements AuthorizedOnly {
     addAuthHeader(token, message);
   }
 
+  @Override
+  public boolean isAuthQuiet() {
+    return false;
+  }
+
 }

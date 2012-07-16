@@ -37,6 +37,9 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
   @Parameter(names={"--message", "-m"}, description="comment", required=true)  
   private String comment;
   
+  @Parameter(names="--quiet-auth", description="Option to skip updating/prompting for new credentials.", required=false)
+  private Boolean skipAuth = false;
+  
   public void execute() throws Exception {
        
 	String siteUrl = site.get(0);
@@ -78,5 +81,10 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
   @Override
   public String getCommandName() {
     return "commit";
+  }
+
+  @Override
+  public boolean isAuthQuiet() {
+    return skipAuth;
   }
 }

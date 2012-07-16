@@ -72,7 +72,11 @@ public class GitService
   }
   
   public static void setupLocalSsh(String sshDir) {
-    SshSessionFactory.setInstance(new LocalConfigSessionFactory(sshDir));
+    setupLocalSsh(sshDir, false);
+  }
+  
+  public static void setupLocalSsh(String sshDir, boolean noPrompt) {
+    SshSessionFactory.setInstance(new LocalConfigSessionFactory(sshDir, noPrompt));
   }
   
   public static GitService createGitService(String repositoryDirectory) throws Exception {
