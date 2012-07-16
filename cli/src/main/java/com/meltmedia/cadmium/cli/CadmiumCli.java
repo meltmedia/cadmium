@@ -126,7 +126,11 @@ public class CadmiumCli {
 	  if(token != null) {
 	    authCmd.setToken(token);
 	  } else {
-	    System.err.println("Github auth failed: Please rerun cadmium install script [cli-install.py]");
+	    if(authCmd.isAuthQuiet()) {
+	      System.err.println("Github auth failed: Please rerun cadmium install script [cli-install.py]");
+	    } else {
+	      System.err.println("Github auth failed");
+	    }
 	    System.exit(1);
 	  }
 	}
