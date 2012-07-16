@@ -22,10 +22,43 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-public class MaintenanceFilter extends HttpFilter implements Filter, SiteDownService {
+public class MaintenanceFilter extends HttpFilter implements Filter {
   private final Logger logger = LoggerFactory.getLogger(getClass());
+  
+  final static class MaintSiteDownService implements SiteDownService
+  {
+    
+    protected MaintenanceFilter filter = null;
+    protected boolean active = false;
+    
+    synchronized void setMaintenanceFilter( MaintenanceFilter filter ) {
+      this.filter = filter;
+      if( filter != null ) {
+        if( active ) filter.start();
+        else filter.stop();
+      }
+    }
 
-	public volatile boolean on = false;
+    @Override
+    public synchronized void start() {
+      active = true;
+      if( filter != null ) filter.start();
+    }
+
+    @Override
+    public synchronized void stop() {
+     if( filter != null ) filter.stop();
+    }
+
+    @Override
+    public synchronized boolean isOn() {
+      return active;
+    }
+  }
+  
+  public static final MaintSiteDownService siteDown = new MaintSiteDownService();
+
+	public volatile boolean on = true;
 	private String ignorePath;
 
 
@@ -36,11 +69,12 @@ public class MaintenanceFilter extends HttpFilter implements Filter, SiteDownSer
 			ignorePath = config.getInitParameter("ignorePrefix");
 		}
 		config.getServletContext().setAttribute(this.getClass().getName(), this);
+		siteDown.setMaintenanceFilter(this);
 	}
 
 	@Override
 	public void destroy() {
-
+    siteDown.setMaintenanceFilter(null);
 	}
 
 	@Override
@@ -70,12 +104,10 @@ public class MaintenanceFilter extends HttpFilter implements Filter, SiteDownSer
 		}
 	}
 
-	@Override
 	public void start()	{		
 		on = true;
 	}
 
-	@Override
 	public void stop() {
 		on = false;
 	}

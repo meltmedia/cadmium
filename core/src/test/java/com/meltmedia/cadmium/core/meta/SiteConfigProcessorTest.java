@@ -4,19 +4,21 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
 
 public class SiteConfigProcessorTest {
   
-  private List<ConfigProcessor> processors;
+  private Set<ConfigProcessor> processors;
   private SiteConfigProcessor proc;
   
   @Before
   public void createProcessors() throws Exception {
-    processors = new ArrayList<ConfigProcessor>();
+    processors = new HashSet<ConfigProcessor>();
     for(int i=0; i<5; i++) {
       DummyConfigProcessor proc = new DummyConfigProcessor();
       processors.add(proc);

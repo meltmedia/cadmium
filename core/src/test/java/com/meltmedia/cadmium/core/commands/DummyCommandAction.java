@@ -12,6 +12,8 @@ public class DummyCommandAction implements CommandAction {
     this.failTest = failTest;
     this.throwException = throwException;
   }
+  
+  public String getName() { return "DUMMY"; }
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {

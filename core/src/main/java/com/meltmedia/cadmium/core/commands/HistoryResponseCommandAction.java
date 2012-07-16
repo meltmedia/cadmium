@@ -12,12 +12,15 @@ import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
 public class HistoryResponseCommandAction implements CommandAction, CommandResponse {
   private final Logger log = LoggerFactory.getLogger(getClass()); 
   
   protected Map<ChannelMember, Message> responses = new HashMap<ChannelMember, Message>();
+
+  public String getName() { return ProtocolMessage.HISTORY_RESPONSE; };
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {

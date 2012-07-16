@@ -4,6 +4,7 @@ package com.meltmedia.cadmium.deployer;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -13,18 +14,24 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 
-import org.jgroups.JChannel;
-import org.jgroups.Message;
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.meltmedia.cadmium.core.messaging.Message;
+import com.meltmedia.cadmium.core.messaging.MessageSender;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 
 @Path("/deploy")
 public class DeployerService extends AuthorizationService {
-	private final Logger logger = LoggerFactory.getLogger(getClass()); 
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	
+  @Inject
+  protected MessageSender sender;
 
 	@POST
 	@Consumes("application/x-www-form-urlencoded")
@@ -33,19 +40,25 @@ public class DeployerService extends AuthorizationService {
 	  if(!this.isAuth(auth)) {
 	    throw new Exception("Unauthorized!");
     }
-		Map<String, String> parameters = new HashMap<String, String>();
-		parameters.put("branch", branch);
-		parameters.put("repo", repo);
-		parameters.put("domain", domain);
-		parameters.put("context", contextRoot);
+	  
+	  if( StringUtils.isEmptyOrNull(branch) || StringUtils.isEmptyOrNull(repo) || StringUtils.isEmptyOrNull(domain) ) {
+	    Response.serverError();
+	    return "error";
+	  }
+	  
+	  if( StringUtils.isEmptyOrNull(contextRoot) ) {
+	    contextRoot = "/";
+	  }
 		
-		String message = new Gson().toJson(parameters);
-		logger.debug("Sending [{}] over jgroups", message);
-		
-		JChannel channel = (JChannel)context.getAttribute(JGroupsMessagingListener.JGROUPS_CHANNEL);
-		channel.send(new Message(null, null, message));
-		
-		return "ok";
-	} 
+    Message msg = new Message();
+    msg.setCommand(DeployCommandAction.DEPLOY_ACTION);
+    msg.getProtocolParameters().put("branch", branch);
+    msg.getProtocolParameters().put("repo", repo);
+    msg.getProtocolParameters().put("domain", domain);
+    msg.getProtocolParameters().put("context", contextRoot);
+
+    sender.sendMessage(msg, null);
+    return "ok";
+	}
 }
 

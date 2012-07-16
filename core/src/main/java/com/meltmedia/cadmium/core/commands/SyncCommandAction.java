@@ -44,6 +44,8 @@ public class SyncCommandAction implements CommandAction {
   @Inject
   protected ContentService fileServlet;
 
+  public String getName() { return ProtocolMessage.SYNC; }
+  
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
     if(!tracker.getCoordinator().isMine()) {
@@ -105,7 +107,7 @@ public class SyncCommandAction implements CommandAction {
     
     if(update) {
       Message syncMessage = new Message();
-      syncMessage.setCommand(ProtocolMessage.SYNC);
+      syncMessage.setCommand(getName());
       syncMessage.getProtocolParameters().put("branch", configProperties.getProperty("branch"));
       syncMessage.getProtocolParameters().put("sha", configProperties.getProperty("git.ref.sha"));
       try{

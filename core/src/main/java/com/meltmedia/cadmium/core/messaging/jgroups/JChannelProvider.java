@@ -11,6 +11,11 @@ import org.jgroups.JChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A provider for the JGroups channel for this cluster.
+ * 
+ * @author John McEntire
+ */
 @Singleton
 public class JChannelProvider implements Provider<JChannel> {
   

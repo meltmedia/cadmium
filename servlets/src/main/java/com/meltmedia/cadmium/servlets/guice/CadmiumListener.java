@@ -1,21 +1,28 @@
 package com.meltmedia.cadmium.servlets.guice;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
+import javax.ws.rs.Path;
 
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
@@ -23,6 +30,9 @@ import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
 import org.jgroups.Receiver;
+import org.reflections.Reflections;
+import org.reflections.vfs.UrlTypeVFS;
+import org.reflections.vfs.Vfs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +47,11 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
+import com.google.inject.grapher.GrapherModule;
+import com.google.inject.grapher.InjectorGrapher;
+import com.google.inject.grapher.graphviz.GraphvizModule;
+import com.google.inject.grapher.graphviz.GraphvizRenderer;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
@@ -68,11 +83,11 @@ import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
-import com.meltmedia.cadmium.core.meta.MetaConfigProvider;
 import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
 import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
+import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.email.jersey.EmailService;
 import com.meltmedia.cadmium.epsilon.client.impl.HcpEpsilonClientImpl;
@@ -119,7 +134,6 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String warName;
   private String repoUri;
   private String channelConfigUrl;
-  private MaintenanceFilter maintenanceFilter;
   
   // Email config
   private String mailJNDIName;
@@ -163,28 +177,11 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
-    maintenanceFilter = new MaintenanceFilter();
     context = servletContextEvent.getServletContext();
     Properties cadmiumProperties = loadProperties(new Properties(), context, "/WEB-INF/cadmium.properties", log);
     
     //Epsilon Props
-    epsilonProperties = new Properties();
-    String epsilonPropsFile = servletContextEvent.getServletContext().getRealPath("/WEB-INF/epsilon.properties");
-    if(FileSystemManager.canRead(epsilonPropsFile)){
-      FileReader reader = null;
-      try{
-        reader = new FileReader(epsilonPropsFile);
-        epsilonProperties.load(reader);
-      } catch(Exception e) {
-        log.warn("Failed to load epsilon.properties file");
-      } finally {
-        if(reader != null) {
-          try{
-            reader.close();
-          } catch(Exception e){}
-        }
-      }
-    }
+    epsilonProperties = loadProperties(new Properties(), context, "/WEB-INF/epsilon.properties", log);
     
     
     Properties configProperties = new Properties();
@@ -274,8 +271,9 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
 
     injector = Guice.createInjector(createServletModule(), createModule());
-    maintenanceFilter.stop();
     super.contextInitialized(servletContextEvent);
+    File graphFile = new File(applicationContentRoot, "injector.dot");
+    graphGood(graphFile, injector);
   }
 
   @Override
@@ -300,7 +298,6 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         serve("/*").with(FileServlet.class, fileParams);
 
-        filter("/*").through(maintenanceFilter, maintParams);
         filter("/*").through(ErrorPageFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
         filter("/*").through(SslRedirectFilter.class);
@@ -313,6 +310,9 @@ public class CadmiumListener extends GuiceServletContextListener {
     return new AbstractModule() {
       @Override
       protected void configure() {
+
+        Vfs.addDefaultURLTypes(new JBossVfsUrlType());
+        Reflections reflections = new Reflections("com.meltmedia.cadmium");
         Properties configProperties = new Properties();
         configProperties.putAll(System.getenv());
         configProperties.putAll(System.getProperties());
@@ -328,8 +328,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         }
 
 
-        bind(MaintenanceFilter.class).toInstance(maintenanceFilter);
-        bind(SiteDownService.class).toInstance(maintenanceFilter);
+        bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
 
         bind(FileServlet.class).in(Scopes.SINGLETON);
         bind(ContentService.class).to(FileServlet.class);
@@ -346,43 +345,22 @@ public class CadmiumListener extends GuiceServletContextListener {
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
         }).annotatedWith(Names.named("members")).toInstance(members);
-
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.CURRENT_STATE.name()))
-            .to(CurrentStateCommandAction.class).in(Scopes.SINGLETON);
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.STATE_UPDATE.name()))
-            .to(StateUpdateCommandAction.class).in(Scopes.SINGLETON);
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.SYNC.name()))
-            .to(SyncCommandAction.class).in(Scopes.SINGLETON);
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.UPDATE.name()))
-            .to(UpdateCommandAction.class).in(Scopes.SINGLETON);
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.UPDATE_DONE.name()))
-            .to(UpdateDoneCommandAction.class).in(Scopes.SINGLETON);
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.UPDATE_FAILED.name()))
-            .to(UpdateFailedCommandAction.class).in(Scopes.SINGLETON);
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.MAINTENANCE.name()))
-            .to(MaintenanceCommandAction.class).in(Scopes.SINGLETON);
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.HISTORY_REQUEST.name()))
-            .to(HistoryRequestCommandAction.class).in(Scopes.SINGLETON);
-        bind(CommandAction.class)
-            .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE.name()))
-            .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
         
+        Multibinder<CommandAction> commandActionBinder = Multibinder.newSetBinder(binder(), CommandAction.class);
+        
+        Set<Class<? extends CommandAction>> commandActionSet = 
+            reflections.getSubTypesOf(CommandAction.class);
+        log.debug("Found {} CommandAction classes.", commandActionSet.size());
+        
+        for( Class<? extends CommandAction> commandActionClass : commandActionSet ) {
+          commandActionBinder.addBinding().to(commandActionClass);
+        }
 
         bind(CommandResponse.class)
-            .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE.name()))
+            .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE))
             .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
 
-        bind(new TypeLiteral<Map<ProtocolMessage, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
-
-        
+        bind(new TypeLiteral<Map<String, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
         
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
 
@@ -424,13 +402,19 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(LifecycleService.class);
         bind(CoordinatedWorker.class).to(CoordinatedWorkerImpl.class);
         
-        //Bind Meta-config objects
-        bind(RedirectConfigProcessor.class);
-        bind(MimeTypeConfigProcessor.class);
-        bind(SslRedirectConfigProcessor.class);
-        bind(new TypeLiteral<List<ConfigProcessor>>() {}).toProvider(MetaConfigProvider.class).in(Scopes.SINGLETON);
-        
         bind(SiteConfigProcessor.class);
+        
+        Multibinder<ConfigProcessor> configProcessorBinder = Multibinder.newSetBinder(binder(), ConfigProcessor.class);
+        
+        Set<Class<? extends ConfigProcessor>> configProcessorSet = 
+            reflections.getSubTypesOf(ConfigProcessor.class);
+        
+        log.debug("Found {} ConfigProcessor classes.", configProcessorSet.size());
+        
+        for( Class<? extends ConfigProcessor> configProcessorClass : configProcessorSet ) {
+          configProcessorBinder.addBinding().to(configProcessorClass);
+          //bind(ConfigProcessor.class).to(configProcessorClass);
+        }
         
         //This should be the name of a header that BigIp will set if the incoming request was SSL
         bind(String.class).annotatedWith(Names.named(SslRedirectFilter.SSL_HEADER_NAME)).toInstance(SSL_HEADER);
@@ -444,10 +428,14 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named(VaultConstants.CACHE_DIRECTORY)).toInstance(new File(applicationContentRoot, "vault").getAbsoluteFile().getAbsolutePath());
 
         // Bind Jersey Endpoints
-        bind(UpdateService.class).asEagerSingleton();
-        bind(MaintenanceService.class).asEagerSingleton();
-        bind(HistoryService.class).asEagerSingleton();
-        bind(StatusService.class).asEagerSingleton();
+        Set<Class<? extends Object>> jerseySet = 
+            reflections.getTypesAnnotatedWith(Path.class);
+        
+        log.debug("Found {} jersey services with the Path annotation.", jerseySet.size());
+        
+        for( Class<? extends Object> jerseyService : jerseySet ) {
+          bind(jerseyService).asEagerSingleton();
+        }
         
         // bind email services
         bind(String.class).annotatedWith(Names.named("com.meltmedia.email.jndi")).toInstance(mailJNDIName);
@@ -565,4 +553,45 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
     return sshDir;
   }
+  
+  public final static Injector graphGood(File file, Injector inj) {
+    try {
+       ByteArrayOutputStream baos = new ByteArrayOutputStream();
+       PrintWriter out = new PrintWriter(baos);
+
+       Injector injector =
+          Guice.createInjector(new GrapherModule(), new GraphvizModule());
+       GraphvizRenderer renderer = 
+          injector.getInstance(GraphvizRenderer.class);
+       renderer.setOut(out).setRankdir("TB");
+
+       injector.getInstance(InjectorGrapher.class).of(inj).graph();
+
+       out = new PrintWriter(file, "UTF-8");
+       String s = baos.toString("UTF-8");
+       s = fixGrapherBug(s);
+       s = hideClassPaths(s);
+       out.write(s);
+       out.close();
+
+    } catch (FileNotFoundException e) {
+       e.printStackTrace();
+    } catch (UnsupportedEncodingException e) {
+       e.printStackTrace();
+    } catch (IOException e) {
+       e.printStackTrace();
+    }
+    return inj;
+ }
+
+ public static String hideClassPaths(String s) {
+    s = s.replaceAll("\\w[a-z\\d_\\.]+\\.([A-Z][A-Za-z\\d_]*)", "");
+    s = s.replaceAll("value=[\\w-]+", "random");
+    return s;
+ }
+
+ public static String fixGrapherBug(String s) {
+    s = s.replaceAll("style=invis", "style=solid");
+    return s;
+ }
 }

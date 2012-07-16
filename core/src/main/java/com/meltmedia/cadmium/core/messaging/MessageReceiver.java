@@ -21,7 +21,7 @@ public class MessageReceiver implements MessageListener {
   
   @Inject
   @Named("commandMap")
-  Map<ProtocolMessage, CommandAction> commandMap; 
+  Map<String, CommandAction> commandMap; 
   
   @Override
   public void receive(org.jgroups.Message msg) {

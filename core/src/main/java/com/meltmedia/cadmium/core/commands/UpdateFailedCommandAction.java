@@ -12,6 +12,7 @@ import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
 public class UpdateFailedCommandAction implements CommandAction {
@@ -25,6 +26,8 @@ public class UpdateFailedCommandAction implements CommandAction {
   
   @Inject
   protected HistoryManager historyManager;
+
+  public String getName() { return ProtocolMessage.UPDATE_FAILED; }
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {

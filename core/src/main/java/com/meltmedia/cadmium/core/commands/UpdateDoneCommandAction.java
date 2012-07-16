@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
 public class UpdateDoneCommandAction implements CommandAction {
@@ -16,6 +17,8 @@ public class UpdateDoneCommandAction implements CommandAction {
   
   @Inject
   protected LifecycleService lifecycleService;
+
+  public String getName() { return ProtocolMessage.UPDATE_DONE; }
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {

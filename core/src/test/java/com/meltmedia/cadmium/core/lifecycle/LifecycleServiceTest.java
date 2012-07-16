@@ -73,7 +73,7 @@ public class LifecycleServiceTest {
     
     assertTrue("State not updated", members.get(1).getState() == UpdateState.UPDATING);
     assertTrue("No message sent", channel.getMessageList().size() == 1);
-    assertTrue("Message sent not a STATE_UPDATE", channel.getMessageList().get(0).getObject().toString().contains(ProtocolMessage.STATE_UPDATE.name()));
+    assertTrue("Message sent not a STATE_UPDATE", channel.getMessageList().get(0).getObject().toString().contains(ProtocolMessage.STATE_UPDATE));
     assertTrue("Correct state not sent", channel.getMessageList().get(0).getObject().toString().contains(UpdateState.UPDATING.name()));
   }
   

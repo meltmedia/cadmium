@@ -12,6 +12,7 @@ import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
 public class MaintenanceCommandAction implements CommandAction {
@@ -22,6 +23,8 @@ public class MaintenanceCommandAction implements CommandAction {
 
 	@Inject
 	protected SiteDownService siteDownService;
+	
+  public String getName() { return ProtocolMessage.MAINTENANCE; }
 	
 	@Override
 	public boolean execute(CommandContext ctx) throws Exception {

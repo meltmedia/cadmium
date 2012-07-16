@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Message {
-  private ProtocolMessage command;
+  private String command;
   private Map<String, String> protocolParameters = new HashMap<String, String>();
   private Long requestTime;
   
@@ -12,11 +12,11 @@ public class Message {
     this.requestTime = System.currentTimeMillis();
   }
 
-  public ProtocolMessage getCommand() {
+  public String getCommand() {
     return command;
   }
 
-  public void setCommand(ProtocolMessage command) {
+  public void setCommand(String command) {
     this.command = command;
   }
   

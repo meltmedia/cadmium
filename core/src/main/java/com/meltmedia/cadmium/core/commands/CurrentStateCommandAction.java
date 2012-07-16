@@ -10,6 +10,7 @@ import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
 public class CurrentStateCommandAction implements CommandAction {
@@ -17,6 +18,8 @@ public class CurrentStateCommandAction implements CommandAction {
   
   @Inject
   protected LifecycleService lifecycleService;
+  
+  public String getName() { return ProtocolMessage.CURRENT_STATE; };
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {

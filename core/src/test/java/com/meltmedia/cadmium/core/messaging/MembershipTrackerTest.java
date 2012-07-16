@@ -60,15 +60,15 @@ public class MembershipTrackerTest {
     assertTrue("Wrong number of messages sent", msgs.size() == 4);
     
     assertTrue("Wrong msg1 dest address", msgs.get(0).getDest().toString().equals(other2.toString()));
-    assertTrue("Wrong msg1 msg", msgs.get(0).getObject().toString().contains(ProtocolMessage.CURRENT_STATE.name()));
+    assertTrue("Wrong msg1 msg", msgs.get(0).getObject().toString().contains(ProtocolMessage.CURRENT_STATE));
 
     assertTrue("Wrong msg2 dest address", msgs.get(1).getDest().toString().equals(me.toString()));
-    assertTrue("Wrong msg2 msg", msgs.get(1).getObject().toString().contains(ProtocolMessage.CURRENT_STATE.name()));
+    assertTrue("Wrong msg2 msg", msgs.get(1).getObject().toString().contains(ProtocolMessage.CURRENT_STATE));
 
     assertTrue("Wrong msg2 dest address", msgs.get(2).getDest().toString().equals(other3.toString()));
-    assertTrue("Wrong msg2 msg", msgs.get(2).getObject().toString().contains(ProtocolMessage.CURRENT_STATE.name()));
+    assertTrue("Wrong msg2 msg", msgs.get(2).getObject().toString().contains(ProtocolMessage.CURRENT_STATE));
     
     assertTrue("Wrong msg3 dest address", msgs.get(3).getDest().toString().equals(other2.toString()));
-    assertTrue("Wrong msg3 msg", msgs.get(3).getObject().toString().contains(ProtocolMessage.SYNC.name()));
+    assertTrue("Wrong msg3 msg", msgs.get(3).getObject().toString().contains(ProtocolMessage.SYNC));
   }
 }

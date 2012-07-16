@@ -86,7 +86,9 @@ public class MimeTypeConfigProcessor implements ConfigProcessor {
   
   public String getContentType(String filename) {
     String[] parts = filename.split("\\.");
-    return mimeTypes.get(parts[parts.length-1]);
+    String mimeType = mimeTypes.get(parts[parts.length-1]);
+    log.debug("Resolving mimetype for {} with extension {} to {}", new String[] {filename, parts[parts.length-1], mimeType});
+    return mimeType;
   }
 
 }

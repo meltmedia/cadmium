@@ -11,6 +11,7 @@ import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
 public class UpdateCommandAction implements CommandAction {
@@ -21,6 +22,8 @@ public class UpdateCommandAction implements CommandAction {
   
   @Inject
   protected CoordinatedWorker worker;
+  
+  public String getName() { return ProtocolMessage.UPDATE; }
   
   public UpdateCommandAction(){}
 

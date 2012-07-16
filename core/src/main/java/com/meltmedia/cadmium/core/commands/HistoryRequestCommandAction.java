@@ -28,6 +28,8 @@ public class HistoryRequestCommandAction implements CommandAction {
   
   @Inject
   protected MessageSender sender;
+  
+  public String getName() { return ProtocolMessage.HISTORY_REQUEST; };
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {

@@ -13,6 +13,7 @@ import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 @Singleton
@@ -31,6 +32,8 @@ public class StateUpdateCommandAction implements CommandAction {
   @Inject
   protected SiteConfigProcessor processor;
 
+  public String getName() { return ProtocolMessage.STATE_UPDATE; }
+  
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
     try {

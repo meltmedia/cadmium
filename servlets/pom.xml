@@ -56,6 +56,18 @@
       <artifactId>guice</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-multibindings</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-grapher</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.reflections</groupId>
+      <artifactId>reflections</artifactId>
+   </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
@@ -90,4 +102,12 @@
       <artifactId>jersey-json</artifactId>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+        <plugin>
+          <groupId>org.reflections</groupId>
+          <artifactId>reflections-maven</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>

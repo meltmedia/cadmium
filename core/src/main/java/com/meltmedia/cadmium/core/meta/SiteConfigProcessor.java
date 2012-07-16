@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.core.meta;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -15,10 +16,10 @@ import org.slf4j.LoggerFactory;
 public class SiteConfigProcessor {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
-  private List<ConfigProcessor> processors;
+  private Set<ConfigProcessor> processors;
   
   @Inject
-  public SiteConfigProcessor(List<ConfigProcessor> processors, @Named("contentDir") String contentDir) throws Exception {
+  public SiteConfigProcessor(Set<ConfigProcessor> processors, @Named("contentDir") String contentDir) throws Exception {
     this.processors = processors;
     if(contentDir != null) {
       this.processDir(contentDir);

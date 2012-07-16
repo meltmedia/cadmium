@@ -49,4 +49,12 @@
       <artifactId>httpclient</artifactId>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+        <plugin>
+          <groupId>org.reflections</groupId>
+          <artifactId>reflections-maven</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -255,7 +255,7 @@ public class GitService
   		git.commit().setMessage("initial commit").call();
   		return new GitService(git);  		
   	} catch (IllegalStateException e) {
-  		System.out.println("Repo Already exists locally");
+  		log.debug("Repo Already exists locally");
   	}
 		return null;
   }
