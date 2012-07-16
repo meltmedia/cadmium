@@ -20,7 +20,7 @@ import os, os.path, sys, stat, shutil, string
 cadmium_version = '0.1.0-SNAPSHOT'
 
 cadmium_sh = """#! /bin/sh
-java -jar ~/.cadmium/cadmium-cli.jar $@
+java -jar ~/.cadmium/cadmium-cli.jar "$@"
 """
 user_dir = os.path.expanduser('~/.cadmium')
 
