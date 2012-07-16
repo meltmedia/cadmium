@@ -1,0 +1,99 @@
+# The DocPad Configuration File
+# It is simply a CoffeeScript Object which is parsed by CSON
+{
+
+  # =================================
+  # Template Data
+  # These are variables that will be accessible via our templates
+  # To access one of these within our templates, refer to the FAQ: https://github.com/bevry/docpad/wiki/FAQ
+
+  templateData:
+
+    contextRoot: ''
+    
+    layoutsPaths: [
+      'layouts',
+      'templates'
+    ]
+    # Global site settings
+    site:
+
+      title: 'Cadmium Getting Started'
+
+      # The website analytics codes for various servers
+      analytics:
+
+        # Google Analytics is the most popular analytics service
+        google: false  # instead of false, use your google analytics tracker id here
+
+    # -----------------------------
+    # Helper Functions
+    # We haven't come across the case that we need to be able to access to the meta data of the partial file 
+    # but we had some cases that we needed to be able to access to the current document.
+    # By passing the reference of the current document which includes partial files to this partial function, 
+    # nesting partials and accessting to data of the current document and this cson file becomes possible.
+    # Also, it becamse possible to run methods in this file, so now you can load specific JS and CSS files to the current document.  
+    loadPartial: (name)->
+      @partial name, @
+    
+    _addTo: (key, files)->
+
+      if typeof files is "string"
+        files = files.replace(/\s+/g, '').split(",")
+      
+      allFiles = null;
+      #get underscore
+      @_ or= require "underscore"
+      _ = @_
+      
+      #somehow files get an extra file
+      #files.pop() 
+      
+      existingFiles = @documentModel.get key
+
+      if existingFiles
+        allFiles = _.union existingFiles, files
+      else
+        allFiles = files;
+        
+      @documentModel.set key, allFiles
+      
+      ""
+      
+    loadFiles: (type)->
+      
+      if type isnt 'js' and type isnt 'css'
+        new Error("Error: the first arguments of the 'loadFiles' function has to be 'js' or 'css'");
+        return false
+      
+      files = @documentModel.get type
+      html = ""
+      
+      if files
+        for path in files
+          if typeof path is "string"
+            if type is "js"
+              html += "<script type='text/javascript' src='#{path}'></script>\n"
+            else if type is "css"
+              html += "<link rel='stylesheet' href='#{path}'/>\n"
+      html
+
+  plugins:
+  
+    handlebars:
+    
+      helpers:
+        # Actual Handlerbar Helper is the only way to access to the data between open and closing Handlebar tags when there are more than one lines
+        addTo: (key,options)->
+          str = options.fn this
+          @_addTo key, str
+        
+    proxy:
+      
+      proxies: 
+        
+        meltmediaApi:
+            path: /^\/(api|system)(\/.*)$/
+            domain: 'http://cadmium.meltdemo.com'
+          
+}

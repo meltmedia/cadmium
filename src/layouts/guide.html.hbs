@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+
+    <!-- Site Info
+    ================================================== -->
+    <title>{{document.title}}</title>
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+
+    <!--<link rel="shortcut icon" href="images/favicon.ico" />-->
+    <!-- Mobile Specific Meta
+    ================================================== -->
+    <meta name="viewport" content="initial-scale=1.0; maximum-scale=1.0; minimum-scale=1.0; user-scalable=0;" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <!-- JAVASCRIPT
+    ================================================== -->
+    <!--<script type="text/javascript" charset="utf-8" data-requirecontext="_" data-requiremodule="jquery" src="/lib/jam/jquery/jquery.js"></script>-->
+
+    <!-- CSS
+    ================================================== -->
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/global.css" />
+    {{#each documents.css}}
+      <link rel="stylesheet" href="{{contextRoot}}{{this}}" media="screen">
+    {{/each}}
+
+  </head>
+
+  <body>
+    <a id="top"></a>
+    {{loadPartial "header.html.hbs"}}
+
+  <div id="container" class="clearfix">
+    <nav>
+      {{loadPartial "nav/left-nav.html.hbs"}}
+    </nav>
+    <section id="content">
+
+      {{{content}}}
+
+      <p><a href="#top" title="top" id="top-link">back to top</a></p>
+    </section>
+  </div>
+
+    {{loadPartial "footer.html"}}
+
+</body>
+</html>

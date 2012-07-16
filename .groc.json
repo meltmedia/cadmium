@@ -1,0 +1,7 @@
+{
+  "glob": ["src/**/*.coffee", "src/**/*.js", "src/**/*.scss", "src/**/*.sass", "src/**/*.css", "README.md"],
+  "except": ["src/files/js/jam/**/*.*", ".git/**/*.*"],
+  "index": "README.md",
+  "strip": ["src/"],
+  "out": "docs"
+}
