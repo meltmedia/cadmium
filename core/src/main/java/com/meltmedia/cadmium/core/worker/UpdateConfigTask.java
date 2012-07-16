@@ -97,7 +97,7 @@ public class UpdateConfigTask implements Callable<Boolean> {
         configProperties.remove("updating.to.branch");
       }
       
-      String sourceFilePath = lastUpdatedDir + File.separator + "MET-INF" + File.separator + "source";
+      String sourceFilePath = lastUpdatedDir + File.separator + "META-INF" + File.separator + "source";
       if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
         try {
           configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
