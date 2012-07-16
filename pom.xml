@@ -244,6 +244,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <copyright.owner>meltmedia</copyright.owner>
+    <copyright.year>2012</copyright.year>
   </properties>
 
   <build>
