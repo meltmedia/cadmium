@@ -17,9 +17,7 @@ package com.meltmedia.cadmium.servlets.jersey;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -29,16 +27,18 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
+import com.meltmedia.cadmium.status.Status;
+import com.meltmedia.cadmium.status.StatusMember;
 
 @Path("/status")
 public class StatusService extends AuthorizationService {
@@ -81,12 +81,12 @@ public class StatusService extends AuthorizationService {
 	}
 	
 	@GET	
-	@Produces("application/json")
-	public String status(@HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+	@Produces(MediaType.APPLICATION_JSON)
+	public Status status(@HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
 	  if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-		Map<String, Object> returnObj = new LinkedHashMap<String, Object>();
+		Status returnObj = new Status();
 		
 		// Get content directory
 		String contentDir = this.initialContentDir;
@@ -118,20 +118,20 @@ public class StatusService extends AuthorizationService {
 		
 		if(members != null) {
 			
-			List<Map<String, Object>> peers = new ArrayList<Map<String, Object>>();
+			List<StatusMember> peers = new ArrayList<StatusMember>();
 			
 			for(ChannelMember member : members) {
 				
-				Map<String, Object> peer = new LinkedHashMap<String, Object>();
-				peer.put("address", member.getAddress().toString());
-				peer.put("coordinator", member.isCoordinator());
-				peer.put("state", member.getState().name());
-				peer.put("mine", member.isMine());
+			  StatusMember peer = new StatusMember();
+				peer.setAddress(member.getAddress().toString());
+				peer.setCoordinator(member.isCoordinator());
+				peer.setState(member.getState());
+				peer.setMine(member.isMine());
 				peers.add(peer);			
 				
 			}
 			
-			returnObj.put("members", peers);
+			returnObj.setMembers(peers);
 		}
 		
 		// Get environment status 
@@ -139,12 +139,12 @@ public class StatusService extends AuthorizationService {
 		
 		if(environFromConfig != null && environFromConfig.trim().length() > 0) {			
 			
-			returnObj.put("environment", environFromConfig);
+			returnObj.setEnvironment(environFromConfig);
 			
 		}
 		else {
 			
-			returnObj.put("environment", ENVIRON_DEV);	
+			returnObj.setEnvironment(ENVIRON_DEV);	
 		}
 		
 		// Get Maintanence page status (on or off)
@@ -158,15 +158,15 @@ public class StatusService extends AuthorizationService {
 			maintStatus = MAINT_OFF;
 		}
 		
-		returnObj.put("groupName", sender.getGroupName());
-		returnObj.put("contentDir", contentDir);
-		returnObj.put("branch", branch);
-		returnObj.put("revision", rev);		
-		returnObj.put("repo", repo);
-		returnObj.put("maintPageState", maintStatus);
-		returnObj.put("source", source);
+		returnObj.setGroupName(sender.getGroupName());
+		returnObj.setContentDir(contentDir);
+		returnObj.setBranch(branch);
+		returnObj.setRevision(rev);		
+		returnObj.setRepo(repo);
+		returnObj.setMaintPageState(maintStatus);
+		returnObj.setSource(source);
 		
-		return new Gson().toJson(returnObj);
+		return returnObj;
 	}
 
 }

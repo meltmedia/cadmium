@@ -23,6 +23,8 @@ public class StatusMember {
   private boolean mine = false;
   private UpdateState state = UpdateState.IDLE;
   
+  public StatusMember(){}
+  
   public StatusMember(String address, boolean coordinator, boolean mine, UpdateState state) {
     this.address = address;
     this.coordinator = coordinator;
@@ -38,6 +40,14 @@ public class StatusMember {
   
   public StatusMember(String address) {
     this.address = address;
+  }
+
+  public void setAddress(String address) {
+    this.address = address;
+  }
+
+  public void setMine(boolean mine) {
+    this.mine = mine;
   }
 
   public String getAddress() {

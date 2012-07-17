@@ -47,7 +47,7 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
     GitService git = null;
     try {
       System.out.println("Getting status of ["+siteUrl+"]");
-      Status status = CloneCommand.getSiteStatus(siteUrl, token);
+      Status status = StatusCommand.getSiteStatus(siteUrl, token);
   
       if(repo != null) {
         status.setRepo(repo);
@@ -66,7 +66,7 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
       revision = CloneCommand.cloneContent(content, git, comment);
       
       System.out.println("Switching content on ["+siteUrl+"]");
-      CloneCommand.sendUpdateMessage(siteUrl, branch, revision, comment, token);
+      UpdateCommand.sendUpdateMessage(siteUrl, branch, revision, comment, token);
       
     } catch(Exception e) {
       System.err.println("Failed to commit changes to ["+siteUrl+"]: "+e.getMessage());

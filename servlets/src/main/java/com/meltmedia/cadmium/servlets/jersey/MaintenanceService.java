@@ -18,15 +18,17 @@ package com.meltmedia.cadmium.servlets.jersey;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.api.BasicApiResponse;
+import com.meltmedia.cadmium.core.api.MaintenanceRequest;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -39,25 +41,30 @@ public class MaintenanceService extends AuthorizationService {
   protected MessageSender sender;
 	
 	@POST
-	@Consumes("application/x-www-form-urlencoded")
-	@Produces("text/plain")
-	public String post(@FormParam("state") String state,@FormParam("comment") String comment, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public BasicApiResponse post(MaintenanceRequest request, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
 	  if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
+	  String comment = request.getComment();
     Message msg = new Message();
-    log.info("state: " + state);
+    log.info("state: " + request.getState());
     log.info("comment: " + comment);
     msg.setCommand(ProtocolMessage.MAINTENANCE);
-    if(state != null && (state.trim().equalsIgnoreCase("on") || state.trim().equalsIgnoreCase("off"))) {
-    	msg.getProtocolParameters().put("state", state);
+    BasicApiResponse cmdResponse = new BasicApiResponse();
+    if(request.getState() != null) {
+    	msg.getProtocolParameters().put("state", request.getState().name());
     	if(comment != null && comment.trim().length() > 0) {
       	msg.getProtocolParameters().put("comment", comment);
       }
     	msg.getProtocolParameters().put("openId", openId);
     	sender.sendMessage(msg, null);
-    	return "ok";
+    	
+    	cmdResponse.setMessage("ok");
+    } else {
+      cmdResponse.setMessage("invalid request");
     }
-    return "invalid request";
+    return cmdResponse;
 	}
 }

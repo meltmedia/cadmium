@@ -21,16 +21,18 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.api.BasicApiResponse;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
@@ -58,13 +60,22 @@ public class UpdateService extends AuthorizationService {
   protected String initialContentDir;
   
   @POST
-  @Consumes("application/x-www-form-urlencoded")
-  @Produces("text/plain")
-  public String update(@FormParam("branch") @DefaultValue("") String branch, @FormParam("sha") @DefaultValue("") String sha, @FormParam("comment") String comment, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public BasicApiResponse update(UpdateRequest req, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-   
+    String branch = "";
+    String sha = "";
+    String comment = req.getComment();
+    if(req.getBranch() != null) {
+      branch = req.getBranch();
+    }
+    if(req.getSha() != null) {
+      sha = req.getSha();
+    }
+    BasicApiResponse resp = new BasicApiResponse();
     if(sender != null) {
       if(comment != null && comment.trim().length() > 0) {
         log.debug("Sending update message");
@@ -79,13 +90,15 @@ public class UpdateService extends AuthorizationService {
         msg.getProtocolParameters().put("comment", comment);
         msg.getProtocolParameters().put("openId", openId);
         sender.sendMessage(msg, null);
+        resp.setMessage("ok");
       } else {
-        return "invalid request\n";
+        resp.setMessage("invalid request");
       }
     } else {
+      resp.setMessage("Cadmium is not fully deployed. See logs for details.");
       log.error("Channel is not wired");
     }
-    return "ok";
+    return resp;
   } 
   
 }

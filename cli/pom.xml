@@ -27,7 +27,7 @@
             <configuration>
               <filters>
                 <filter>
-                  <artifact>${project.groupId}:cadmium-basic-war</artifact>
+                  <artifact>${project.groupId}:cadmium-war</artifact>
                   <excludes>
                     <exclude>**/*</exclude>
                   </excludes>

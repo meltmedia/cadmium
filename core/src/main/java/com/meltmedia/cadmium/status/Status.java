@@ -18,6 +18,8 @@ package com.meltmedia.cadmium.status;
 import java.util.List;
 
 public class Status {
+  
+  public Status() {}
 
 	public Status(String environment, String repo, String branch, String revision, String source, String maintPageState, List<StatusMember> members) {
 		
@@ -30,7 +32,8 @@ public class Status {
         this.setMembers(members);
 	}	
 	
-	
+	private String groupName;
+	private String contentDir;
 	private String environment;
 	private String repo;
 	private String branch;
@@ -40,7 +43,23 @@ public class Status {
 	private List<StatusMember> members;
 	
 	
-	public String getEnvironment() {
+	public String getGroupName() {
+    return groupName;
+  }
+
+  public void setGroupName(String groupName) {
+    this.groupName = groupName;
+  }
+
+  public String getContentDir() {
+    return contentDir;
+  }
+
+  public void setContentDir(String contentDir) {
+    this.contentDir = contentDir;
+  }
+
+  public String getEnvironment() {
 		return environment;
 	}
 	public void setEnvironment(String environment) {

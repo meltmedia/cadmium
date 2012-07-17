@@ -73,7 +73,7 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
         System.out.println("Switching content on ["+siteUrl+"]");
       }
       log.debug("Reverting to branch {}, revision {}, comment [{}]", new Object [] {selectedEntry.getBranch(), selectedEntry.getRevision(), selectedEntry.getComment()});
-      CloneCommand.sendUpdateMessage(siteUrl, selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token);
+      UpdateCommand.sendUpdateMessage(siteUrl, selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token);
     } else {
       System.exit(1);
     }

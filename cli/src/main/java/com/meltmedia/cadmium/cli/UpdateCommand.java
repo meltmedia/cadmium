@@ -16,25 +16,27 @@
 package com.meltmedia.cadmium.cli;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
+import javax.ws.rs.core.MediaType;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.api.BasicApiResponse;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
@@ -42,6 +44,7 @@ import com.meltmedia.cadmium.status.Status;
 public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
+  public static final String UPDATE_ENDPOINT = "/system/update";
 
 	@Parameter(names={"--branch", "-b"}, description="The branch that you are updating to", required=false)
 	private String branch;
@@ -62,23 +65,15 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	@Parameter(names={"--force", "-f"}, description="Force the update", required=false)
 	private boolean force;
 
-	public static final String JERSEY_ENDPOINT = "/system/update";
-
 	public void execute() throws ClientProtocolException, IOException {
-
-		DefaultHttpClient client = new DefaultHttpClient();
-
+	  
 		String siteUrl = site.get(0);
-		String url = siteUrl + JERSEY_ENDPOINT;	
-
-		log.debug("site + JERSEY_ENDPOINT = {}", url);
-
 
 		System.out.println("Getting status of ["+ siteUrl +"]");
     GitService gitValidation = null;
 		try {
 
-			Status siteStatus = CloneCommand.getSiteStatus(siteUrl, token);
+			Status siteStatus = StatusCommand.getSiteStatus(siteUrl, token);
 
 			boolean branchSame = false;
 			boolean revisionSame = false;
@@ -123,16 +118,13 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 				System.out.println("The site [" + siteUrl  + "] is already on branch [" + branch + "] and revision [" + revision  + "].");
 			}
 			else {				
-
-				HttpPost post = new HttpPost(url);
-				addAuthHeader(post);
-				List <NameValuePair> nvps = new ArrayList <NameValuePair>();
 				gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
-				
+				String newBranch = null;
+				String rev = null;
 				//check to see if tag was specified without branch or revision
 				if(isTagAlone) {
 					if(gitValidation.isTag(tag)){
-  					nvps.add(new BasicNameValuePair("branch", tag.trim()));	
+					  newBranch = tag;
   					log.debug("tag being added = {}", tag);
 					} else {
 					  System.err.println("The tag ["+tag+"] specified is not a tag.");
@@ -145,18 +137,18 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
           }
 					if(branch != null) {
 						if(gitValidation.isBranch(branch)) {
+						  newBranch = branch;
 						  gitValidation.switchBranch(branch);
-  						nvps.add(new BasicNameValuePair("branch", branch.trim()));
   						log.debug("branch being added = {}", branch);
 						} else {
 						  System.err.println("The branch ["+branch+"] does not exist.");
 						  throw new Exception("");
 						}
 					}
-	
+					
 					if(revision != null) {
 					  if(gitValidation.checkRevision(revision)){
-  						nvps.add(new BasicNameValuePair("sha", revision.trim()));
+					    rev = revision;
   						log.debug("revision being added = {}", revision);
 					  } else {  
 					    System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
@@ -165,21 +157,8 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 					}					
 				}
 				
-				nvps.add(new BasicNameValuePair("comment", message.trim()));
-
-				post.setEntity(new UrlEncodedFormEntity(nvps,"UTF-8"));
-				HttpResponse response = client.execute(post);
-
-				if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					HttpEntity entity = response.getEntity();
-					String resp = EntityUtils.toString(entity);
-					if(resp.equalsIgnoreCase("ok")) {
-						System.out.println("Success!");
-					} else {
-						System.out.println(resp);
-					}
-				} else {
-					System.out.println(response.toString());
+				if(sendUpdateMessage(siteUrl, newBranch, rev, message, token)){
+				  System.out.println("Update successful");
 				}
 
 			}
@@ -203,4 +182,40 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	public String getCommandName() {
 		return "update";
 	}
+  
+  public static boolean sendUpdateMessage(String site2, String branch, String revision, String comment, String token) throws Exception {
+    HttpClient client = new DefaultHttpClient();
+    
+    HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
+    addAuthHeader(token, post);
+    
+    post.addHeader("Content-Type", MediaType.APPLICATION_JSON);
+    
+    UpdateRequest req = new UpdateRequest();
+    
+    if(branch != null) {
+      req.setBranch(branch);
+    }
+    
+    if(revision != null) {
+      req.setSha(revision);
+    }
+    
+    req.setComment(comment);
+    
+    post.setEntity(new StringEntity(new Gson().toJson(req), "UTF-8"));
+    
+    HttpResponse response = client.execute(post);
+    
+    if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+      String responseString = EntityUtils.toString(response.getEntity());
+      BasicApiResponse resp = new Gson().fromJson(responseString, BasicApiResponse.class);
+      if(!"ok".equals(resp.getMessage())) {
+        System.err.println("Update message to ["+site2+"] failed. ["+resp.getMessage()+"]");
+      } else {
+        return true;
+      }
+    }
+    return false;
+  }
 }

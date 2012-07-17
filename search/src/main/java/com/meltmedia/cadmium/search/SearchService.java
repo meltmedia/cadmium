@@ -38,7 +38,6 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 @Path("/search")
@@ -49,7 +48,8 @@ public class SearchService
   @Inject
   private IndexSearcherProvider provider;
   
-  
+  @GET
+  @Produces("application/json")
   public Map<String, Object> search(final @QueryParam("query") String query)
       throws Exception {
     logger.info("Running search for [{}]", query);
@@ -79,12 +79,6 @@ public class SearchService
     }.search();
 
     return resultMap;
-  }
-  
-  @GET
-  @Produces("application/json")
-  public String searchResponse(final @QueryParam("query") String query) throws Exception {
-    return new Gson().toJson(search(query));
   }
   
   QueryParser createParser( Analyzer analyzer ) {

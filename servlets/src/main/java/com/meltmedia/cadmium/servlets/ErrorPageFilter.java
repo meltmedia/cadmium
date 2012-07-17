@@ -32,6 +32,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
+import javax.ws.rs.core.MediaType;
+
 import org.apache.commons.io.IOUtils;
 
 import com.meltmedia.cadmium.core.ContentService;
@@ -204,6 +206,7 @@ public class ErrorPageFilter implements Filter {
           response.setStatus(sc);
 
         // create a UTF-8 reader for the error page content.
+        response.setContentType(MediaType.TEXT_HTML);
         errorPageReader = new InputStreamReader(errorPageIn, "UTF-8");
         IOUtils.copy(errorPageReader, response.getWriter());
       } finally {

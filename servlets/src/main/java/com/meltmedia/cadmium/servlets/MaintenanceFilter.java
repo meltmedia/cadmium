@@ -25,6 +25,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.MediaType;
 
 import com.meltmedia.cadmium.core.SiteDownService;
 
@@ -103,6 +104,7 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
 		}
 
 		httpRes.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+		httpRes.setContentType(MediaType.TEXT_HTML);
 		InputStream in = null;
 		try {
 		  in = MaintenanceFilter.class.getResourceAsStream("./maintenance.html");
