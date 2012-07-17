@@ -17,24 +17,25 @@ package com.meltmedia.cadmium.cli;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
+
+import javax.ws.rs.core.MediaType;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.google.gson.Gson;
+import com.meltmedia.cadmium.core.api.DeployRequest;
 
 
 @Parameters(commandDescription = "Deploys the cadmium war to the specified(domain) server", separators="=")
@@ -88,13 +89,14 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 			
 			HttpPost post = new HttpPost(url);
 			addAuthHeader(post);
+			post.setHeader("Content-Type", MediaType.APPLICATION_JSON);
 			
-		  List<NameValuePair> params = new ArrayList<NameValuePair>();
-      params.add(new BasicNameValuePair("branch", branch));
-		  params.add(new BasicNameValuePair("repo", repo));
-		  params.add(new BasicNameValuePair("domain", domain));
+			DeployRequest req = new DeployRequest();
+			req.setBranch(branch);
+			req.setRepo(repo);
+			req.setDomain(domain);
 		  
- 		  post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+ 		  post.setEntity(new StringEntity(new Gson().toJson(req), "UTF-8"));
 			
 			HttpResponse response = client.execute(post);
 			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -111,7 +113,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 			}
 		} 
 		catch (Exception e) {
-		  e.printStackTrace();
+		  //e.printStackTrace();
 			System.err.println("Failed to deploy cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
 			System.exit(1);
 		}		

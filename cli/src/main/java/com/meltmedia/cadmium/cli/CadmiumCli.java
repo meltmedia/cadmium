@@ -16,14 +16,13 @@
 package com.meltmedia.cadmium.cli;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.Set;
+
+import org.reflections.Reflections;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -136,40 +135,15 @@ public class CadmiumCli {
 	}
 	
 	private static Map<String, CliCommand> wireCommands(JCommander jCommander) throws Exception {
-	  Map<String, CliCommand> commands = new LinkedHashMap<String, CliCommand>();
-	  String packageName = CadmiumCli.class.getPackage().getName();
-	  String dirName = packageName.replace(".", "/");
-	  Enumeration<URL> resources = CadmiumCli.class.getClassLoader().getResources(dirName);
-	  while(resources.hasMoreElements()) {
-	    URL resource = resources.nextElement();
-	    if(resource.getFile().contains("!")) {
-	      ZipFile resFile = new ZipFile(resource.getFile().split("\\!")[0].substring(5));
-	      Enumeration<? extends ZipEntry> entries = resFile.entries();
-	      while(entries.hasMoreElements()) {
-	        ZipEntry entry = entries.nextElement();
-    	    if(entry.getName().startsWith(dirName) && entry.getName().endsWith(".class")) {
-    	      String classFileName = entry.getName().substring(0, entry.getName().length() - 6);
-    	      try {
-      	      String fileName = classFileName.replace("/", ".");
-      	      Class<?> classInPackage = Class.forName(fileName);
-      	      
-      	      //System.out.println("classFileName: " + classFileName);
-      	      
-      	      if(CliCommand.class.isAssignableFrom(classInPackage) && !classInPackage.isInterface()) {
-      	        CliCommand command = (CliCommand) classInPackage.newInstance();
-      	        
-      	        commands.put(command.getCommandName(), command);
-      	        jCommander.addCommand(command.getCommandName(), command);
-      	      }
-    	      } catch(Throwable e) {
-    	        //e.printStackTrace();
-    	        // I can't autowire this class.
-    	      }
-    	    }
-	      }
-	    }
-	  }
-	  return commands;
+    Map<String, CliCommand> commands = new LinkedHashMap<String, CliCommand>();
+    Reflections reflections = new Reflections("com.meltmedia.cadmium");
+    Set<Class<? extends CliCommand>> subTypes = reflections.getSubTypesOf(CliCommand.class);
+    for(Class<? extends CliCommand> cliCommandClass : subTypes) {
+      CliCommand command = cliCommandClass.newInstance();
+      commands.put(command.getCommandName(), command);
+      jCommander.addCommand(command.getCommandName(), command);
+    }
+    return commands;
 	}
 
 }
