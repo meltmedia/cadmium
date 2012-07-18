@@ -112,6 +112,24 @@ nav a:hover {
   padding: 20px;
 }
 
+.snippet > a:link {
+  color: #fff;
+  font-family: "Courier New", Courier, Times, serif;
+  line-height: 21px;
+  text-decoration: none;
+}
+
+.snippet > a:visited {
+  color: #fff;
+  font-family: "Courier New", Courier, Times, serif;
+  line-height: 21px;
+  text-decoration: none;
+}
+
+.snippet > a:hover {
+  color: #6d9ac3;
+}
+
 #main {
   border-right: 1px dotted #ccc;
   width: 55%;
