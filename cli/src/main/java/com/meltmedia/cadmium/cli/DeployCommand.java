@@ -58,7 +58,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	//@Parameter(description="<site>", required=true)
 	//private List<String> site;
 	
-	@Parameter(description="<site> <repo>", required=true)
+	@Parameter(description="<repo> <site>", required=true)
   private List<String> parameters;
 
 	//public static final String JERSEY_ENDPOINT = "/deploy";
