@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.vault.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
+import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.vault.VaultContentPreprocessor;
 import com.meltmedia.cadmium.vault.VaultListener;
@@ -24,6 +25,7 @@ import com.meltmedia.cadmium.vault.service.ResourceFetcher;
 import com.meltmedia.cadmium.vault.service.VaultConstants;
 import com.meltmedia.cadmium.vault.service.VaultService;
 
+@CadmiumModule
 public class VaultModule extends AbstractModule {
 
   @Override

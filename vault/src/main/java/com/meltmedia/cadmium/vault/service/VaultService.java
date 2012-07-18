@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.vault.service;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
@@ -33,7 +34,7 @@ import com.meltmedia.cadmium.vault.SafetyMissingException;
 import com.meltmedia.cadmium.vault.VaultListener;
 
 @Singleton
-public class VaultService {
+public class VaultService implements Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   private VaultListener listener;
@@ -126,5 +127,9 @@ public class VaultService {
       resourceManagerTimer.cancel();
     }
     resourceManagerTimer = null;
+  }
+  
+  public void close() {
+    finalize();
   }
  }

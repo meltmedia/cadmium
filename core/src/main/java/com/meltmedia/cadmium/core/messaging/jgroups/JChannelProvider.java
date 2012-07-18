@@ -15,6 +15,8 @@
  */
 package com.meltmedia.cadmium.core.messaging.jgroups;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.URL;
 
 import javax.inject.Inject;
@@ -32,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * @author John McEntire
  */
 @Singleton
-public class JChannelProvider implements Provider<JChannel> {
+public class JChannelProvider implements Provider<JChannel>, Closeable {
   
   public static final String CHANNEL_NAME = "JGroupsName";
   public static final String CONFIG_NAME = "JGroupsConfigName";
@@ -60,6 +62,13 @@ public class JChannelProvider implements Provider<JChannel> {
       }
     }
     return channel;
+  }
+
+  @Override
+  public void close() throws IOException {
+    if(channel != null) {
+      channel.close();
+    }
   }
 
 }

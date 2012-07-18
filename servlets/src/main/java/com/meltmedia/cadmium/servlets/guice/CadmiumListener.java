@@ -16,6 +16,7 @@
 package com.meltmedia.cadmium.servlets.guice;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -68,6 +69,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
+import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
@@ -95,7 +97,6 @@ import com.meltmedia.cadmium.epsilon.client.impl.HcpEpsilonClientImpl;
 import com.meltmedia.cadmium.epsilon.ws.WebServicePool;
 import com.meltmedia.cadmium.epsilon.ws.impl.HcpPortPoolImpl;
 import com.meltmedia.cadmium.hcpregform.jersey.resource.RegisterResource;
-import com.meltmedia.cadmium.search.guice.SearchModule;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
@@ -103,7 +104,6 @@ import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SslRedirectFilter;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
-import com.meltmedia.cadmium.vault.guice.VaultModule;
 import com.meltmedia.cadmium.vault.service.VaultConstants;
 
 /**
@@ -145,7 +145,18 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextDestroyed(ServletContextEvent event) {
-    try {
+    Reflections reflections = new Reflections("com.meltmedia.cadmium");
+    Set<Class<? extends Closeable>> closeables = reflections.getSubTypesOf(Closeable.class);
+    for(Class<? extends Closeable> closeableClass : closeables) {
+      if(!closeableClass.isMemberClass() && !closeableClass.isAnonymousClass() && !closeableClass.isLocalClass()) {
+        log.info("Closing instance of {}", closeableClass.getName());
+        try {
+          Closeable toClose = injector.getInstance(closeableClass);
+          IOUtils.closeQuietly(toClose);
+        } catch(Exception e){}
+      }
+    }
+    /*try {
       JChannel channel = injector.getInstance(JChannel.class);
       if (channel != null) {
         try {
@@ -168,7 +179,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       }
     } catch (Exception e) {
       log.warn("Failed to get git service", e);
-    }
+    }*/
     super.contextDestroyed(event);
   }
 
@@ -305,6 +316,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   
   private Module createModule() {
     return new AbstractModule() {
+      @SuppressWarnings("unchecked")
       @Override
       protected void configure() {
 
@@ -418,8 +430,23 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
         
-        install(new VaultModule());
-        install(new SearchModule());
+        Set<Class<?>> modules = reflections.getTypesAnnotatedWith(CadmiumModule.class);
+        
+        log.debug("Found {} Module classes.", modules.size());
+        for(Class<?> module : modules) {
+          if(Module.class.isAssignableFrom(module)) {
+            log.debug("Installing module {}", module.getName());
+            try {
+              install(((Class<? extends Module>)module).newInstance());
+            } catch (InstantiationException e) {
+              log.warn("Failed to instantiate "+module.getName(), e);
+            } catch (IllegalAccessException e) {
+              log.debug("Modules ["+module.getName()+"] constructor is not accessible.", e);
+            }
+          }
+        }
+        //install(new VaultModule());
+        //install(new SearchModule());
         
         //bind vault cache-directory
         bind(String.class).annotatedWith(Names.named(VaultConstants.CACHE_DIRECTORY)).toInstance(new File(applicationContentRoot, "vault").getAbsoluteFile().getAbsolutePath());

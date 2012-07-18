@@ -17,11 +17,13 @@ package com.meltmedia.cadmium.search.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
+import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.search.IndexSearcherProvider;
 import com.meltmedia.cadmium.search.SearchContentPreprocessor;
 import com.meltmedia.cadmium.search.SearchService;
 
+@CadmiumModule
 public class SearchModule extends AbstractModule {
 
   @Override
