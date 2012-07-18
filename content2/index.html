@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta name="viewport" content="initial-scale=1.0; maximum-scale=1.0; minimum-scale=1.0; user-scalable=0;" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta charset="utf-8" />
+
+<title>Demo Content :: Home</title>
+
+<link rel="stylesheet" href="./assets/css/global.css" />
+
+</head>
+
+<body>
+
+<div id="container">
+  <header>
+    <a href="/" title="meltmedia" id="logo">meltmedia</a>
+  </header>
+  <nav>
+    <a href="./index.html" title="Commit">Commit</a>
+    <a href="./clone.html" title="Clone">Clone</a>
+    <a href="./example.html" title="Example">Example</a>
+  </nav>
+  <div id="content" class="clearfix">
+    <section id="main">
+      <h1>Updating Content</h1>
+      <p>So, what just happened?  The Cadmium CLI Commit command was just used to upload a directory of static content onto this website.  Let's take a closer look at the command used to do this.
+      <h2>The Commit Command</h2>
+      <p>The Cadmium CLI Commit command is the entry point for content being distributed by Cadmium.  The command takes a directory of static content on the local file system and pushes it up to GitHub, so that it can be served by Cadmium sites.  Here is the format of the command:</p>
+      <div class="snippet">
+        > cadmium commit -m &lt;message&gt; &lt;dir&gt; &lt;site&gt;
+      </div>
+      <p>Although that is a short command, there is a lot going on:</p>
+      <ol>
+        <li>Content repository information is retrieved from <i>site</i>.</li>
+        <li>The respository is cloned and its content is replaced with the content in <i>dir</i>.</li>
+        <li>The changes are pushed back to GitHub with a commit message of <i>message</i>.</li>
+        <li><i>site</i> is then instructed to move to the new revision.</li>
+      </ol>
+      <p>Once the development site has an acceptable version of the content, it is time to move that content to other environments.  To do that, we need <a href="/clone.html" title="clone command">the clone command</a>.</p>
+    </section>
+    <section id="sidebar">
+      <h3>In This Demo...</h3>
+      <p>In this demonstration, we will be looking at the CLI commands for getting new content into Cadmium and moving content between sites running cadmium.</p>
+      <h3>What's Next...</h3>
+      <p>In the next demonstration, we will look at the common functionality provided by Cadmium.</p>
+    </section>
+  </div>
+</div>
+
+</body>
+
+</html>
