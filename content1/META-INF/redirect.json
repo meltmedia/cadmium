@@ -1,0 +1,10 @@
+[
+  {
+    "url":"http://www.meltmedia.com",
+    "path":"/cadmium/meltmedia"
+  },
+  { 
+    "url":"/cadmium/index.html",
+    "path":"/cadmium/!(meltmedia|index.html|test.json|secure).*"
+  }
+]
