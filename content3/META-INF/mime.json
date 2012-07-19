@@ -1,6 +1,10 @@
 [
   {
-    "extension":"json",
-    "contentType":"application/json"
+    "extension":"foo",
+    "contentType":"text/html"
+  },
+  {
+    "extension":"bar",
+    "contentType":"text/html"
   }
 ]

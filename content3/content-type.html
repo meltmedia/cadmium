@@ -30,29 +30,22 @@
   </nav>
   <div id="content" class="clearfix">
     <section id="main">
-      <h1>Cadmium Layout</h1>
-      <p>This part of the demonstration will go over the structure of a cadmium application and the features that are provided to Cadmium content.</p>
-      <h2>Content File Structure</h2>
-      <p>This is an example of the file structure for a Cadmium application.  Select any of the files to see information about what it is configuring.</p>
-      <div class="snippet">
-        > find . -type f<br/>
-        <a href="error-pages.html">./404.html</a><br/>
-        <a href="error-pages.html">./4xx.html</a><br/>
-        <a href="error-pages.html">./5xx.html</a><br/>
-        ./index.html<br/>
-        <a href="email.html">./META-INF/email/email-this-page.html</a><br/>
-        <a href="email.html">./META-INF/email/email-this-page.txt</a><br/>
-        <a href="content-type.html">./META-INF/mime.json</a><br/>
-        <a href="redirect.html">./META-INF/redirect.json</a><br/>
-        ./META-INF/secure.json<br/>
-      </div>
-      <h2>Application URL Structure</h2>
-      <p>The URLs of a cadmium application are divided into 3 main groups:</p>
-      <ul>
-        <li>http://domain/system - REST apis for managing the site.</li>
-        <li>http://domain/api - REST apis for the content (search, email, etc.).</li>
-        <li>http://domain/ - the deployed content.</li>
-      </ul>
+      <h1>Cadmium Content Types</h1>
+      <p>Cadmium provides content type mappings for hundreds of common file extensions.  If these mappings do not cover the content for your application, you can add to or override these mappings with the /META-INF/mime.json file.</p>
+      <h2>Custom Content Types</h2>
+      <p>The /META-INF/mime.json file provides custom type mappings for the currently deployed content.  This is an example file that maps both the .foo and .bar extensions to text/html:</p>
+      <pre class="snippet">
+[
+  {
+    "extension":"foo",
+    "contentType":"text/html"
+  },
+  {
+    "extension":"bar",
+    "contentType":"text/html"
+  }
+]
+      </pre>
     </section>
     <section id="sidebar">
       <h3>In This Demo...</h3>
