@@ -33,7 +33,7 @@
       <h1>Search</h1>
       <p>Cadmium comes with a <a href="http://lucene.apache.org/core/" title="Apache Lucene">Lucene</a> indexer built in.  Everytime content is uploaded, the index is updated, so the REST API will always server results for the currnent content.</p>
       <h2>The Search Endpoint</h2>
-      <p>You can make a search request by doing a GET to /api/search?query=YOUR_QUERY_TERMS.  Cadmium will return query hits as a JSON document.  This is an example response, with 2 records:</p>
+      <p>You can make a search request by doing a GET request to /api/search?query=QUERY_STRING.  This will return you results as a JSON object:</p>
       <pre class="snippet">
 {
   "number-hits": 2,
@@ -52,6 +52,8 @@
   ]
 }
       </pre>
+      <h2>A Quick Example</h2>
+      <p>Let's use the search feature to find a page that is <a href="/api/search?query=hidden">not in the nav</a>.</p>
     </section>
     <section id="sidebar">
       <h3>In This Demo...</h3>

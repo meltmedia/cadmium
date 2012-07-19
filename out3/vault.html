@@ -26,7 +26,6 @@
     <a href="./email.html" title="Email">Email</a>
     <a href="./content-type.foo" title="Content Types">Content Types</a>
     <a href="./redirects.html" title="Redirects">Redirects</a>
-    <a href="./ssh.html" title="SSH">SSH</a>
     <a href="./vault.html" title="Vault">Vault</a>
   </nav>
   <div id="content" class="clearfix">
@@ -36,24 +35,13 @@
       <h2>Adding Vault Content</h2>
       <p>Adding vault content is very simple with Cadmium.  Just add a div with the identifier of the content you want to inline.  </p>
       <div class="snippet">
-        > find . -type f<br/>
-        <a href="error-pages.html">./404.html</a><br/>
-        <a href="error-pages.html">./4xx.html</a><br/>
-        <a href="error-pages.html">./5xx.html</a><br/>
-        ./index.html<br/>
-        <a href="email.html">./META-INF/email/email-this-page.html</a><br/>
-        <a href="email.html">./META-INF/email/email-this-page.txt</a><br/>
-        <a href="content-type.html">./META-INF/mime.json</a><br/>
-        <a href="redirect.html">./META-INF/redirect.json</a><br/>
-        <a href="ssh.html">./META-INF/secure.json</a><br/>
+        &lt;div data-vault-guid="UUID"&gt;DEV CONTENT&lt;/div&gt;
       </div>
-      <h2>Application URL Structure</h2>
-      <p>The URLs of a cadmium application are divided into 3 main groups:</p>
-      <ul>
-        <li>http://domain/system - REST apis for managing the site.</li>
-        <li>http://domain/api - REST apis for the content (search, email, etc.).</li>
-        <li>http://domain/ - the deployed content.</li>
-      </ul>
+      <h2>An Example</h2>
+      <div class="snippet">
+        &lt;div data-vault-guid="01c571c4-0fdf-4b3c-896d-0feda89adc9c"&gt;Bah&lt;/div&gt;
+      </div>
+      <div data-vault-guid="01c571c4-0fdf-4b3c-896d-0feda89adc9c">Bah</div>
     </section>
     <section id="sidebar">
       <h3>In This Demo...</h3>

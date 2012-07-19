@@ -1,0 +1,46 @@
+
+
+Setup:
+
+  Cadmium Nodes:
+
+
+  Cadmium2 Nodes:
+
+    Node1: ec2-204-236-188-218.us-west-1.compute.amazonaws.com
+    Mode2: ec2-50-18-140-208.us-west-1.compute.amazonaws.com
+
+    Dev: http://dev.cadmium2.meltdemo.com/
+    QA: http://qa.cadmium2.meltdemo.com/
+    Staging: http://staging.cadmium2.meltdemo.com/
+    Prod: http://prod.cadmium2.meltdemo.com/
+
+    cadmium deploy git@github.com:meltmedia/test-content-repo.git http://dev.cadmium2.meltdemo.com
+    cadmium deploy git@github.com:meltmedia/test-content-repo.git http://qa.cadmium2.meltdemo.com
+    cadmium deploy git@github.com:meltmedia/test-content-repo.git http://staging.cadmium2.meltdemo.com
+    cadmium deploy git@github.com:meltmedia/test-content-repo.git http://prod.cadmium2.meltdemo.com
+
+
+Preparing the environment:
+
+    cadmium commit out0 http://dev.cadmium2.meltdemo.com/ -message "Setup"
+    cadmium clone http://dev.cadmium2.meltdemo.com/ http://qa.cadmium2.meltdemo.com/ -message "Setup"
+    cadmium clone http://qa.cadmium2.meltdemo.com/ http://staging.cadmium2.meltdemo.com/ -message "Setup"
+    cadmium clone http://staging.cadmium2.meltdemo.com/ http://prod.cadmium2.meltdemo.com/ -message "Setup"
+
+Running the Demo:
+
+  Content 1:
+    cadmium commit out1 http://dev.cadmium2.meltdemo.com/ -message "Step 1"
+
+  Content 2:
+    cadmium commit out2 http://dev.cadmium2.meltdemo.com/ -message "Step 1"
+
+  Example push to prod:
+    cadmium clone http://dev.cadmium2.meltdemo.com/ http://qa.cadmium2.meltdemo.com/ -message "Setup"
+    cadmium clone http://qa.cadmium2.meltdemo.com/ http://staging.cadmium2.meltdemo.com/ -message "Setup"
+    cadmium clone http://staging.cadmium2.meltdemo.com/ http://prod.cadmium2.meltdemo.com/ -message "Setup"
+
+  Content 3:
+
+    cadmium commit out3 http://dev.cadmium2.meltdemo.com/ -message "Step 1"

@@ -1,10 +1,10 @@
 [
   {
     "url":"http://www.meltmedia.com",
-    "path":"/cadmium/meltmedia"
+    "path":"/meltmedia"
   },
-  { 
-    "url":"/cadmium/index.html",
-    "path":"/cadmium/!(meltmedia|index.html|test.json|secure).*"
+  {
+    "url":"/redirects.html",
+    "path":"/redirects/.*\.html"
   }
 ]
