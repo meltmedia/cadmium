@@ -15,9 +15,9 @@
 #    limitations under the License.
 #
 
-import os, os.path, sys, stat, shutil, string
+import os, os.path, sys, stat, shutil, string, urllib, xml.etree.ElementTree, subprocess
 
-cadmium_version = '0.1.0-SNAPSHOT'
+cadmium_version = '0.0.1-SNAPSHOT'
 
 cadmium_sh = """#! /bin/sh
 newest_jar=~/.cadmium/cadmium-cli.jar
@@ -41,6 +41,60 @@ if [ -d ~/.m2/repository/com/meltmedia/cadmium/cadmium-cli ]; then
 fi
 java -jar $newest_jar "$@"
 """
+
+cadmium_commit = """#! /usr/bin/env python
+import os.path, sys, subprocess, shutil
+
+if not os.path.exists(os.path.expanduser('~/.cadmium/bin/cadmium')):
+  print "Please run `cli-install.py` before running `cake deploy`"
+  sys.exit(1)
+
+if len(sys.argv) != 3:
+  print "Please specify a \\"commit message\\" and a site url to deploy to.\\nUSAGE cadmium-deploy <message> <url>"
+  sys.exit(1)
+
+message = sys.argv[1]
+url = sys.argv[2]
+
+try:
+  source_repo_url = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url']).strip()
+  source_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
+  source_branch = subprocess.check_output(['git', 'symbolic-ref', 'HEAD']).strip().split('/')
+  if len(source_branch) > 1:
+    source_branch = source_branch[len(source_branch) - 1]
+  
+  source = "{\\"repo\\":\\""+source_repo_url+"\\",\\"sha\\":\\""+source_sha+"\\",\\"branch\\":\\""+source_branch+"\\"}"
+
+  if os.path.exists('out'):
+    shutil.move('out', 'out-old')
+
+  subprocess.call(['docpad', 'generate'])
+
+  if not os.path.exists('out/META-INF'):
+    os.mkdir('out/META-INF')
+
+  if os.path.exists('out/META-INF/source'):
+    os.remove('out/META-INF/source')
+
+  fd = open('out/META-INF/source', 'w')
+  try:
+    fd.write(source)
+    fd.flush()
+  finally:
+    fd.close()
+
+  subprocess.call(['cadmium', 'commit', '--quiet-auth', '-m', '"'+message+'"', 'out', url])
+
+except subprocess.CalledProcessError:
+  print "Please run this command from within a git repository."
+finally:
+  if os.path.exists('out-old'):
+    if os.path.exists('out'):
+      shutil.rmtree('out')
+    shutil.move('out-old', 'out')
+
+"""
+
 user_dir = os.path.expanduser('~/.cadmium')
 
 path_var = os.getenv('PATH')
@@ -63,6 +117,9 @@ if not os.path.exists(user_dir):
 if not os.path.exists(user_dir + '/bin'):
   os.mkdir(user_dir + '/bin')
 
+if os.path.exists(user_dir + '/bin/cadmium'):
+  os.remove(user_dir + '/bin/cadmium')
+  
 if not os.path.exists(user_dir + '/bin/cadmium'):
   fd = open(user_dir + '/bin/cadmium', 'w')
   try:
@@ -75,23 +132,62 @@ mode = os.stat(user_dir + '/bin/cadmium').st_mode
 if stat.S_IMODE(mode) != 0755:
   os.chmod(user_dir + '/bin/cadmium', 0755)
 
-has_path = False
-for item in path:
-  if item == user_dir + '/bin/cadmium':
-    has_path = True
-
-if not has_path:
-  fd = open(os.path.expanduser('~/.profile'), 'a')
+if os.path.exists(user_dir + '/bin/cadmium-commit'):
+  os.remove(user_dir + '/bin/cadmium-commit')
+  
+if not os.path.exists(user_dir + '/bin/cadmium-commit'):
+  fd = open(user_dir + '/bin/cadmium-commit', 'w')
   try:
-    fd.write('\nexport PATH="$PATH:~/.cadmium/bin"\n')
+    fd.write(cadmium_commit)
     fd.flush()
-    os.putenv('PATH', path_var + os.pathsep + '~/.cadmium/bin')
   finally:
     fd.close()
+
+mode = os.stat(user_dir + '/bin/cadmium-commit').st_mode
+if stat.S_IMODE(mode) != 0755:
+  os.chmod(user_dir + '/bin/cadmium-commit', 0755)
+
+if sys.argv[0][0] == '.' and os.path.exists(user_dir + '/bin/cli-install.py') and (not os.path.samefile(sys.argv[0], user_dir + '/bin/cli-install.py')):
+  os.remove(user_dir + '/bin/cli-install.py')
+  
+if not os.path.exists(user_dir + '/bin/cli-install.py'):
+  shutil.copy(sys.argv[0], user_dir + '/bin/cli-install.py')
+  os.chmod(user_dir + '/bin/cli-install.py', 0755)
+
+has_path = False
+for item in path:
+  if item == (user_dir + '/bin'):
+    has_path = True
+    break
+
+if not has_path:
+  print "Please run `. ~/.profile` before continuing!"
+  has_path = (subprocess.call(['grep', '--silent', 'cadmium', os.path.expanduser('~/.profile')]) == 0)
+  if not has_path:
+    fd = open(os.path.expanduser('~/.profile'), 'a')
+    try:
+      fd.write('\nexport PATH="$PATH:'+user_dir+'/bin"\n')
+      fd.flush()
+      os.putenv('PATH', path_var + os.pathsep + user_dir + '/bin')
+    finally:
+      fd.close()
+
+metaData = urllib.urlopen('http://nexus.meltdev.com/service/local/repo_groups/public/content/com/meltmedia/cadmium/cadmium-cli/maven-metadata.xml')
+tree = xml.etree.ElementTree.fromstring( metaData.read() )
+versioningNode = tree.find('versioning')
+if versioningNode != None:
+  releaseNode = versioningNode.find('release')
+  if releaseNode != None:
+    cadmium_version = releaseNode.text
+  else:
+    latestNode = versioningNode.find('latest')
+    if latestNode != None:
+      cadmium_version = latestNode.text
 
 if os.path.exists(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cadmium-cli')):
   shutil.rmtree(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cadmium-cli'), True)
 
-os.spawnl(os.P_WAIT, maven_home + os.sep + 'mvn', 'mvn', '-U', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:' + cadmium_version + ':jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false')
+print 'Downloading latest version of cadmium...'
+subprocess.call(['mvn', '-q', '-U', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:' + cadmium_version + ':jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
 
-os.execl(user_dir + '/bin/cadmium', 'cadmium', 'check')
+subprocess.call([user_dir + '/bin/cadmium', 'check'])
