@@ -23,24 +23,24 @@ Setup:
 
 Preparing the environment:
 
-    cadmium commit out0 http://dev.cadmium2.meltdemo.com/ -message "Setup"
-    cadmium clone http://dev.cadmium2.meltdemo.com/ http://qa.cadmium2.meltdemo.com/ -message "Setup"
-    cadmium clone http://qa.cadmium2.meltdemo.com/ http://staging.cadmium2.meltdemo.com/ -message "Setup"
-    cadmium clone http://staging.cadmium2.meltdemo.com/ http://prod.cadmium2.meltdemo.com/ -message "Setup"
+    cadmium commit out0 http://dev.cadmium2.meltdemo.com/ -m "Setup"
+    cadmium clone http://dev.cadmium2.meltdemo.com/ http://qa.cadmium2.meltdemo.com/ -m "Setup"
+    cadmium clone http://qa.cadmium2.meltdemo.com/ http://staging.cadmium2.meltdemo.com/ -m "Setup"
+    cadmium clone http://staging.cadmium2.meltdemo.com/ http://prod.cadmium2.meltdemo.com/ -m "Setup"
 
 Running the Demo:
 
   Content 1:
-    cadmium commit out1 http://dev.cadmium2.meltdemo.com/ -message "Step 1"
+    cadmium commit out1 http://dev.cadmium2.meltdemo.com/ -m "Step 1"
 
   Content 2:
-    cadmium commit out2 http://dev.cadmium2.meltdemo.com/ -message "Step 1"
+    cadmium commit out2 http://dev.cadmium2.meltdemo.com/ -m "Step 2"
 
   Example push to prod:
-    cadmium clone http://dev.cadmium2.meltdemo.com/ http://qa.cadmium2.meltdemo.com/ -message "Setup"
-    cadmium clone http://qa.cadmium2.meltdemo.com/ http://staging.cadmium2.meltdemo.com/ -message "Setup"
-    cadmium clone http://staging.cadmium2.meltdemo.com/ http://prod.cadmium2.meltdemo.com/ -message "Setup"
+    cadmium clone http://dev.cadmium2.meltdemo.com/ http://qa.cadmium2.meltdemo.com/ -m "To QA"
+    cadmium clone http://qa.cadmium2.meltdemo.com/ http://staging.cadmium2.meltdemo.com/ -m "To Stage"
+    cadmium clone http://staging.cadmium2.meltdemo.com/ http://prod.cadmium2.meltdemo.com/ -m "To Prod"
 
   Content 3:
 
-    cadmium commit out3 http://dev.cadmium2.meltdemo.com/ -message "Step 1"
+    cadmium commit out3 http://dev.cadmium2.meltdemo.com/ -m "Step 3"
