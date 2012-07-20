@@ -79,14 +79,6 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.meltmedia.cadmium.epsilon</groupId>
-      <artifactId>meltmedia-epsilon-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.meltmedia.cadmium.hcpregform</groupId>
-      <artifactId>hcp-reg-form</artifactId>
-    </dependency>
     
     <!-- Testing -->
     <dependency>
