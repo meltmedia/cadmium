@@ -37,6 +37,9 @@ public class ValidateCommand implements CliCommand {
   @Parameter(names = "-q", description="Quites output for use in scripts.", required=false)
   private boolean quite = false;
   
+  @Parameter(description="<path>", required=false)
+  private List<String> paths;
+  
   @Override
   public String getCommandName() {
     return "validate";
@@ -73,7 +76,7 @@ public class ValidateCommand implements CliCommand {
   }
   
   private List<File> listHtmlFiles() {
-    File currentDir = new File(".");
+    File currentDir = new File(paths == null || paths.size() == 0 ? "." : paths.get(0));
     List<File> theFiles = new ArrayList<File>();
     List<File> theDirs = new ArrayList<File>();
     addCurrentDirFiles(theFiles, theDirs, currentDir);
