@@ -38,12 +38,12 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.email.model.EmailForm;
-import com.meltmedia.cadmium.mail.EmailException;
-import com.meltmedia.cadmium.mail.VelocityHtmlTextEmail;
-import com.meltmedia.cadmium.mail.internal.EmailServiceImpl;
+import com.meltmedia.cadmium.email.EmailException;
+import com.meltmedia.cadmium.email.VelocityHtmlTextEmail;
+import com.meltmedia.cadmium.email.internal.EmailServiceImpl;
 
 @Path("/email")
-public class EmailService {
+public class EmailResource {
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -76,6 +76,7 @@ public class EmailService {
   		if (pageExists(pagePath)) {
 		  	try { 
 		  		EmailForm emailForm = new EmailForm(toName, toAddress, fromName, fromAddress, message, pagePath,subject);
+		  		log.info("Email Form: {}", emailForm.toString());
 					EmailFormValidator.validate(emailForm);
 			  	
 			  	email.addTo(emailForm.getToAddress());
@@ -103,7 +104,7 @@ public class EmailService {
 			  	emailService.send(email);
 			  	log.debug("After Sending Email");
 				} catch (EmailException e) {
-					log.info("EmailException Caught");
+					log.info("EmailException Caught " + e.getMessage());
 					return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 				} catch (ValidationException e) {
 					log.info("ValidationException Caught");

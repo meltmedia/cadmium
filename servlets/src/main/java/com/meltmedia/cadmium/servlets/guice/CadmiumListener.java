@@ -68,6 +68,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
+import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
@@ -127,11 +128,6 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String repoUri;
   private String channelConfigUrl;
   
-  // Email config
-  private String mailJNDIName;
-  private String mailSessionStrategy;
-  private String mailMessageTransformer;
-  
   private ServletContext context;
 
   private Injector injector = null;
@@ -190,9 +186,6 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
     String branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
-    mailJNDIName = cadmiumProperties.getProperty("com.meltmedia.email.jndi");
-    mailMessageTransformer = cadmiumProperties.getProperty("melt.mail.messagetransformer");
-    mailSessionStrategy = cadmiumProperties.getProperty("melt.mail.sessionstrategy");
     
     if(repoUri != null && branch != null) {
       GitService cloned = null;
@@ -409,8 +402,20 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
         
-        install(new VaultModule());
-        install(new SearchModule());
+        Set<Class<?>> modules = reflections.getTypesAnnotatedWith(CadmiumModule.class);
+        log.debug("Found {} Module classes.", modules.size());
+        for(Class<?> module : modules) {
+          if(Module.class.isAssignableFrom(module)) {	  	
+                  log.debug("Installing module {}", module.getName());
+       	  	try {
+       	  	  install(((Class<? extends Module>)module).newInstance());
+         	       } catch (InstantiationException e) {
+       	           log.warn("Failed to instantiate "+module.getName(), e);
+       	  	     } catch (IllegalAccessException e) {
+        	  	     log.debug("Modules ["+module.getName()+"] constructor is not accessible.", e);
+       	  	     }  	
+              }	  	
+            }
         
         //bind vault cache-directory
         bind(String.class).annotatedWith(Names.named(VaultConstants.CACHE_DIRECTORY)).toInstance(new File(applicationContentRoot, "vault").getAbsoluteFile().getAbsolutePath());
@@ -424,14 +429,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         for( Class<? extends Object> jerseyService : jerseySet ) {
           bind(jerseyService).asEagerSingleton();
         }
-        
-        // bind email services
-        bind(String.class).annotatedWith(Names.named("com.meltmedia.email.jndi")).toInstance(mailJNDIName);
-        bind(String.class).annotatedWith(Names.named("melt.mail.messagetransformer")).toInstance(mailMessageTransformer);
-        bind(String.class).annotatedWith(Names.named("melt.mail.sessionstrategy")).toInstance(mailSessionStrategy);
-        bind(com.meltmedia.cadmium.mail.internal.EmailServiceImpl.class).asEagerSingleton();
-       // bind(EmailService.class).asEagerSingleton();
-        
+          
        
         
       }

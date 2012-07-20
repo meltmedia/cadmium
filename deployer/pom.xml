@@ -79,9 +79,8 @@
     </dependency>
 
     <dependency>
-      <groupId>com.meltmedia.cadmium.mail</groupId>
-      <artifactId>meltmedia-cadmium-email</artifactId>
-      <version>0.1.0-SNAPSHOT</version>
+      <groupId>com.meltmedia.cadmium</groupId>
+      <artifactId>cadmium-email</artifactId>
       <exclusions>
         <exclusion>
           <groupId>xerces</groupId>

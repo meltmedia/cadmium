@@ -55,7 +55,7 @@ public class EmailFormValidator {
   	}
   	
   	if (StringUtils.isEmpty(emailForm.getSubject())) {
-  		errors.add(new ValidationError(Constants.SUBJECT, "Page Path is required."));
+  		errors.add(new ValidationError(Constants.SUBJECT, "Subject is required."));
   	}
   	
   	 if (errors.size() > 0) {

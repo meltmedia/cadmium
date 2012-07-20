@@ -37,10 +37,6 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>cadmium-email</artifactId> 
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>cadmium-search</artifactId> 
     </dependency>
     <dependency>
