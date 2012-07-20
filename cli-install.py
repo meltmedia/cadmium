@@ -83,6 +83,8 @@ try:
   finally:
     fd.close()
 
+  subprocess.call(['cadmium', 'validate', 'out'])
+
   subprocess.call(['cadmium', 'commit', '--quiet-auth', '-m', '"'+message+'"', 'out', url])
 
 except subprocess.CalledProcessError:

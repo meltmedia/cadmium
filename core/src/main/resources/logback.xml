@@ -26,6 +26,7 @@
   </appender>
 
   <logger name="com.meltmedia.cadmium" level="INFO"/>
+  <logger name="jodd" level="ERROR"/>
 
 
   <root level="WARN">
