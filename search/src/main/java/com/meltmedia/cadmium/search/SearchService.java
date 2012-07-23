@@ -39,7 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
+import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 
+@CadmiumApiEndpoint
 @Path("/search")
 public class SearchService
 {

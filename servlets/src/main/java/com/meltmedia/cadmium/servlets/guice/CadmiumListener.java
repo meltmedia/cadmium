@@ -96,7 +96,6 @@ import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SslRedirectFilter;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 import com.meltmedia.cadmium.vault.guice.VaultModule;
 import com.meltmedia.cadmium.vault.service.VaultConstants;
@@ -282,8 +281,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         // hook Jackson into Jersey as the POJO <-> JSON mapper
         bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
 
-        serve("/system/*", "/api/*").with(GuiceContainer.class);
-
+        serve("/system/*").with(SystemGuiceContainer.class);
+        serve("/api/*").with(ApiGuiceContainer.class);
         serve("/*").with(FileServlet.class, fileParams);
 
         filter("/*").through(ErrorPageFilter.class, maintParams);
@@ -298,8 +297,8 @@ public class CadmiumListener extends GuiceServletContextListener {
     return new AbstractModule() {
       @Override
       protected void configure() {
-
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
+        
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
         Properties configProperties = new Properties();
         configProperties.putAll(System.getenv());

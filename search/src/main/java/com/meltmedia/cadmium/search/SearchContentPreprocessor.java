@@ -150,6 +150,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     IndexWriter iwriter = null;
     try {
       iwriter = new IndexWriter(newStagedSearcher.directory, new IndexWriterConfig(Version.LUCENE_36, analyzer).setRAMBufferSizeMB(5));
+      iwriter.deleteAll();
       writeIndex(iwriter, dataDir);
     }
     finally {

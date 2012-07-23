@@ -21,7 +21,6 @@ import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.search.IndexSearcherProvider;
 import com.meltmedia.cadmium.search.SearchContentPreprocessor;
-import com.meltmedia.cadmium.search.SearchService;
 
 @CadmiumModule
 public class SearchModule extends AbstractModule {
@@ -30,7 +29,6 @@ public class SearchModule extends AbstractModule {
   protected void configure() {
     bind(IndexSearcherProvider.class).to(SearchContentPreprocessor.class);
     bind(ConfigProcessor.class).annotatedWith(Names.named("search.processor")).to(SearchContentPreprocessor.class);
-    bind(SearchService.class).asEagerSingleton();
   }
 
 }

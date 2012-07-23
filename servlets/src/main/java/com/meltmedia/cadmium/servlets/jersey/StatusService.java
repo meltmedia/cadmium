@@ -32,6 +32,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -40,6 +41,7 @@ import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.status.Status;
 import com.meltmedia.cadmium.status.StatusMember;
 
+@CadmiumSystemEndpoint
 @Path("/status")
 public class StatusService extends AuthorizationService {
   private final Logger logger = LoggerFactory.getLogger(getClass());

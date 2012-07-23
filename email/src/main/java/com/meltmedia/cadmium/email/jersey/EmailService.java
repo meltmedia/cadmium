@@ -36,12 +36,14 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.email.model.EmailForm;
 import com.meltmedia.cadmium.mail.EmailException;
 import com.meltmedia.cadmium.mail.VelocityHtmlTextEmail;
 import com.meltmedia.cadmium.mail.internal.EmailServiceImpl;
 
+@CadmiumApiEndpoint
 @Path("/email")
 public class EmailService {
 	

@@ -30,6 +30,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.api.BasicApiResponse;
 import com.meltmedia.cadmium.core.api.UpdateRequest;
@@ -38,6 +39,7 @@ import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
+@CadmiumSystemEndpoint
 @Path("/update")
 public class UpdateService extends AuthorizationService {
   private final Logger log = LoggerFactory.getLogger(getClass());
