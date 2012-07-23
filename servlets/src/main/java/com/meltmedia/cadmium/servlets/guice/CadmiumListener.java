@@ -37,6 +37,12 @@ import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.ws.rs.Path;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
@@ -48,6 +54,8 @@ import org.reflections.Reflections;
 import org.reflections.vfs.Vfs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
@@ -91,14 +99,12 @@ import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
-import com.meltmedia.cadmium.search.guice.SearchModule;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SslRedirectFilter;
 
-import com.meltmedia.cadmium.vault.guice.VaultModule;
 import com.meltmedia.cadmium.vault.service.VaultConstants;
 
 /**
@@ -124,6 +130,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private File sshDir;
   private List<ChannelMember> members;
   private String warName;
+  private String vHostName;
   private String repoUri;
   private String channelConfigUrl;
   
@@ -174,6 +181,8 @@ public class CadmiumListener extends GuiceServletContextListener {
 
     // compute the directory for this application, based on the war name.
     warName = getWarName(context);
+    
+    vHostName = getVHostName(context);
     
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
     
@@ -288,6 +297,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   
   private Module createModule() {
     return new AbstractModule() {
+      @SuppressWarnings("unchecked")
       @Override
       protected void configure() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
@@ -347,7 +357,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
         
         // Bind channel name
-        bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+warName+"-"+environment);
+        bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
         
         bind(String.class).annotatedWith(Names.named("applicationContentRoot")).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
         
@@ -494,6 +504,31 @@ public class CadmiumListener extends GuiceServletContextListener {
       sharedContentRoot = (File) context.getAttribute("javax.servlet.context.tempdir");
     }
     return sharedContentRoot;
+  }
+  
+  public String getVHostName( ServletContext context ) {
+    String jbossWebXml = context.getRealPath("/WEB-INF/jboss-web.xml");
+    try {
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      factory.setNamespaceAware(true); // never forget this!
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      Document doc = builder.parse(jbossWebXml);
+      
+      XPathFactory xpFactory = XPathFactory.newInstance();
+      XPath xpath = xpFactory.newXPath();
+      
+      XPathExpression expr = xpath.compile("/jboss-web/virtual-host/text()");
+      
+      NodeList result = (NodeList)expr.evaluate(doc, XPathConstants.NODESET);
+      
+      if(result.getLength() > 0) {
+        return result.item(0).getNodeValue();
+      }
+      
+    } catch(Exception e) {
+      log.warn("Failed to read/parse file.", e);
+    }
+    return getWarName(context);
   }
   
   public static String getWarName( ServletContext context ) {
