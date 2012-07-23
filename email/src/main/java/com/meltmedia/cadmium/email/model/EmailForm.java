@@ -87,4 +87,13 @@ public class EmailForm {
 	public void setSubject(String subject) {
 		this.subject = subject;
 	}
+
+	@Override
+	public String toString() {
+		return "EmailForm [toName=" + toName + ", toAddress=" + toAddress
+				+ ", fromName=" + fromName + ", fromAddress=" + fromAddress
+				+ ", message=" + message + ", pagePath=" + pagePath + ", subject="
+				+ subject + "]";
+	}
+	
 }
