@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 import com.meltmedia.cadmium.core.history.HistoryManager;
@@ -40,6 +41,7 @@ import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
+@CadmiumSystemEndpoint
 @Path("/history")
 public class HistoryService extends AuthorizationService {
   private final Logger log = LoggerFactory.getLogger(getClass());

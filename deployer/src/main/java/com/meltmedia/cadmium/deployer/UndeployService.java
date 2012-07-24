@@ -12,11 +12,13 @@ import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.api.UndeployRequest;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 
+@CadmiumSystemEndpoint
 @Path("/undeploy")
 public class UndeployService extends AuthorizationService {
   private final Logger logger = LoggerFactory.getLogger(getClass());

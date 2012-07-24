@@ -29,11 +29,13 @@ import javax.ws.rs.core.Response;
 
 import org.eclipse.jgit.util.StringUtils;
 
+import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.api.DeployRequest;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 
+@CadmiumSystemEndpoint
 @Path("/deploy")
 public class DeployerService extends AuthorizationService {
 	
