@@ -59,9 +59,12 @@ public class ResourceManager extends TimerTask {
     this.propertiesFileName = propertiesFileName;
     this.cacheDir = cacheDir;
     
+    //TODO:  this line should be replaced with something like the following //ConfigManger.getProperties(propertiesFileName);
     readInPropertiesFile();
+    
   }
   
+  //TODO: need to change this to pass in a file name
   private void readInPropertiesFile() {    
     if(new File(propertiesFileName).canRead()) {
       FileInputStream in = null;
@@ -247,6 +250,7 @@ public class ResourceManager extends TimerTask {
     return null;
   }
   
+  //TODO: this method needs to be wrapped by the ConfigManager
   public void persistVaultProperties() {
     File propsFile = new File(propertiesFileName);
     if(propsFile.canWrite() || !propsFile.exists()) {
