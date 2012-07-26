@@ -99,7 +99,7 @@ public class EmailResource {
 			  	// Set up link
 			  	String link = "http://" + request.getServerName() + "/"  + emailForm.getPagePath();
 			  	log.info("Email This Page Link: {}",link);
-			  	email.setProperty(Constants.LINK,link);
+			  	email.setProperty(Constants.PATH,link);
 								  	
 			  	// Send Email
 			  	log.debug("Before Sending Email");  		

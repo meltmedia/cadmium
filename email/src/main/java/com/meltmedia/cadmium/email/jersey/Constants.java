@@ -25,7 +25,7 @@ public class Constants {
 	public static final String MESSAGE       = "message";
 	public static final String PAGE_PATH     = "pagePath";
 	public static final String SUBJECT       = "subject";
-	public static final String LINK          = "link";
+	public static final String PATH          = "path";
 	public static final String TEMPLATE_NAME = "email-this-page";
 
 }
