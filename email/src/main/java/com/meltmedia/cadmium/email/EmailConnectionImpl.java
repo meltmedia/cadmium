@@ -94,6 +94,7 @@ public class EmailConnectionImpl
         Transport.send(message);
       }
       catch( Exception e ) {
+      	e.printStackTrace();
         throw new EmailException("Could not send message.", e);
       }
     }
