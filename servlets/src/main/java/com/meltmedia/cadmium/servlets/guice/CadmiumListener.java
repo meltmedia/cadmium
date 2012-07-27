@@ -76,6 +76,7 @@ import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -163,13 +164,12 @@ public class CadmiumListener extends GuiceServletContextListener {
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     context = servletContextEvent.getServletContext();
-    Properties cadmiumProperties = loadProperties(new Properties(), context, "/WEB-INF/cadmium.properties", log);
+    Properties cadmiumProperties = ConfigManager.getPropertiesByContext(context, "/WEB-INF/cadmium.properties");
     
     
     Properties configProperties = new Properties();
-    configProperties.putAll(System.getenv());
-    configProperties.putAll(System.getProperties());
-
+    configProperties = ConfigManager.getSystemProperties();
+    
     sharedContentRoot = sharedContextRoot(configProperties, context, log);
 
     // compute the directory for this application, based on the war name.
@@ -177,7 +177,9 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
     
-    loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE), log);
+    
+    configProperties = ConfigManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+    //loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE), log);
 
     if ((sshDir = getSshDir(configProperties, sharedContentRoot )) != null) {
       GitService.setupSsh(sshDir.getAbsolutePath());
@@ -188,7 +190,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     if(repoUri != null && branch != null) {
       GitService cloned = null;
-      try {
+      try {               
         cloned = GitService.initializeContentDirectory(repoUri, branch, this.sharedContentRoot.getAbsolutePath(), warName);
       } catch(Exception e) {
         throw new RuntimeException(e);
@@ -226,7 +228,8 @@ public class CadmiumListener extends GuiceServletContextListener {
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     }
     
-    String channelCfgUrl = System.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
+    String channelCfgUrl = configProperties.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
+    //String channelCfgUrl = System.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
     if(channelCfgUrl != null) {
       File channelCfgFile = null;
       URL fileUrl = null;
@@ -294,8 +297,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
         Properties configProperties = new Properties();
-        configProperties.putAll(System.getenv());
-        configProperties.putAll(System.getProperties());
+        configProperties = ConfigManager.getSystemProperties();        
 
         if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
           try {
@@ -344,7 +346,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
 
-        String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
+        String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
+        //String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
         
         // Bind channel name
         bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+warName+"-"+environment);
@@ -449,7 +452,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     StatusPrinter.printInCaseOfErrorsOrWarnings(context);
   }
   
-  public static Properties loadProperties( Properties properties, ServletContext context, String path, Logger log ) {
+  /*public static Properties loadProperties( Properties properties, ServletContext context, String path, Logger log ) {
     Reader reader = null;
     try{
       reader = new InputStreamReader(context.getResourceAsStream(path), "UTF-8");
@@ -460,7 +463,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       IOUtils.closeQuietly(reader);
     }
     return properties;
-  }
+  }*/
   
   public static Properties loadProperties( Properties properties, File configFile, Logger log ) {
     if( !configFile.exists() || !configFile.canRead()) return properties;
