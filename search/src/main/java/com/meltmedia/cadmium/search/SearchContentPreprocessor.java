@@ -18,6 +18,7 @@ package com.meltmedia.cadmium.search;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -46,7 +47,7 @@ import jodd.lagarto.dom.jerry.Jerry;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 
 @Singleton
-public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider {
+public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider, Closeable {
   
   public static FileFilter HTML_FILE_FILTER = new FileFilter() {
     @Override
@@ -238,6 +239,11 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     public void finalize() {
       close();
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    finalize();
   }
 
 }
