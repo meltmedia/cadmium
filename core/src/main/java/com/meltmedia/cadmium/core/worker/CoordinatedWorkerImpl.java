@@ -185,12 +185,15 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
 
   @Override
   public void close() throws IOException {
-    if(!pool.isShutdown() || !pool.isTerminated()) {
-      try {
+    try {
+      if(!pool.isShutdown() || !pool.isTerminated()) {
         pool.shutdownNow();
-      } catch(Throwable t) {}
+      }
+    } catch(Throwable t) {
+      throw new IOException(t);
+    } finally {
+      pool = null;
     }
-    pool = null;
   }
 
 }

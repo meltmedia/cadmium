@@ -108,7 +108,9 @@ public class StatusService extends AuthorizationService {
 		if(this.git == null && !configProperties.containsKey("git.ref.sha") && !configProperties.containsKey("branch")) {
   		try {
   		  git = gitService.getGitService();
-  		} catch(Exception e){}
+  		} catch(Exception e){
+        logger.info("Interrupted while waiting on git service to initialize.", e);
+      }
 		}
 		
 		// Get cadmium project info (branch, repo and revision)

@@ -97,6 +97,8 @@ public class MimeTypeConfigProcessor implements ConfigProcessor {
 
   @Override
   public void makeLive() {
+    // Synchronized to make sure that the logs happen in the correct order.
+    // TODO: Find and fix whatever is causing multiple Update actions to occur.
     synchronized(stagedMimeTypes) {
       log.info("Promoting {} staged mime types, replacing {} old live mime types", stagedMimeTypes.size(), mimeTypes.size());
       this.mimeTypes = this.stagedMimeTypes;
