@@ -38,6 +38,9 @@
     </encoder>
   </appender>
   <logger name="com.meltmedia.cadmium" level="DEBUG"/>
+  <logger name="com.meltmedia.jgroups" level="ERROR"/>
+  <logger name="org.jgroups" level="ERROR"/>
+  <logger name="jodd" level="ERROR"/>
 
   <root level="WARN">
     <appender-ref ref="CONSOLE" />

@@ -45,12 +45,14 @@ public class MimeTypeConfigProcessor implements ConfigProcessor {
   @Override
   public void processFromDirectory(String metaDir) throws Exception {
     Map<String, String> newMimeTypes = new HashMap<String, String>();
-      addDefaultMimeTypes(newMimeTypes);
-      String mimeTypeFile = FileSystemManager.getFileIfCanRead(metaDir, CONFIG_FILE_NAME);
-      if( mimeTypeFile != null ) {
-        addAppMimeTypes(newMimeTypes, mimeTypeFile);
-      }
-    this.stagedMimeTypes = newMimeTypes;
+    addDefaultMimeTypes(newMimeTypes);
+    String mimeTypeFile = FileSystemManager.getFileIfCanRead(metaDir, CONFIG_FILE_NAME);
+    if( mimeTypeFile != null ) {
+      addAppMimeTypes(newMimeTypes, mimeTypeFile);
+    }
+    synchronized(stagedMimeTypes) {
+      this.stagedMimeTypes = newMimeTypes;
+    }
   }
   
   static void addDefaultMimeTypes( Map<String, String> mimeTypeMap ) throws IllegalArgumentException, UnsupportedEncodingException {
@@ -87,7 +89,7 @@ public class MimeTypeConfigProcessor implements ConfigProcessor {
       for( MimeType mime : mimes ) {
         mimeTypeMap.put(mime.getExtension(), mime.getContentType());
       }
-      } catch(Exception e) {
+    } catch(Exception e) {
       log.error("Invalid "+CONFIG_FILE_NAME+"!", e);
       throw e;
     }
@@ -95,8 +97,11 @@ public class MimeTypeConfigProcessor implements ConfigProcessor {
 
   @Override
   public void makeLive() {
-    log.info("Promoting {} staged mime types, replacing {} old live mime types", stagedMimeTypes.size(), mimeTypes.size());
-    this.mimeTypes = this.stagedMimeTypes;
+    synchronized(stagedMimeTypes) {
+      log.info("Promoting {} staged mime types, replacing {} old live mime types", stagedMimeTypes.size(), mimeTypes.size());
+      this.mimeTypes = this.stagedMimeTypes;
+      log.debug("Now serving {} live mime types", mimeTypes.size());
+    }
   }
   
   public String getContentType(String filename) {

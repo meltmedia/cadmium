@@ -18,6 +18,8 @@ package com.meltmedia.cadmium.core.messaging;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -29,6 +31,9 @@ import org.jgroups.MembershipListener;
 import org.jgroups.View;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
+import com.meltmedia.cadmium.core.git.GitService;
 
 @Singleton
 public class MembershipTracker implements MembershipListener {
@@ -42,12 +47,18 @@ public class MembershipTracker implements MembershipListener {
   
   protected Properties configProperties;
   
+  protected DelayedGitServiceInitializer gitService;
+  private GitService git;
+  private Timer timer = new Timer();
+  
   @Inject
-  public MembershipTracker(MessageSender sender, JChannel channel, @Named("members") List<ChannelMember> members, @Named("config.properties") Properties configProperties) {
+  public MembershipTracker(MessageSender sender, JChannel channel, @Named("members") List<ChannelMember> members, @Named("config.properties") Properties configProperties, DelayedGitServiceInitializer gitService) {
     this.sender = sender;
     this.channel = channel;
     this.members = members;
     this.configProperties = configProperties;
+    this.gitService = gitService;
+    
     if(this.channel != null) {
       viewAccepted(this.channel.getView());
     }
@@ -90,22 +101,32 @@ public class MembershipTracker implements MembershipListener {
 
   private void handleSyncRequest(View new_view) {
     log.info("Here is the new view {}", new_view);
-    ChannelMember coordinator = getCoordinator();
+    final ChannelMember coordinator = getCoordinator();
     if(coordinator != null && !coordinator.isMine()) {
-      log.debug("I'm not the coordinator!!!");
-      Message syncMessage = new Message();
-      syncMessage.setCommand(ProtocolMessage.SYNC);
-      log.info("Sending sync message to coordinator {}", coordinator.getAddress());
-      if(configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
-        syncMessage.getProtocolParameters().put("branch", configProperties.getProperty("branch"));
-        syncMessage.getProtocolParameters().put("sha", configProperties.getProperty("git.ref.sha"));
-        log.info("I have branch:{}, and sha:{}", configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha"));
-      }
-      try{
-        sender.sendMessage(syncMessage, coordinator);
-      } catch(Exception e) {
-        log.warn("Failed to send sync message: {}", e.getMessage());
-      }
+      timer.schedule(new TimerTask() {
+        public void run() {
+          log.debug("I'm not the coordinator!!!");
+          if(git == null && gitService != null) {
+            try {
+              log.debug("Wainting for git service to initialize.");
+              git = gitService.getGitService();
+            } catch(Throwable t){}
+          }
+          Message syncMessage = new Message();
+          syncMessage.setCommand(ProtocolMessage.SYNC);
+          log.info("Sending sync message to coordinator {}", coordinator.getAddress());
+          if(configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+            syncMessage.getProtocolParameters().put("branch", configProperties.getProperty("branch"));
+            syncMessage.getProtocolParameters().put("sha", configProperties.getProperty("git.ref.sha"));
+            log.info("I have branch:{}, and sha:{}", configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha"));
+          }
+          try{
+            sender.sendMessage(syncMessage, coordinator);
+          } catch(Exception e) {
+            log.warn("Failed to send sync message: {}", e.getMessage());
+          }
+        }
+      }, 50l);
     }
   }
   

@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
+import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
@@ -62,6 +64,9 @@ public class StatusService extends AuthorizationService {
 	
 	@Inject
 	protected LifecycleService lifecycleService;
+	
+	@Inject
+	protected DelayedGitServiceInitializer gitService;
 
 	@Inject
 	@Named("config.properties")
@@ -74,6 +79,8 @@ public class StatusService extends AuthorizationService {
 	@Inject
 	@Named("contentDir")
 	protected String initialContentDir;
+	
+	private GitService git;
 
 	@GET
 	@Path("/Ping")
@@ -97,10 +104,16 @@ public class StatusService extends AuthorizationService {
 			contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");			
 		}
 		
+		GitService git = null;
+		if(this.git == null && !configProperties.containsKey("git.ref.sha") && !configProperties.containsKey("branch")) {
+  		try {
+  		  git = gitService.getGitService();
+  		} catch(Exception e){}
+		}
 		
 		// Get cadmium project info (branch, repo and revision)
-		String rev = configProperties.getProperty("git.ref.sha");
-		String branch = configProperties.getProperty("branch");
+		String rev = configProperties.getProperty("git.ref.sha", (git != null ? git.getCurrentRevision() : null));
+		String branch = configProperties.getProperty("branch", (git != null ? git.getBranchName() : null));
 		String repo = repoUri;
 		
 		// Get source project info (branch, repo and revision)
