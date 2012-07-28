@@ -22,7 +22,7 @@ import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 
 public class DummyMembershipTracker extends MembershipTracker {
   public DummyMembershipTracker(){
-    super(null,null,null,null);
+    super(null,null,null,null,null);
   }
   
   public void setMembers(List<ChannelMember> members) {

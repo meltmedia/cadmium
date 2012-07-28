@@ -126,10 +126,10 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
     if(tmpDir.delete()) {
       try {
         git = GitService.cloneRepo(status.getRepo(), tmpDir.getAbsolutePath());
-        if(!git.getBranchName().equals(status.getBranch())) {
+        if(status.getBranch() != null && !git.getBranchName().equals(status.getBranch())) {
           git.switchBranch(status.getBranch());
         }
-        if(!git.getCurrentRevision().equals(status.getRevision())) {
+        if(status.getRevision() != null && !git.getCurrentRevision().equals(status.getRevision())) {
           git.resetToRev(status.getRevision());
         }
       } catch(Exception e) {

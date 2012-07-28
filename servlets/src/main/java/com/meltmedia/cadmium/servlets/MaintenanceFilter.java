@@ -59,7 +59,8 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
 
     @Override
     public synchronized void stop() {
-     if( filter != null ) filter.stop();
+      active = false;
+      if( filter != null ) filter.stop();
     }
 
     @Override
@@ -68,7 +69,7 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
     }
   }
   
-  public static final MaintSiteDownService siteDown = new MaintSiteDownService();
+  public static final SiteDownService siteDown = new MaintSiteDownService();
 
 	public volatile boolean on = true;
 	private String ignorePath;
@@ -81,12 +82,12 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
 			ignorePath = config.getInitParameter("ignorePrefix");
 		}
 		config.getServletContext().setAttribute(this.getClass().getName(), this);
-		siteDown.setMaintenanceFilter(this);
+		((MaintSiteDownService) siteDown).setMaintenanceFilter(this);
 	}
 
 	@Override
 	public void destroy() {
-    siteDown.setMaintenanceFilter(null);
+    ((MaintSiteDownService) siteDown).setMaintenanceFilter(null);
 	}
 
 	@Override

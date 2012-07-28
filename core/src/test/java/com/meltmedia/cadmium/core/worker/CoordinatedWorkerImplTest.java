@@ -30,14 +30,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.DummyMessageSender;
 
+import static org.mockito.Mockito.*;
+
 public class CoordinatedWorkerImplTest {
-  private GitService service;
+  private DelayedGitServiceInitializer service;
   private File baseDir;
   
   @Before
@@ -47,7 +50,9 @@ public class CoordinatedWorkerImplTest {
     }
     baseDir = new File("./target/worker-test");
     baseDir.mkdirs();
-    service = GitService.cloneRepo("git://github.com/meltmedia/test-content-repo.git", new File(baseDir, "git-checkout").getAbsolutePath());
+    GitService gitService = GitService.cloneRepo("git://github.com/meltmedia/test-content-repo.git", new File(baseDir, "git-checkout").getAbsolutePath());
+    service = mock(DelayedGitServiceInitializer.class);
+    when(service.getGitService()).thenReturn(gitService);
     
     File renderedContent = new File(baseDir, "renderedContent");
     renderedContent.mkdir();
@@ -65,7 +70,7 @@ public class CoordinatedWorkerImplTest {
   
   @After
   public void shutdownService() throws Exception {
-    service.close();
+    service.getGitService().close();
   }
   
   @Test
@@ -88,6 +93,7 @@ public class CoordinatedWorkerImplTest {
     lifecycleService.setMembers(members);
     
     
+    @SuppressWarnings("resource")
     CoordinatedWorkerImpl worker = new CoordinatedWorkerImpl();
     worker.configProperties = configProperties;
     worker.sender = sender;
