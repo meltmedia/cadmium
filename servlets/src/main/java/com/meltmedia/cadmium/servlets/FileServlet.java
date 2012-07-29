@@ -80,11 +80,28 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 		return getBasePath();
 	}
 	
+	/**
+	 * Returns the content type for the specified path.
+	 * 
+	 * @param path the path to look up.
+	 * @return the content type for the path.
+	 * @throws FileNotFoundException if a file (or welcome file) does not exist at path.
+	 * @throws IOException if any other problem prevents the lookup of the content type.
+	 */
 	public String contentTypeOf( String path ) throws IOException {
 	  File file = findFile(path);
 	  return resolveMimeType(file.getName());
 	}
 	
+	/**
+	 * Returns the file object for the given path, including welcome file lookup.  If the file cannot be found, a
+	 * FileNotFoundException is returned.
+	 * 
+	 * @param path the path to look up.
+	 * @return the file object for that path.
+	 * @throws FileNotFoundException if the file could not be found.
+	 * @throws IOException if any other problem prevented the locating of the file.
+	 */
 	public File findFile( String path ) throws FileNotFoundException, IOException {
 	  File base = new File(getBasePath());
 	  File pathFile = new File(base, "."+path);

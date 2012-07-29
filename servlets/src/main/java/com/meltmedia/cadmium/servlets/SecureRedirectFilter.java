@@ -49,19 +49,36 @@ public class SecureRedirectFilter implements Filter {
   @Inject
   protected FileServlet fileServlet;
   
-
+  /**
+   * Sets the redirect strategy for unit tests.
+   * 
+   * @param redirectStrategy the mock of the redirect strategy.
+   */
   void setRedirectStrategy(SecureRedirectStrategy redirectStrategy) {
     this.redirectStrategy = redirectStrategy;
   }
   
+  /**
+   * Sets the redirect config processor for unit tests.
+   * 
+   * @param redirect the mock of the redirect config processor.
+   */
   void setRedirectConfigProcessor( SslRedirectConfigProcessor redirect ) {
     this.redirect = redirect;
   }
   
+  /**
+   * Sets the file servlet for unit testing.
+   * 
+   * @param fileServlet the mock of the file servlet.
+   */
   void setFileServlet( FileServlet fileServlet ) {
     this.fileServlet = fileServlet;
   }
 
+  /**
+   * NoOp.
+   */
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
 
@@ -127,6 +144,9 @@ public class SecureRedirectFilter implements Filter {
       }
     }
 
+  /**
+   * NoOp.
+   */
   @Override
   public void destroy() {
 

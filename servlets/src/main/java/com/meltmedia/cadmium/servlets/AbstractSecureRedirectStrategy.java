@@ -43,12 +43,25 @@ public abstract class AbstractSecureRedirectStrategy implements SecureRedirectSt
     addPortMapping(8080, 8443);
   }
   
+  /**
+   * Returns the default port for the specified protocol.
+   * 
+   * @param protocol the protocol name.
+   * @return the default port for the specifed protocol.
+   */
   public static int getDefaultPort( String protocol ) {
     if( HTTP_PROTOCOL.equals(protocol) ) { return DEFAULT_HTTP_PORT; }
     else if( HTTPS_PROTOCOL.equals(protocol) ) { return DEFAULT_HTTPS_PORT; }
     else { throw new IllegalArgumentException("No known default for "+protocol); }
   }
   
+  /**
+   * Looks up a corresponding port number from a port mapping.
+   * @param mapping the port mapping
+   * @param port the key in the port map.
+   * @return the corresponding port number from the port mapping.
+   * @throws RuntimeException if a value could not be found.
+   */
   public static int mapPort(Map<Integer, Integer> mapping, int port) {
     Integer mappedPort = mapping.get(port);
     if( mappedPort == null ) throw new RuntimeException("Could not map port "+port);
@@ -69,8 +82,17 @@ public abstract class AbstractSecureRedirectStrategy implements SecureRedirectSt
    */
   public abstract int getPort( HttpServletRequest request );
   
+  /**
+   * Returns the secure version of the original URL for the request.
+   * 
+   * @param request the insecure request that was made.
+   * @param response the response for the request.
+   * @return the secure version of the original URL for the request.
+   * @throws IOException if the url could not be created.
+   */
   public String secureUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    if( getProtocol(request).equalsIgnoreCase(HTTP_PROTOCOL) ) {
+    String protocol = getProtocol(request);
+    if( protocol.equalsIgnoreCase(HTTP_PROTOCOL) ) {
       int port = mapPort(TO_SECURE_PORT_MAP, getPort(request));
       try {
         URI newUri = changeProtocolAndPort(HTTPS_PROTOCOL, port == DEFAULT_HTTPS_PORT ? -1 : port, request);
@@ -80,12 +102,21 @@ public abstract class AbstractSecureRedirectStrategy implements SecureRedirectSt
       }
     }
     else {
-      throw new UnsupportedProtocolException();
+      throw new UnsupportedProtocolException("Cannot build secure url for "+protocol);
     }
   }
 
+  /**
+   * Returns the insecure version of the original URL for the request.
+   * 
+   * @param request the secure request that was made.
+   * @param response the response for the request.
+   * @return the insecure version of the original URL for the request.
+   * @throws IOException if the url could not be created.
+   */
   public String insecureUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    if( getProtocol(request).equalsIgnoreCase(HTTPS_PROTOCOL) ) {
+    String protocol = getProtocol(request);
+    if( protocol.equalsIgnoreCase(HTTPS_PROTOCOL) ) {
       int port = mapPort(TO_INSECURE_PORT_MAP, getPort(request));
       try {
         return changeProtocolAndPort(HTTP_PROTOCOL, port == DEFAULT_HTTP_PORT ? -1 : port, request).toString();
@@ -94,10 +125,16 @@ public abstract class AbstractSecureRedirectStrategy implements SecureRedirectSt
       }
     }
     else {
-      throw new UnsupportedProtocolException();
+      throw new UnsupportedProtocolException("Cannot build insecure url for "+protocol);
     }
   }
   
+  /**
+   * Sends a moved perminately redirect to the secure form of the request URL.
+   * 
+   * @request the request to make secure.
+   * @response the response for the request.
+   */
   @Override
   public void makeSecure(HttpServletRequest request, HttpServletResponse response)
     throws IOException
@@ -108,6 +145,12 @@ public abstract class AbstractSecureRedirectStrategy implements SecureRedirectSt
     response.getOutputStream().close();
   }
 
+  /**
+   * Sends a moved perminately redirect to the insecure form of the request URL.
+   * 
+   * @request the request to make secure.
+   * @response the response for the request.
+   */
   @Override
   public void makeInsecure(HttpServletRequest request, HttpServletResponse response) throws IOException {
     response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
