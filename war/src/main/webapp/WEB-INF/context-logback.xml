@@ -33,6 +33,9 @@
   </appender>
 
   <logger name="com.meltmedia.cadmium" level="INFO"/>
+  <logger name="com.meltmedia.jgroups" level="ERROR"/>
+  <logger name="org.jgroups" level="ERROR"/>
+  <logger name="jodd" level="ERROR"/>
 
   <root level="WARN">
     <appender-ref ref="FILE" />
