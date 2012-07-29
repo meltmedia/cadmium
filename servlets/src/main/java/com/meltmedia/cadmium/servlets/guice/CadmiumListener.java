@@ -1,5 +1,4 @@
 /**
- *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -108,7 +107,8 @@ import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
-import com.meltmedia.cadmium.servlets.SslRedirectFilter;
+import com.meltmedia.cadmium.servlets.SecureRedirectFilter;
+import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
 
 import com.meltmedia.cadmium.vault.service.VaultConstants;
 
@@ -296,6 +296,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         // hook Jackson into Jersey as the POJO <-> JSON mapper
         bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
+        
+        bind(XForwardedSecureRedirectStrategy.class).in(Scopes.SINGLETON);
 
         serve("/system/*").with(SystemGuiceContainer.class);
         serve("/api/*").with(ApiGuiceContainer.class);
@@ -303,7 +305,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         filter("/*").through(ErrorPageFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
-        filter("/*").through(SslRedirectFilter.class);
+        filter("/*").through(SecureRedirectFilter.class);
         
       }
     };
@@ -417,9 +419,6 @@ public class CadmiumListener extends GuiceServletContextListener {
           configProcessorBinder.addBinding().to(configProcessorClass);
           //bind(ConfigProcessor.class).to(configProcessorClass);
         }
-        
-        //This should be the name of a header that BigIp will set if the incoming request was SSL
-        bind(String.class).annotatedWith(Names.named(SslRedirectFilter.SSL_HEADER_NAME)).toInstance(SSL_HEADER);
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
         
