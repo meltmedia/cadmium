@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.servlets;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -77,6 +78,21 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	@Override
 	public String getContentRoot() {		
 		return getBasePath();
+	}
+	
+	public String contentTypeOf( String path ) throws IOException {
+	  File file = findFile(path);
+	  return resolveMimeType(file.getName());
+	}
+	
+	public File findFile( String path ) throws FileNotFoundException, IOException {
+	  File base = new File(getBasePath());
+	  File pathFile = new File(base, "."+path);
+	  if( !pathFile.exists()) throw new FileNotFoundException("No file or directory at "+pathFile.getCanonicalPath());
+	  if( pathFile.isFile()) return pathFile;
+	  pathFile = new File(pathFile, "index.html");
+	  if( !pathFile.exists() ) throw new FileNotFoundException("No welcome file at "+pathFile.getCanonicalPath());
+	  return pathFile;
 	}
 
   @Override
