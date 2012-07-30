@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta charset="utf-8" />
 
-<title>Demo Content :: Home</title>
+<title>Demo Content :: Secure</title>
 
 <link rel="stylesheet" href="./assets/css/global.css" />
 
@@ -31,22 +31,20 @@
   </nav>
   <div id="content" class="clearfix">
     <section id="main">
-      <h1>Cadmium Content Types</h1>
-      <p>Cadmium provides content type mappings for hundreds of common file extensions.  If these mappings do not cover the content for your application, you can add to or override these mappings with the /META-INF/mime.json file.</p>
-      <h2>Custom Content Types</h2>
-      <p>The /META-INF/mime.json file provides custom type mappings for the currently deployed content.  This is an example file that maps both the .foo and .bar extensions to text/html:</p>
+      <h1>Secure</h1>
+      <p>Cadmium provides support for marking some pages as secure, so that they will use the https protocol when they are accessed.  This support only applies to pages that are served with the
+      content type text/html.</p>
+      <h2>Making a Page Secure</h2>
+      <p>The /META-INF/secure.json file provides configuration for pages that should be secure.  Any file that is text/html and has a URL that matches one of the configured regular expressions will be redirected to the https protocol.  Any text/html page that is requested with https and does not match one of the configured urls will be redirected to the http protocol.  Here is the configuration used to make this page secure:</p>
       <pre class="snippet">
 [
   {
-    "extension":"foo",
-    "contentType":"text/html"
-  },
-  {
-    "extension":"bar",
-    "contentType":"text/html"
+    "url":"/secure.*"
   }
 ]
       </pre>
+    </section>
+
     </section>
     <section id="sidebar">
       <h3>In This Demo...</h3>
