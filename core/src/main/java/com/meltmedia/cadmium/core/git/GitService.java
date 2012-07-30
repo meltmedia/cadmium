@@ -34,6 +34,7 @@ import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.RmCommand;
+import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
@@ -150,7 +151,7 @@ public class GitService
     return git.checkinNewContent(source, comment);
   }
   
-  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName) throws Exception {
+  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName) throws RefNotFoundException, Exception {
     if(!FileSystemManager.exists(root)) {
       log.info("Content Root directory [{}] does not exist. Creating!!!", root);
       if(!new File(root).mkdirs()) {
@@ -300,7 +301,7 @@ public class GitService
     push.call();
   }
   
-  public void switchBranch(String branchName) throws Exception {
+  public void switchBranch(String branchName) throws RefNotFoundException, Exception {
     if(branchName != null && !repository.getBranch().equals(branchName)) {
       log.info("Switching branch from {} to {}", repository.getBranch(), branchName);
       CheckoutCommand checkout = git.checkout();

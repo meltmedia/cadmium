@@ -15,6 +15,8 @@
  */
 package com.meltmedia.cadmium.core.worker;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -25,11 +27,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -40,13 +44,13 @@ import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 @Singleton
-public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWorkerListener {
+public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWorkerListener, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   private ExecutorService pool;
   
   @Inject
-  protected GitService service;
+  protected DelayedGitServiceInitializer service;
 
   @Inject
   @Named("config.properties")
@@ -72,6 +76,8 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   
   private CoordinatedWorkerListener listener;
   
+  private GitService gitService = null;
+  
   public CoordinatedWorkerImpl() {
     pool = Executors.newSingleThreadExecutor();
     listener = this;
@@ -83,6 +89,15 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
       log.info("Beginning Update...");
       lastTask = null;
       try {
+        GitService service = gitService;
+        if(gitService == null) {
+          log.debug("Waiting for git service to initialize.");
+          service = this.service.getGitService();
+          gitService = service;
+        }
+        if(service == null) {
+          throw new Exception("Git service not initialized yet!");
+        }
         if(properties.containsKey("sha")) {
           configProperties.setProperty("updating.to.sha", properties.get("sha"));
         }
@@ -120,9 +135,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
 
   @Override
   public void killUpdate() {
-    synchronized(pool) {
-      pool.shutdownNow();
-    }
+    IOUtils.closeQuietly(this);
     pool = Executors.newSingleThreadExecutor();
   }
 
@@ -173,6 +186,19 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
       sender.sendMessage(doneMessage, null);
     } catch (Exception e) {
       log.warn("Failed to send fail message: {}", e.getMessage());
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      if(!pool.isShutdown() || !pool.isTerminated()) {
+        pool.shutdownNow();
+      }
+    } catch(Throwable t) {
+      throw new IOException(t);
+    } finally {
+      pool = null;
     }
   }
 

@@ -1,5 +1,4 @@
 /**
- *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
 package com.meltmedia.cadmium.servlets.guice;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -29,6 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -65,6 +66,7 @@ import ch.qos.logback.core.util.StatusPrinter;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -80,10 +82,12 @@ import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
+import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -103,7 +107,9 @@ import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
-import com.meltmedia.cadmium.servlets.SslRedirectFilter;
+import com.meltmedia.cadmium.servlets.SecureRedirectFilter;
+import com.meltmedia.cadmium.servlets.SecureRedirectStrategy;
+import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
 
 import com.meltmedia.cadmium.vault.service.VaultConstants;
 
@@ -133,6 +139,8 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String vHostName;
   private String repoUri;
   private String channelConfigUrl;
+  private String branch;
+  private String failOver;
   
   private ServletContext context;
 
@@ -140,35 +148,50 @@ public class CadmiumListener extends GuiceServletContextListener {
   
   @Override
   public void contextDestroyed(ServletContextEvent event) {
-    try {
-      JChannel channel = injector.getInstance(JChannel.class);
-      if (channel != null) {
+    Set<Closeable> closed = new HashSet<Closeable>();
+    Injector injector = this.injector;
+    while(injector != null) {
+      for (Key<?> key : injector.getBindings().keySet()) {
         try {
-          channel.close();
-        } catch (Exception e) {
-          log.warn("Failed to close jgroups channel", e);
-        }
+          Object instance = injector.getInstance(key);
+          
+          if(instance instanceof Closeable) {
+            try {
+              Closeable toClose = (Closeable) instance;
+              if(!closed.contains(toClose)) {
+                closed.add(toClose);
+                log.info("Closing instance of {}, key {}", instance.getClass().getName(), key);
+                IOUtils.closeQuietly(toClose);
+              }
+            } catch(Exception e){}
+          }
+        } catch(Throwable t) {}
       }
-    } catch (Exception e) {
-      log.warn("Failed to get channel", e);
+      injector = injector.getParent();
     }
     try {
-      GitService git = injector.getInstance(GitService.class);
-      if (git != null) {
+      Reflections reflections = new Reflections("com.meltmedia");
+      for(Class<? extends Closeable> toCloseClass : reflections.getSubTypesOf(Closeable.class)) {
         try {
-          git.close();
-        } catch (Exception e) {
-          log.warn("Failed to close GitService", e);
-        }
+          Closeable toClose = this.injector.getInstance(toCloseClass);
+          if(!closed.contains(toClose)) {
+            closed.add(toClose);
+            log.info("Closing instance of {}", toCloseClass.getName());
+            IOUtils.closeQuietly(toClose);
+          }
+        } catch(Throwable t) {}
       }
-    } catch (Exception e) {
-      log.warn("Failed to get git service", e);
+    } catch(Throwable t) {
+      log.warn("Failed to close down fully.", t);
     }
+    closed.clear();
     super.contextDestroyed(event);
   }
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
+    failOver = servletContextEvent.getServletContext().getRealPath("/");
+    MaintenanceFilter.siteDown.start();
     context = servletContextEvent.getServletContext();
     Properties cadmiumProperties = loadProperties(new Properties(), context, "/WEB-INF/cadmium.properties", log);
     
@@ -193,18 +216,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
     
     repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
-    String branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
-    
-    if(repoUri != null && branch != null) {
-      GitService cloned = null;
-      try {
-        cloned = GitService.initializeContentDirectory(repoUri, branch, this.sharedContentRoot.getAbsolutePath(), warName);
-      } catch(Exception e) {
-        throw new RuntimeException(e);
-      } finally {
-        IOUtils.closeQuietly(cloned);
-      }
-    }
+    branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
 
     String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
     if (repoDir != null && repoDir.trim().length() > 0) {
@@ -224,6 +236,9 @@ public class CadmiumListener extends GuiceServletContextListener {
     File repoFile = new File(this.applicationContentRoot, this.repoDir);
     if (repoFile.isDirectory() && repoFile.canWrite()) {
       this.repoDir = repoFile.getAbsoluteFile().getAbsolutePath();
+    } else {
+      log.warn("The repo directory may not have been initialized yet.");
+      this.repoDir = repoFile.getAbsoluteFile().getAbsolutePath();
     }
 
     File contentFile = new File(this.applicationContentRoot, this.contentDir);
@@ -231,7 +246,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         && contentFile.canWrite()) {
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     } else {
-      log.warn("The content directory exists, but we cannot write to it.");
+      log.warn("The content directory may not have been initialized yet.");
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     }
     
@@ -278,10 +293,12 @@ public class CadmiumListener extends GuiceServletContextListener {
         maintParams.put("ignorePrefix", "/system");
         
         Map<String, String> fileParams = new HashMap<String, String>();
-        fileParams.put("basePath", contentDir);
+        fileParams.put("basePath", FileSystemManager.exists(contentDir) ? contentDir : failOver);
         
         // hook Jackson into Jersey as the POJO <-> JSON mapper
         bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
+        
+        bind(SecureRedirectStrategy.class).to(XForwardedSecureRedirectStrategy.class).in(Scopes.SINGLETON);
 
         serve("/system/*").with(SystemGuiceContainer.class);
         serve("/api/*").with(ApiGuiceContainer.class);
@@ -289,7 +306,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         filter("/*").through(ErrorPageFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
-        filter("/*").through(SslRedirectFilter.class);
+        filter("/*").through(SecureRedirectFilter.class);
         
       }
     };
@@ -325,12 +342,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(MessageSender.class).to(JGroupsMessageSender.class);
 
-        try {
-          bind(GitService.class).toInstance(
-              GitService.createGitService(repoDir));
-        } catch (Exception e) {
-          throw new Error("Failed to bind git service");
-        }
+        bind(DelayedGitServiceInitializer.class).toInstance(new DelayedGitServiceInitializer());
 
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
@@ -353,6 +365,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(new TypeLiteral<Map<String, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
         
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
+        bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
+        bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
+        bind(String.class).annotatedWith(Names.named("initialCadmiumBranch")).toInstance(branch);
 
         String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
         
@@ -405,9 +420,6 @@ public class CadmiumListener extends GuiceServletContextListener {
           configProcessorBinder.addBinding().to(configProcessorClass);
           //bind(ConfigProcessor.class).to(configProcessorClass);
         }
-        
-        //This should be the name of a header that BigIp will set if the incoming request was SSL
-        bind(String.class).annotatedWith(Names.named(SslRedirectFilter.SSL_HEADER_NAME)).toInstance(SSL_HEADER);
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
         

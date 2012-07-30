@@ -32,11 +32,14 @@ import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
+import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 @Singleton
 public class SyncCommandAction implements CommandAction {
@@ -63,6 +66,14 @@ public class SyncCommandAction implements CommandAction {
   
   @Inject
   protected HistoryManager manager;
+
+  @Inject
+  protected SiteConfigProcessor processor;
+  
+  @Inject
+  protected DelayedGitServiceInitializer gitInit;
+  
+  private GitService git;
 
   public String getName() { return ProtocolMessage.SYNC; }
   
@@ -93,6 +104,9 @@ public class SyncCommandAction implements CommandAction {
         public void workDone(Map<String, String> properties) {
           log.info("Sync done");
           fileServlet.switchContent(ctx.getMessage().getRequestTime());
+          if(processor != null) {
+            processor.makeLive();
+          }
           if(manager != null) {
             try {
               manager.logEvent(properties.get("BranchName"), properties.get("CurrentRevision"), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"), properties.get("uuid"), properties.get("comment"), !new Boolean(properties.get("nonRevertible")), true);
@@ -117,6 +131,15 @@ public class SyncCommandAction implements CommandAction {
 
   private void handleCommandAsCoordinator(CommandContext ctx) {
     log.info("Received SYNC message from new member {}", ctx.getSource());
+    if(git != null && gitInit != null) {
+      try {
+        log.info("Waiting for git service to initialize.");
+        git = gitInit.getGitService();
+      } catch(Exception e){
+        log.warn("Waiting was interrupted.", e);
+        return;
+      }
+    }
     boolean update = false;
     if(ctx.getMessage().getProtocolParameters().containsKey("branch") && ctx.getMessage().getProtocolParameters().containsKey("sha")) {
       log.info("Sync Request has branch {} and sha {}", ctx.getMessage().getProtocolParameters().get("branch"), ctx.getMessage().getProtocolParameters().get("sha"));
@@ -128,7 +151,7 @@ public class SyncCommandAction implements CommandAction {
         }
       }
     } else if (configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
-      log.info("Sync request has not branch or sha! update is required!");
+      log.info("Sync request has no branch and/or sha! update is required!");
       update = true;
     }
     
