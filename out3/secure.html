@@ -31,18 +31,16 @@
   </nav>
   <div id="content" class="clearfix">
     <section id="main">
-      <h1>Secure</h1>
-      <p>Cadmium provides support for marking some pages as secure, so that they will use the https protocol when they are accessed.  This support only applies to pages that are served with the
-      content type text/html.</p>
+      <h1>Secure Pages</h1>
+      <p>Cadmium provides support for http/https redirection for text/html pages.  Cadmium does not redirect other content types, so assets can be served under either protocol.</p>
       <h2>Making a Page Secure</h2>
-      <p>The /META-INF/secure.json file provides configuration for pages that should be secure.  Any file that is text/html and has a URL that matches one of the configured regular expressions will be redirected to the https protocol.  Any text/html page that is requested with https and does not match one of the configured urls will be redirected to the http protocol.  Here is the configuration used to make this page secure:</p>
+      <p>The /META-INF/secure.json file is used to configure pages that are secure.  Pages that match on of the path regular expressions in this file will only be served under the https protocol.  All other text/html resources will only be served under the http protocol.  This config file will make any path starting with /secure be served under https:</p>
       <pre class="snippet">
 [
   {
     "url":"/secure.*"
   }
-]
-      </pre>
+]</pre>
     </section>
 
     </section>
