@@ -23,16 +23,17 @@
     <a href="./index.html" title="Commit">Commit</a>
     <a href="./clone.html" title="Clone">Clone</a>
     <a href="./example.html" title="Example">Example</a>
+    <a href="./time.html" title="Time Savings">Time Savings</a>
   </nav>
   <div id="content" class="clearfix">
     <section id="main">
       <h1>Example Production Push</h1>
       <p>For this example, imagine the following environments are being used to push content to production:</p>
       <ol>
-        <li><a href="http://dev.cadmium2.meltdemo.com" title="dev">http://dev.cadmium2.meltdemo.com</a> - Development</li>
-        <li><a href="http://qa.cadmium2.meltdemo.com" title="qa">http://qa.cadmium2.meltdemo.com</a> - QA</li>
-        <li><a href="http://staging2.cadmium.meltdemo.com" title="staging">http://staging2.cadmium.meltdemo.com</a> - Staging</li>
-        <li><a href="http://prod.cadmium2.meltdemo.com" title="prod">http://prod.cadmium2.meltdemo.com</a> - Production</li>
+        <li><a href="http://dev.cadmium.meltdemo.com" title="dev">http://dev.cadmium.meltdemo.com</a> - Development</li>
+        <li><a href="http://qa.cadmium.meltdemo.com" title="qa">http://qa.cadmium.meltdemo.com</a> - QA</li>
+        <li><a href="http://staging.cadmium.meltdemo.com" title="qa">http://staging.cadmium.meltdemo.com</a> - Staging</li>
+        <li><a href="http://prod.cadmium.meltdemo.com" title="prod">http://prod.cadmium.meltdemo.com</a> - Production</li>
       </ol>
       <p>During development, we run this command to get content in the <i>out</i> directory onto the development site.</p>
       <div class="snippet">
@@ -42,7 +43,7 @@
       <div class="snippet">
         > cadmium clone -m "This stuff works!" http://dev.cadmium.meltdemo.com http://qa.cadmium.meltdemo.com
       </div>
-      <p>Now the content is ready to be tested.  Assuming that everything goes well in testing, the content will then be moved to staging.</p>
+      <p>Now the content is ready to be tested.  Assuming that everything goes well in testing, the content will then be moved to staging</p>
       <div class="snippet">
         > cadmium clone -m "We know it works!" http://qa.cadmium.meltdemo.com http://staging.cadmium.meltdemo.com
       </div>
