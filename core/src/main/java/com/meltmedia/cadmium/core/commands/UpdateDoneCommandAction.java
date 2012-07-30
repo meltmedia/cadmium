@@ -15,7 +15,10 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import java.util.Properties;
+
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -23,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
@@ -32,13 +36,27 @@ public class UpdateDoneCommandAction implements CommandAction {
   
   @Inject
   protected LifecycleService lifecycleService;
+  
+  @Inject
+  protected HistoryManager manager;
+  
+  @Inject
+  @Named("config.properties")
+  protected Properties configProperties;
 
   public String getName() { return ProtocolMessage.UPDATE_DONE; }
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
     log.info("Update is done @ {}, my state {}", ctx.getSource(), lifecycleService.getCurrentState());
-    lifecycleService.sendStateUpdate(null);
+    if(manager != null) {
+      try {
+        manager.logEvent(ctx.getMessage().getProtocolParameters().get("BranchName"), ctx.getMessage().getProtocolParameters().get("CurrentRevision"), "SYNC".equals(ctx.getMessage().getProtocolParameters().get("comment")) ? "AUTO" : ctx.getMessage().getProtocolParameters().get("openId"), configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"), ctx.getMessage().getProtocolParameters().get("uuid"), ctx.getMessage().getProtocolParameters().get("comment"), !new Boolean(ctx.getMessage().getProtocolParameters().get("nonRevertible")), false);
+      } catch(Exception e){
+        log.warn("Failed to update log", e);
+      }
+    }
+    lifecycleService.sendStateUpdate(null, ctx.getMessage().getProtocolParameters().get("uuid"));
     return true;
   }
 

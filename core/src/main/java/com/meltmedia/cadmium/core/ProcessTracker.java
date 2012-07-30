@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,9 +15,12 @@
  */
 package com.meltmedia.cadmium.core;
 
-import java.util.Map;
+/**
+ * <p>Creates and tracks UUID tokens used to track whether or not a process has completed.</p>
+ * <p></p>
+ * @author John McEntire
+ *
+ */
+public class ProcessTracker {
 
-public interface CoordinatedWorkerListener {
-  public void workDone(Map<String, String> properties);
-  public void workFailed(String branch, String sha, String openId, String uuid);
 }

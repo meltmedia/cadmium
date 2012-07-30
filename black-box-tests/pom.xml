@@ -12,6 +12,40 @@
   <artifactId>cadmium-black-box</artifactId>
   <packaging>jar</packaging>
   <name>cadmium :: Black Box Tests</name>
+  
+  <properties>
+    <maven.build.timestamp.format>yyyyMMdd HH:mm:ss.SSS</maven.build.timestamp.format>
+    <timestamp>${maven.build.timestamp}</timestamp>
+  </properties>
+  
+  <build>
+    <plugins>
+      <!-- The resource plugin does not run automatically with POM packaging, so it
+           must be setup manually. -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <encoding>UTF-8</encoding>
+              <outputDirectory>${basedir}/target/filtered-resources</outputDirectory>
+              <resources>    
+                <resource>
+                  <directory>src/test/resources</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>    
+            </configuration>    
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <dependencies>
 
@@ -24,10 +58,17 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-exec</artifactId>
+      <version>1.1</version>
+    </dependency>
     
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>compile</scope>
     </dependency>
     
     <dependency>

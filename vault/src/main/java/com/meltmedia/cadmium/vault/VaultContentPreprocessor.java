@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jodd.lagarto.dom.jerry.Jerry;
+import jodd.lagarto.dom.jerry.Jerry.JerryParser;
 import jodd.lagarto.dom.jerry.JerryFunction;
-import static jodd.lagarto.dom.jerry.Jerry.jerry;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.messaging.Message;
@@ -117,8 +117,9 @@ public class VaultContentPreprocessor implements ConfigProcessor, VaultListener 
   
   public void processHtmlFile(String htmlFile) throws Exception {
     String fileContent = FileSystemManager.getFileContents(htmlFile);
-    
-    Jerry htmlParser = jerry(fileContent);
+    JerryParser parser = new Jerry.JerryParser();
+    parser.enableHtmlMode();
+    Jerry htmlParser = parser.parse(fileContent);
     htmlParser.$("div[data-vault-guid]").each(new JerryFunction() {
 
       @Override

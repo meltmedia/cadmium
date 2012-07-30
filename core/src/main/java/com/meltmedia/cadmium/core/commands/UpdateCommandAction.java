@@ -46,7 +46,7 @@ public class UpdateCommandAction implements CommandAction {
   public boolean execute(CommandContext ctx) throws Exception {
     if(lifecycleService.getCurrentState() == UpdateState.IDLE) {
       log.info("Beginning an update, started by {}", ctx.getSource());
-      lifecycleService.updateMyState(UpdateState.UPDATING);
+      lifecycleService.updateMyState(UpdateState.UPDATING, ctx.getMessage().getProtocolParameters().get("uuid"));
       worker.beginPullUpdates(ctx.getMessage().getProtocolParameters());
       
     } else {

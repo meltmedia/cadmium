@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -30,6 +31,7 @@ import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import com.meltmedia.cadmium.core.messaging.Message;
@@ -58,6 +60,9 @@ public class SyncCommandAction implements CommandAction {
   
   @Inject
   protected ContentService fileServlet;
+  
+  @Inject
+  protected HistoryManager manager;
 
   public String getName() { return ProtocolMessage.SYNC; }
   
@@ -85,15 +90,22 @@ public class SyncCommandAction implements CommandAction {
       worker.setListener(new CoordinatedWorkerListener() {
         
        @Override
-        public void workDone() {
+        public void workDone(Map<String, String> properties) {
           log.info("Sync done");
           fileServlet.switchContent(ctx.getMessage().getRequestTime());
+          if(manager != null) {
+            try {
+              manager.logEvent(properties.get("BranchName"), properties.get("CurrentRevision"), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"), properties.get("uuid"), properties.get("comment"), !new Boolean(properties.get("nonRevertible")), true);
+            } catch(Exception e){
+              log.warn("Failed to update log", e);
+            }
+          }
           maintFilter.stop();
           worker.setListener(oldListener);
         }
 
         @Override
-        public void workFailed(String branch, String sha, String openId) {
+        public void workFailed(String branch, String sha, String openId, String uuid) {
           log.info("Sync failed");
           worker.setListener(oldListener);
         }

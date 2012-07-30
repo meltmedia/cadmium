@@ -27,6 +27,9 @@ public class HistoryEntry {
   private String servedDirectory;
   private boolean revertible;
   private boolean maintenance;
+  private boolean failed = false;
+  private boolean finished = true;
+  private String uuid;
   private String comment;
   
   public HistoryEntry(){}
@@ -120,5 +123,29 @@ public class HistoryEntry {
   
   public boolean isMaintenance() {
     return this.maintenance;
+  }
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uuid) {
+    this.uuid = uuid;
+  }
+
+  public boolean isFailed() {
+    return failed;
+  }
+
+  public void setFailed(boolean failed) {
+    this.failed = failed;
+  }
+
+  public boolean isFinished() {
+    return finished;
+  }
+
+  public void setFinished(boolean finished) {
+    this.finished = finished;
   }
 }

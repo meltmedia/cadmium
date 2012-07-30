@@ -1,0 +1,14 @@
+[
+  {
+    "url":"http://www.meltmedia.com",
+    "path":"/meltmedia"
+  },
+  {
+    "url":"/redirects.html",
+    "path":"/redirects/.*\.html"
+  },
+  {
+    "url":"/index.html",
+    "path":"/example.html"
+  }
+]

@@ -30,7 +30,7 @@ public class DummyCoordinatedWorker implements CoordinatedWorker {
   public void beginPullUpdates(Map<String, String> properties) {
     updating = true;
     if(listener != null) {
-      listener.workDone();
+      listener.workDone(null);
     }
   }
 

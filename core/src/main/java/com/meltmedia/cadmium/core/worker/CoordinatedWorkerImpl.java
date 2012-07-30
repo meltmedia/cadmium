@@ -106,7 +106,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
         
         lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
         
-        lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, historyManager, lastTask));
+        lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, lastTask));
         
         lastTask = pool.submit(new NotifyListenerTask(listener, properties, lastTask));
         
@@ -137,12 +137,15 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void workDone() {
+  public void workDone(Map<String, String> properties) {
     log.info("Work is done");
-    lifecycleService.updateMyState(UpdateState.WAITING, false);
+    lifecycleService.updateMyState(UpdateState.WAITING, null, false);
     Message doneMessage = new Message();
     doneMessage.setCommand(ProtocolMessage.UPDATE_DONE);
-    try {
+    if(properties != null) {
+      doneMessage.setProtocolParameters(properties);
+    }
+    try { 
       sender.sendMessage(doneMessage, null);
     } catch (Exception e) {
       log.warn("Failed to send done message: {}", e.getMessage());
@@ -150,7 +153,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void workFailed(String branch, String sha, String openId) {
+  public void workFailed(String branch, String sha, String openId, String uuid) {
     log.info("Work has failed");
     Message doneMessage = new Message();
     doneMessage.setCommand(ProtocolMessage.UPDATE_FAILED);
@@ -162,6 +165,9 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
     }
     if(openId != null) {
       doneMessage.getProtocolParameters().put("openId", openId);
+    }
+    if(uuid != null) {
+      doneMessage.getProtocolParameters().put("uuid", uuid);
     }
     try {
       sender.sendMessage(doneMessage, null);

@@ -247,7 +247,7 @@ public class GitService
       try{
         writer = new FileWriter(configPropsFile);
         configProperties.store(writer, "initialized configuration properties");
-        historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "Initial content pull.", true);
+        historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
       } finally {
         if(writer != null) {
           writer.close();

@@ -18,6 +18,7 @@ package com.meltmedia.cadmium.core.commands;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Properties;
 
 import org.jgroups.stack.IpAddress;
@@ -78,11 +79,11 @@ public class SyncCommandActionTest {
     CoordinatedWorkerListener listener = new CoordinatedWorkerListener() {
 
       @Override
-      public void workDone() {
+      public void workDone(Map<String, String> properties) {
       }
 
       @Override
-      public void workFailed(String branch, String sha, String openId) {
+      public void workFailed(String branch, String sha, String openId, String uuid) {
       }
       
     };
