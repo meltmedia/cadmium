@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import jodd.lagarto.dom.jerry.Jerry;
-import jodd.lagarto.dom.jerry.Jerry.JerryParser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,14 +53,12 @@ public class ValidateCommand implements CliCommand {
       System.out.println("Validating "+htmlFiles.size()+" files.");
     }
     boolean failed = false;
-    JerryParser parser = new Jerry.JerryParser();
-    parser.enableHtmlMode();
     for(File file : htmlFiles) {
       try {
         if(!quite) {
           System.out.print("  "+file + ": "); 
         }
-        parser.parse(FileSystemManager.getFileContents(file.getAbsolutePath()));
+        Jerry.jerry().parse(FileSystemManager.getFileContents(file.getAbsolutePath()));
         if(!quite) {
           System.out.println(" passed");
         }

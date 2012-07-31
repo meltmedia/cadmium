@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -51,7 +52,15 @@ public class UpdateDoneCommandAction implements CommandAction {
     log.info("Update is done @ {}, my state {}", ctx.getSource(), lifecycleService.getCurrentState());
     if(manager != null) {
       try {
-        manager.logEvent(ctx.getMessage().getProtocolParameters().get("BranchName"), ctx.getMessage().getProtocolParameters().get("CurrentRevision"), "SYNC".equals(ctx.getMessage().getProtocolParameters().get("comment")) ? "AUTO" : ctx.getMessage().getProtocolParameters().get("openId"), configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"), ctx.getMessage().getProtocolParameters().get("uuid"), ctx.getMessage().getProtocolParameters().get("comment"), !new Boolean(ctx.getMessage().getProtocolParameters().get("nonRevertible")), false);
+        Map<String, String> props = ctx.getMessage().getProtocolParameters();
+        String branch = props.get("BranchName");
+        String rev = props.get("CurrentRevision");
+        String openId = props.get("openId");
+        String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+        String uuid = props.get("uuid");
+        String comment = props.get("comment");
+        boolean revertible = !new Boolean(props.get("nonRevertible"));
+        manager.logEvent(branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }

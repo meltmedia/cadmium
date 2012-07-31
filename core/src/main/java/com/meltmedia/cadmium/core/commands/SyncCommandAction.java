@@ -109,7 +109,13 @@ public class SyncCommandAction implements CommandAction {
           }
           if(manager != null) {
             try {
-              manager.logEvent(properties.get("BranchName"), properties.get("CurrentRevision"), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"), properties.get("uuid"), properties.get("comment"), !new Boolean(properties.get("nonRevertible")), true);
+              String branch = properties.get("BranchName");
+              String rev = properties.get("CurrentRevision");
+              String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+              String uuid = properties.get("uuid");
+              String comment = properties.get("comment");
+              boolean revertible = !new Boolean(properties.get("nonRevertible"));
+              manager.logEvent(branch, rev, "AUTO", lastUpdated, uuid, comment, revertible, true);
             } catch(Exception e){
               log.warn("Failed to update log", e);
             }

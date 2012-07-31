@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jodd.lagarto.dom.jerry.Jerry;
-import jodd.lagarto.dom.jerry.Jerry.JerryParser;
+import static jodd.lagarto.dom.jerry.Jerry.jerry;
 import jodd.lagarto.dom.jerry.JerryFunction;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
@@ -115,33 +115,40 @@ public class VaultContentPreprocessor implements ConfigProcessor, VaultListener 
     }
   }
   
+  /**
+   * <p>Processes all div blocks with "data-vault-guid" attributes that are present in the specified html file. All pages without these blocks will not be touched.</p>
+   * <p>Example: <code>&lt;div data-vault-guid="VAULT_GUID"&gt;&lt;/div&gt</code></p>
+   * @param htmlFile The file to process for vault resources.
+   * @throws Exception If an error occurs while reading or parsing the file.
+   */
   public void processHtmlFile(String htmlFile) throws Exception {
     String fileContent = FileSystemManager.getFileContents(htmlFile);
-    JerryParser parser = new Jerry.JerryParser();
-    parser.enableHtmlMode();
-    Jerry htmlParser = parser.parse(fileContent);
-    htmlParser.$("div[data-vault-guid]").each(new JerryFunction() {
-
-      @Override
-      public boolean onNode(Jerry $this, int index) {
-        String safety = $this.attr("data-vault-guid");
-        try {
-          $this.html(loader.getSafety(safety));
-        } catch(SafetyMissingException e) {
-          safetyMissing = true;
-        } catch(IOException e) {
-          log.error("Failed to process update!", e);
-          error = true;
+    Jerry htmlParser = jerry().parse(fileContent);
+    Jerry divs = htmlParser.$("div[data-vault-guid]");
+    if(divs.size() > 0) {
+      divs.each(new JerryFunction() {
+  
+        @Override
+        public boolean onNode(Jerry $this, int index) {
+          String safety = $this.attr("data-vault-guid");
+          try {
+            $this.html(loader.getSafety(safety));
+          } catch(SafetyMissingException e) {
+            safetyMissing = true;
+          } catch(IOException e) {
+            log.error("Failed to process update!", e);
+            error = true;
+          }
+          return true;
         }
-        return true;
+        
+      });
+      
+      String newContents = htmlParser.html();
+      if(newContents != null && newContents.trim().length() > 0 && !fileContent.equals(newContents)) {
+        File htmlFileObj = new File(htmlFile);
+        FileSystemManager.writeStringToFile(htmlFileObj.getParent(), htmlFileObj.getName(), newContents);
       }
-      
-    });
-      
-    String newContents = htmlParser.html();
-    if(newContents != null && newContents.trim().length() > 0 && !fileContent.equals(newContents)) {
-      File htmlFileObj = new File(htmlFile);
-      FileSystemManager.writeStringToFile(htmlFileObj.getParent(), htmlFileObj.getName(), newContents);
     }
   }
 
