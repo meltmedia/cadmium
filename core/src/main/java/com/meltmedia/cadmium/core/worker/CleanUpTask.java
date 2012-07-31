@@ -50,7 +50,7 @@ public class CleanUpTask implements Callable<Boolean> {
         }
       } catch(Exception e) {
         log.warn("Work failed!", e);
-        listener.workFailed(properties.get("branch"), properties.get("sha"), properties.get("openId"));
+        listener.workFailed(properties.get("branch"), properties.get("sha"), properties.get("openId"), properties.get("uuid"));
         return false;
       }
     }

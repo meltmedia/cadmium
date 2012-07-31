@@ -25,6 +25,7 @@ import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
@@ -46,6 +47,9 @@ public class StateUpdateCommandAction implements CommandAction {
   
   @Inject
   protected SiteConfigProcessor processor;
+  
+  @Inject
+  protected HistoryManager historyManager;
 
   public String getName() { return ProtocolMessage.STATE_UPDATE; }
   
@@ -64,8 +68,11 @@ public class StateUpdateCommandAction implements CommandAction {
           if(processor != null) {
             processor.makeLive();
           }
+          if(ctx.getMessage().getProtocolParameters().containsKey("uuid")) {
+            historyManager.markHistoryEntryAsFinished(ctx.getMessage().getProtocolParameters().get("uuid"));
+          }
           maintFilter.stop();
-          lifecycleService.updateMyState(UpdateState.IDLE);
+          lifecycleService.updateMyState(UpdateState.IDLE, ctx.getMessage().getProtocolParameters().get("uuid"));
         }
       }
     } catch(Exception e) {

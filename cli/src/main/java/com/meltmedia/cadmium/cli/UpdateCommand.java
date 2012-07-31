@@ -213,6 +213,9 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
       if(!"ok".equals(resp.getMessage())) {
         System.err.println("Update message to ["+site2+"] failed. ["+resp.getMessage()+"]");
       } else {
+        if(resp.getUuid() != null) {
+          HistoryCommand.waitForToken(site2, resp.getUuid(), resp.getTimestamp(), 120000l);
+        }
         return true;
       }
     }

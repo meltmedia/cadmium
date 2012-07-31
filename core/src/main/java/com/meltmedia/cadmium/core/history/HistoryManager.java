@@ -55,14 +55,14 @@ public class HistoryManager {
   }
   
   public void logEvent(boolean maint, String openId, String comment) {
-    logEvent("", "", openId, "", comment, maint, false);
+    logEvent("", "", openId, "", "", comment, maint, false, false, true);
   }
   
-  public void logEvent(String branch, String sha, String openId, String directory, String comment, boolean revertible) {
-    logEvent(branch, sha, openId, directory, comment, false, revertible);
+  public void logEvent(String branch, String sha, String openId, String directory, String uuid, String comment, boolean revertible, boolean finished) {
+    logEvent(branch, sha, openId, directory, uuid, comment, false, revertible, false, finished);
   }
 
-  public void logEvent(String branch, String sha, String openId, String directory, String comment, boolean maint, boolean revertible) {
+  public void logEvent(String branch, String sha, String openId, String directory, String uuid, String comment, boolean maint, boolean revertible, boolean failed, boolean finished) {
     HistoryEntry lastEntry = history.size() > 0 ? history.get(0) : null;
     HistoryEntry newEntry = new HistoryEntry();
     newEntry.setTimestamp(new Date());
@@ -87,9 +87,12 @@ public class HistoryManager {
     newEntry.setRevision(sha);
     newEntry.setOpenId(openId);
     newEntry.setServedDirectory(directory);
+    newEntry.setUuid(uuid);
     newEntry.setComment(comment);
     newEntry.setRevertible(revertible);
-    log.info("Logging new History Event: branch[{}], sha[{}], openId[{}], directory[{}], revertible[{}], maint[{}], comment[{}]", new Object[] {branch, sha, openId, directory, revertible, maint, comment});
+    newEntry.setFailed(failed);
+    newEntry.setFinished(finished);
+    log.info("Logging new History Event: branch[{}], sha[{}], openId[{}], directory[{}], uuid[{}], revertible[{}], maint[{}], failed[{}], comment[{}]", new Object[] {branch, sha, openId, directory, uuid, revertible, maint, failed, comment});
     
     history.add(0, newEntry);
     
@@ -114,6 +117,24 @@ public class HistoryManager {
     
     log.info("History size {}, filtered history size {}", history.size(), filteredHistory.size());
     return filteredHistory;
+  }
+  
+  public void markHistoryEntryAsFinished(String uuid) {
+    for(HistoryEntry entry : history) {
+      if(!entry.isFinished() && entry.getUuid() != null && entry.getUuid().equals(uuid) && entry.isRevertible()) {
+        entry.setFinished(true);
+        break;
+      }
+    }
+  }
+  
+  public HistoryEntry getLatestHistoryEntryByUUID(String uuid, Date since) {
+    for(HistoryEntry entry : history) {
+      if((since == null || entry.getTimestamp().after(since)) && entry.getUuid() != null && entry.getUuid().equals(uuid)) {
+        return entry;
+      }
+    }
+    return null;
   }
   
   private void readHistoryFile() throws Exception {

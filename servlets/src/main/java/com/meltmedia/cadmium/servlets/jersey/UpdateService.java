@@ -27,6 +27,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.jgroups.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +79,7 @@ public class UpdateService extends AuthorizationService {
       sha = req.getSha();
     }
     BasicApiResponse resp = new BasicApiResponse();
+    resp.setUuid(UUID.randomUUID().toString());
     if(sender != null) {
       if(comment != null && comment.trim().length() > 0) {
         log.debug("Sending update message");
@@ -91,6 +93,7 @@ public class UpdateService extends AuthorizationService {
         }
         msg.getProtocolParameters().put("comment", comment);
         msg.getProtocolParameters().put("openId", openId);
+        msg.getProtocolParameters().put("uuid", resp.getUuid());
         sender.sendMessage(msg, null);
         resp.setMessage("ok");
       } else {
