@@ -61,7 +61,17 @@ public class DeployCommandAction implements CommandAction {
     File tmpZip = File.createTempFile(tmpFileName, null);
     tmpZip.deleteOnExit();
     newWarNames.add(tmpZip.getAbsolutePath());
-    updateWar("cadmium-war.war", null, newWarNames, repo, branch, domain, context);
+    boolean secure = new Boolean(params.get("secure"));
+    
+    // If the shiro config file can't be read lets not make this war secure.
+    if(secure) {
+      File shiroIniFile = new File(System.getProperty("com.meltmedia.cadmium.contentRoot"), "shiro.ini");
+      if(!shiroIniFile.canRead()) {
+        log.warn("Not adding security to war! The shiro config file \"{}\": either doesn't exist or cannot be read.", shiroIniFile.getAbsoluteFile());
+        secure = false;
+      }
+    }
+    updateWar("cadmium-war.war", null, newWarNames, repo, branch, domain, context, secure);
     
     String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
     
