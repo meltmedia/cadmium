@@ -5,6 +5,7 @@ public class DeployRequest {
   private String repo;
   private String domain;
   private String contextRoot;
+  private boolean disableSecurity;
   
   public DeployRequest() {}
 
@@ -38,5 +39,13 @@ public class DeployRequest {
 
   public void setContextRoot(String contextRoot) {
     this.contextRoot = contextRoot;
+  }
+
+  public boolean isDisableSecurity() {
+    return disableSecurity;
+  }
+
+  public void setDisableSecurity(boolean disableSecurity) {
+    this.disableSecurity = disableSecurity;
   }
 }
