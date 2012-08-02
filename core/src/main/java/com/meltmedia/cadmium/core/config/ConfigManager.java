@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
@@ -114,17 +115,18 @@ public final class ConfigManager {
   public static Properties getPropertiesByFileName(String fileName) {
     
     Properties properties = new Properties();
+  
     if(new File(fileName).canRead()) {
-      
+     
       FileInputStream in = null;
       try {
         
-        in = new FileInputStream(fileName);
+        in = new FileInputStream(fileName);        
         properties.load(in);
       }
       catch(Exception e){
         
-        log.warn("Failed to read in vault properties file.", e);
+        log.warn("Failed to read in properties file.", e);
       } 
       finally {
         
@@ -141,8 +143,30 @@ public final class ConfigManager {
     
     return properties;
   }
+  
+  public static Properties getPropertiesByPath(Properties properties, String path) throws IOException {
+    
+    FileReader reader = null;
+    try {
+      
+      reader = new FileReader(path);
+      properties.load(reader);
+    }
+    catch(Exception e) {
+    
+      log.warn("Failed to load in properties for path: {}", path);
+    }
+    finally {
+    
+      if(reader != null) {
+        reader.close();
+      }
+    }  
+    
+    return properties;
+  }
 
-  public static void persistProperties(Properties properties, String fileName) {
+  public static void persistProperties(Properties properties, String fileName, String message) {
 
     File propsFile = new File(fileName);
     if(propsFile.canWrite() || !propsFile.exists()) {
@@ -155,7 +179,7 @@ public final class ConfigManager {
         try {
           
           out = new FileOutputStream(propsFile.getAbsolutePath());
-          properties.store(out, null);
+          properties.store(out, message);
         } 
         catch(Exception e) {
           

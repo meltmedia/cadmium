@@ -62,7 +62,6 @@ public class ResourceManager extends TimerTask {
        
     vaultProperties = ConfigManager.getPropertiesByFileName(propertiesFileName);
     //readInPropertiesFile();
-    
   }
   
   /*private void readInPropertiesFile() {    
@@ -186,8 +185,7 @@ public class ResourceManager extends TimerTask {
     }
     
     purgeUnusedSafety();
-    ConfigManager.persistProperties(vaultProperties, propertiesFileName);
-    //persistVaultProperties();
+    persistVaultProperties();
   }
   
   private void purgeUnusedSafety() {
@@ -251,6 +249,14 @@ public class ResourceManager extends TimerTask {
     return null;
   }
   
+  public void persistVaultProperties() {
+    
+    ConfigManager.persistProperties(vaultProperties, propertiesFileName, null);
+   
+    for(Object key : vaultProperties.keySet()) {
+      System.out.println("Vault properties by Context: " + vaultProperties.getProperty(key.toString()));
+    }
+  }
   /*public void persistVaultProperties() {
     File propsFile = new File(propertiesFileName);
     if(propsFile.canWrite() || !propsFile.exists()) {
