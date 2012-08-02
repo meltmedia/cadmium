@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -380,5 +381,48 @@ public final class FileSystemManager {
     if(!leaveOutputOpen) {
       output.close();
     }
+  }
+  
+  /**
+   * Gets the first writable directory that exists or can be created.
+   * @param directories The directories to try
+   * @return A File object that represents a writable directory.
+   * @throws IOException Thrown if no directory can be written to.
+   */
+  public static File getWriteableDirectoryWithFailovers(String... directories) throws IOException {
+    File logDir = null;
+    for(String directory : directories) {
+      if(directory != null) {
+        logDir = new File(directory);
+        try {
+          logDir = ensureDirectoryWriteable(logDir);
+        } catch(IOException e) {
+          log.warn("Failed to get writeable directory: "+directory, e);
+          logDir = null;
+        }
+        if(logDir != null) {
+          break;
+        }
+      }
+    }
+    if(logDir == null) {
+      throw new IOException("Could not get a writeable directory!");
+    }
+    return logDir;
+  }
+
+  /**
+   * Try's to create a directory and ensures that it is writable. 
+   * @param logDir The File object to check.
+   * @return A file object that represents a writable directory or null if logDir exists and cannot be written to.
+   * @throws IOException Thrown if logDir exists and is not a directory or cannot be created.
+   */
+  public static File ensureDirectoryWriteable(File logDir) throws IOException {
+    FileUtils.forceMkdir(logDir);
+    if(!logDir.canWrite()) {
+      log.warn("Init param log dir cannot be used!");
+      logDir = null;
+    }
+    return logDir;
   }
 }
