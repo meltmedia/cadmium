@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -30,6 +31,7 @@ import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
@@ -62,6 +64,9 @@ public class SyncCommandAction implements CommandAction {
   @Inject
   protected ContentService fileServlet;
   
+  @Inject
+  protected HistoryManager manager;
+
   @Inject
   protected SiteConfigProcessor processor;
   
@@ -96,18 +101,31 @@ public class SyncCommandAction implements CommandAction {
       worker.setListener(new CoordinatedWorkerListener() {
         
        @Override
-        public void workDone() {
+        public void workDone(Map<String, String> properties) {
           log.info("Sync done");
           fileServlet.switchContent(ctx.getMessage().getRequestTime());
           if(processor != null) {
             processor.makeLive();
+          }
+          if(manager != null) {
+            try {
+              String branch = properties.get("BranchName");
+              String rev = properties.get("CurrentRevision");
+              String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+              String uuid = properties.get("uuid");
+              String comment = properties.get("comment");
+              boolean revertible = !new Boolean(properties.get("nonRevertible"));
+              manager.logEvent(branch, rev, "AUTO", lastUpdated, uuid, comment, revertible, true);
+            } catch(Exception e){
+              log.warn("Failed to update log", e);
+            }
           }
           maintFilter.stop();
           worker.setListener(oldListener);
         }
 
         @Override
-        public void workFailed(String branch, String sha, String openId) {
+        public void workFailed(String branch, String sha, String openId, String uuid) {
           log.info("Sync failed");
           worker.setListener(oldListener);
         }

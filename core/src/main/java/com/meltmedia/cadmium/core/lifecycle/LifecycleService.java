@@ -57,10 +57,14 @@ public class LifecycleService {
   }
   
   public void updateMyState(UpdateState state) {
-    updateMyState(state, true);
+    updateMyState(state, null, true);
   }
   
-  public void updateMyState(UpdateState state, boolean sendUpdate) {
+  public void updateMyState(UpdateState state, String uuid) {
+    updateMyState(state, uuid, true);
+  }
+  
+  public void updateMyState(UpdateState state, String uuid, boolean sendUpdate) {
     if(members != null) {
       for(ChannelMember member : members) {
         if(member.isMine()) {
@@ -69,7 +73,7 @@ public class LifecycleService {
           if(oldState != state) {
             log.info("Updating my state to {} and sendUpdate is {}", state, sendUpdate);
             if(sendUpdate) {
-              sendStateUpdate(null);
+              sendStateUpdate(null, uuid);
             }
           }
         }
@@ -77,13 +81,20 @@ public class LifecycleService {
     }
   }
   
-  public void sendStateUpdate(ChannelMember source) {
+  public void sendStateUpdate(ChannelMember dest) {
+    sendStateUpdate(dest, null);
+  }
+  
+  public void sendStateUpdate(ChannelMember dest, String uuid) {
     Message updateStateMsg = new Message();
     updateStateMsg.setCommand(ProtocolMessage.STATE_UPDATE);
     updateStateMsg.getProtocolParameters().put("state", getCurrentState().name());
+    if(uuid != null) {
+      updateStateMsg.getProtocolParameters().put("uuid", uuid);
+    }
     try{
       log.info("Sending state update message from state change!");
-      sender.sendMessage(updateStateMsg, source);
+      sender.sendMessage(updateStateMsg, dest);
     } catch(Exception e) {
       log.warn("Failed to send state update: {}", e.getMessage());
     }

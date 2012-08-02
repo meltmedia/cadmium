@@ -15,7 +15,11 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import java.util.Map;
+import java.util.Properties;
+
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -23,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
@@ -32,13 +37,35 @@ public class UpdateDoneCommandAction implements CommandAction {
   
   @Inject
   protected LifecycleService lifecycleService;
+  
+  @Inject
+  protected HistoryManager manager;
+  
+  @Inject
+  @Named("config.properties")
+  protected Properties configProperties;
 
   public String getName() { return ProtocolMessage.UPDATE_DONE; }
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
     log.info("Update is done @ {}, my state {}", ctx.getSource(), lifecycleService.getCurrentState());
-    lifecycleService.sendStateUpdate(null);
+    if(manager != null) {
+      try {
+        Map<String, String> props = ctx.getMessage().getProtocolParameters();
+        String branch = props.get("BranchName");
+        String rev = props.get("CurrentRevision");
+        String openId = props.get("openId");
+        String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+        String uuid = props.get("uuid");
+        String comment = props.get("comment");
+        boolean revertible = !new Boolean(props.get("nonRevertible"));
+        manager.logEvent(branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
+      } catch(Exception e){
+        log.warn("Failed to update log", e);
+      }
+    }
+    lifecycleService.sendStateUpdate(null, ctx.getMessage().getProtocolParameters().get("uuid"));
     return true;
   }
 

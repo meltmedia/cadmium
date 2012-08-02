@@ -33,6 +33,8 @@ import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 public class UpdateFailedCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
+  public static final String FAILED_LOG_MESSAGE = "Update failed to run!";
+  
   @Inject
   protected CoordinatedWorker worker;
   
@@ -63,7 +65,7 @@ public class UpdateFailedCommandAction implements CommandAction {
         if(ctx.getMessage().getProtocolParameters().containsKey("openId")) {
           openId = ctx.getMessage().getProtocolParameters().get("openId");
         }
-        historyManager.logEvent(branch, sha, openId, "", "Update failed to run!", false, false);
+        historyManager.logEvent(branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
       }
     }
     return true;

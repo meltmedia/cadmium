@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -23,8 +24,10 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,5 +96,27 @@ public class HistoryService extends AuthorizationService {
       }
     }
     return "[]";
+  }
+  
+  @GET
+  @Path("{uuid}")
+  @Produces(MediaType.TEXT_PLAIN)
+  public String findUUID(@PathParam("uuid") String uuid) throws Exception {
+    return findUUID(uuid, null);
+  }
+  
+  @GET
+  @Path("{uuid}/{timestamp}")
+  @Produces(MediaType.TEXT_PLAIN)
+  public String findUUID(@PathParam("uuid") String uuid, @PathParam("timestamp") Long since) throws Exception {
+    boolean found = false;
+    HistoryEntry entry = historyManager.getLatestHistoryEntryByUUID(uuid, since != null ? new Date(since) : null);
+    if(entry != null && entry.isFinished()) {
+      found = true;
+      if(entry.isFailed()) {
+        throw new Exception(entry.getComment());
+      }
+    }
+    return found+"";
   }
 }
