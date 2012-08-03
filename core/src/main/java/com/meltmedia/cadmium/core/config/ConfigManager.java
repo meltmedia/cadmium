@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.servlet.ServletContext;
 
@@ -31,9 +30,7 @@ public final class ConfigManager {
       reader = new FileReader(configFile);
       properties.load(reader);
       
-      for(Object key : properties.keySet()) {
-        System.out.println("Fetched properties by file: " + properties.getProperty(key.toString()));
-      }
+      logProperties(log, properties, configFile.getCanonicalPath());
     }
     catch(Exception e) {
 
@@ -60,9 +57,7 @@ public final class ConfigManager {
       reader = new FileReader(configFile);
       properties.load(reader);
       
-      for(Object key : properties.keySet()) {
-        System.out.println("Loaded properties: " + properties.getProperty(key.toString()));
-      }
+      logProperties(log, properties, configFile.getCanonicalPath());
     }
     catch(Exception e) {
 
@@ -96,10 +91,7 @@ public final class ConfigManager {
       reader = new InputStreamReader(context.getResourceAsStream(path), "UTF-8");
       properties.load(reader);
       
-      for(Object key : properties.keySet()) {
-        System.out.println("Fetched properties by Context: " + properties.getProperty(key.toString()));
-      }
-
+      logProperties(log, properties, path);
     } 
     catch(Exception e) {
 
@@ -130,15 +122,7 @@ public final class ConfigManager {
         log.warn("Failed to read in properties file.", e);
       } 
       finally {
-        
-        if(in != null) {
-          
-          try{
-            
-            in.close();
-          } 
-          catch(Exception e){}
-        }
+        IOUtils.closeQuietly(in);
       }
     }
     
@@ -158,10 +142,7 @@ public final class ConfigManager {
       log.warn("Failed to load in properties for path: {}", path);
     }
     finally {
-    
-      if(reader != null) {
-        reader.close();
-      }
+      IOUtils.closeQuietly(reader);
     }  
     
     return properties;
@@ -179,27 +160,28 @@ public final class ConfigManager {
         
         try {
           
-          out = new FileOutputStream(propsFile.getAbsolutePath());
+          out = new FileOutputStream(propsFile);
           properties.store(out, message);
+          out.flush();
         } 
         catch(Exception e) {
           
           log.warn("Failed to persist vault properties file.", e);
         } 
         finally {
-          
-          if(out != null) {            
-            try {
-              
-              out.close();
-            } 
-            catch(Exception e){
-              
-              log.warn("Failed to close output stream for writing properties.", e);
-            }
-          }
+          IOUtils.closeQuietly(out);
         }
       }
+    }
+  }
+  
+  public static void logProperties( Logger log, Properties properties, String name ) {
+    if( log.isDebugEnabled() ) {
+      StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
+      for(Object key : properties.keySet()) {
+        sb.append("  ").append(key.toString()).append(properties.getProperty(key.toString())).append("\n");
+      }
+      log.debug(sb.toString());
     }
   }
 
@@ -210,5 +192,95 @@ public final class ConfigManager {
     }
   }
 
+  /**
+  * <p>A template for reading resources from a file.</p>
+  * <pre>
+  * return new ReadFileTemplate<Properties>(file, "UTF-8", log) {
+  *   public Properties withReader(Reader reader) throws IOException {
+  *     Properties properties = new Properties();
+  *     properties.load(reader);
+  *     return properties;
+  *   }
+  * }.read();
+  * </pre>
+  * 
+  * @author Christian Trimble
+  */
+  public static abstract class ReadFileTemplate<T>
+  {
+    private File file;
+    private String encoding;
+    private Logger log;
+
+    public ReadFileTemplate( File file, String encoding, Logger log ) {
+      this.file = file;
+      this.encoding = encoding;
+      this.log = log;
+    }
+    
+    public final T read() throws IOException {
+      Reader reader = null;
+      try {
+        reader = new InputStreamReader(new FileInputStream(file), encoding);
+        return withReader(reader);
+      }
+      catch(IOException ioe) {
+        log.debug("Failed to read file: {}", file.getPath(), ioe);
+        throw ioe;
+      }
+      finally {
+        IOUtils.closeQuietly(reader);
+      }  
+    }
+    
+    public abstract T withReader( Reader reader ) throws IOException;
+  }
+  
+  /**
+   * <p>A template for reading resources from a servlet context.</p>
+   * <pre>
+   * return new ReadResourceTemplate<Properties>(servletContext, "/path/to/file", "UTF-8", log) {
+   *   public Properties withReader(Reader reader) throws IOException {
+   *     Properties properties = new Properties();
+   *     properties.load(reader);
+   *     return properties;
+   *   }
+   * }.read();
+   * </pre>
+   * 
+   * @author Christian Trimble
+   *
+   */
+  public static abstract class ReadResourceTemplate<T>
+  {
+    private ServletContext context;
+    private String path;
+    private String encoding;
+    private Logger log;
+
+    public ReadResourceTemplate( ServletContext context, String path, String encoding, Logger log ) {
+      this.context = context;
+      this.path = path;
+      this.encoding = encoding;
+      this.log = log;
+    }
+    
+    public final T read() throws IOException {
+      Reader reader = null;
+      try {
+        reader = new InputStreamReader(context.getResourceAsStream(path), encoding);
+        return withReader(reader);
+      }
+      catch(IOException ioe) {
+        log.debug("Failed to read resource from context: {}", path, ioe);
+        throw ioe;
+      }
+      finally {
+        IOUtils.closeQuietly(reader);
+      }  
+    }
+    
+    public abstract T withReader( Reader reader ) throws IOException;
+  }
 
 }
