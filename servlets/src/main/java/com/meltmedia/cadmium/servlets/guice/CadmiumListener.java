@@ -129,6 +129,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
   public static final String JGROUPS_CHANNEL_CONFIG_URL = "com.meltmedia.cadmium.jgroups.channel.config";
   public static final String SSL_HEADER = "REQUEST_IS_SSL";
+  public static final String LOG_DIR_INIT_PARAM = "log-directory";
   public File sharedContentRoot;
   public File applicationContentRoot;
   private String repoDir = "git-checkout";
@@ -190,6 +191,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
+    
     failOver = servletContextEvent.getServletContext().getRealPath("/");
     MaintenanceFilter.siteDown.start();
     context = servletContextEvent.getServletContext();
@@ -208,6 +210,12 @@ public class CadmiumListener extends GuiceServletContextListener {
     vHostName = getVHostName(context);
     
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
+    
+    try {
+      configureLogback(servletContextEvent.getServletContext(), applicationContentRoot);
+    } catch(IOException e) {
+      log.error("Failed to reconfigure logging", e);
+    }
     
     loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE), log);
 
@@ -457,18 +465,44 @@ public class CadmiumListener extends GuiceServletContextListener {
     };
   }
   
-  public void configureLogback( ServletContext servletContext, File logDir ) throws IOException {
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    try {
-      JoranConfigurator configurator = new JoranConfigurator();
-      configurator.setContext(context);
-      context.reset(); 
-      context.putProperty("logDir", logDir.getCanonicalPath());
-      configurator.doConfigure(servletContext.getResource("WEB-INF/context-logback.xml"));
-    } catch (JoranException je) {
-      // StatusPrinter will handle this
+  /**
+   * <p>Reconfigures the logging context.</p>
+   * <p>The LoggerContext gets configured with "/WEB-INF/context-logback.xml". There is a <code>logDir</code> property set here which is expected to be the directory that the log file is written to.</p>
+   * <p>The <code>logDir</code> property gets set on the LoggerContext with the following logic.</p>
+   * <ul>
+   *   <li>{@link LOG_DIR_INIT_PARAM} context parameter will be created and checked if it is writable.</li>
+   *   <li>The File object passed in is used as a fall-back if it can be created and written to.</li>
+   * </ul>    
+   * @see {@link LoggerContext}
+   * @param servletContext The current servlet context.
+   * @param logDirFallback The fall-back directory to log to.
+   * @throws FileNotFoundException Thrown if no logDir can be written to.
+   * @throws MalformedURLException 
+   * @throws IOException
+   */
+  public void configureLogback( ServletContext servletContext, File logDirFallback ) throws FileNotFoundException, MalformedURLException, IOException {
+    log.debug("Reconfiguring Logback!");
+    File logDir = FileSystemManager.getWritableDirectoryWithFailovers(servletContext.getInitParameter(LOG_DIR_INIT_PARAM), logDirFallback.getAbsolutePath());
+    if(logDir != null) {
+      log.debug("Resetting logback context.");
+      URL configFile = servletContext.getResource("/WEB-INF/context-logback.xml");
+      log.debug("Configuring logback with file, {}", configFile);
+      LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+      try {
+        JoranConfigurator configurator = new JoranConfigurator();
+        configurator.setContext(context);
+        context.stop();
+        context.reset();  
+        context.putProperty("logDir", logDir.getCanonicalPath());
+        configurator.doConfigure(configFile);
+      } catch (JoranException je) {
+        // StatusPrinter will handle this
+      } finally {
+        context.start();
+        log.debug("Done resetting logback.");
+      }
+      StatusPrinter.printInCaseOfErrorsOrWarnings(context);
     }
-    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
   }
   
   public static Properties loadProperties( Properties properties, ServletContext context, String path, Logger log ) {
