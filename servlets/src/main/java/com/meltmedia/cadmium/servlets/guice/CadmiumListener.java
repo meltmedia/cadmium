@@ -134,6 +134,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String vHostName;
   private String repoUri;
   private String channelConfigUrl;
+  private ConfigManager configManager;
   
   private ServletContext context;
 
@@ -171,11 +172,14 @@ public class CadmiumListener extends GuiceServletContextListener {
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     context = servletContextEvent.getServletContext();
-    Properties cadmiumProperties = ConfigManager.getPropertiesByContext(context, "/WEB-INF/cadmium.properties");
+    
+    configManager = new ConfigManager();
+    
+    Properties cadmiumProperties = configManager.getPropertiesByContext(context, "/WEB-INF/cadmium.properties");
     
     
     Properties configProperties = new Properties();
-    configProperties = ConfigManager.getSystemProperties();
+    configProperties = configManager.getSystemProperties();
     
     sharedContentRoot = sharedContextRoot(configProperties, context, log);
 
@@ -187,7 +191,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
     
     
-    configProperties = ConfigManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+    configProperties = configManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
     //loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE), log);
 
     if ((sshDir = getSshDir(configProperties, sharedContentRoot )) != null) {
@@ -307,9 +311,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
         Properties configProperties = new Properties();
-        configProperties = ConfigManager.getSystemProperties(); 
+        configProperties = configManager.getSystemProperties(); 
         
-        configProperties = ConfigManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+        configProperties = configManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
         
         //replaced this with the above line
         /*if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
@@ -372,8 +376,10 @@ public class CadmiumListener extends GuiceServletContextListener {
         }
         
         bind(HistoryManager.class);
-
+        
         bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
+        
+        bind(ConfigManager.class).toInstance(configManager);
 
         // Bind Config file URL
         if(channelConfigUrl == null) {

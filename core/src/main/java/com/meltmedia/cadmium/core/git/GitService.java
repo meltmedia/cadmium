@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.inject.Inject;
+
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
@@ -57,6 +59,7 @@ public class GitService
   
   protected Repository repository;
   protected Git git;
+    
   
   public GitService(Repository repository) {
     this.repository = repository;
@@ -151,7 +154,7 @@ public class GitService
     return git.checkinNewContent(source, comment);
   }
   
-  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName) throws Exception {
+  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, ConfigManager configManager) throws Exception {
     if(!FileSystemManager.exists(root)) {
       log.info("Content Root directory [{}] does not exist. Creating!!!", root);
       if(!new File(root).mkdirs()) {
@@ -189,7 +192,7 @@ public class GitService
     Properties configProperties = new Properties();
     String configPropsFile = FileSystemManager.getFileIfCanRead(warDir, "config.properties");
     if(configPropsFile != null) {
-      configProperties = ConfigManager.getPropertiesByPath(configProperties, configPropsFile);
+      configProperties = configManager.getPropertiesByPath(configProperties, configPropsFile);
       
       // This got replace with the above line
       /*FileReader reader = null;
@@ -247,10 +250,10 @@ public class GitService
       HistoryManager historyManager = new HistoryManager(warDir);
       
      
-      ConfigManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
+      configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
       historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "Initial content pull.", true);
      
-      // This got replaced with the abovd 2 lines
+      // This got replaced with the above 2 lines
       /*FileWriter writer = null;
       try{
         writer = new FileWriter(configPropsFile);

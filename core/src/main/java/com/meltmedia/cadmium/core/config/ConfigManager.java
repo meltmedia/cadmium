@@ -9,18 +9,20 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
 
+import javax.inject.Singleton;
 import javax.servlet.ServletContext;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Singleton
 public final class ConfigManager {
 
-  private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
+  private final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 
   
-  public static Properties getPropertiesByFile(File configFile) {
+  public Properties getPropertiesByFile(File configFile) {
 
     Properties properties = new Properties();    
     Reader reader = null;
@@ -28,7 +30,7 @@ public final class ConfigManager {
 
       log.info("configFile path: {}", configFile.getPath());
       reader = new FileReader(configFile);
-      properties.load(reader);
+      properties.load(reader);     
       
       logProperties(log, properties, configFile.getCanonicalPath());
     }
@@ -45,9 +47,10 @@ public final class ConfigManager {
 
   }
 
-  public static Properties loadProperties(Properties properties, File configFile) {
+  // rework to be loadPropertiesIfExists
+  public Properties loadProperties(Properties properties, File configFile) {
 
-    if( !configFile.exists() || !configFile.canRead()) return properties;
+    if( !configFile.exists() /*|| !configFile.canRead()*/) return properties;
     
     Reader reader = null;
     try{
@@ -72,7 +75,7 @@ public final class ConfigManager {
     return properties;
   }
 
-  public static Properties getSystemProperties() {
+  public Properties getSystemProperties() {
 
     Properties properties = new Properties();     
     properties.putAll(System.getenv());
@@ -82,7 +85,7 @@ public final class ConfigManager {
 
   }
 
-  public static Properties getPropertiesByContext(ServletContext context, String path) {
+  public Properties getPropertiesByContext(ServletContext context, String path) {
 
     Properties properties = new Properties();
     Reader reader = null;
@@ -105,7 +108,7 @@ public final class ConfigManager {
     return properties;
   }
   
-  public static Properties getPropertiesByFileName(String fileName) {
+  public Properties getPropertiesByFileName(String fileName) {
     
     Properties properties = new Properties();
   
@@ -129,7 +132,7 @@ public final class ConfigManager {
     return properties;
   }
   
-  public static Properties getPropertiesByPath(Properties properties, String path) throws IOException {
+  public Properties getPropertiesByPath(Properties properties, String path) throws IOException {
     
     FileReader reader = null;
     try {
@@ -148,7 +151,7 @@ public final class ConfigManager {
     return properties;
   }
 
-  public static void persistProperties(Properties properties, String fileName, String message) {
+  public void persistProperties(Properties properties, String fileName, String message) {
 
     File propsFile = new File(fileName);
     if(propsFile.canWrite() || !propsFile.exists()) {
@@ -175,7 +178,7 @@ public final class ConfigManager {
     }
   }
   
-  public static void logProperties( Logger log, Properties properties, String name ) {
+  public void logProperties( Logger log, Properties properties, String name ) {
     if( log.isDebugEnabled() ) {
       StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
       for(Object key : properties.keySet()) {
@@ -206,7 +209,7 @@ public final class ConfigManager {
   * 
   * @author Christian Trimble
   */
-  public static abstract class ReadFileTemplate<T>
+  public abstract class ReadFileTemplate<T>
   {
     private File file;
     private String encoding;
@@ -251,7 +254,7 @@ public final class ConfigManager {
    * @author Christian Trimble
    *
    */
-  public static abstract class ReadResourceTemplate<T>
+  public abstract class ReadResourceTemplate<T>
   {
     private ServletContext context;
     private String path;
