@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 
 public class GitService
@@ -188,7 +189,10 @@ public class GitService
     Properties configProperties = new Properties();
     String configPropsFile = FileSystemManager.getFileIfCanRead(warDir, "config.properties");
     if(configPropsFile != null) {
-      FileReader reader = null;
+      configProperties = ConfigManager.getPropertiesByPath(configProperties, configPropsFile);
+      
+      // This got replace with the above line
+      /*FileReader reader = null;
       try {
         reader = new FileReader(configPropsFile);
         configProperties.load(reader);
@@ -196,7 +200,7 @@ public class GitService
         if(reader != null) {
           reader.close();
         }
-      }
+      }*/ 
     }
     
     String renderedContentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
@@ -242,8 +246,12 @@ public class GitService
       
       HistoryManager historyManager = new HistoryManager(warDir);
       
-      
-      FileWriter writer = null;
+     
+      ConfigManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
+      historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "Initial content pull.", true);
+     
+      // This got replaced with the abovd 2 lines
+      /*FileWriter writer = null;
       try{
         writer = new FileWriter(configPropsFile);
         configProperties.store(writer, "initialized configuration properties");
@@ -252,7 +260,7 @@ public class GitService
         if(writer != null) {
           writer.close();
         }
-      }
+      }*/
     }
     
     return cloned;

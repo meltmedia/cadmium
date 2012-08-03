@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.github.ApiClient;
 
 public class AuthorizationService {
@@ -34,12 +35,21 @@ public class AuthorizationService {
       authString = authString.substring(6).trim();
     }
     log.info("Authenticating request through github api with token [{}]", authString);
+    
+    Properties systemProperties = ConfigManager.getSystemProperties();
+    
     try {
       gitClient = new ApiClient(authString);
-      String env = System.getProperty("com.meltmedia.cadmium.environment", "dev");
-      Properties teamsProps = new Properties();
-      String teamsFile = System.getProperty("com.meltmedia.cadmium.teams.properties");
-      FileInputStream inStream = null;
+      
+      //String env = System.getProperty("com.meltmedia.cadmium.environment", "dev");
+      String env = systemProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
+           
+      String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties");
+      Properties teamsProps = ConfigManager.getPropertiesByFileName(teamsFile);
+     
+      //replaced this block with the above line
+      /*FileInputStream inStream = null;
+            
       try {
         if(teamsFile != null && FileSystemManager.canRead(teamsFile)) {
           inStream = new FileInputStream(teamsFile);
@@ -55,7 +65,8 @@ public class AuthorizationService {
             inStream.close();
           } catch(Exception e){}
         }
-      }
+      }*/
+      
       String defaultId = teamsProps.getProperty("default");
       String teamIdString = teamsProps.getProperty(env);
       if(teamIdString == null && defaultId == null) {
