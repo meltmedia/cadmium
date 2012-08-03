@@ -100,6 +100,45 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
       System.out.println("No history to show");
     }
   }
+  
+  public static void waitForToken(String siteUri, String token, Long since, Long timeout) throws Exception {
+
+    if(!siteUri.endsWith("/system/history")) {
+      siteUri += "/system/history";
+    }
+    siteUri += "/" + token;
+    if(since != null) {
+      siteUri += "/" + since;
+    }
+    
+    HttpClient httpClient = new DefaultHttpClient();
+    HttpGet get = new HttpGet(siteUri);
+    Long currentTime = System.currentTimeMillis();
+    Long timeoutTime = currentTime + timeout;
+    do {
+      currentTime = System.currentTimeMillis();
+      
+      HttpResponse resp = httpClient.execute(get);
+      if(resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+        String response = EntityUtils.toString(resp.getEntity());
+        if(response != null && response.trim().equalsIgnoreCase("true")) {
+          return;
+        } else {
+          Thread.sleep(1000l);
+        }
+      } else {
+        String errorResponse = EntityUtils.toString(resp.getEntity());
+        if(errorResponse != null) {
+          throw new Exception(errorResponse.trim());
+        } else {
+          throw new Exception("Command failed!");
+        }
+      }
+    } while(currentTime < timeoutTime);
+    if(currentTime >= timeoutTime) {
+      throw new Exception("Timed out waiting for command to complete!");
+    }
+  }
 
   public static List<HistoryEntry> getHistory(String siteUri, int limit, boolean filter, String token)
       throws URISyntaxException, IOException, ClientProtocolException {

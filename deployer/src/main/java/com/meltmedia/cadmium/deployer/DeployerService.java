@@ -69,6 +69,7 @@ public class DeployerService extends AuthorizationService {
     msg.getProtocolParameters().put("repo", repo);
     msg.getProtocolParameters().put("domain", domain);
     msg.getProtocolParameters().put("context", contextRoot);
+    msg.getProtocolParameters().put("secure", Boolean.toString(!req.isDisableSecurity()));
 
     sender.sendMessage(msg, null);
     return "ok";

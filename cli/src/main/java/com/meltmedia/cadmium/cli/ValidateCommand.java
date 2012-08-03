@@ -21,14 +21,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import jodd.lagarto.dom.jerry.Jerry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.FileSystemManager;
-
-import static jodd.lagarto.dom.jerry.Jerry.jerry;
 
 @Parameters(commandDescription = "Validates a cadmium static content project.", separators="=")
 public class ValidateCommand implements CliCommand {
@@ -58,7 +58,7 @@ public class ValidateCommand implements CliCommand {
         if(!quite) {
           System.out.print("  "+file + ": "); 
         }
-        jerry(FileSystemManager.getFileContents(file.getAbsolutePath()));
+        Jerry.jerry().parse(FileSystemManager.getFileContents(file.getAbsolutePath()));
         if(!quite) {
           System.out.println(" passed");
         }

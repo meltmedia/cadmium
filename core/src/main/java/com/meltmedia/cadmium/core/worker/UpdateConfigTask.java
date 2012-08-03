@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.git.GitService;
-import com.meltmedia.cadmium.core.history.HistoryManager;
 
 public class UpdateConfigTask implements Callable<Boolean> {
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -38,14 +37,12 @@ public class UpdateConfigTask implements Callable<Boolean> {
   private GitService service;
   private Map<String, String> properties;
   private Properties configProperties;
-  private HistoryManager manager;
   private Future<Boolean> previousTask;
   
-  public UpdateConfigTask(GitService service, Map<String, String> properties, Properties configProperties, HistoryManager manager, Future<Boolean> previousTask) {
+  public UpdateConfigTask(GitService service, Map<String, String> properties, Properties configProperties, Future<Boolean> previousTask) {
     this.service = service;
     this.properties = properties;
     this.configProperties = configProperties;
-    this.manager = manager;
     this.previousTask = previousTask;
   }
 
@@ -83,13 +80,9 @@ public class UpdateConfigTask implements Callable<Boolean> {
       updatedProperties.setProperty("git.ref.sha", service.getCurrentRevision());
       configProperties.setProperty("git.ref.sha", service.getCurrentRevision());
       
-      if(manager != null) {
-        try {
-          manager.logEvent(service.getBranchName(), service.getCurrentRevision(), "SYNC".equals(properties.get("comment")) ? "AUTO" : properties.get("openId"), lastUpdatedDir, properties.get("comment"), !new Boolean(properties.get("nonRevertible")));
-        } catch(Exception e){
-          log.warn("Failed to update log", e);
-        }
-      }
+      properties.put("BranchName", service.getBranchName());
+      properties.put("CurrentRevision", service.getCurrentRevision());
+      
       if(configProperties.containsKey("updating.to.sha")) {
         configProperties.remove("updating.to.sha");
       }

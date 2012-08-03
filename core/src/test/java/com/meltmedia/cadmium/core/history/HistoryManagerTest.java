@@ -74,13 +74,13 @@ public class HistoryManagerTest {
   public void testLogEntry() throws Exception {
     long size = historyFile.length();
     
-    manager.logEvent("test1", "sha1", "me", testDirectory, "This is a test", true);
+    manager.logEvent("test1", "sha1", "me", testDirectory, null, "This is a test", true, true);
     
     Thread.sleep(3000l);
     
     assertTrue("History file not written", size < historyFile.length());
     
-    manager.logEvent("test2", "sha2", "me", testDirectory, "This is a test2", true);
+    manager.logEvent("test2", "sha2", "me", testDirectory, null, "This is a test2", true, true);
   }
   
   @Test

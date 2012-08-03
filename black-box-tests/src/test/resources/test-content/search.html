@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta name="viewport" content="initial-scale=1.0; maximum-scale=1.0; minimum-scale=1.0; user-scalable=0;">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta charset="utf-8">
+
+<title>Demo Content :: Home</title>
+
+<link rel="stylesheet" href="./assets/css/global.css">
+
+</head>
+
+<body>
+
+<div id="container">
+  <header>
+    <a href="/" title="meltmedia" id="logo">meltmedia</a>
+  </header>
+  <nav>
+    <a href="./index.html" title="Layout">Layout</a>
+    <a href="./error-pages.html" title="Error Pages">Error Pages</a>
+    <a href="./search.html" title="Search">Search</a>
+    <a href="./email.html" title="Email">Email</a>
+    <a href="./content-type.foo" title="Content Types">Content Types</a>
+    <a href="./redirects.html" title="Redirects">Redirects</a>
+    <a href="./vault.html" title="Vault">Vault</a>
+  </nav>
+  <div id="content" class="clearfix">
+    <section id="main">
+      <h1>Search</h1>
+      <p>Cadmium comes with a <a href="http://lucene.apache.org/core/" title="Apache Lucene">Lucene</a> indexer built in.  Everytime content is uploaded, the index is updated, so the REST API will always server results for the currnent content.</p>
+      <h2>The Search Endpoint</h2>
+      <p>You can make a search request by doing a GET request to /api/search?query=QUERY_STRING.  This will return you results as a JSON object:</p>
+      <pre class="snippet">
+{
+  "number-hits": 2,
+  "results":
+  [
+    {
+      "path": "/path/to/file1.html",
+      "score": 0.0112411,
+      "title": "Title 1"
+    },
+    {
+      "path": "/path/to/file2.html",
+      "score": 0.0112411,
+      "title": "Title 2"
+    }
+  ]
+}
+      </pre>
+      <h2>A Quick Example</h2>
+      <p>Let's use the search feature to find a page that is <a href="/api/search?query=hidden">not in the nav</a>.</p>
+    </section>
+    <section id="sidebar">
+      <h3>In This Demo...</h3>
+      <p>In this demonstration, we will be looking at the structure of Cadmium content and the functionality proved to by Cadmium to the content being served.</p>
+      <h3>What's Next...</h3>
+      <p>In the next demonstration, we will look at more advanced commands for production.</p>
+      <p>${timestamp}</p>
+    </section>
+  </div>
+</div>
+
+</body>
+
+</html>

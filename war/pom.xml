@@ -63,7 +63,14 @@
       <groupId>com.meltmedia.jgroups.aws</groupId>
       <artifactId>jgroups-aws</artifactId>
     </dependency>
-    
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-web</artifactId>
+    </dependency>
     <!--
     <dependency>
       <groupId>org.jboss</groupId>

@@ -1,5 +1,4 @@
 /**
- *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
 package com.meltmedia.cadmium.servlets.guice;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -29,6 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -65,6 +66,7 @@ import ch.qos.logback.core.util.StatusPrinter;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -80,11 +82,13 @@ import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
+import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
 import com.meltmedia.cadmium.core.config.ConfigManager;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -104,7 +108,9 @@ import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
 import com.meltmedia.cadmium.servlets.RedirectFilter;
-import com.meltmedia.cadmium.servlets.SslRedirectFilter;
+import com.meltmedia.cadmium.servlets.SecureRedirectFilter;
+import com.meltmedia.cadmium.servlets.SecureRedirectStrategy;
+import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
 
 import com.meltmedia.cadmium.vault.service.VaultConstants;
 
@@ -124,6 +130,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
   public static final String JGROUPS_CHANNEL_CONFIG_URL = "com.meltmedia.cadmium.jgroups.channel.config";
   public static final String SSL_HEADER = "REQUEST_IS_SSL";
+  public static final String LOG_DIR_INIT_PARAM = "log-directory";
   public File sharedContentRoot;
   public File applicationContentRoot;
   private String repoDir = "git-checkout";
@@ -135,6 +142,8 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String repoUri;
   private String channelConfigUrl;
   private ConfigManager configManager;
+  private String branch;
+  private String failOver;
   
   private ServletContext context;
 
@@ -142,35 +151,51 @@ public class CadmiumListener extends GuiceServletContextListener {
   
   @Override
   public void contextDestroyed(ServletContextEvent event) {
-    try {
-      JChannel channel = injector.getInstance(JChannel.class);
-      if (channel != null) {
+    Set<Closeable> closed = new HashSet<Closeable>();
+    Injector injector = this.injector;
+    while(injector != null) {
+      for (Key<?> key : injector.getBindings().keySet()) {
         try {
-          channel.close();
-        } catch (Exception e) {
-          log.warn("Failed to close jgroups channel", e);
-        }
+          Object instance = injector.getInstance(key);
+          
+          if(instance instanceof Closeable) {
+            try {
+              Closeable toClose = (Closeable) instance;
+              if(!closed.contains(toClose)) {
+                closed.add(toClose);
+                log.info("Closing instance of {}, key {}", instance.getClass().getName(), key);
+                IOUtils.closeQuietly(toClose);
+              }
+            } catch(Exception e){}
+          }
+        } catch(Throwable t) {}
       }
-    } catch (Exception e) {
-      log.warn("Failed to get channel", e);
+      injector = injector.getParent();
     }
     try {
-      GitService git = injector.getInstance(GitService.class);
-      if (git != null) {
+      Reflections reflections = new Reflections("com.meltmedia");
+      for(Class<? extends Closeable> toCloseClass : reflections.getSubTypesOf(Closeable.class)) {
         try {
-          git.close();
-        } catch (Exception e) {
-          log.warn("Failed to close GitService", e);
-        }
+          Closeable toClose = this.injector.getInstance(toCloseClass);
+          if(!closed.contains(toClose)) {
+            closed.add(toClose);
+            log.info("Closing instance of {}", toCloseClass.getName());
+            IOUtils.closeQuietly(toClose);
+          }
+        } catch(Throwable t) {}
       }
-    } catch (Exception e) {
-      log.warn("Failed to get git service", e);
+    } catch(Throwable t) {
+      log.warn("Failed to close down fully.", t);
     }
+    closed.clear();
     super.contextDestroyed(event);
   }
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
+    
+    failOver = servletContextEvent.getServletContext().getRealPath("/");
+    MaintenanceFilter.siteDown.start();
     context = servletContextEvent.getServletContext();
     
     configManager = new ConfigManager();
@@ -193,6 +218,12 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     configProperties = configManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
     //loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE), log);
+    try {
+      configureLogback(servletContextEvent.getServletContext(), applicationContentRoot);
+    } catch(IOException e) {
+      log.error("Failed to reconfigure logging", e);
+    }
+    
 
     if ((sshDir = getSshDir(configProperties, sharedContentRoot )) != null) {
       GitService.setupSsh(sshDir.getAbsolutePath());
@@ -211,6 +242,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         IOUtils.closeQuietly(cloned);
       }
     }
+=======
+    branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
+>>>>>>> bb4ed5d99b99c0f701a08ca04f2c46f0ab6e51a8
 
     String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
     if (repoDir != null && repoDir.trim().length() > 0) {
@@ -230,6 +264,9 @@ public class CadmiumListener extends GuiceServletContextListener {
     File repoFile = new File(this.applicationContentRoot, this.repoDir);
     if (repoFile.isDirectory() && repoFile.canWrite()) {
       this.repoDir = repoFile.getAbsoluteFile().getAbsolutePath();
+    } else {
+      log.warn("The repo directory may not have been initialized yet.");
+      this.repoDir = repoFile.getAbsoluteFile().getAbsolutePath();
     }
 
     File contentFile = new File(this.applicationContentRoot, this.contentDir);
@@ -237,7 +274,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         && contentFile.canWrite()) {
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     } else {
-      log.warn("The content directory exists, but we cannot write to it.");
+      log.warn("The content directory may not have been initialized yet.");
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     }
     
@@ -285,10 +322,12 @@ public class CadmiumListener extends GuiceServletContextListener {
         maintParams.put("ignorePrefix", "/system");
         
         Map<String, String> fileParams = new HashMap<String, String>();
-        fileParams.put("basePath", contentDir);
+        fileParams.put("basePath", FileSystemManager.exists(contentDir) ? contentDir : failOver);
         
         // hook Jackson into Jersey as the POJO <-> JSON mapper
         bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
+        
+        bind(SecureRedirectStrategy.class).to(XForwardedSecureRedirectStrategy.class).in(Scopes.SINGLETON);
 
         serve("/system/*").with(SystemGuiceContainer.class);
         serve("/api/*").with(ApiGuiceContainer.class);
@@ -296,7 +335,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         filter("/*").through(ErrorPageFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
-        filter("/*").through(SslRedirectFilter.class);
+        filter("/*").through(SecureRedirectFilter.class);
         
       }
     };
@@ -334,12 +373,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(MessageSender.class).to(JGroupsMessageSender.class);
 
-        try {
-          bind(GitService.class).toInstance(
-              GitService.createGitService(repoDir));
-        } catch (Exception e) {
-          throw new Error("Failed to bind git service");
-        }
+        bind(DelayedGitServiceInitializer.class).toInstance(new DelayedGitServiceInitializer());
 
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
@@ -362,6 +396,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(new TypeLiteral<Map<String, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
         
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
+        bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
+        bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
+        bind(String.class).annotatedWith(Names.named("initialCadmiumBranch")).toInstance(branch);
 
         String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
         //String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
@@ -417,9 +454,6 @@ public class CadmiumListener extends GuiceServletContextListener {
           configProcessorBinder.addBinding().to(configProcessorClass);
           //bind(ConfigProcessor.class).to(configProcessorClass);
         }
-        
-        //This should be the name of a header that BigIp will set if the incoming request was SSL
-        bind(String.class).annotatedWith(Names.named(SslRedirectFilter.SSL_HEADER_NAME)).toInstance(SSL_HEADER);
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
         
@@ -457,18 +491,44 @@ public class CadmiumListener extends GuiceServletContextListener {
     };
   }
   
-  public void configureLogback( ServletContext servletContext, File logDir ) throws IOException {
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    try {
-      JoranConfigurator configurator = new JoranConfigurator();
-      configurator.setContext(context);
-      context.reset(); 
-      context.putProperty("logDir", logDir.getCanonicalPath());
-      configurator.doConfigure(servletContext.getResource("WEB-INF/context-logback.xml"));
-    } catch (JoranException je) {
-      // StatusPrinter will handle this
+  /**
+   * <p>Reconfigures the logging context.</p>
+   * <p>The LoggerContext gets configured with "/WEB-INF/context-logback.xml". There is a <code>logDir</code> property set here which is expected to be the directory that the log file is written to.</p>
+   * <p>The <code>logDir</code> property gets set on the LoggerContext with the following logic.</p>
+   * <ul>
+   *   <li>{@link LOG_DIR_INIT_PARAM} context parameter will be created and checked if it is writable.</li>
+   *   <li>The File object passed in is used as a fall-back if it can be created and written to.</li>
+   * </ul>    
+   * @see {@link LoggerContext}
+   * @param servletContext The current servlet context.
+   * @param logDirFallback The fall-back directory to log to.
+   * @throws FileNotFoundException Thrown if no logDir can be written to.
+   * @throws MalformedURLException 
+   * @throws IOException
+   */
+  public void configureLogback( ServletContext servletContext, File logDirFallback ) throws FileNotFoundException, MalformedURLException, IOException {
+    log.debug("Reconfiguring Logback!");
+    File logDir = FileSystemManager.getWritableDirectoryWithFailovers(servletContext.getInitParameter(LOG_DIR_INIT_PARAM), logDirFallback.getAbsolutePath());
+    if(logDir != null) {
+      log.debug("Resetting logback context.");
+      URL configFile = servletContext.getResource("/WEB-INF/context-logback.xml");
+      log.debug("Configuring logback with file, {}", configFile);
+      LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+      try {
+        JoranConfigurator configurator = new JoranConfigurator();
+        configurator.setContext(context);
+        context.stop();
+        context.reset();  
+        context.putProperty("logDir", logDir.getCanonicalPath());
+        configurator.doConfigure(configFile);
+      } catch (JoranException je) {
+        // StatusPrinter will handle this
+      } finally {
+        context.start();
+        log.debug("Done resetting logback.");
+      }
+      StatusPrinter.printInCaseOfErrorsOrWarnings(context);
     }
-    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
   }
   
   /*public static Properties loadProperties( Properties properties, ServletContext context, String path, Logger log ) {

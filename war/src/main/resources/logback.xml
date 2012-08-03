@@ -44,5 +44,7 @@
   </root>
   
   <logger name="com.meltmedia.cadmium" level="DEBUG"/>
+  <logger name="com.meltmedia.cadmium.vault" level="ERROR"/>
+  <logger name="jodd" level="ERROR" />
   
 </configuration>

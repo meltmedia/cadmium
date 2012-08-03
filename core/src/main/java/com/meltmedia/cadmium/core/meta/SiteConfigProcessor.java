@@ -35,10 +35,6 @@ public class SiteConfigProcessor {
   @Inject
   public SiteConfigProcessor(Set<ConfigProcessor> processors, @Named("contentDir") String contentDir) throws Exception {
     this.processors = processors;
-    if(contentDir != null) {
-      this.processDir(contentDir);
-      this.makeLive();
-    }
   }
   
   public void processDir(String contentDirectory) throws Exception {
