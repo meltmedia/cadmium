@@ -297,9 +297,12 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
         Properties configProperties = new Properties();
-        configProperties = ConfigManager.getSystemProperties();        
-
-        if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
+        configProperties = ConfigManager.getSystemProperties(); 
+        
+        configProperties = ConfigManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+        
+        //replaced this with the above line
+        /*if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
           try {
             configProperties.load(new FileReader(new File(
                 applicationContentRoot, CONFIG_PROPERTIES_FILE)));
@@ -307,7 +310,7 @@ public class CadmiumListener extends GuiceServletContextListener {
             log.warn("Failed to load properties file ["
                 + CONFIG_PROPERTIES_FILE + "] from content directory.", e);
           }
-        }
+        }*/
 
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
@@ -465,7 +468,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     return properties;
   }*/
   
-  public static Properties loadProperties( Properties properties, File configFile, Logger log ) {
+  /*public static Properties loadProperties( Properties properties, File configFile, Logger log ) {
     if( !configFile.exists() || !configFile.canRead()) return properties;
     
     Reader reader = null;
@@ -478,7 +481,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       IOUtils.closeQuietly(reader);
     }
     return properties;
-  }
+  }*/
   
   public static File sharedContextRoot( Properties configProperties, ServletContext context, Logger log ) {
     File sharedContentRoot = null;

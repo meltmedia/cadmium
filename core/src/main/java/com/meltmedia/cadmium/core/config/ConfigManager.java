@@ -66,7 +66,8 @@ public final class ConfigManager {
     }
     catch(Exception e) {
 
-      log.warn("Failed to load "+configFile.getAbsolutePath());
+      log.warn("Failed to load properties file ["
+          + configFile.getAbsolutePath() + "] from content directory.", e);
     }
     finally {
 
