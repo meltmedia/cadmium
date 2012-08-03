@@ -476,11 +476,13 @@ public class CadmiumListener extends GuiceServletContextListener {
    * @see {@link LoggerContext}
    * @param servletContext The current servlet context.
    * @param logDirFallback The fall-back directory to log to.
-   * @throws IOException An IOException will be thrown if no logDir can be written to.
+   * @throws FileNotFoundException Thrown if no logDir can be written to.
+   * @throws MalformedURLException 
+   * @throws IOException
    */
-  public void configureLogback( ServletContext servletContext, File logDirFallback ) throws IOException {
+  public void configureLogback( ServletContext servletContext, File logDirFallback ) throws FileNotFoundException, MalformedURLException, IOException {
     log.debug("Reconfiguring Logback!");
-    File logDir = FileSystemManager.getWriteableDirectoryWithFailovers(servletContext.getInitParameter(LOG_DIR_INIT_PARAM), logDirFallback.getAbsolutePath());
+    File logDir = FileSystemManager.getWritableDirectoryWithFailovers(servletContext.getInitParameter(LOG_DIR_INIT_PARAM), logDirFallback.getAbsolutePath());
     if(logDir != null) {
       log.debug("Resetting logback context.");
       URL configFile = servletContext.getResource("/WEB-INF/context-logback.xml");
@@ -494,7 +496,6 @@ public class CadmiumListener extends GuiceServletContextListener {
         context.putProperty("logDir", logDir.getCanonicalPath());
         configurator.doConfigure(configFile);
       } catch (JoranException je) {
-        je.printStackTrace();
         // StatusPrinter will handle this
       } finally {
         context.start();

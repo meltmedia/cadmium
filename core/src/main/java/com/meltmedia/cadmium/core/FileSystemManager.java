@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -387,26 +388,23 @@ public final class FileSystemManager {
    * Gets the first writable directory that exists or can be created.
    * @param directories The directories to try
    * @return A File object that represents a writable directory.
-   * @throws IOException Thrown if no directory can be written to.
+   * @throws FileNotFoundException Thrown if no directory can be written to.
    */
-  public static File getWriteableDirectoryWithFailovers(String... directories) throws IOException {
+  public static File getWritableDirectoryWithFailovers(String... directories) throws FileNotFoundException {
     File logDir = null;
     for(String directory : directories) {
       if(directory != null) {
-        logDir = new File(directory);
         try {
-          logDir = ensureDirectoryWriteable(logDir);
-        } catch(IOException e) {
-          log.warn("Failed to get writeable directory: "+directory, e);
-          logDir = null;
+          logDir = ensureDirectoryWriteable(new File(directory));
+        } catch(FileNotFoundException e) {
+          log.debug("Failed to get writeable directory: "+directory, e);
+          continue;
         }
-        if(logDir != null) {
-          break;
-        }
+        break;
       }
     }
     if(logDir == null) {
-      throw new IOException("Could not get a writeable directory!");
+      throw new FileNotFoundException("Could not get a writeable directory!");
     }
     return logDir;
   }
@@ -414,14 +412,19 @@ public final class FileSystemManager {
   /**
    * Try's to create a directory and ensures that it is writable. 
    * @param logDir The File object to check.
-   * @return A file object that represents a writable directory or null if logDir exists and cannot be written to.
-   * @throws IOException Thrown if logDir exists and is not a directory or cannot be created.
+   * @return The File object passed in for chaining call to it. This value will never be null.
+   * @throws FileNotFoundException Thrown if logDir is null, exists, is not a directory, cannot be created, or cannot be written to.
    */
-  public static File ensureDirectoryWriteable(File logDir) throws IOException {
-    FileUtils.forceMkdir(logDir);
+  public static File ensureDirectoryWriteable(File logDir) throws FileNotFoundException {
+    try {
+      FileUtils.forceMkdir(logDir);
+    } catch(IOException e){
+      log.debug("Failed to create directory " + logDir, e);
+      throw new FileNotFoundException("Failed to create directory: " + logDir + " IOException: " + e.getMessage());
+    }
     if(!logDir.canWrite()) {
-      log.warn("Init param log dir cannot be used!");
-      logDir = null;
+      log.debug("Init param log dir cannot be used!");
+      throw new FileNotFoundException("Directory is not writable: " + logDir);
     }
     return logDir;
   }
