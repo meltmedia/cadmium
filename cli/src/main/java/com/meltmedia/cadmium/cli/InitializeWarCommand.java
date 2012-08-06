@@ -40,6 +40,12 @@ public class InitializeWarCommand implements CliCommand {
 
   @Parameter(names="--context", description="Sets the context root that this war will bind to.", required=false)
   private String context = "/";
+  
+  @Parameter(names="--secure", description="Creates a Secure war.", required=false)
+  private boolean secure = false;
+  
+  @Parameter(names="--secureContentRoot", description="Set content root.", required=false)
+  private String secureContentRoot = System.getProperty("com.meltmedia.cadmium.contentRoot");
 
 	@Parameter(description="\"new war name\"", required=true, arity=1)
 	private List<String> newWarNames;
@@ -47,7 +53,10 @@ public class InitializeWarCommand implements CliCommand {
 
 	public void execute() throws Exception {
 		if(war == null || FileSystemManager.canRead(war)) {
-	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, domain, context, false);
+			if (secure && secureContentRoot != null) {
+				System.setProperty("com.meltmedia.cadmium.contentRoot", secureContentRoot);
+			}
+	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, domain, context, secure);
 		} else {
 			System.err.println("ERROR: \""+war+"\" does not exist or cannot be read.");
 			System.exit(1);
