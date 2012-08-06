@@ -394,8 +394,15 @@ public class GitService
     git.branchDelete().setForce(true).setBranchNames(branchName).call();
   }
   
+  /**
+   * Checks in content from a source directory into the current git repository.
+   * @param sourceDirectory The directory to pull content in from.
+   * @param message The commit message to use.
+   * @return The new SHA revision.
+   * @throws Exception
+   */
   public String checkinNewContent(String sourceDirectory, String message) throws Exception {
-    log.info("Purging old content.");
+    log.info("Removing old content.");
     RmCommand remove = git.rm();
     for(String filename : new File(getBaseDirectory()).list()) {
       if(!filename.equals(".git")) {
@@ -403,8 +410,6 @@ public class GitService
       }
     }
     remove.call();
-    //log.info("Committing removal of content.");
-    //git.commit().setMessage("Removed old content for deployment \""+message+"\"").call();
     log.info("Copying in new content.");
     FileSystemManager.copyAllContent(sourceDirectory, getBaseDirectory(), true);
     log.info("Adding new content.");
