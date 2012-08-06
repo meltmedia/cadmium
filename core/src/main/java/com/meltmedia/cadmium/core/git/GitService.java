@@ -403,8 +403,8 @@ public class GitService
       }
     }
     remove.call();
-    log.info("Committing removal of content.");
-    git.commit().setMessage("Removed old content for deployment \""+message+"\"").call();
+    //log.info("Committing removal of content.");
+    //git.commit().setMessage("Removed old content for deployment \""+message+"\"").call();
     log.info("Copying in new content.");
     FileSystemManager.copyAllContent(sourceDirectory, getBaseDirectory(), true);
     log.info("Adding new content.");
