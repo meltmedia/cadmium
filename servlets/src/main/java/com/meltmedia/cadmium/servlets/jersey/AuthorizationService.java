@@ -36,7 +36,7 @@ public class AuthorizationService {
     log.info("Authenticating request through github api with token [{}]", authString);
     try {
       gitClient = new ApiClient(authString);
-      String env = System.getProperty("com.meltmedia.cadmium.environment", "dev");
+      String env = System.getProperty("com.meltmedia.cadmium.environment", "development");
       Properties teamsProps = new Properties();
       String teamsFile = System.getProperty("com.meltmedia.cadmium.teams.properties");
       FileInputStream inStream = null;
