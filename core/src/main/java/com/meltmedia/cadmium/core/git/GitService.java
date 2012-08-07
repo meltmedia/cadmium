@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
@@ -151,7 +152,18 @@ public class GitService
     return git.checkinNewContent(source, comment);
   }
   
-  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName) throws RefNotFoundException, Exception {
+  /**
+   * Initializes war content directory for a Cadmium war.
+   * @param uri The remote Git repository ssh URI.
+   * @param branch The remote branch to checkout.
+   * @param root The shared content root.
+   * @param warName The name of the war file.
+   * @param historyManager The history manager to log the initialization event.
+   * @return A GitService object the points to the freshly cloned Git repository.
+   * @throws RefNotFoundException
+   * @throws Exception
+   */
+  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager) throws RefNotFoundException, Exception {
     if(!FileSystemManager.exists(root)) {
       log.info("Content Root directory [{}] does not exist. Creating!!!", root);
       if(!new File(root).mkdirs()) {
@@ -241,17 +253,23 @@ public class GitService
         configProperties.setProperty("source", "{}");
       }
       
-      HistoryManager historyManager = new HistoryManager(warDir);
-      
+      boolean closeHistoryManager = false;
+      if(historyManager == null) {
+        closeHistoryManager = true;
+        historyManager = new HistoryManager(warDir);
+      }
       
       FileWriter writer = null;
       try{
         writer = new FileWriter(configPropsFile);
         configProperties.store(writer, "initialized configuration properties");
-        historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+        if(historyManager != null) {
+          historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+        }
       } finally {
-        if(writer != null) {
-          writer.close();
+        IOUtils.closeQuietly(writer);
+        if(closeHistoryManager) {
+          IOUtils.closeQuietly(historyManager);
         }
       }
     }

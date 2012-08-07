@@ -15,9 +15,11 @@
  */
 package com.meltmedia.cadmium.core.history;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -37,7 +39,7 @@ import com.google.gson.stream.JsonReader;
 import com.meltmedia.cadmium.core.FileSystemManager;
 
 @Singleton
-public class HistoryManager {
+public class HistoryManager implements Closeable {
   public static final String HISTORY_FILE_NAME = "history.json";
   private final Logger log = LoggerFactory.getLogger(getClass());
   private List<HistoryEntry> history = new ArrayList<HistoryEntry>();
@@ -191,5 +193,10 @@ public class HistoryManager {
   
   public List<HistoryEntry> getHistory() {
     return this.history;
+  }
+
+  @Override
+  public void close() throws IOException {
+    pool.shutdown();
   }
 }
