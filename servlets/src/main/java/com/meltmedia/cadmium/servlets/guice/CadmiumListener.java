@@ -217,7 +217,9 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     
     configProperties = configManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
-    //loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE), log);
+    
+    configManager.setDefaultProperties(configProperties);
+    
     try {
       configureLogback(servletContextEvent.getServletContext(), applicationContentRoot);
     } catch(IOException e) {
@@ -229,22 +231,9 @@ public class CadmiumListener extends GuiceServletContextListener {
       GitService.setupSsh(sshDir.getAbsolutePath());
     }
     
-    repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");
-    String branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
-    
-    if(repoUri != null && branch != null) {
-      GitService cloned = null;
-      try {               
-        cloned = GitService.initializeContentDirectory(repoUri, branch, this.sharedContentRoot.getAbsolutePath(), warName);
-      } catch(Exception e) {
-        throw new RuntimeException(e);
-      } finally {
-        IOUtils.closeQuietly(cloned);
-      }
-    }
-=======
+    repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");  
     branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
->>>>>>> bb4ed5d99b99c0f701a08ca04f2c46f0ab6e51a8
+
 
     String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
     if (repoDir != null && repoDir.trim().length() > 0) {
@@ -353,19 +342,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         configProperties = configManager.getSystemProperties(); 
         
         configProperties = configManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
-        
-        //replaced this with the above line
-        /*if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
-          try {
-            configProperties.load(new FileReader(new File(
-                applicationContentRoot, CONFIG_PROPERTIES_FILE)));
-          } catch (Exception e) {
-            log.warn("Failed to load properties file ["
-                + CONFIG_PROPERTIES_FILE + "] from content directory.", e);
-          }
-        }*/
-
-
+       
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
 
         bind(FileServlet.class).in(Scopes.SINGLETON);
@@ -414,7 +391,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         bind(HistoryManager.class);
         
-        bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
+        //bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
         
         bind(ConfigManager.class).toInstance(configManager);
 

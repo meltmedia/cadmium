@@ -32,12 +32,13 @@ import org.jgroups.View;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 
 @Singleton
 public class MembershipTracker implements MembershipListener {
-  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(getClass());  
   
   protected MessageSender sender;
   
@@ -45,18 +46,18 @@ public class MembershipTracker implements MembershipListener {
   
   protected List<ChannelMember> members;
   
-  protected Properties configProperties;
+  protected ConfigManager configManager;
   
   protected DelayedGitServiceInitializer gitService;
   private GitService git;
   private Timer timer = new Timer();
   
   @Inject
-  public MembershipTracker(MessageSender sender, JChannel channel, @Named("members") List<ChannelMember> members, @Named("config.properties") Properties configProperties, DelayedGitServiceInitializer gitService) {
+  public MembershipTracker(MessageSender sender, JChannel channel, @Named("members") List<ChannelMember> members, ConfigManager configManager, DelayedGitServiceInitializer gitService) {
     this.sender = sender;
     this.channel = channel;
     this.members = members;
-    this.configProperties = configProperties;
+    this.configManager = configManager;
     this.gitService = gitService;
     
     if(this.channel != null) {
@@ -101,7 +102,7 @@ public class MembershipTracker implements MembershipListener {
 
   private void handleSyncRequest(View new_view) {
     log.info("Here is the new view {}", new_view);
-    final ChannelMember coordinator = getCoordinator();
+    final ChannelMember coordinator = getCoordinator();    
     if(coordinator != null && !coordinator.isMine()) {
       timer.schedule(new TimerTask() {
         public void run() {
@@ -112,6 +113,7 @@ public class MembershipTracker implements MembershipListener {
               git = gitService.getGitService();
             } catch(Throwable t){}
           }
+          Properties configProperties = configManager.getDefaultProperties();
           Message syncMessage = new Message();
           syncMessage.setCommand(ProtocolMessage.SYNC);
           log.info("Sending sync message to coordinator {}", coordinator.getAddress());

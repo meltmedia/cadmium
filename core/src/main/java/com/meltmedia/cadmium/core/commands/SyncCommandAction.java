@@ -32,6 +32,7 @@ import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
@@ -52,8 +53,7 @@ public class SyncCommandAction implements CommandAction {
   protected MembershipTracker tracker;
   
   @Inject
-  @Named("config.properties")
-  protected Properties configProperties;
+  protected ConfigManager configManager;
   
   @Inject
   protected MessageSender sender;
@@ -74,11 +74,15 @@ public class SyncCommandAction implements CommandAction {
   protected DelayedGitServiceInitializer gitInit;
   
   private GitService git;
+  protected Properties configProperties;
 
   public String getName() { return ProtocolMessage.SYNC; }
   
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
+    
+    configProperties = configManager.getDefaultProperties();
+    
     if(!tracker.getCoordinator().isMine()) {
       handleCommandAsNonCoordinator(ctx);
     } else {
@@ -92,7 +96,7 @@ public class SyncCommandAction implements CommandAction {
     boolean update = false;
     if(ctx.getMessage().getProtocolParameters().containsKey("branch") || ctx.getMessage().getProtocolParameters().containsKey("sha")) {
       update = true;
-    }
+    }   
     
     if(update) {
       log.info("Taking site down to run sync update!");

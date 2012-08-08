@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ContentService;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
 
 import javax.inject.Inject;
@@ -44,8 +45,7 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	protected MimeTypeConfigProcessor mimeTypes;
 	
 	@Inject
-	@Named("config.properties")
-	protected Properties configProperties;
+	protected ConfigManager configManager;
 	
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
@@ -53,6 +53,8 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 
   @Override
 	public void switchContent(Long requestTime) {
+    
+    Properties configProperties = configManager.getDefaultProperties();
 		
 		try {
 		  if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {

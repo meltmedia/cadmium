@@ -1,19 +1,16 @@
 package com.meltmedia.cadmium.core.worker;
 
-import java.io.File;
-import java.io.FileReader;
-import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ContentService;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
@@ -27,10 +24,11 @@ public class InitializeTask implements Callable<GitService> {
   private SiteConfigProcessor metaProcessor = null;
   private String contentDirectory = null;
   private ContentService servlet = null;
-  private Properties configProperties = null;
+  private ConfigManager configManager;
+  
   
   @Inject
-  public InitializeTask(@Named("config.properties") Properties configProperties, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("com.meltmedia.cadmium.git.uri") String repoUri, @Named("initialCadmiumBranch") String branch, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory) {
+  public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("com.meltmedia.cadmium.git.uri") String repoUri, @Named("initialCadmiumBranch") String branch, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory) {
     this.branch = branch;
     this.repoUri = repoUri;
     this.contentRoot = contentRoot;
@@ -38,7 +36,8 @@ public class InitializeTask implements Callable<GitService> {
     this.contentDirectory = contentDirectory;
     this.metaProcessor = metaProcessor;
     this.servlet = servlet;
-    this.configProperties = configProperties;
+    this.configManager = configManager;
+    
   }
 
   @Override
@@ -46,25 +45,16 @@ public class InitializeTask implements Callable<GitService> {
     GitService cloned = null;
     if(repoUri != null && branch != null) {
       Throwable t = null;
-      FileReader reader = null;
+      
       try {
         logger.debug("Attempting to initialize content for `{}` into `{}`", warName, contentRoot);
-        cloned = GitService.initializeContentDirectory(repoUri, branch, contentRoot, warName);
+        cloned = GitService.initializeContentDirectory(repoUri, branch, contentRoot, warName, configManager);
         if(metaProcessor != null) {
           logger.debug("Processing META-INF dir in `{}`", warName);
           this.metaProcessor.processDir(contentDirectory);
         }
         if(servlet != null) {
           logger.debug("Switching content root of {}", warName);
-          File configFilePath = new File(new File(contentRoot, warName), "config.properties").getAbsoluteFile();
-          if(configFilePath.exists()) {
-            try {
-              reader = new FileReader(configFilePath);
-              configProperties.load(reader);
-            } finally {
-              IOUtils.closeQuietly(reader);
-            }
-          }
           this.servlet.switchContent(System.currentTimeMillis());
         }
         logger.debug("Successfully initialized `{}`", warName);

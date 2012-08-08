@@ -193,18 +193,8 @@ public class GitService
     Properties configProperties = new Properties();
     String configPropsFile = FileSystemManager.getFileIfCanRead(warDir, "config.properties");
     if(configPropsFile != null) {
-      configProperties = configManager.getPropertiesByPath(configProperties, configPropsFile);
       
-      // This got replace with the above line
-      /*FileReader reader = null;
-      try {
-        reader = new FileReader(configPropsFile);
-        configProperties.load(reader);
-      } finally {
-        if(reader != null) {
-          reader.close();
-        }
-      }*/ 
+      configProperties = configManager.getPropertiesByPath(configProperties, configPropsFile);         
     }
     
     String renderedContentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
@@ -252,19 +242,8 @@ public class GitService
       
      
       configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
-      historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "Initial content pull.", true);
-     
-      // This got replaced with the above 2 lines
-      /*FileWriter writer = null;
-      try{
-        writer = new FileWriter(configPropsFile);
-        configProperties.store(writer, "initialized configuration properties");
-        historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
-      } finally {
-        if(writer != null) {
-          writer.close();
-        }
-      }*/
+      historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+           
     }
     
     return cloned;

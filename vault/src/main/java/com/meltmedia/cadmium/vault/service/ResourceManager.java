@@ -37,7 +37,6 @@ import java.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.vault.SafetyMissingException;
 
 public class ResourceManager extends TimerTask {
@@ -52,19 +51,18 @@ public class ResourceManager extends TimerTask {
   
   ResourceManager() {}
   
-  public ResourceManager(VaultService service, String fileName, String cacheDir) {
+  public ResourceManager(VaultService service, String propertiesFileName, String cacheDir) {
     this.service = service;
     if(service != null) {
       this.fetcher = service.getFetcher();
     }
-    this.propertiesFileName = fileName;
+    this.propertiesFileName = propertiesFileName;
     this.cacheDir = cacheDir;
-       
-    vaultProperties = ConfigManager.getPropertiesByFileName(propertiesFileName);
-    //readInPropertiesFile();
+    
+    readInPropertiesFile();
   }
   
-  /*private void readInPropertiesFile() {    
+  private void readInPropertiesFile() {    
     if(new File(propertiesFileName).canRead()) {
       FileInputStream in = null;
       try {
@@ -80,7 +78,7 @@ public class ResourceManager extends TimerTask {
         }
       }
     }
-  }*/
+  }
   
   public String getSafety(String guid) throws SafetyMissingException, IOException {
     synchronized(vaultProperties) {
@@ -250,14 +248,6 @@ public class ResourceManager extends TimerTask {
   }
   
   public void persistVaultProperties() {
-    
-    ConfigManager.persistProperties(vaultProperties, propertiesFileName, null);
-   
-    for(Object key : vaultProperties.keySet()) {
-      System.out.println("Vault properties by Context: " + vaultProperties.getProperty(key.toString()));
-    }
-  }
-  /*public void persistVaultProperties() {
     File propsFile = new File(propertiesFileName);
     if(propsFile.canWrite() || !propsFile.exists()) {
       if(!vaultProperties.isEmpty()) {
@@ -277,7 +267,7 @@ public class ResourceManager extends TimerTask {
         }
       }
     }
-  }*/
+  }
   
   public static void streamCopy(InputStream streamIn, OutputStream streamOut) throws IOException {
     ReadableByteChannel input = Channels.newChannel(streamIn);

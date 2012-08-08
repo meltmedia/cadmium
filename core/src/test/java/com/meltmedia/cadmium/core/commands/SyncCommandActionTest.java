@@ -22,32 +22,47 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.jgroups.stack.IpAddress;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.DummyMessageSender;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import static org.mockito.Mockito.*;
 
-public class SyncCommandActionTest {
+public class SyncCommandActionTest {  
+  
+  ConfigManager configManager;
+  Properties configProperties = new Properties();
 
+  @Before
+  public void setupConfigManager() throws Exception {
+    configManager = mock(ConfigManager.class);      
+
+    when(configManager.getDefaultProperties()).thenReturn(configProperties);
+  }
+  
   @Test
-  public void testCommandAsCoordinator() throws Exception {
+  public void testCommandAsCoordinator() throws Exception {    
+   
+    
     DummyMembershipTracker tracker = new DummyMembershipTracker();
+    tracker.setConfigManager(configManager);
     tracker.setMembers(new ArrayList<ChannelMember>());
     tracker.getMembers().add(new ChannelMember(new IpAddress(1234), true, true));
     tracker.getMembers().add(new ChannelMember(new IpAddress(4321), false, false));
-    
-    Properties configProperties = new Properties();
+        
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "good_key");
     
     DummyMessageSender sender = new DummyMessageSender();
     
     SyncCommandAction cmd = new SyncCommandAction();
-    cmd.configProperties = configProperties;
+    cmd.configManager = configManager;   
     cmd.tracker = tracker;
     cmd.sender = sender;
     
@@ -69,6 +84,7 @@ public class SyncCommandActionTest {
   @Test
   public void testCommandAsNotCoordinator() throws Exception {
     DummyMembershipTracker tracker = new DummyMembershipTracker();
+    tracker.setConfigManager(configManager);
     tracker.setMembers(new ArrayList<ChannelMember>());
     tracker.getMembers().add(new ChannelMember(new IpAddress(1234), false, true));
     tracker.getMembers().add(new ChannelMember(new IpAddress(4321), true, false));
@@ -87,16 +103,15 @@ public class SyncCommandActionTest {
       }
       
     };
-    worker.setListener(listener);
-    
-    Properties configProperties = new Properties();
+    worker.setListener(listener);    
+   
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "old_key");
     
     DummyMessageSender sender = new DummyMessageSender();
     
     SyncCommandAction cmd = new SyncCommandAction();
-    cmd.configProperties = configProperties;
+    cmd.configManager = configManager;    
     cmd.tracker = tracker;
     cmd.sender = sender;
     cmd.maintFilter = maintFilter;

@@ -18,12 +18,17 @@ package com.meltmedia.cadmium.core.git;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Properties;
 
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.meltmedia.cadmium.core.config.ConfigManager;
+
+import static org.mockito.Mockito.*;
 
 public class GitServiceTest {
   private File testDir;
@@ -37,9 +42,13 @@ public class GitServiceTest {
   private GitService localGit;
   private File localGitRepoCloned;
   private GitService localClone;
+  ConfigManager configManager = new ConfigManager();
   
   @Before
-  public void createDirForTests() throws Exception {
+  public void createDirForTests() throws Exception {    
+          
+    
+    // TODO delete every line under here....
     testDir = new File("./target/git-test");
     if(!testDir.exists()) {
       if(testDir.mkdir()){
@@ -185,7 +194,7 @@ public class GitServiceTest {
   public void testInitializeContentDirectory() throws Exception {
     GitService cloned = null;
     try {
-      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war");
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", configManager);
     } finally {
       if(cloned != null) {
         cloned.close();
@@ -194,7 +203,7 @@ public class GitServiceTest {
     assertTrue("Initialize method failed", cloned != null);
     cloned = null;
     try {
-      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war");
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", configManager);
     } finally {
       if(cloned != null) {
         cloned.close();

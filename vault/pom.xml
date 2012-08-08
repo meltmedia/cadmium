@@ -37,8 +37,8 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-
+    </dependency> 	
+    
     <dependency>
       <groupId>org.jodd</groupId>
       <artifactId>jodd-wot</artifactId>

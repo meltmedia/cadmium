@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
@@ -53,8 +54,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   protected DelayedGitServiceInitializer service;
 
   @Inject
-  @Named("config.properties")
-  protected Properties configProperties;
+  protected ConfigManager configManager;
   
   @Inject
   @Named("contentDir")
@@ -71,12 +71,12 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   
   @Inject
   protected HistoryManager historyManager;
-  
+    
   protected Future<Boolean> lastTask = null;
   
-  private CoordinatedWorkerListener listener;
-  
-  private GitService gitService = null;
+  protected CoordinatedWorkerListener listener;
+  protected Properties configProperties; 
+  protected GitService gitService = null;
   
   public CoordinatedWorkerImpl() {
     pool = Executors.newSingleThreadExecutor();
@@ -88,6 +88,8 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
     synchronized(pool) {
       log.info("Beginning Update...");
       lastTask = null;
+      configProperties = configManager.getDefaultProperties();
+      
       try {
         GitService service = gitService;
         if(gitService == null) {

@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.core.commands;
 
 import java.util.List;
 
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 
@@ -31,5 +32,9 @@ public class DummyMembershipTracker extends MembershipTracker {
   
   public List<ChannelMember> getMembers() {
     return this.members;
+  }
+  
+  public void setConfigManager(ConfigManager configManager) {
+    this.configManager = configManager; 
   }
 }

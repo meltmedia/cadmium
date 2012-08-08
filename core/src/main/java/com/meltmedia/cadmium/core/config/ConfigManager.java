@@ -17,11 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-public final class ConfigManager {
+public class ConfigManager {
 
   private final Logger log = LoggerFactory.getLogger(ConfigManager.class);
-
   
+  private Properties defaultProperties;     
+
   public Properties getPropertiesByFile(File configFile) {
 
     Properties properties = new Properties();    
@@ -193,6 +194,14 @@ public final class ConfigManager {
     if(!file.exists()) {
       file.mkdirs();
     }
+  }
+
+  public Properties getDefaultProperties() {
+    return defaultProperties;
+  }
+
+  public void setDefaultProperties(Properties defaultProperties) {
+    this.defaultProperties = defaultProperties;
   }
 
   /**
