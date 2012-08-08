@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 public class InitializeTask implements Callable<GitService> {
@@ -24,11 +25,12 @@ public class InitializeTask implements Callable<GitService> {
   private SiteConfigProcessor metaProcessor = null;
   private String contentDirectory = null;
   private ContentService servlet = null;
-  private ConfigManager configManager;
-  
-  
+  private ConfigManager configManager;  
+  private HistoryManager historyManager = null;
+
   @Inject
-  public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("com.meltmedia.cadmium.git.uri") String repoUri, @Named("initialCadmiumBranch") String branch, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory) {
+  public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("com.meltmedia.cadmium.git.uri") String repoUri, @Named("initialCadmiumBranch") String branch, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
+
     this.branch = branch;
     this.repoUri = repoUri;
     this.contentRoot = contentRoot;
@@ -37,7 +39,7 @@ public class InitializeTask implements Callable<GitService> {
     this.metaProcessor = metaProcessor;
     this.servlet = servlet;
     this.configManager = configManager;
-    
+    this.historyManager = historyManager;
   }
 
   @Override
@@ -48,7 +50,8 @@ public class InitializeTask implements Callable<GitService> {
       
       try {
         logger.debug("Attempting to initialize content for `{}` into `{}`", warName, contentRoot);
-        cloned = GitService.initializeContentDirectory(repoUri, branch, contentRoot, warName, configManager);
+        cloned = GitService.initializeContentDirectory(repoUri, branch, contentRoot, warName, historyManager, configManager);
+
         if(metaProcessor != null) {
           logger.debug("Processing META-INF dir in `{}`", warName);
           this.metaProcessor.processDir(contentDirectory);

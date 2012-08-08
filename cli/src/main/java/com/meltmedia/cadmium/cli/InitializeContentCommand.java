@@ -59,7 +59,7 @@ public class InitializeContentCommand implements CliCommand {
         String repo = cadmiumProps.getProperty("com.meltmedia.cadmium.git.uri");
         
         if(branch != null && repo != null) {
-          service = GitService.initializeContentDirectory(repo, branch, root, warName, configManager);
+          service = GitService.initializeContentDirectory(repo, branch, root, warName, null, configManager);
         }
       } catch (Exception e) {
         System.err.println("Failed to initialize content for "+war);

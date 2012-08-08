@@ -194,7 +194,7 @@ public class GitServiceTest {
   public void testInitializeContentDirectory() throws Exception {
     GitService cloned = null;
     try {
-      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", configManager);
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", configManager, null);
     } finally {
       if(cloned != null) {
         cloned.close();
@@ -203,7 +203,7 @@ public class GitServiceTest {
     assertTrue("Initialize method failed", cloned != null);
     cloned = null;
     try {
-      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", configManager);
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", configManager, null);
     } finally {
       if(cloned != null) {
         cloned.close();

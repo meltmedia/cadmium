@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
-
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
@@ -155,7 +155,18 @@ public class GitService
     return git.checkinNewContent(source, comment);
   }
   
-  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, ConfigManager configManager) throws Exception {
+  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager, ConfigManager configManager) throws Exception {
+  /**
+   * Initializes war content directory for a Cadmium war.
+   * @param uri The remote Git repository ssh URI.
+   * @param branch The remote branch to checkout.
+   * @param root The shared content root.
+   * @param warName The name of the war file.
+   * @param historyManager The history manager to log the initialization event.
+   * @return A GitService object the points to the freshly cloned Git repository.
+   * @throws RefNotFoundException
+   * @throws Exception
+   */
     if(!FileSystemManager.exists(root)) {
       log.info("Content Root directory [{}] does not exist. Creating!!!", root);
       if(!new File(root).mkdirs()) {
@@ -238,12 +249,27 @@ public class GitService
         configProperties.setProperty("source", "{}");
       }
       
-      HistoryManager historyManager = new HistoryManager(warDir);
-      
-     
       configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
-      historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
-           
+
+      boolean closeHistoryManager = false;
+      if(historyManager == null) {
+        closeHistoryManager = true;
+        historyManager = new HistoryManager(warDir);
+      }
+      
+      FileWriter writer = null;
+      try{
+        writer = new FileWriter(configPropsFile);
+        configProperties.store(writer, "initialized configuration properties");
+        if(historyManager != null) {
+          historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+        }
+      } finally {
+        IOUtils.closeQuietly(writer);
+        if(closeHistoryManager) {
+          IOUtils.closeQuietly(historyManager);
+        }
+      }
     }
     
     return cloned;
@@ -384,8 +410,15 @@ public class GitService
     git.branchDelete().setForce(true).setBranchNames(branchName).call();
   }
   
+  /**
+   * Checks in content from a source directory into the current git repository.
+   * @param sourceDirectory The directory to pull content in from.
+   * @param message The commit message to use.
+   * @return The new SHA revision.
+   * @throws Exception
+   */
   public String checkinNewContent(String sourceDirectory, String message) throws Exception {
-    log.info("Purging old content.");
+    log.info("Removing old content.");
     RmCommand remove = git.rm();
     for(String filename : new File(getBaseDirectory()).list()) {
       if(!filename.equals(".git")) {
@@ -393,8 +426,6 @@ public class GitService
       }
     }
     remove.call();
-    log.info("Committing removal of content.");
-    git.commit().setMessage("Removed old content for deployment \""+message+"\"").call();
     log.info("Copying in new content.");
     FileSystemManager.copyAllContent(sourceDirectory, getBaseDirectory(), true);
     log.info("Adding new content.");
