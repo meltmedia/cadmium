@@ -84,21 +84,19 @@ public class DelayedGitServiceInitializer implements Closeable {
    * @throws Exception
    */
   public synchronized void switchRepository(String uri) throws Exception {
-    String branch = null;
-    String revision = null;
-    String oldRepoUri = null;
+    File oldRepo = null;
     File gitDir = null;
     try {
       writeLock.lock();
       latch.await();
       if(!git.getRemoteRepository().equalsIgnoreCase(uri)) {
         logger.debug("Switching repo from {} to {}", git.getRemoteRepository(), uri);
-        branch = git.getBranchName();
-        revision = git.getCurrentRevision();
-        oldRepoUri = git.getRemoteRepository();
         gitDir = new File(git.getBaseDirectory());
         IOUtils.closeQuietly(git);
         git = null;
+        oldRepo = new File(gitDir.getParentFile(), "old-git-checkout");
+        FileUtils.deleteQuietly(oldRepo);
+        FileUtils.copyDirectory(gitDir, oldRepo);
         FileUtils.deleteDirectory(gitDir);
         git = GitService.cloneRepo(uri, gitDir.getAbsolutePath());
       }
@@ -112,11 +110,11 @@ public class DelayedGitServiceInitializer implements Closeable {
         git = null;
       }
       FileUtils.deleteQuietly(gitDir);
-      git = GitService.cloneRepo(oldRepoUri, gitDir.getAbsolutePath());
-      git.switchBranch(branch);
-      git.resetToRev(revision);
+      FileUtils.copyDirectory(oldRepo, gitDir);
+      git = GitService.createGitService(gitDir.getAbsolutePath());
       throw e;
     } finally {
+      FileUtils.deleteQuietly(oldRepo);
       writeLock.unlock();
     }
   }
