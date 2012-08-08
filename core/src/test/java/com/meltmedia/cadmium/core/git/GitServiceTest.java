@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.git;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -170,13 +171,13 @@ public class GitServiceTest {
   @Test
   public void testNewRemoteBranch() throws Exception {
     
-    assertTrue("Branch shouldn't yet exist", localGit.repository.getRef("newBranch") == null);
+    assertTrue("Branch shouldn't yet exist", localGit.git.getRepository().getRef("newBranch") == null);
     
     assertTrue("Branch should have been created", localClone.newRemoteBranch("newBranch"));
     
-    assertTrue("Branch did not get created in remote", localGit.repository.getRef("newBranch") != null);
+    assertTrue("Branch did not get created in remote", localGit.git.getRepository().getRef("newBranch") != null);
     
-    assertTrue("Branch did not get created in local", localClone.repository.getRef("newBranch") != null);
+    assertTrue("Branch did not get created in local", localClone.git.getRepository().getRef("newBranch") != null);
     
     assertTrue("Branch shouldn't allow me to create it", !localClone.newRemoteBranch("newBranch"));
   }
@@ -254,7 +255,7 @@ public class GitServiceTest {
     
     localGit.tag("release-1.0", "Testing tag creation.");
     
-    assertTrue("Tag not created", localGit.repository.getRef("refs/tags/release-1.0") != null);
+    assertTrue("Tag not created", localGit.git.getRepository().getRef("refs/tags/release-1.0") != null);
     
     localClone.fetchRemotes();
     localClone.switchBranch("release-1.0");
@@ -269,7 +270,7 @@ public class GitServiceTest {
     
     localGit.tag("release-1.1", "Testing isTag test.");
     
-    assertTrue("Tag not created", localGit.repository.getRef("refs/tags/release-1.1") != null);
+    assertTrue("Tag not created", localGit.git.getRepository().getRef("refs/tags/release-1.1") != null);
     
     assertTrue("Failed", localGit.isTag("release-1.1"));
     
@@ -293,21 +294,26 @@ public class GitServiceTest {
   public void testNewLocalBranch() throws Exception {
     localGit.newLocalBranch("test-local");
     
-    assertTrue("Branch not created", localGit.repository.getRef("refs/heads/test-local") != null);
+    assertTrue("Branch not created", localGit.git.getRepository().getRef("refs/heads/test-local") != null);
   }
   
   @Test
   public void testDeleteLocalBranch() throws Exception {
-    assertTrue("Branch should exist", localGit.repository.getRef("refs/heads/test-delete") != null);
+    assertTrue("Branch should exist", localGit.git.getRepository().getRef("refs/heads/test-delete") != null);
     
     localGit.deleteLocalBranch("test-delete");
     
-    assertTrue("Branch not delete", localGit.repository.getRef("refs/heads/test-delete") == null);
+    assertTrue("Branch not delete", localGit.git.getRepository().getRef("refs/heads/test-delete") == null);
   }
   
   @Test
   public void testFetch() throws Exception {
     git3.fetchRemotes();
+  }
+  
+  @Test
+  public void testGetRemoteRepository() throws Exception {
+    assertEquals("Returned wrong remote repository.", "git://github.com/meltmedia/test-content-repo.git", git1.getRemoteRepository());
   }
 }
 

@@ -76,7 +76,7 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
       revision = CloneCommand.cloneContent(content, git, comment);
       
       System.out.println("Switching content on ["+siteUrl+"]");
-      UpdateCommand.sendUpdateMessage(siteUrl, branch, revision, comment, token);
+      UpdateCommand.sendUpdateMessage(siteUrl, null, branch, revision, comment, token);
       
     } catch(Exception e) {
       System.err.println("Failed to commit changes to ["+siteUrl+"]: "+e.getMessage());

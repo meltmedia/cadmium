@@ -46,6 +46,9 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	private final Logger log = LoggerFactory.getLogger(getClass());
   public static final String UPDATE_ENDPOINT = "/system/update";
 
+  @Parameter(names={"--repo"}, description="A new git repository url to switch to.", required=false)
+  private String repo;
+
 	@Parameter(names={"--branch", "-b"}, description="The branch that you are updating to", required=false)
 	private String branch;
 	
@@ -75,6 +78,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 			Status siteStatus = StatusCommand.getSiteStatus(siteUrl, token);
 
+			boolean repoSame = false;
 			boolean branchSame = false;
 			boolean revisionSame = false;
 			boolean forceUpdate = force;
@@ -93,9 +97,17 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 				System.exit(1);
 			}
 			
+			String currentRepo = siteStatus.getRepo();
 			String currentRevision = siteStatus.getRevision();
 			String currentBranch = siteStatus.getBranch();
-			
+
+
+      log.debug("repo = {}, and currentRepo = {}", repo, currentRepo);
+      
+      if(repo != null && repo.trim().equals(currentRepo.trim())) {
+                
+        repoSame = true;
+      }
 
 			log.debug("branch = {}, and currentBranch = {}", branch, currentBranch);
 			
@@ -113,11 +125,19 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 			log.debug("branchSame = {}, and revisionSame = {}", branchSame, revisionSame);
 
-			if(branchSame && revisionSame && !forceUpdate) {
+			if(repoSame && branchSame && revisionSame && !forceUpdate) {
 
-				System.out.println("The site [" + siteUrl  + "] is already on branch [" + branch + "] and revision [" + revision  + "].");
+				System.out.println("The site [" + siteUrl  + "] is already on repo [" + repo + "] branch [" + branch + "] and revision [" + revision  + "].");
 			}
-			else {				
+			else {		
+			  if(repo != null) {
+			    siteStatus.setRepo(repo);
+			    siteStatus.setBranch(null);
+			    siteStatus.setRevision(null);
+			  }
+			  if(repo == null) {
+			    repo = siteStatus.getRepo();
+			  }
 				gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
 				String newBranch = null;
 				String rev = null;
@@ -157,7 +177,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 					}					
 				}
 				
-				if(sendUpdateMessage(siteUrl, newBranch, rev, message, token)){
+				if(sendUpdateMessage(siteUrl, repo, newBranch, rev, message, token)){
 				  System.out.println("Update successful");
 				}
 
@@ -166,7 +186,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		} 
 		catch (Exception e) {
 
-			System.err.println("Failed to updated site [" + siteUrl  + "] to branch [" + branch  + "] and revision [" + revision  + "], or tag [" + tag + "].");
+			System.err.println("Failed to updated site [" + siteUrl  + "] to repo [" + repo + "] branch [" + branch  + "] and revision [" + revision  + "], or tag [" + tag + "].");
 		} finally {
       if(gitValidation != null) {
         try {
@@ -183,7 +203,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		return "update";
 	}
   
-  public static boolean sendUpdateMessage(String site2, String branch, String revision, String comment, String token) throws Exception {
+  public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token) throws Exception {
     HttpClient client = new DefaultHttpClient();
     
     HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
@@ -192,6 +212,10 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
     post.addHeader("Content-Type", MediaType.APPLICATION_JSON);
     
     UpdateRequest req = new UpdateRequest();
+    
+    if(repo != null) {
+      req.setRepo(repo);
+    }
     
     if(branch != null) {
       req.setBranch(branch);
@@ -214,7 +238,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
         System.err.println("Update message to ["+site2+"] failed. ["+resp.getMessage()+"]");
       } else {
         if(resp.getUuid() != null) {
-          HistoryCommand.waitForToken(site2, resp.getUuid(), resp.getTimestamp(), 120000l);
+          HistoryCommand.waitForToken(site2, resp.getUuid(), resp.getTimestamp(), 600000l);
         }
         return true;
       }
