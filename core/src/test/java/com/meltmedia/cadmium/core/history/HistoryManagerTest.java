@@ -28,8 +28,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class HistoryManagerTest {
-  private static final String INIT_HISTORY_CONTENT = "[{\"timestamp\":\"May 29, 2012 2:10:32 PM\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":1000,\"openId\":\"me\",\"servedDirectory\":\"./target/history-test\",\"revertible\":true,\"comment\":\"This is it\"}," +
-  		"{\"timestamp\":\"May 29, 2012 2:10:31 PM\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":0,\"openId\":\"auto\",\"servedDirectory\":\"./target/history-test\",\"revertible\":false,\"comment\":\"This is an init log\"}]";
+  private static final String INIT_HISTORY_CONTENT = "[{\"timestamp\":\"May 29, 2012 2:10:32 PM\",\"repoUrl\":\"\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":1000,\"openId\":\"me\",\"servedDirectory\":\"./target/history-test\",\"revertible\":true,\"comment\":\"This is it\"}," +
+  		"{\"timestamp\":\"May 29, 2012 2:10:31 PM\",\"repoUrl\":\"\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":0,\"openId\":\"auto\",\"servedDirectory\":\"./target/history-test\",\"revertible\":false,\"comment\":\"This is an init log\"}]";
   private String testDirectory = null; 
   private File historyFile = null;
   private HistoryManager manager;
@@ -65,6 +65,7 @@ public class HistoryManagerTest {
     historyFile.delete();
   }
   
+  @SuppressWarnings("resource")
   @Test
   public void testNoLogConstructor() throws Exception {
     new HistoryManager("./target");
@@ -74,13 +75,13 @@ public class HistoryManagerTest {
   public void testLogEntry() throws Exception {
     long size = historyFile.length();
     
-    manager.logEvent("test1", "sha1", "me", testDirectory, null, "This is a test", true, true);
+    manager.logEvent("", "test1", "sha1", "me", testDirectory, null, "This is a test", true, true);
     
     Thread.sleep(3000l);
     
     assertTrue("History file not written", size < historyFile.length());
     
-    manager.logEvent("test2", "sha2", "me", testDirectory, null, "This is a test2", true, true);
+    manager.logEvent("", "test2", "sha2", "me", testDirectory, null, "This is a test2", true, true);
   }
   
   @Test

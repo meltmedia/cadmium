@@ -53,6 +53,7 @@ public class UpdateDoneCommandAction implements CommandAction {
     if(manager != null) {
       try {
         Map<String, String> props = ctx.getMessage().getProtocolParameters();
+        String repo = props.get("repo");
         String branch = props.get("BranchName");
         String rev = props.get("CurrentRevision");
         String openId = props.get("openId");
@@ -60,7 +61,7 @@ public class UpdateDoneCommandAction implements CommandAction {
         String uuid = props.get("uuid");
         String comment = props.get("comment");
         boolean revertible = !new Boolean(props.get("nonRevertible"));
-        manager.logEvent(branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
+        manager.logEvent(repo, branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }
