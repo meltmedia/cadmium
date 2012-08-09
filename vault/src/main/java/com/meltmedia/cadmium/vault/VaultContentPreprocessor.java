@@ -33,6 +33,7 @@ import static jodd.lagarto.dom.jerry.Jerry.jerry;
 import jodd.lagarto.dom.jerry.JerryFunction;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -48,6 +49,7 @@ public class VaultContentPreprocessor implements ConfigProcessor, VaultListener 
   
   private boolean safetyMissing = false;
   private boolean error = false;
+  private Properties configProperties;
   
   //private Object timerSync = new Object();
   //private Timer timer = new Timer();
@@ -56,8 +58,7 @@ public class VaultContentPreprocessor implements ConfigProcessor, VaultListener 
   protected MessageSender sender;
   
   @Inject
-  @Named("config.properties")
-  protected Properties configProperties;
+  protected ConfigManager configManager;
 
   @Override
   public void processFromDirectory(String metaDir) throws Exception {
@@ -165,6 +166,8 @@ public class VaultContentPreprocessor implements ConfigProcessor, VaultListener 
   @Override
   public void safetyUpdated(String[] guids) {
     log.info("Safety was updated");
+    configProperties = configManager.getDefaultProperties();
+    
     String sha = configProperties.getProperty("updating.to.sha", configProperties.getProperty("git.ref.sha"));
     String branch = configProperties.getProperty("updating.to.branch", configProperties.getProperty("branch"));
     
