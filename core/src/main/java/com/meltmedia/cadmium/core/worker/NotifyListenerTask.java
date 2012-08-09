@@ -43,7 +43,7 @@ public class NotifyListenerTask implements Callable<Boolean> {
       Boolean lastResponse = previousTask.get();
       if(lastResponse != null && !lastResponse.booleanValue() ) {
         log.warn("Notification of work failed!");
-        listener.workFailed(properties.get("branch"), properties.get("sha"), properties.get("openId"), properties.get("uuid"));
+        listener.workFailed(properties.get("repo"), properties.get("branch"), properties.get("sha"), properties.get("openId"), properties.get("uuid"));
         throw new Exception("Previous task failed");
       }
     }

@@ -32,9 +32,9 @@ public class InitializeTask implements Callable<GitService> {
   private HistoryManager historyManager = null;
   
   @Inject
-  public InitializeTask(@Named("config.properties") Properties configProperties, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("com.meltmedia.cadmium.git.uri") String repoUri, @Named("initialCadmiumBranch") String branch, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
-    this.branch = branch;
-    this.repoUri = repoUri;
+  public InitializeTask(@Named("config.properties") Properties configProperties, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
+    this.branch = configProperties.getProperty("com.meltmedia.cadmium.branch");
+    this.repoUri = configProperties.getProperty("com.meltmedia.cadmium.git.uri");
     this.contentRoot = contentRoot;
     this.warName = warName;
     this.contentDirectory = contentDirectory;

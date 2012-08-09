@@ -28,9 +28,6 @@ import com.meltmedia.cadmium.core.history.HistoryEntry;
 public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
-  @Parameter(names="-i", description="Turns on interactive mode. (Not to be used with -n option)", required=false)
-  private boolean interactive = false;
-  
   @Parameter(names="-n", description="Specifies which history item to revert to. (Not to be used with -i option)", required=false)
   private Long index;
   
@@ -40,17 +37,14 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
   @Parameter(names={"--message", "-m"}, description="comment", required=true)  
   private String comment;
   
-  public void execute() throws Exception {
-    if(!interactive && index == null) {
-      System.err.println("Please specify either -i or -n options.");
-      System.exit(1);
-    }
+  public void execute() throws Exception {    
+    boolean interactive = index == null;
     
     String siteUrl = site.get(0);
     
     List<HistoryEntry> history = HistoryCommand.getHistory(siteUrl, -1, false, token);
     HistoryEntry selectedEntry = null;
-    if(interactive && history != null && history.size() > 0) {
+    if(index == null && history != null && history.size() > 0) {
       HistoryCommand.displayHistory(history, true, 5);
       
       String response = null;
@@ -72,8 +66,8 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
       if(interactive) {
         System.out.println("Switching content on ["+siteUrl+"]");
       }
-      log.debug("Reverting to branch {}, revision {}, comment [{}]", new Object [] {selectedEntry.getBranch(), selectedEntry.getRevision(), selectedEntry.getComment()});
-      UpdateCommand.sendUpdateMessage(siteUrl, selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token);
+      log.debug("Reverting to repo {}, branch {}, revision {}, comment [{}]", new Object [] {selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), selectedEntry.getComment()});
+      UpdateCommand.sendUpdateMessage(siteUrl, selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token);
     } else {
       System.exit(1);
     }
