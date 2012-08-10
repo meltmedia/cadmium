@@ -65,7 +65,7 @@
       <artifactId>gson</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.meltmedia.jgroups.aws</groupId>
+      <groupId>com.meltmedia.jgroups</groupId>
       <artifactId>jgroups-aws</artifactId>
     </dependency>
 
@@ -93,6 +93,10 @@
         <exclusion>
           <groupId>oswego-concurrent</groupId>
           <artifactId>concurrent</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>apache-xerces</groupId>
+          <artifactId>xml-apis</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
