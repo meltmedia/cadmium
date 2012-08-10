@@ -35,7 +35,6 @@ import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
-import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
@@ -74,9 +73,9 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
     
   protected Future<Boolean> lastTask = null;
   
+
   protected CoordinatedWorkerListener listener;
   protected Properties configProperties; 
-  protected GitService gitService = null;
   
   public CoordinatedWorkerImpl() {
     pool = Executors.newSingleThreadExecutor();
@@ -91,15 +90,14 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
       configProperties = configManager.getDefaultProperties();
       
       try {
-        GitService service = gitService;
-        if(gitService == null) {
-          log.debug("Waiting for git service to initialize.");
-          service = this.service.getGitService();
-          gitService = service;
+        log.debug("Waiting for git service to initialize.");
+        service.getGitService();
+        service.releaseGitService();
+        
+        if(properties.containsKey("repo") && properties.get("repo").trim().length() > 0) {
+          lastTask = pool.submit(new SwitchRepositoryTask(service, properties.get("repo"), lastTask));
         }
-        if(service == null) {
-          throw new Exception("Git service not initialized yet!");
-        }
+        
         if(properties.containsKey("sha")) {
           configProperties.setProperty("updating.to.sha", properties.get("sha"));
         }
@@ -168,10 +166,13 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void workFailed(String branch, String sha, String openId, String uuid) {
+  public void workFailed(String repo, String branch, String sha, String openId, String uuid) {
     log.info("Work has failed");
     Message doneMessage = new Message();
     doneMessage.setCommand(ProtocolMessage.UPDATE_FAILED);
+    if(repo != null) {
+      doneMessage.getProtocolParameters().put("repo", repo);
+    }
     if(branch != null) {
       doneMessage.getProtocolParameters().put("branch", branch);
     }

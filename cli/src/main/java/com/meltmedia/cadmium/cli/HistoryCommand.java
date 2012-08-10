@@ -70,8 +70,8 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
 
   public static void displayHistory(List<HistoryEntry> history, boolean filter, Integer limitHistory) {
     if(history != null && history.size() > 0) {
-      System.console().format("%7s|%12s|%7s|%14s|%24s|%44s|%24s|%6s|%10s\n", "Index", "Date", "Time", "User", "Branch", "Revision", "Time Live", "Maint", "Revertible");
-      for(int i=0; i<156; i++) {
+      System.console().format("%7s|%12s|%7s|%14s|%52s|%18s|%42s|%24s|%6s|%6s|%6s|%6s\n", "Index", "Date", "Time", "User", "Repository", "Branch", "Revision", "Time Live", "Maint", "Revert", "Done", "Fail");
+      for(int i=0; i<211; i++) {
         System.out.print("-");
       }
       System.out.println();
@@ -80,15 +80,18 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
         if(!filter || entry.isRevertible()) {
           if(limitHistory == null || limitHistory-- > 0) {
             showing = true;
-            System.console().format("%7d|%4tm/%<2td/%<4tY|%<4tH:%<2tM|%14s|%24s|%44s|%24s|%6b|%10b\n",
+            System.console().format("%7d|%4tm/%<2td/%<4tY|%<4tH:%<2tM|%14s|%52s|%18s|%42s|%24s|%6b|%6b|%6s|%6s\n",
                 entry.getIndex(),
                 entry.getTimestamp(),
                 entry.getOpenId(),
+                entry.getRepoUrl(),
                 entry.getBranch(),
                 entry.getRevision(),
                 formatTimeLive(entry.getTimeLive() == 0 ? System.currentTimeMillis() - entry.getTimestamp().getTime() : entry.getTimeLive()),
                 entry.isMaintenance(),
-                entry.isRevertible());
+                entry.isRevertible(),
+                entry.isFinished(),
+                entry.isFailed());
             printComments(entry.getComment());
           }
         }

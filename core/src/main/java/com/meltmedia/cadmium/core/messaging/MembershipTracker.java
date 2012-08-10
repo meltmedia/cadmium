@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
-import com.meltmedia.cadmium.core.git.GitService;
 
 @Singleton
 public class MembershipTracker implements MembershipListener {
@@ -49,7 +48,6 @@ public class MembershipTracker implements MembershipListener {
   protected ConfigManager configManager;
   
   protected DelayedGitServiceInitializer gitService;
-  private GitService git;
   private Timer timer = new Timer();
   
   @Inject
@@ -107,20 +105,22 @@ public class MembershipTracker implements MembershipListener {
       timer.schedule(new TimerTask() {
         public void run() {
           log.debug("I'm not the coordinator!!!");
-          if(git == null && gitService != null) {
+          if(gitService != null) {
             try {
               log.debug("Wainting for git service to initialize.");
-              git = gitService.getGitService();
+              gitService.getGitService();
+              gitService.releaseGitService();
             } catch(Throwable t){}
           }
           Properties configProperties = configManager.getDefaultProperties();
           Message syncMessage = new Message();
           syncMessage.setCommand(ProtocolMessage.SYNC);
           log.info("Sending sync message to coordinator {}", coordinator.getAddress());
-          if(configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+          if(configProperties.containsKey("repo") && configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+            syncMessage.getProtocolParameters().put("repo", configProperties.getProperty("repo"));
             syncMessage.getProtocolParameters().put("branch", configProperties.getProperty("branch"));
             syncMessage.getProtocolParameters().put("sha", configProperties.getProperty("git.ref.sha"));
-            log.info("I have branch:{}, and sha:{}", configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha"));
+            log.info("I have repo:{}, branch:{}, and sha:{}", new Object[] { configProperties.getProperty("repo"), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
           }
           try{
             sender.sendMessage(syncMessage, coordinator);

@@ -68,7 +68,7 @@ try:
   if os.path.exists('out'):
     shutil.move('out', 'out-old')
 
-  subprocess.call(['docpad', 'generate'])
+  subprocess.call(['./node_modules/.bin/docpad', 'generate'])
 
   if not os.path.exists('out/META-INF'):
     os.mkdir('out/META-INF')

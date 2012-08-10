@@ -139,10 +139,9 @@ public class CadmiumListener extends GuiceServletContextListener {
   private List<ChannelMember> members;
   private String warName;
   private String vHostName;
-  private String repoUri;
   private String channelConfigUrl;
   private ConfigManager configManager;
-  private String branch;
+  
   private String failOver;
   
   private ServletContext context;
@@ -231,8 +230,6 @@ public class CadmiumListener extends GuiceServletContextListener {
       GitService.setupSsh(sshDir.getAbsolutePath());
     }
     
-    repoUri = cadmiumProperties.getProperty("com.meltmedia.cadmium.git.uri");  
-    branch = cadmiumProperties.getProperty("com.meltmedia.cadmium.branch");
 
 
     String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
@@ -339,10 +336,11 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
         Properties configProperties = new Properties();
-        configProperties = configManager.getSystemProperties(); 
-        
+
+        configProperties = configManager.getSystemProperties();         
         configProperties = configManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
        
+
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
 
         bind(FileServlet.class).in(Scopes.SINGLETON);
@@ -375,7 +373,6 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
         bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
         bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
-        bind(String.class).annotatedWith(Names.named("initialCadmiumBranch")).toInstance(branch);
 
         String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
         //String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
@@ -384,10 +381,6 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
         
         bind(String.class).annotatedWith(Names.named("applicationContentRoot")).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
-        
-        if(repoUri != null) {
-          bind(String.class).annotatedWith(Names.named("com.meltmedia.cadmium.git.uri")).toInstance(repoUri);
-        }
         
         bind(HistoryManager.class);
         

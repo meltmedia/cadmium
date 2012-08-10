@@ -55,7 +55,10 @@ public class SyncCommandActionTest {
     tracker.setMembers(new ArrayList<ChannelMember>());
     tracker.getMembers().add(new ChannelMember(new IpAddress(1234), true, true));
     tracker.getMembers().add(new ChannelMember(new IpAddress(4321), false, false));
-        
+    
+   
+    configProperties.setProperty("repo", "oldRepo");
+
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "good_key");
     
@@ -73,6 +76,9 @@ public class SyncCommandActionTest {
     
     assertTrue("Message not sent", sender.dest != null && sender.msg != null && sender.dest.getAddress() == ctx.getSource());
     assertTrue("Message not sync", sender.msg.getCommand() == ProtocolMessage.SYNC);
+    assertTrue("Incorrent repo", sender.msg.getProtocolParameters().containsKey("repo")
+        && sender.msg.getProtocolParameters().get("repo").equals("oldRepo"));
+    
     assertTrue("Incorrent branch", sender.msg.getProtocolParameters().containsKey("branch")
         && sender.msg.getProtocolParameters().get("branch").equals("master"));
 
@@ -99,12 +105,15 @@ public class SyncCommandActionTest {
       }
 
       @Override
-      public void workFailed(String branch, String sha, String openId, String uuid) {
+      public void workFailed(String repo, String branch, String sha, String openId, String uuid) {
       }
       
     };
+
     worker.setListener(listener);    
-   
+
+    configProperties.setProperty("repo", "oldRepo");
+
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "old_key");
     
@@ -120,6 +129,7 @@ public class SyncCommandActionTest {
     
     CommandContext ctx = new CommandContext(new IpAddress(4321), new Message());
     ctx.getMessage().setCommand(ProtocolMessage.SYNC);
+    ctx.getMessage().getProtocolParameters().put("repo", "newRepo");
     ctx.getMessage().getProtocolParameters().put("branch", "master");
     ctx.getMessage().getProtocolParameters().put("git.ref.sha", "good_key");
     

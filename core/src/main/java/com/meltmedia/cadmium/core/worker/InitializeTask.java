@@ -1,5 +1,6 @@
 package com.meltmedia.cadmium.core.worker;
 
+import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
@@ -17,7 +18,7 @@ import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 public class InitializeTask implements Callable<GitService> {
   private final Logger logger = LoggerFactory.getLogger(getClass());
-  
+
   private String repoUri = null;
   private String branch = null;
   private String contentRoot = null;
@@ -27,12 +28,11 @@ public class InitializeTask implements Callable<GitService> {
   private ContentService servlet = null;
   private ConfigManager configManager;  
   private HistoryManager historyManager = null;
+  private Properties configProperties = new Properties();
 
   @Inject
-  public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("com.meltmedia.cadmium.git.uri") String repoUri, @Named("initialCadmiumBranch") String branch, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
-
-    this.branch = branch;
-    this.repoUri = repoUri;
+  public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
+    
     this.contentRoot = contentRoot;
     this.warName = warName;
     this.contentDirectory = contentDirectory;
@@ -44,10 +44,15 @@ public class InitializeTask implements Callable<GitService> {
 
   @Override
   public GitService call() throws Exception {
+    
+    configProperties = configManager.getDefaultProperties();
+    branch = configProperties.getProperty("com.meltmedia.cadmium.branch");
+    repoUri = configProperties.getProperty("com.meltmedia.cadmium.git.uri");
+    
     GitService cloned = null;
     if(repoUri != null && branch != null) {
       Throwable t = null;
-      
+
       try {
         logger.debug("Attempting to initialize content for `{}` into `{}`", warName, contentRoot);
         cloned = GitService.initializeContentDirectory(repoUri, branch, contentRoot, warName, historyManager, configManager);
@@ -74,7 +79,7 @@ public class InitializeTask implements Callable<GitService> {
     }
     return cloned;
   }
-  
+
   @Override
   public String toString() {
     return warName;
