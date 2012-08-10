@@ -14,6 +14,14 @@
   <description>A webapp that will deploy new cadmium projects to a server</description>
   
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/java</directory>
+        <filtering>true</filtering>
+        <targetPath>../filtered-sources/java</targetPath>
+      </resource>
+    </resources>
+    <sourceDirectory>target/filtered-sources/java</sourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.mortbay.jetty</groupId>
@@ -21,25 +29,8 @@
         <version>6.1.10</version>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>validate</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeTypes>war</includeTypes>
-              <stripVersion>true</stripVersion>
-              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-        <plugin>
-          <groupId>org.reflections</groupId>
-          <artifactId>reflections-maven</artifactId>
+        <groupId>org.reflections</groupId>
+        <artifactId>reflections-maven</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -128,6 +119,11 @@
       <artifactId>dom4j</artifactId>
       <version>1.6.1</version>
       <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>cadmium-maven</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -5,6 +5,7 @@ public class DeployRequest {
   private String repo;
   private String domain;
   private String contextRoot;
+  private String artifact;
   private boolean disableSecurity;
   
   public DeployRequest() {}
@@ -39,6 +40,14 @@ public class DeployRequest {
 
   public void setContextRoot(String contextRoot) {
     this.contextRoot = contextRoot;
+  }
+
+  public String getArtifact() {
+    return artifact;
+  }
+
+  public void setArtifact(String artifact) {
+    this.artifact = artifact;
   }
 
   public boolean isDisableSecurity() {
