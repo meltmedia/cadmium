@@ -14,6 +14,7 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -49,6 +50,11 @@
       <dependency>
         <groupId>com.meltmedia.cadmium</groupId>
         <artifactId>cadmium-search</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.meltmedia.cadmium</groupId>
+        <artifactId>cadmium-maven</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -235,6 +241,37 @@
         <artifactId>shiro-web</artifactId>
         <version>1.2.0</version>
       </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-api</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-util</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-impl</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-aether-provider</artifactId>
+        <version>${mavenVersion}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-connector-file</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-connector-asynchttpclient</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
       <!--
       <dependency>
             <groupId>org.jboss</groupId>
@@ -252,6 +289,7 @@
     <module>cli</module>
     <module>demos</module>
     <module>war</module>
+    <module>maven</module>
     <module>deployer</module>
     <module>vault</module>
     <module>email</module>
@@ -265,6 +303,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <copyright.owner>meltmedia</copyright.owner>
     <copyright.year>2012</copyright.year>
+    <aetherVersion>1.13.1</aetherVersion>
+    <mavenVersion>3.0.3</mavenVersion>
+    <wagonVersion>1.0</wagonVersion>
   </properties>
 
   <build>

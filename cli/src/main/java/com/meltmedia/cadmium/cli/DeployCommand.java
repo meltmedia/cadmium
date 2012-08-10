@@ -57,6 +57,9 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	
 	//@Parameter(description="<site>", required=true)
 	//private List<String> site;
+  
+  @Parameter(names="--artifact", description="The maven coordinates to a cadmium war.", required=false)
+  private String artifact;
 	
 	@Parameter(description="<repo> <site>", required=true)
   private List<String> parameters;
@@ -95,6 +98,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 			req.setBranch(branch);
 			req.setRepo(repo);
 			req.setDomain(domain);
+			req.setArtifact(artifact);
 		  
  		  post.setEntity(new StringEntity(new Gson().toJson(req), "UTF-8"));
 			

@@ -20,7 +20,7 @@
         <artifactId>maven-jetty-plugin</artifactId>
         <version>6.1.10</version>
       </plugin>
-      <plugin>
+      <!-- <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
@@ -36,7 +36,7 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
+      </plugin> -->
         <plugin>
           <groupId>org.reflections</groupId>
           <artifactId>reflections-maven</artifactId>
@@ -124,6 +124,11 @@
       <artifactId>dom4j</artifactId>
       <version>1.6.1</version>
       <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>cadmium-maven</artifactId>
     </dependency>
   </dependencies>
 </project>
