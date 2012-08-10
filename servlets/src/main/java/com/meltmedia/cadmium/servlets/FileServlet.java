@@ -47,6 +47,12 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	@Named("config.properties")
 	protected Properties configProperties;
 	
+	void setMimeTypeConfigProcessor( MimeTypeConfigProcessor mimeTypes ) { this.mimeTypes = mimeTypes; }
+	void setProperties(Properties configProperties) { this.configProperties = configProperties; }
+	void setLastModifiedForTesting(long lastModified) {
+	  super.setLastModified(lastModified);
+	}
+	
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 	}	
