@@ -39,7 +39,7 @@ import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 @Path("/deploy")
 public class DeployerService extends AuthorizationService {
   
-  private String version = "0.1.0-SNAPSHOT";
+  private String version = "${project.version}";
 	
   @Inject
   protected MessageSender sender;
