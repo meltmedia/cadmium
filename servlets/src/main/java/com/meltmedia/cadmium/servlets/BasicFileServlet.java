@@ -65,6 +65,12 @@ public class BasicFileServlet
     // Handle any conditional headers that may be present.
     if(handleConditions(context)) return;
     
+    // Sets the content type header.
+    resolveContentType(context);
+    
+    // Sets compress if Accept-Encoding allows for gzip or identity
+    if(checkAccepts(context)) return;
+    
     context.range = context.request.getHeader(RANGE_HEADER);
     context.inRangeETag = context.request.getHeader(IF_RANGE_HEADER);
     if( !context.inRangeETag.matches("\\A(*|W\\\\|\\\")") ) {
@@ -100,6 +106,29 @@ public class BasicFileServlet
     }
   }
   
+  /**
+   * Checks the accepts headers and makes sure that we can fulfill the request.
+   * @param context 
+   * @return
+   * @throws IOException 
+   */
+  private boolean checkAccepts(FileRequestContext context) throws IOException {
+    if (!canAccept(context.request.getHeader("Accept"), context.contentType)) {
+      notAcceptable(context);
+      return true;
+    }
+    
+    if (!canAccept(context.request.getHeader("Accept-Encoding"), "gzip", "identity")) {
+      notAcceptable(context);
+      return true;
+    }
+    
+    if (canAccept(context.request.getHeader("Accept-Encoding"), "gzip")) {
+      context.compress = true;
+    }
+    return false;
+  }
+
   /**
    * Locates the file to serve.  Returns true if locating the file caused the request to be handled.
    * @param context
@@ -180,6 +209,82 @@ public class BasicFileServlet
     }
   }
   
+  /**
+   * Parses an Accept header value and checks to see if the type is acceptable.
+   * @param headerValue The value of the header.
+   * @param type The token that we need in order to be acceptable.
+   * @return
+   */
+  public static boolean canAccept(String headerValue, String... type) {
+    if(headerValue == null || type == null) {
+      return true;
+    } else {
+      String availableTypes[] = headerValue.split(",");
+      for(String availableType : availableTypes) {
+        String typeParams[] = availableType.split(";");
+        double qValue = 1.0d;
+        if(typeParams.length > 0) {
+          for(int i=1; i<typeParams.length; i++) {
+            if(typeParams[i].trim().startsWith("q=")) {
+              String qString = typeParams[i].substring(2).trim();
+              if(qString.matches("\\\\A\\\\d+(\\.\\\\d*){0,1}\\\\Z")){
+                qValue = Double.parseDouble(qString);
+                break;
+              } 
+            }
+          }
+        }
+        boolean matches = false;
+        if(typeParams[0].equals("*") || typeParams[0].equals("*/*")) {
+          matches = true;
+        } else {
+          matches = hasMatch(typeParams, type);
+        }
+        if(qValue != 0 && matches) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check to see if a Accept header accept part matches any of the given types.
+   * @param typeParams
+   * @param type
+   * @return
+   */
+  private static boolean hasMatch(String[] typeParams, String... type) {
+    boolean matches = false;
+    for(String t : type) {
+      for(String typeParam : typeParams) {
+        if(typeParam.contains("/")) {
+          String typePart = typeParam.replace("*", "");
+          if(t.startsWith(typePart) || t.endsWith(typePart)) {
+            matches = true;
+            break;
+          }
+        } else if(t.equals(typeParam)) {
+          matches = true;
+          break;
+        }
+      }
+      if(matches) {
+        break;
+      }
+    }
+    return matches;
+  }
+  
+  /**
+   * Sends an error on the response for status code 406 NOT ACCEPTABLE.
+   * @param context
+   * @throws IOException
+   */
+  public static void notAcceptable(FileRequestContext context) throws IOException {
+    context.response.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
+  }
+  
   public static List<String> parseETagList( String value ) {
     List<String> etags = new ArrayList<String>();
     value = value.trim();
@@ -211,7 +316,7 @@ public class BasicFileServlet
    */
   public boolean handleWelcomeRedirect( FileRequestContext context ) throws IOException {
     if( context.file.isFile() && context.file.getName().equals("index.html")) {
-      context.contentType = lookupMimeType(context.path);
+      resolveContentType(context);
       String location = context.path.replaceFirst("/index.html\\Z", "");
       if( location.isEmpty() ) location = "/";
       if( context.request.getQueryString() != null ) location = location + "?" + context.request.getQueryString();
@@ -219,6 +324,21 @@ public class BasicFileServlet
       return true;
     }
     return false;
+  }
+
+  /**
+   * Looks up the mime type based on file extension and if found sets it on the FileRequestContext.
+   * 
+   * @param context
+   */
+  public void resolveContentType(FileRequestContext context) {
+    String contentType = lookupMimeType(context.path);
+    if(contentType != null) {
+      context.contentType = contentType;
+      if(contentType.equals("text/html")) {
+        context.contentType += ";charset=utf-8";
+      }
+    }
   }
   
   public static void sendPermanentRedirect( FileRequestContext context, String location ) throws IOException {
