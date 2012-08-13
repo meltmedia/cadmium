@@ -43,7 +43,7 @@ java -jar $newest_jar "$@"
 """
 
 cadmium_commit = """#! /usr/bin/env python
-import os.path, sys, subprocess, shutil
+import os, os.path, sys, subprocess, shutil
 
 if not os.path.exists(os.path.expanduser('~/.cadmium/bin/cadmium')):
   print "Please run `cli-install.py` before running `cake deploy`"
@@ -67,6 +67,8 @@ try:
 
   if os.path.exists('out'):
     shutil.move('out', 'out-old')
+
+  os.putenv('NODE_ENV', 'production')
 
   subprocess.call(['./node_modules/.bin/docpad', 'generate'])
 
