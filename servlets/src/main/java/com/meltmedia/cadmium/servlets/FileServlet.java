@@ -36,7 +36,7 @@ import javax.servlet.ServletException;
 
 @SuppressWarnings("serial")
 @Singleton
-public class FileServlet extends net.balusc.webapp.FileServlet implements ContentService {
+public class FileServlet extends BasicFileServlet implements ContentService {
 	
 	private Logger log = LoggerFactory.getLogger(getClass());
 	
@@ -50,7 +50,7 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	void setMimeTypeConfigProcessor( MimeTypeConfigProcessor mimeTypes ) { this.mimeTypes = mimeTypes; }
 	void setProperties(Properties configProperties) { this.configProperties = configProperties; }
 	void setLastModifiedForTesting(long lastModified) {
-	  super.setLastModified(lastModified);
+	  super.setLastUpdated(lastModified);
 	}
 	
 	public void init(ServletConfig config) throws ServletException {
@@ -64,7 +64,7 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 		  if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
 		    log.info("Switching to new directory ["+configProperties.getProperty("com.meltmedia.cadmium.lastUpdated")+"]");
 		    this.setBasePath(configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
-		    setLastModified(requestTime.longValue());
+		    setLastUpdated(requestTime.longValue());
 		  } else {
 		    log.error("Failed to get last updated path");
 		  }
@@ -76,7 +76,7 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	}
   
   @Override
-  protected String resolveMimeType(String filename) {
+  public String lookupMimeType(String filename) {
     if( mimeTypes == null) throw new RuntimeException("The mime type processor is not set!.");
     return mimeTypes.getContentType(filename);
   }
@@ -96,7 +96,7 @@ public class FileServlet extends net.balusc.webapp.FileServlet implements Conten
 	 */
 	public String contentTypeOf( String path ) throws IOException {
 	  File file = findFile(path);
-	  return resolveMimeType(file.getName());
+	  return lookupMimeType(file.getName());
 	}
 	
 	/**

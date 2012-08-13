@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.zip.GZIPOutputStream;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +45,42 @@ public class BasicFileServlet
   public static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
   
   protected File contentDir;
-  protected Long lastUpdated;
+  protected Long lastUpdated = System.currentTimeMillis();
+  
+  
+  @Override
+  public void init(ServletConfig config) throws ServletException {
+    super.init(config);
+    
+    setBasePath(config.getInitParameter("basePath"));
+    
+  }
+  
+  protected void setLastUpdated(long lastUpdated) {
+    this.lastUpdated = lastUpdated;
+  }
+
+  protected void setBasePath(String basePath) throws ServletException {
+    if(basePath == null) {
+      throw new ServletException("Please set the base path in init paramater \"basePath\".");
+    } else {
+      File contentDir = new File(basePath);
+      if(!contentDir.exists()) {
+        throw new ServletException("The basePath \""+basePath+"\" does not exist on the file system.");
+      } else if(!contentDir.isDirectory()) {
+        throw new ServletException("The basePath \""+basePath+"\" exists and is not a directory.");
+      } else if(!contentDir.canRead()) {
+        throw new ServletException("The basePath\""+basePath+"\" cannot be read.");
+      }
+      this.contentDir = contentDir;
+    }
+  }
+  
+  protected String getBasePath() {
+    return contentDir.toString();
+  }
+  
+  
   
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -73,7 +109,7 @@ public class BasicFileServlet
     
     context.range = context.request.getHeader(RANGE_HEADER);
     context.inRangeETag = context.request.getHeader(IF_RANGE_HEADER);
-    if( !context.inRangeETag.matches("\\A(*|W\\\\|\\\")") ) {
+    if( context.inRangeETag == null || !context.inRangeETag.matches("\\A(.*|W\\\\|\\\")") ) {
       context.inRangeETag = null;
       try {
         context.inRangeDate = context.request.getDateHeader(IF_RANGE_HEADER);
@@ -94,6 +130,8 @@ public class BasicFileServlet
     
     if( context.sendEntity ) {
       try {
+        context.response.setStatus(HttpServletResponse.SC_OK);
+        context.response.setContentType(context.contentType);
         context.in = new FileInputStream(context.file);
         context.out = context.response.getOutputStream();
         if( context.compress ) context.out = new GZIPOutputStream(context.out);
@@ -201,7 +239,7 @@ public class BasicFileServlet
   public static Pattern unescapePattern = null;
   static {
     try {
-      etagPattern = Pattern.compile( "(W/)?\"((?:[^\"\\\\]*|\\\\.)*)\"\\s*(?:,\\s*)?*");
+      etagPattern = Pattern.compile( "(W/)?\"((?:[^\"\\\\]*|\\\\.)*)\"\\s*(?:,\\s*)?.*");
       unescapePattern = Pattern.compile("\\\\(.)");
     }
     catch( PatternSyntaxException pse ) {
