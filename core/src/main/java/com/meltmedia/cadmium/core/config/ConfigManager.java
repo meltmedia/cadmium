@@ -16,16 +16,21 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.config.impl.PropertiesReaderImpl;
+import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
+
 @Singleton
 public class ConfigManager {
 
   private final Logger log = LoggerFactory.getLogger(ConfigManager.class);
   
-  private Properties defaultProperties;     
+  private Properties defaultProperties;    
+  private PropertiesReader reader = new PropertiesReaderImpl();
+  private PropertiesWriter writer = new PropertiesWriterImpl();
 
   public Properties getPropertiesByFile(File configFile) {
 
-    Properties properties = new Properties();    
+    /*Properties properties = new Properties();    
     Reader reader = null;
     try{
 
@@ -42,18 +47,18 @@ public class ConfigManager {
     finally {
 
       IOUtils.closeQuietly(reader);
-    }
-
-    return properties;
+    }*/
+    
+    return reader.getProperties(configFile, log);
 
   }
 
   // rework to be loadPropertiesIfExists
   public Properties loadProperties(Properties properties, File configFile) {
 
-    if( !configFile.exists() /*|| !configFile.canRead()*/) return properties;
+    //if( !configFile.exists() /*|| !configFile.canRead()*/) return properties;
     
-    Reader reader = null;
+    /*Reader reader = null;
     try{
       
       log.info("configFile path: {}", configFile.getPath());
@@ -71,9 +76,9 @@ public class ConfigManager {
     finally {
 
       IOUtils.closeQuietly(reader);
-    }
+    }*/
     
-    return properties;
+    return reader.appendProperties(properties, configFile, log);
   }
 
   public Properties getSystemProperties() {
@@ -88,7 +93,7 @@ public class ConfigManager {
 
   public Properties getPropertiesByContext(ServletContext context, String path) {
 
-    Properties properties = new Properties();
+    /*Properties properties = new Properties();
     Reader reader = null;
     try{
 
@@ -104,14 +109,14 @@ public class ConfigManager {
     finally {
 
       IOUtils.closeQuietly(reader);
-    }
+    }*/
 
-    return properties;
+    return reader.getProperties(context, path, log);
   }
   
   public Properties getPropertiesByFileName(String fileName) {
     
-    Properties properties = new Properties();
+    /*Properties properties = new Properties();
   
     if(new File(fileName).canRead()) {
      
@@ -128,14 +133,14 @@ public class ConfigManager {
       finally {
         IOUtils.closeQuietly(in);
       }
-    }
+    }*/
     
-    return properties;
+    return reader.getProperties(fileName, log);
   }
   
   public Properties getPropertiesByPath(Properties properties, String path) throws IOException {
     
-    FileReader reader = null;
+    /*FileReader reader = null;
     try {
       
       reader = new FileReader(path);
@@ -147,14 +152,14 @@ public class ConfigManager {
     }
     finally {
       IOUtils.closeQuietly(reader);
-    }  
+    }  */
     
-    return properties;
+    return reader.getProperties(properties, path, log);
   }
 
   public void persistProperties(Properties properties, String fileName, String message) {
 
-    File propsFile = new File(fileName);
+    /*File propsFile = new File(fileName);
     if(propsFile.canWrite() || !propsFile.exists()) {
       
       if(!properties.isEmpty()) {
@@ -176,7 +181,10 @@ public class ConfigManager {
           IOUtils.closeQuietly(out);
         }
       }
-    }
+    }*/
+    
+    writer.persistProperties(properties, fileName, message, log);
+    
   }
   
   public void logProperties( Logger log, Properties properties, String name ) {
@@ -187,14 +195,7 @@ public class ConfigManager {
       }
       log.debug(sb.toString());
     }
-  }
-
-  private static void ensureDirExists(String dir) {
-    File file = new File(dir);
-    if(!file.exists()) {
-      file.mkdirs();
-    }
-  }
+  }  
 
   public Properties getDefaultProperties() {
     return defaultProperties;

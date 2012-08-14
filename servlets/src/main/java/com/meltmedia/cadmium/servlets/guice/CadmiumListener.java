@@ -204,6 +204,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     Properties configProperties = new Properties();
     configProperties = configManager.getSystemProperties();
+    configProperties.putAll(cadmiumProperties);
     
     sharedContentRoot = sharedContextRoot(configProperties, context, log);
 
@@ -501,33 +502,6 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
   }
   
-  /*public static Properties loadProperties( Properties properties, ServletContext context, String path, Logger log ) {
-    Reader reader = null;
-    try{
-      reader = new InputStreamReader(context.getResourceAsStream(path), "UTF-8");
-      properties.load(reader);
-    } catch(Exception e) {
-      log.warn("Failed to load "+path);
-    } finally {
-      IOUtils.closeQuietly(reader);
-    }
-    return properties;
-  }*/
-  
-  /*public static Properties loadProperties( Properties properties, File configFile, Logger log ) {
-    if( !configFile.exists() || !configFile.canRead()) return properties;
-    
-    Reader reader = null;
-    try{
-      reader = new FileReader(configFile);
-      properties.load(reader);
-    } catch(Exception e) {
-      log.warn("Failed to load "+configFile.getAbsolutePath());
-    } finally {
-      IOUtils.closeQuietly(reader);
-    }
-    return properties;
-  }*/
   
   public static File sharedContextRoot( Properties configProperties, ServletContext context, Logger log ) {
     File sharedContentRoot = null;
