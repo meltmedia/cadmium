@@ -14,11 +14,13 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.util.StringUtils;
 
 public class BasicFileServlet
   extends HttpServlet
@@ -43,6 +45,8 @@ public class BasicFileServlet
   public static final String CONTENT_RANGE_HEADER = "Content-Range";
   public static final String CONTENT_LENGTH_HEADER = "Content-Length";
   public static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
+  
+  public static final String RANGE_BOUNDARY = "MULTIPART_BYTERANGES";
   
   protected File contentDir;
   protected Long lastUpdated = System.currentTimeMillis();
@@ -107,43 +111,104 @@ public class BasicFileServlet
     // Sets compress if Accept-Encoding allows for gzip or identity
     if(checkAccepts(context)) return;
     
-    context.range = context.request.getHeader(RANGE_HEADER);
-    context.inRangeETag = context.request.getHeader(IF_RANGE_HEADER);
-    if( context.inRangeETag == null || !context.inRangeETag.matches("\\A(.*|W\\\\|\\\")") ) {
-      context.inRangeETag = null;
-      try {
-        context.inRangeDate = context.request.getDateHeader(IF_RANGE_HEADER);
+    try {
+      if(context.file != null) {
+        context.response.setHeader("Content-Disposition", "inline;filename=\"" + context.file.getName() + "\"");
       }
-      catch( IllegalArgumentException iae ) {
-        // ignore per spec.
+      context.response.setHeader("Accept-Ranges", "bytes");
+      if(context.eTag != null) {
+        context.response.setHeader("ETag", context.eTag);
       }
-    }
-    
-    if( context.range != null ) {
-      if( !( context.inRangeETag != null && validateStrong(context.inRangeETag, context.eTag ) ||
-             context.inRangeDate != -1 && context.inRangeDate >= lastUpdated ) ) {
-        context.range = null;
-        context.inRangeETag = null;
-        context.inRangeDate = -1;
-      }
-    }
-    
-    if( context.sendEntity ) {
-      try {
+      context.response.setDateHeader("Last-Modified", lastUpdated);
+      if(!context.ranges.isEmpty()) {
+        context.response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+        if(context.ranges.size() > 1) {
+          context.response.setContentType("multipart/byteranges; boundary=" + RANGE_BOUNDARY);
+          context.response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+          
+          if(context.sendEntity) {
+            context.in = new FileInputStream(context.file);
+            context.out = context.response.getOutputStream();
+            ServletOutputStream sout = (ServletOutputStream)context.out;
+            for(Range r : context.ranges) {
+              sout.println();
+              sout.println("--"+RANGE_BOUNDARY);
+              sout.println("Content-Type: " + context.contentType);
+              Long rangeLength = calculateRangeLength(context, r);
+              sout.println("Context-Range: bytes " + r.start + "-" + r.end + "/" + rangeLength);
+              
+              copyPartialContent(context.in, context.out, r);
+            }
+            
+            sout.println();
+            sout.println("--"+RANGE_BOUNDARY+"--");
+          }
+        } else {
+          Range r = context.ranges.get(0);
+          context.response.setContentType(context.contentType);
+          Long rangeLength = calculateRangeLength(context, r);
+          context.response.setHeader("Content-Range", "bytes " + r.start + "-" + r.end
+              + "/" + rangeLength);
+          if(context.sendEntity) {
+            context.in = new FileInputStream(context.file);
+            context.out = context.response.getOutputStream();
+            
+            context.response.setHeader("Content-Length", rangeLength.toString());
+
+            copyPartialContent(context.in, context.out, r);
+          }
+        }
+      } else {
         context.response.setStatus(HttpServletResponse.SC_OK);
         context.response.setContentType(context.contentType);
-        context.in = new FileInputStream(context.file);
-        context.out = context.response.getOutputStream();
-        if( context.compress ) context.out = new GZIPOutputStream(context.out);
-        IOUtils.copy(context.in, context.out);
+
+        if( context.sendEntity ) {
+          context.response.setHeader("Content-Range", "bytes 0-" + context.file.length() + "/" + context.file.length());
+          context.in = new FileInputStream(context.file);
+          context.out = context.response.getOutputStream();
+          if( context.compress ) {
+          
+            context.response.setHeader("Content-Encoding", "gzip");
+            context.out = new GZIPOutputStream(context.out);
+          
+          } else context.response.setHeader("Content-Length", new Long(context.file.length()).toString());
+
+          IOUtils.copy(context.in, context.out);
+        }
       }
-      finally {
-        IOUtils.closeQuietly(context.in);
-        IOUtils.closeQuietly(context.out);
-      } 
     }
+    finally {
+      IOUtils.closeQuietly(context.in);
+      IOUtils.closeQuietly(context.out);
+    } 
   }
   
+  /**
+   * Copies the given range of bytes from the input stream to the output stream.
+   * 
+   * @param in
+   * @param sout
+   * @param r
+   * @throws IOException 
+   */
+  public static void copyPartialContent(InputStream in, OutputStream out, Range r) throws IOException {
+    IOUtils.copyLarge(in, out, r.start, r.length);
+  }
+
+  /**
+   * Calculates the length of a given range.
+   * 
+   * @param context
+   * @param range
+   * @return
+   */
+  public static Long calculateRangeLength(FileRequestContext context, Range range) {
+    if(range.start == -1) range.start = 0;
+    if(range.end == -1) range.end = context.file.length() - 1;
+    range.length = range.end - range.start + 1;
+    return range.length;
+  }
+
   /**
    * Checks the accepts headers and makes sure that we can fulfill the request.
    * @param context 
@@ -209,6 +274,33 @@ public class BasicFileServlet
       return true;
     }
     
+    context.range = context.request.getHeader(RANGE_HEADER);
+    
+    try {
+      context.inRangeDate = context.request.getDateHeader(IF_RANGE_HEADER);
+      if(context.inRangeDate != -1 && context.inRangeDate >= lastUpdated) {
+        if(!parseRanges(context)){
+          invalidRanges(context);
+          return true;
+        }
+      }
+    } catch(IllegalArgumentException iae) {
+      context.inRangeETag = context.request.getHeader(IF_RANGE_HEADER);
+      if(context.inRangeETag != null && validateStrong(context.inRangeETag, context.eTag ) ) {
+        if(!parseRanges(context)){
+          invalidRanges(context);
+          return true;
+        }
+      }
+    }
+    
+    if(context.inRangeDate == -1 && context.inRangeETag == null) {
+      if(!parseRanges(context)){
+        invalidRanges(context);
+        return true;
+      }
+    }
+    
     context.ifNoneMatch = context.request.getHeader(IF_NONE_MATCH_HEADER);
     if( context.ifNoneMatch != null && !validateStrong(context.ifNoneMatch, context.eTag)) {
       context.response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
@@ -234,17 +326,63 @@ public class BasicFileServlet
     return false;
 
   }
+
+  /**
+   * Sets the appropriate response headers and error status for bad ranges
+   * 
+   * @param context
+   * @throws IOException
+   */
+  public static void invalidRanges(FileRequestContext context) throws IOException {
+    context.response.setHeader("Content-Range", "*/" + context.file.length());
+    context.response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+  }
   
   public static Pattern etagPattern = null;
   public static Pattern unescapePattern = null;
+  public static Pattern rangePattern = null;
   static {
     try {
       etagPattern = Pattern.compile( "(W/)?\"((?:[^\"\\\\]*|\\\\.)*)\"\\s*(?:,\\s*)?.*");
       unescapePattern = Pattern.compile("\\\\(.)");
+      rangePattern = Pattern.compile("\\A\\s*bytes\\s*=\\s*(\\d*-\\d*(,\\d*-\\d*)*)\\s*\\Z");
     }
     catch( PatternSyntaxException pse ) {
       pse.printStackTrace();
     }
+  }
+  
+  /**
+   * Parses the Range Header of the request and sets the appropriate ranges list on the {@link FileRequestContext} Object.
+   * 
+   * @param context
+   * @return false if the range pattern contains no satisfiable ranges.
+   */
+  public static boolean parseRanges(FileRequestContext context) {
+    if( !StringUtils.isEmptyOrNull(context.range) ) {
+      Matcher rangeMatcher = rangePattern.matcher(context.range);
+      if(rangeMatcher.matches()) {
+        String ranges[] = rangeMatcher.group(1).split(",");
+        for(String range : ranges) {
+          long startBound = -1;
+          int hyphenIndex = range.indexOf('-');
+          if( hyphenIndex > 0 ) {
+            startBound = Long.parseLong(range.substring(0, hyphenIndex));
+          }
+          long endBound = -1;
+          if( hyphenIndex >= 0 && (hyphenIndex + 1) < range.length() ) {
+            endBound = Long.parseLong(range.substring(hyphenIndex + 1));
+          }
+          Range newRange = new Range(startBound, endBound);
+          
+          if(!(startBound != -1 && endBound != -1 && startBound > endBound) && !(startBound == -1 && endBound == -1)) {
+            context.ranges.add(newRange);
+          }
+        } 
+        return !context.ranges.isEmpty();
+      }
+    }
+    return true;
   }
   
   /**
@@ -265,7 +403,7 @@ public class BasicFileServlet
           for(int i=1; i<typeParams.length; i++) {
             if(typeParams[i].trim().startsWith("q=")) {
               String qString = typeParams[i].substring(2).trim();
-              if(qString.matches("\\\\A\\\\d+(\\.\\\\d*){0,1}\\\\Z")){
+              if(qString.matches("\\A\\d+(\\.\\d*){0,1}\\Z")){
                 qValue = Double.parseDouble(qString);
                 break;
               } 
@@ -393,7 +531,8 @@ public class BasicFileServlet
   public static class FileRequestContext
   {
     public String range;
-    public long inRangeDate;
+    public List<Range> ranges = new ArrayList<Range>();
+    public long inRangeDate = -1;
     public String inRangeETag;
     public long ifUnmodifiedSince;
     public long ifModifiedSince;
@@ -415,6 +554,16 @@ public class BasicFileServlet
       this.response = response;
       this.sendEntity = sendEntity;
       this.path = request.getPathInfo();
+    }
+  }
+  
+  public static class Range {
+    public long start = -1l;
+    public long end = -1l;
+    public long length;
+    public Range(long start, long end) {
+      this.start = start;
+      this.end = end;
     }
   }
 }
