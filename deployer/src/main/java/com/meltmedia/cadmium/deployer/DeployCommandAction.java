@@ -22,11 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.maven.ArtifactResolver;
 
 public class DeployCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -34,6 +37,9 @@ public class DeployCommandAction implements CommandAction {
 
   @Override
   public String getName() { return DEPLOY_ACTION; }
+  
+  @Inject
+  protected ArtifactResolver artifactResolver;
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
@@ -44,6 +50,7 @@ public class DeployCommandAction implements CommandAction {
     String branch = params.get("branch").trim();
     String repo = params.get("repo").trim();
     String context = params.get("context").trim();
+    String artifact = params.get("artifact").trim();
     
     // make sure our state is OK.  We need some proper validation.
     if( domain.isEmpty() || branch.isEmpty() || repo.isEmpty() || context.isEmpty()) {
@@ -71,7 +78,10 @@ public class DeployCommandAction implements CommandAction {
         secure = false;
       }
     }
-    updateWar("cadmium-war.war", null, newWarNames, repo, branch, domain, context, secure);
+    
+    File artifactFile = artifactResolver.resolveMavenArtifact(artifact);
+    
+    updateWar(null, artifactFile.getAbsolutePath(), newWarNames, repo, branch, domain, context, secure);
     
     String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
     
