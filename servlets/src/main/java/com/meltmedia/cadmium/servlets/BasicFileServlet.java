@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +27,7 @@ public class BasicFileServlet
   extends HttpServlet
 {
 
+  private static final long serialVersionUID = 1L;
   public static final String GET_METHOD = "GET";
   public static final String HEAD_METHOD = "HEAD";
   public static final String ETAG_HEADER = "ETag";
@@ -37,6 +39,7 @@ public class BasicFileServlet
   public static final String RANGE_HEADER = "Range";
   public static final String IF_RANGE_HEADER = "If-Range";
   public static final String ACCEPT_ENCODING_HEADER = "Accept-Encoding";
+  public static final String CONTENT_ENCODING_HEADER = "Content-Encoding";
   public static final String CONTENT_TYPE_HEADER = "Content-Type";
   public static final String TEXT_HTML_TYPE = "text/html";
   public static final String LOCATION_HEADER = "Location";
@@ -45,11 +48,19 @@ public class BasicFileServlet
   public static final String CONTENT_RANGE_HEADER = "Content-Range";
   public static final String CONTENT_LENGTH_HEADER = "Content-Length";
   public static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
+  public static final String ACCEPT_HEADER = "Accept";
   
   public static final String RANGE_BOUNDARY = "MULTIPART_BYTERANGES";
   
   protected File contentDir;
   protected Long lastUpdated = System.currentTimeMillis();
+  
+  protected List<String> gzipList = new ArrayList<String>();
+  
+  public BasicFileServlet() {
+    super();
+    gzipList.addAll(Arrays.asList(new String [] {"text/*", "application/javascript", "application/x-javascript", "application/json", "application/xml", "application/xslt+xml"}));
+  }
   
   
   @Override
@@ -113,13 +124,13 @@ public class BasicFileServlet
     
     try {
       if(context.file != null) {
-        context.response.setHeader("Content-Disposition", "inline;filename=\"" + context.file.getName() + "\"");
+        context.response.setHeader(CONTENT_DISPOSITION_HEADER, "inline;filename=\"" + context.file.getName() + "\"");
       }
-      context.response.setHeader("Accept-Ranges", "bytes");
+      context.response.setHeader(ACCEPT_RANGES_HEADER, "bytes");
       if(context.eTag != null) {
-        context.response.setHeader("ETag", context.eTag);
+        context.response.setHeader(ETAG_HEADER, context.eTag);
       }
-      context.response.setDateHeader("Last-Modified", lastUpdated);
+      context.response.setDateHeader(LAST_MODIFIED_HEADER, lastUpdated);
       if(!context.ranges.isEmpty()) {
         context.response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
         if(context.ranges.size() > 1) {
@@ -134,8 +145,7 @@ public class BasicFileServlet
               sout.println();
               sout.println("--"+RANGE_BOUNDARY);
               sout.println("Content-Type: " + context.contentType);
-              Long rangeLength = calculateRangeLength(context, r);
-              sout.println("Context-Range: bytes " + r.start + "-" + r.end + "/" + rangeLength);
+              sout.println("Context-Range: bytes " + r.start + "-" + r.end + "/" + context.file.length());
               
               copyPartialContent(context.in, context.out, r);
             }
@@ -147,13 +157,13 @@ public class BasicFileServlet
           Range r = context.ranges.get(0);
           context.response.setContentType(context.contentType);
           Long rangeLength = calculateRangeLength(context, r);
-          context.response.setHeader("Content-Range", "bytes " + r.start + "-" + r.end
-              + "/" + rangeLength);
+          context.response.setHeader(CONTENT_RANGE_HEADER, "bytes " + r.start + "-" + r.end
+              + "/" + context.file.length());
           if(context.sendEntity) {
             context.in = new FileInputStream(context.file);
             context.out = context.response.getOutputStream();
             
-            context.response.setHeader("Content-Length", rangeLength.toString());
+            context.response.setHeader(CONTENT_LENGTH_HEADER, rangeLength.toString());
 
             copyPartialContent(context.in, context.out, r);
           }
@@ -163,15 +173,15 @@ public class BasicFileServlet
         context.response.setContentType(context.contentType);
 
         if( context.sendEntity ) {
-          context.response.setHeader("Content-Range", "bytes 0-" + context.file.length() + "/" + context.file.length());
+          context.response.setHeader(CONTENT_RANGE_HEADER, "bytes 0-" + context.file.length() + "/" + context.file.length());
           context.in = new FileInputStream(context.file);
           context.out = context.response.getOutputStream();
           if( context.compress ) {
           
-            context.response.setHeader("Content-Encoding", "gzip");
+            context.response.setHeader(CONTENT_ENCODING_HEADER, "gzip");
             context.out = new GZIPOutputStream(context.out);
           
-          } else context.response.setHeader("Content-Length", new Long(context.file.length()).toString());
+          } else context.response.setHeader(CONTENT_LENGTH_HEADER, new Long(context.file.length()).toString());
 
           IOUtils.copy(context.in, context.out);
         }
@@ -216,21 +226,36 @@ public class BasicFileServlet
    * @throws IOException 
    */
   private boolean checkAccepts(FileRequestContext context) throws IOException {
-    if (!canAccept(context.request.getHeader("Accept"), context.contentType)) {
+    if (!canAccept(context.request.getHeader(ACCEPT_HEADER), false, context.contentType)) {
       notAcceptable(context);
       return true;
     }
     
-    if (!canAccept(context.request.getHeader("Accept-Encoding"), "gzip", "identity")) {
+    if (!(canAccept(context.request.getHeader(ACCEPT_ENCODING_HEADER), false, "identity") || canAccept(context.request.getHeader(ACCEPT_ENCODING_HEADER), false, "gzip"))) {
       notAcceptable(context);
       return true;
     }
     
-    if (canAccept(context.request.getHeader("Accept-Encoding"), "gzip")) {
+    if (context.request.getHeader(ACCEPT_ENCODING_HEADER) != null && canAccept(context.request.getHeader(ACCEPT_ENCODING_HEADER), true, "gzip") && shouldGzip(context.contentType)) {
       context.compress = true;
     }
     return false;
   }
+
+  /**
+   * <p>Checks for inclusion in the gzipList field. Allows basic wild cards.</p>
+   * <p>An empty or null field defaults to gzipping of all content types.</p> 
+   * @param contentType
+   * @return
+   */
+  public boolean shouldGzip(String contentType) {
+    if(gzipList == null || gzipList.isEmpty()) {
+      return true;
+    } else {
+      return gzipList.contains(contentType) || gzipList.contains(contentType.replaceAll("/[^/]+\\Z", "/*")) || gzipList.contains(contentType.replaceAll("\\A[^/]+/", "*/"));
+    }
+  }
+
 
   /**
    * Locates the file to serve.  Returns true if locating the file caused the request to be handled.
@@ -269,7 +294,7 @@ public class BasicFileServlet
     context.eTag = context.path+"_"+lastUpdated;
     
     context.ifMatch = context.request.getHeader(IF_MATCH_HEADER);
-    if( context.ifMatch != null && validateStrong(context.ifMatch, context.eTag) ) {
+    if( context.ifMatch != null && !validateStrong(context.ifMatch, context.eTag) ) {
       context.response.sendError(HttpServletResponse.SC_PRECONDITION_FAILED);
       return true;
     }
@@ -302,7 +327,7 @@ public class BasicFileServlet
     }
     
     context.ifNoneMatch = context.request.getHeader(IF_NONE_MATCH_HEADER);
-    if( context.ifNoneMatch != null && !validateStrong(context.ifNoneMatch, context.eTag)) {
+    if( context.ifNoneMatch != null && validateStrong(context.ifNoneMatch, context.eTag)) {
       context.response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
       context.response.setHeader(ETAG_HEADER, context.eTag);
       context.response.setDateHeader(LAST_MODIFIED_HEADER, lastUpdated);
@@ -334,7 +359,7 @@ public class BasicFileServlet
    * @throws IOException
    */
   public static void invalidRanges(FileRequestContext context) throws IOException {
-    context.response.setHeader("Content-Range", "*/" + context.file.length());
+    context.response.setHeader(CONTENT_RANGE_HEADER, "*/" + context.file.length());
     context.response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
   }
   
@@ -388,13 +413,12 @@ public class BasicFileServlet
   /**
    * Parses an Accept header value and checks to see if the type is acceptable.
    * @param headerValue The value of the header.
+   * @param strict Forces the type to be in the header.
    * @param type The token that we need in order to be acceptable.
    * @return
    */
-  public static boolean canAccept(String headerValue, String... type) {
-    if(headerValue == null || type == null) {
-      return true;
-    } else {
+  public static boolean canAccept(String headerValue, boolean strict, String type) {
+    if(headerValue != null && type != null)  {
       String availableTypes[] = headerValue.split(",");
       for(String availableType : availableTypes) {
         String typeParams[] = availableType.split(";");
@@ -416,12 +440,14 @@ public class BasicFileServlet
         } else {
           matches = hasMatch(typeParams, type);
         }
-        if(qValue != 0 && matches) {
+        if(qValue == 0 && matches) {
+          return false;
+        } else {
           return true;
         }
       }
     }
-    return false;
+    return !strict;
   }
 
   /**
@@ -508,11 +534,11 @@ public class BasicFileServlet
    * @param context
    */
   public void resolveContentType(FileRequestContext context) {
-    String contentType = lookupMimeType(context.path);
+    String contentType = lookupMimeType(context.file.getName());
     if(contentType != null) {
       context.contentType = contentType;
       if(contentType.equals("text/html")) {
-        context.contentType += ";charset=utf-8";
+        context.contentType += ";charset=UTF-8";
       }
     }
   }

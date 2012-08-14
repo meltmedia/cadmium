@@ -59,6 +59,7 @@ public class FileServeltTest {
   public static final String TEXT_HTML_TYPE = "text/html";
   public static final String LOCATION_HEADER = "Location";
   public static final String CONTENT_DISPOSITION_HEADER = "Content-Disposition";
+  public static final String CONTENT_ENCODING_HEADER = "Content-Encoding";
   public static final String ACCEPT_RANGES_HEADER = "Accept-Ranges";
   public static final String CONTENT_RANGE_HEADER = "Content-Range";
   public static final String CONTENT_LENGTH_HEADER = "Content-Length";
@@ -106,19 +107,19 @@ public class FileServeltTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
         // Verify initial requests work.
-        { mockGet("/"), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED) },   
-        { mockGet("/section"), success("index.html", CURRENT_SECTION_INDEX_ETAG, CURRENT_LAST_MODIFIED) },
+        { mockGetWithGzip("/"), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED, true) },   
+        { mockGet("/section"), success("index.html", CURRENT_SECTION_INDEX_ETAG, CURRENT_LAST_MODIFIED, false) },
         
         // verify that stale requests work.
-        { mockGetWithIfNoneMatch("/", PAST_INDEX_ETAG), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED) },
-        { mockGetWithIfModifiedSince("/", PAST_LAST_MODIFIED), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED) },
+        { mockGetWithIfNoneMatch("/", PAST_INDEX_ETAG), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED, false) },
+        { mockGetWithIfModifiedSince("/", PAST_LAST_MODIFIED), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED, false) },
         
         // verify caching hits.
-        { mockGetWithIfNoneMatch("/", CURRENT_INDEX_ETAG), notModified(CURRENT_INDEX_ETAG) },
+        { mockGetWithIfMatch("/", CURRENT_INDEX_ETAG), preconditionFailed() },
         { mockGetWithIfModifiedSince("/", CURRENT_LAST_MODIFIED), notModified(CURRENT_INDEX_ETAG) },
         
         // verify ranges
-        { mockGetWithRanges("/", CURRENT_INDEX_ETAG, rangeSpec(10, 20, INDEX_BYTES)), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED, range(10, 20, INDEX_BYTES)) },
+        { mockGetWithRanges("/", CURRENT_INDEX_ETAG, rangeSpec(10, 20, INDEX_BYTES)), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED, false, range(10, 20, INDEX_BYTES)) },
         
         // verify gzip
         
@@ -131,7 +132,8 @@ public class FileServeltTest {
         { mockGet("/section/index.html"), movedPerminately("/section") },
         
         // verify precondition failed.
-        { mockGetWithIfUnmodifiedSince("/", PAST_LAST_MODIFIED), preconditionFailed() }
+        { mockGetWithIfUnmodifiedSince("/", PAST_LAST_MODIFIED), preconditionFailed() },
+        { mockGetWithoutGzip("/"), success("index.html", CURRENT_INDEX_ETAG, CURRENT_LAST_MODIFIED, false) }
     });
   }
   
@@ -223,6 +225,24 @@ public class FileServeltTest {
     return request;
   }
   
+  public static HttpServletRequest mockGetWithGzip( String pathInfo ) {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getMethod()).thenReturn(GET_METHOD);
+    when(request.getPathInfo()).thenReturn(pathInfo);
+    when(request.getDateHeader(anyString())).thenReturn(new Long(-1));
+    when(request.getHeader(ACCEPT_ENCODING_HEADER)).thenReturn("gzip");
+    return request;
+  }
+  
+  public static HttpServletRequest mockGetWithoutGzip( String pathInfo ) {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getMethod()).thenReturn(GET_METHOD);
+    when(request.getPathInfo()).thenReturn(pathInfo);
+    when(request.getDateHeader(anyString())).thenReturn(new Long(-1));
+    when(request.getHeader(ACCEPT_ENCODING_HEADER)).thenReturn("gzip;q=0");
+    return request;
+  }
+  
   public static HttpServletRequest mockGetWithRanges( String pathInfo, String eTag, final RangeSpec... rangeSpecs) {
     HttpServletRequest request = mockGet(pathInfo);
     when(request.getHeader(IF_RANGE_HEADER)).thenReturn(eTag);
@@ -301,19 +321,23 @@ public class FileServeltTest {
     }
   }
   
-  public static ResponseVerifier success(final String name, final String etag, final Long lastModified, final ResponseVerifier... ranges) {
+  public static ResponseVerifier success(final String name, final String etag, final Long lastModified, final boolean shouldGzip, final ResponseVerifier... ranges) {
     return new ResponseVerifier() {
       @Override
       public void verifyResponse(HttpServletResponse response) throws IOException, ServletException {
-        verify(response).setStatus(200);
         verify(response).setHeader(CONTENT_DISPOSITION_HEADER, "inline;filename=\""+name+"\"");
         verify(response).setHeader(ACCEPT_RANGES_HEADER, "bytes");
         verify(response).setHeader(ETAG_HEADER, etag);
         verify(response).setDateHeader(LAST_MODIFIED_HEADER, lastModified);
         if( ranges.length == 0 ) {
+          verify(response).setStatus(200);
           verify(response).setHeader(eq(CONTENT_RANGE_HEADER), anyString());
-          verify(response).setHeader(eq(CONTENT_LENGTH_HEADER), anyString());
           verify(response).setContentType(TEXT_HTML_TYPE+";charset=UTF-8");
+          if(shouldGzip) {
+            verify(response).setHeader(CONTENT_ENCODING_HEADER, "gzip");
+          } else {
+            verify(response).setHeader(eq(CONTENT_LENGTH_HEADER), anyString());
+          }
         }
         else {
           for( ResponseVerifier range : ranges ) {

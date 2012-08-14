@@ -80,8 +80,8 @@ public class FileServlet extends BasicFileServlet implements ContentService {
     if( mimeTypes == null) throw new RuntimeException("The mime type processor is not set!.");
     return mimeTypes.getContentType(filename);
   }
-
-	@Override
+  
+  @Override
 	public String getContentRoot() {		
 		return getBasePath();
 	}
