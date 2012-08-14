@@ -60,7 +60,7 @@
       <artifactId>guice-servlet</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.meltmedia.jgroups.aws</groupId>
+      <groupId>com.meltmedia.jgroups</groupId>
       <artifactId>jgroups-aws</artifactId>
     </dependency>
     <dependency>

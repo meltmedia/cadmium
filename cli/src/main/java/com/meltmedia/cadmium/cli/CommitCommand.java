@@ -15,7 +15,10 @@
  */
 package com.meltmedia.cadmium.cli;
 
+import java.io.File;
 import java.util.List;
+
+import org.apache.commons.io.FileUtils;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -63,6 +66,8 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
         status.setRepo(repo);
       }
       
+      status.setRevision(null);
+      
       System.out.println("Cloning repository that ["+siteUrl+"] is serving");
       git = CloneCommand.cloneSiteRepo(status);
       
@@ -76,13 +81,14 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
       revision = CloneCommand.cloneContent(content, git, comment);
       
       System.out.println("Switching content on ["+siteUrl+"]");
-      UpdateCommand.sendUpdateMessage(siteUrl, branch, revision, comment, token);
+      UpdateCommand.sendUpdateMessage(siteUrl, null, branch, revision, comment, token);
       
     } catch(Exception e) {
       System.err.println("Failed to commit changes to ["+siteUrl+"]: "+e.getMessage());
     } finally {
       if(git != null) {
         git.close();
+        FileUtils.forceDelete(new File(git.getBaseDirectory()));
       }
     }
     

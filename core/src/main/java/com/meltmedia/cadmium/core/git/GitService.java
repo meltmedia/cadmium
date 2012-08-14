@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
@@ -55,17 +56,14 @@ public class GitService
 {
   private static final Logger log = LoggerFactory.getLogger(GitService.class);
   
-  protected Repository repository;
   protected Git git;
   
   public GitService(Repository repository) {
-    this.repository = repository;
-    git = new Git(this.repository);
+    git = new Git(repository);
   }
   
   protected GitService(Git gitRepo) {
     this.git = gitRepo;
-    this.repository = gitRepo.getRepository();
   }
   
   public static void setupSsh(String sshDir) {
@@ -151,7 +149,18 @@ public class GitService
     return git.checkinNewContent(source, comment);
   }
   
-  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName) throws RefNotFoundException, Exception {
+  /**
+   * Initializes war content directory for a Cadmium war.
+   * @param uri The remote Git repository ssh URI.
+   * @param branch The remote branch to checkout.
+   * @param root The shared content root.
+   * @param warName The name of the war file.
+   * @param historyManager The history manager to log the initialization event.
+   * @return A GitService object the points to the freshly cloned Git repository.
+   * @throws RefNotFoundException
+   * @throws Exception
+   */
+  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager) throws RefNotFoundException, Exception {
     if(!FileSystemManager.exists(root)) {
       log.info("Content Root directory [{}] does not exist. Creating!!!", root);
       if(!new File(root).mkdirs()) {
@@ -228,6 +237,7 @@ public class GitService
       }
       configProperties.setProperty("branch", cloned.getBranchName());
       configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
+      configProperties.setProperty("repo", uri);
       
 
       String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
@@ -241,17 +251,23 @@ public class GitService
         configProperties.setProperty("source", "{}");
       }
       
-      HistoryManager historyManager = new HistoryManager(warDir);
-      
+      boolean closeHistoryManager = false;
+      if(historyManager == null) {
+        closeHistoryManager = true;
+        historyManager = new HistoryManager(warDir);
+      }
       
       FileWriter writer = null;
       try{
         writer = new FileWriter(configPropsFile);
         configProperties.store(writer, "initialized configuration properties");
-        historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+        if(historyManager != null) {
+          historyManager.logEvent(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+        }
       } finally {
-        if(writer != null) {
-          writer.close();
+        IOUtils.closeQuietly(writer);
+        if(closeHistoryManager) {
+          IOUtils.closeQuietly(historyManager);
         }
       }
     }
@@ -281,7 +297,7 @@ public class GitService
   }
   
   public String getRepositoryDirectory() throws Exception {
-    return this.repository.getDirectory().getAbsolutePath();
+    return git.getRepository().getDirectory().getAbsolutePath();
   }
   
   public String getBaseDirectory() throws Exception {
@@ -302,6 +318,7 @@ public class GitService
   }
   
   public void switchBranch(String branchName) throws RefNotFoundException, Exception {
+    Repository repository = git.getRepository();
     if(branchName != null && !repository.getBranch().equals(branchName)) {
       log.info("Switching branch from {} to {}", repository.getBranch(), branchName);
       CheckoutCommand checkout = git.checkout();
@@ -309,7 +326,7 @@ public class GitService
         checkout.setName(branchName);
       } else {
         checkout.setName("refs/heads/"+branchName);
-        if(this.repository.getRef("refs/heads/"+ branchName) == null) {
+        if(repository.getRef("refs/heads/"+ branchName) == null) {
           CreateBranchCommand create = git.branchCreate();
           create.setName(branchName);
           create.setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM);
@@ -394,8 +411,15 @@ public class GitService
     git.branchDelete().setForce(true).setBranchNames(branchName).call();
   }
   
+  /**
+   * Checks in content from a source directory into the current git repository.
+   * @param sourceDirectory The directory to pull content in from.
+   * @param message The commit message to use.
+   * @return The new SHA revision.
+   * @throws Exception
+   */
   public String checkinNewContent(String sourceDirectory, String message) throws Exception {
-    log.info("Purging old content.");
+    log.info("Removing old content.");
     RmCommand remove = git.rm();
     for(String filename : new File(getBaseDirectory()).list()) {
       if(!filename.equals(".git")) {
@@ -403,8 +427,6 @@ public class GitService
       }
     }
     remove.call();
-    log.info("Committing removal of content.");
-    git.commit().setMessage("Removed old content for deployment \""+message+"\"").call();
     log.info("Copying in new content.");
     FileSystemManager.copyAllContent(sourceDirectory, getBaseDirectory(), true);
     log.info("Adding new content.");
@@ -444,7 +466,7 @@ public class GitService
   }
   
   public boolean isTag(String tagname) throws Exception {
-    Map<String, Ref> allRefs = repository.getTags();
+    Map<String, Ref> allRefs = git.getRepository().getTags();
     for(String key : allRefs.keySet()) {
       Ref ref = allRefs.get(key);
       log.debug("Checking tag key{}, ref{}", key, ref.getName());
@@ -470,6 +492,7 @@ public class GitService
   }
   
   public String getBranchName() throws Exception {
+    Repository repository = git.getRepository();
     if(ObjectId.isId(repository.getFullBranch()) && repository.getFullBranch().equals(repository.resolve("HEAD").getName())) {
       RevWalk revs = null;
       try {
@@ -496,10 +519,14 @@ public class GitService
   }
   
   public String getCurrentRevision() throws Exception {
-    return repository.getRef(getBranchName()).getObjectId().getName();
+    return git.getRepository().getRef(getBranchName()).getObjectId().getName();
+  }
+  
+  public String getRemoteRepository() {
+    return git.getRepository().getConfig().getString("remote", "origin", "url");
   }
   
   public void close() throws IOException {
-    this.repository.close();
+    git.getRepository().close();
   }
 }

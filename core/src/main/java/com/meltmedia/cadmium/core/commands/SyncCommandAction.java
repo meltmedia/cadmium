@@ -33,7 +33,6 @@ import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
-import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import com.meltmedia.cadmium.core.messaging.Message;
@@ -73,8 +72,6 @@ public class SyncCommandAction implements CommandAction {
   @Inject
   protected DelayedGitServiceInitializer gitInit;
   
-  private GitService git;
-
   public String getName() { return ProtocolMessage.SYNC; }
   
   @Override
@@ -90,7 +87,7 @@ public class SyncCommandAction implements CommandAction {
   private void handleCommandAsNonCoordinator(final CommandContext ctx) {
     log.info("Received SYNC request from coordinator");
     boolean update = false;
-    if(ctx.getMessage().getProtocolParameters().containsKey("branch") || ctx.getMessage().getProtocolParameters().containsKey("sha")) {
+    if(ctx.getMessage().getProtocolParameters().containsKey("repo") || ctx.getMessage().getProtocolParameters().containsKey("branch") || ctx.getMessage().getProtocolParameters().containsKey("sha")) {
       update = true;
     }
     
@@ -109,13 +106,14 @@ public class SyncCommandAction implements CommandAction {
           }
           if(manager != null) {
             try {
+              String repo = properties.get("repo");
               String branch = properties.get("BranchName");
               String rev = properties.get("CurrentRevision");
               String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
               String uuid = properties.get("uuid");
               String comment = properties.get("comment");
               boolean revertible = !new Boolean(properties.get("nonRevertible"));
-              manager.logEvent(branch, rev, "AUTO", lastUpdated, uuid, comment, revertible, true);
+              manager.logEvent(repo, branch, rev, "AUTO", lastUpdated, uuid, comment, revertible, true);
             } catch(Exception e){
               log.warn("Failed to update log", e);
             }
@@ -125,7 +123,7 @@ public class SyncCommandAction implements CommandAction {
         }
 
         @Override
-        public void workFailed(String branch, String sha, String openId, String uuid) {
+        public void workFailed(String repo, String branch, String sha, String openId, String uuid) {
           log.info("Sync failed");
           worker.setListener(oldListener);
         }
@@ -137,37 +135,40 @@ public class SyncCommandAction implements CommandAction {
 
   private void handleCommandAsCoordinator(CommandContext ctx) {
     log.info("Received SYNC message from new member {}", ctx.getSource());
-    if(git != null && gitInit != null) {
+    if(gitInit != null) {
       try {
         log.info("Waiting for git service to initialize.");
-        git = gitInit.getGitService();
+        gitInit.getGitService();
+        gitInit.releaseGitService();
       } catch(Exception e){
         log.warn("Waiting was interrupted.", e);
         return;
       }
     }
     boolean update = false;
-    if(ctx.getMessage().getProtocolParameters().containsKey("branch") && ctx.getMessage().getProtocolParameters().containsKey("sha")) {
-      log.info("Sync Request has branch {} and sha {}", ctx.getMessage().getProtocolParameters().get("branch"), ctx.getMessage().getProtocolParameters().get("sha"));
-      if(configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
-        log.info("I have branch {} and sha {}", configProperties.get("branch"), configProperties.get("git.ref.sha"));
-        if(!configProperties.getProperty("branch").equals(ctx.getMessage().getProtocolParameters().get("branch")) || !configProperties.getProperty("git.ref.sha").equals(ctx.getMessage().getProtocolParameters().get("sha"))) {
+    if(ctx.getMessage().getProtocolParameters().containsKey("repo") && ctx.getMessage().getProtocolParameters().containsKey("branch") && ctx.getMessage().getProtocolParameters().containsKey("sha")) {
+      log.info("Sync Request has repo {} and branch {} and sha {}", new Object[] {ctx.getMessage().getProtocolParameters().get("repo"), ctx.getMessage().getProtocolParameters().get("branch"), ctx.getMessage().getProtocolParameters().get("sha")});
+      if(configProperties.containsKey("repo") && configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+        log.info("I have repo {} and branch {} and sha {}", new Object[] {configProperties.get("repo"), configProperties.get("branch"), configProperties.get("git.ref.sha")});
+        if(!configProperties.getProperty("repo").equals(ctx.getMessage().getProtocolParameters().get("repo")) || !configProperties.getProperty("branch").equals(ctx.getMessage().getProtocolParameters().get("branch")) || !configProperties.getProperty("git.ref.sha").equals(ctx.getMessage().getProtocolParameters().get("sha"))) {
           log.info("Update is required!");
           update = true;
         }
       }
-    } else if (configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
-      log.info("Sync request has no branch and/or sha! update is required!");
+    } else if (configProperties.containsKey("repo") && configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
+      log.info("Sync request has no repo and/or branch and/or sha! update is required!");
       update = true;
     }
     
     if(update) {
       Message syncMessage = new Message();
       syncMessage.setCommand(getName());
+      syncMessage.getProtocolParameters().put("repo", configProperties.getProperty("repo"));
       syncMessage.getProtocolParameters().put("branch", configProperties.getProperty("branch"));
       syncMessage.getProtocolParameters().put("sha", configProperties.getProperty("git.ref.sha"));
       try{
-        log.info("Sending SYNC message to new member {}, branch {}, sha {}", new Object[] {ctx.getSource(), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
+        log.info("Sending SYNC message to new member {}, repo {}, branch {}, sha {}", new Object[] {ctx.getSource(), configProperties.getProperty("repo"), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
+        
         sender.sendMessage(syncMessage, new ChannelMember(ctx.getSource()));
       } catch(Exception e) {
         log.warn("Failed to send SYNC message", e);
