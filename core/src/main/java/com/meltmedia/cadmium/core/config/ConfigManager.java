@@ -2,8 +2,6 @@ package com.meltmedia.cadmium.core.config;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -18,6 +16,12 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.config.impl.PropertiesReaderImpl;
 import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
+
+/**
+ * This centralizes and manages how other classes read and write to properties files. 
+ * 
+ * @author Brian Barr
+ */
 
 @Singleton
 public class ConfigManager {

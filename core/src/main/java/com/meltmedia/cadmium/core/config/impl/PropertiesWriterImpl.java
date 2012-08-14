@@ -9,6 +9,12 @@ import org.slf4j.Logger;
 
 import com.meltmedia.cadmium.core.config.PropertiesWriter;
 
+/**
+ * This implements the PropertiesWriter Interface.  For use in the ConfigManager class 
+ * 
+ * @author Brian Barr
+ */
+
 public class PropertiesWriterImpl implements PropertiesWriter {
 
   @Override

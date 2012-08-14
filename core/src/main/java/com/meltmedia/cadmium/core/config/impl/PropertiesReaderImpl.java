@@ -13,6 +13,12 @@ import org.slf4j.Logger;
 
 import com.meltmedia.cadmium.core.config.PropertiesReader;
 
+/**
+ * This implements the PropertiesReader Interface.  For use in the ConfigManager class 
+ * 
+ * @author Brian Barr
+ */
+
 public class PropertiesReaderImpl implements PropertiesReader {
 
   @Override

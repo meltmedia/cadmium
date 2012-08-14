@@ -7,6 +7,12 @@ import javax.servlet.ServletContext;
 
 import org.slf4j.Logger;
 
+/**
+ *  PropertiesReader Interface.  For use in the ConfigManager class. 
+ * 
+ * @author Brian Barr
+ */
+
 public interface PropertiesReader {
 
   public Properties getProperties(String fileName, Logger log);
