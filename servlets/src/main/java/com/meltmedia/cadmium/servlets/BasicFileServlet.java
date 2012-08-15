@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.UUID;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,7 +51,7 @@ public class BasicFileServlet
   public static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
   public static final String ACCEPT_HEADER = "Accept";
   
-  public static final String RANGE_BOUNDARY = "MULTIPART_BYTERANGES";
+  public static final String RANGE_BOUNDARY = "RANGES_BOUNDARY_";
   
   protected File contentDir;
   protected Long lastUpdated = System.currentTimeMillis();
@@ -133,8 +134,9 @@ public class BasicFileServlet
       context.response.setDateHeader(LAST_MODIFIED_HEADER, lastUpdated);
       if(!context.ranges.isEmpty()) {
         context.response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+        String rangeBoundary = RANGE_BOUNDARY + UUID.randomUUID().toString();
         if(context.ranges.size() > 1) {
-          context.response.setContentType("multipart/byteranges; boundary=" + RANGE_BOUNDARY);
+          context.response.setContentType("multipart/byteranges; boundary=" + rangeBoundary);
           context.response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
           
           if(context.sendEntity) {
@@ -143,7 +145,7 @@ public class BasicFileServlet
             ServletOutputStream sout = (ServletOutputStream)context.out;
             for(Range r : context.ranges) {
               sout.println();
-              sout.println("--"+RANGE_BOUNDARY);
+              sout.println("--"+rangeBoundary);
               sout.println("Content-Type: " + context.contentType);
               sout.println("Context-Range: bytes " + r.start + "-" + r.end + "/" + context.file.length());
               
@@ -151,7 +153,7 @@ public class BasicFileServlet
             }
             
             sout.println();
-            sout.println("--"+RANGE_BOUNDARY+"--");
+            sout.println("--"+rangeBoundary+"--");
           }
         } else {
           Range r = context.ranges.get(0);
