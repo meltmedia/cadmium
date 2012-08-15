@@ -52,11 +52,6 @@
       </dependency>
       <dependency>
         <groupId>com.meltmedia.cadmium</groupId>
-        <artifactId>cadmium-vault</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.meltmedia.cadmium</groupId>
         <artifactId>cadmium-email</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -304,7 +299,6 @@
     <module>war</module>
     <module>maven</module>
     <module>deployer</module>
-    <module>vault</module>
     <module>email</module>
     <module>search</module>
   </modules>

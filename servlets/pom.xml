@@ -33,10 +33,6 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>cadmium-vault</artifactId> 
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>cadmium-search</artifactId> 
     </dependency>
     <dependency>
