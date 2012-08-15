@@ -40,7 +40,7 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
   public void execute() throws Exception {    
     boolean interactive = index == null;
     
-    String siteUrl = site.get(0);
+    String siteUrl = getSecureBaseUrl(site.get(0));
     
     List<HistoryEntry> history = HistoryCommand.getHistory(siteUrl, -1, false, token);
     HistoryEntry selectedEntry = null;

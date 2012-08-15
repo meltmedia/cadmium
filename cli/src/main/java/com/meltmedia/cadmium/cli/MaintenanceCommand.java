@@ -57,7 +57,7 @@ public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCom
 		    state = MaintenanceRequest.State.valueOf(paramList.get(0).toUpperCase());
 		  } catch(Exception e) {
 		  }
-			site = paramList.get(1);
+			site = getSecureBaseUrl(paramList.get(1));
 			String url = site + JERSEY_ENDPOINT;
 			if(state != null) {
 				HttpPost post = new HttpPost(url);

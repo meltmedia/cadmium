@@ -70,7 +70,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	public void execute() throws ClientProtocolException, IOException {
 	  
-		String siteUrl = site.get(0);
+		String siteUrl = getSecureBaseUrl(site.get(0));
 
 		System.out.println("Getting status of ["+ siteUrl +"]");
     GitService gitValidation = null;

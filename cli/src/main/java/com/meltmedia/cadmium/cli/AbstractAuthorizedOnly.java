@@ -38,6 +38,13 @@ public class AbstractAuthorizedOnly implements AuthorizedOnly {
   protected void addAuthHeader(HttpMessage message) {
     addAuthHeader(token, message);
   }
+  
+  protected String getSecureBaseUrl(String siteUrl) {
+    if(siteUrl.matches("\\Ahttp://.+\\Z")) {
+      return siteUrl.replaceFirst("http://", "https://");
+    }
+    return siteUrl;
+  }
 
   @Override
   public boolean isAuthQuiet() {

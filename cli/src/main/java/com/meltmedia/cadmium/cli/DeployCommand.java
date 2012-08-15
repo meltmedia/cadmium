@@ -78,7 +78,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	  
 
     String repo = parameters.get(0);
-	  String site = parameters.get(1);
+	  String site = getSecureBaseUrl(parameters.get(1));
 	  if( !site.endsWith("/") ) site = site+"/";
 	  if( branch == null ) branch = "master";
 	  String domain = URI.create(site).getHost();

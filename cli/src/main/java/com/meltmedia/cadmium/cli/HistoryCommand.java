@@ -52,7 +52,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
   private List<String> site;
   
   public void execute() throws Exception {
-    String siteUri = site.get(0);
+    String siteUri = getSecureBaseUrl(site.get(0));
     Matcher siteMatcher = URI_PATTERN.matcher(siteUri);
     if(siteMatcher.matches()) {
       siteUri = siteMatcher.group(1);

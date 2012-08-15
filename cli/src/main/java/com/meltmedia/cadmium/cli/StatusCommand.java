@@ -51,7 +51,7 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
 	    System.err.println("Please specify a url");
 	    System.exit(1);
 	  }
-	  String siteUrl = site.get(0);
+	  String siteUrl = getSecureBaseUrl(site.get(0));
 		Status statusObj = getSiteStatus(siteUrl, token);    
     List<StatusMember> members = statusObj.getMembers();
     
