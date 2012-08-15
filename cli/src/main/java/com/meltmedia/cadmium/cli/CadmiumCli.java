@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -32,6 +34,7 @@ import com.meltmedia.cadmium.core.github.ApiClient;
 
 public class CadmiumCli {
 
+  private static final Logger logger = LoggerFactory.getLogger(CadmiumCli.class);
 	public static JCommander jCommander = null;
 
 	/**
@@ -90,6 +93,7 @@ public class CadmiumCli {
 		}
 		catch( Exception e ) {
 			System.err.println("Error: " + e.getMessage());
+			logger.debug("Cli Failed", e);
 			//e.printStackTrace();
 			System.exit(1);
 		}

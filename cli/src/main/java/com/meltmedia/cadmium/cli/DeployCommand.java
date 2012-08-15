@@ -85,10 +85,9 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	  String url = removeSubDomain(site)+"system/deploy";
 	  System.out.println(url);
     log.debug("siteUrl + JERSEY_ENDPOINT = {}", url);
-	  
-		DefaultHttpClient client = new DefaultHttpClient();
 
 		try {
+	    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
 			
 			HttpPost post = new HttpPost(url);
 			addAuthHeader(post);

@@ -204,7 +204,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	}
   
   public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token) throws Exception {
-    HttpClient client = new DefaultHttpClient();
+    HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
     addAuthHeader(token, post);

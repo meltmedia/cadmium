@@ -96,7 +96,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
   
   public static List<String> getDeployed(String url, String token) throws Exception {
     List<String> deployed = new ArrayList<String> ();
-    DefaultHttpClient client = new DefaultHttpClient();
+    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpGet get = new HttpGet(url + "/system/deployment/list");
     addAuthHeader(token, get);
@@ -115,7 +115,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
   }
   
   public static void undeploy(String url, String domain, String context, String token) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
+    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpPost del = new HttpPost(url + "/system/undeploy");
     addAuthHeader(token, del);

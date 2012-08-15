@@ -15,9 +15,27 @@
  */
 package com.meltmedia.cadmium.cli;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.http.HttpMessage;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AbstractAuthorizedOnly implements AuthorizedOnly {
+  private final Logger logger = LoggerFactory.getLogger(getClass());
+  
+  private static final Pattern URL_PATTERN = Pattern.compile("\\Ahttp://([^/:]+)(?:\\:\\d+)?(?:/[^/]*)*\\Z");
 
   protected String token;
   
@@ -40,8 +58,21 @@ public class AbstractAuthorizedOnly implements AuthorizedOnly {
   }
   
   protected String getSecureBaseUrl(String siteUrl) {
-    if(siteUrl.matches("\\Ahttp://.+\\Z")) {
-      return siteUrl.replaceFirst("http://", "https://");
+    Matcher urlMatcher = URL_PATTERN.matcher(siteUrl);
+    if(urlMatcher.matches()) {
+      logger.debug("Url matches [{}]", siteUrl);
+      boolean local = false;
+      try {
+        logger.debug("Checking if host [{}] is local", urlMatcher.group(1));
+        InetAddress hostAddr = InetAddress.getByName(urlMatcher.group(1));
+        local = hostAddr.isLoopbackAddress() || hostAddr.isSiteLocalAddress();
+        logger.debug("IpAddress [{}] local: {}", hostAddr.getHostAddress(), local);
+      } catch(UnknownHostException e) {
+        logger.warn("Hostname not found ["+siteUrl+"]", e);
+      }
+      if(!local) {
+        return siteUrl.replaceFirst("http://", "https://");
+      }
     }
     return siteUrl;
   }
@@ -49,6 +80,24 @@ public class AbstractAuthorizedOnly implements AuthorizedOnly {
   @Override
   public boolean isAuthQuiet() {
     return false;
+  }
+  
+  /**
+   * Sets the Commons HttpComponents to accept all SSL Certificates.
+   * 
+   * @throws Exception
+   * @return The reference passed in.
+   * @throws KeyStoreException 
+   * @throws NoSuchAlgorithmException 
+   * @throws UnrecoverableKeyException 
+   * @throws KeyManagementException 
+   */
+  protected static DefaultHttpClient setTrustAllSSLCerts(DefaultHttpClient client) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+    SSLSocketFactory acceptAll = new SSLSocketFactory(new TrustSelfSignedStrategy(), SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+    
+    client.getConnectionManager().getSchemeRegistry().register(new Scheme("https", 443, acceptAll));
+    
+    return client;
   }
 
 }

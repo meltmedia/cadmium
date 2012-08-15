@@ -114,7 +114,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
       siteUri += "/" + since;
     }
     
-    HttpClient httpClient = new DefaultHttpClient();
+    HttpClient httpClient = setTrustAllSSLCerts(new DefaultHttpClient());
     HttpGet get = new HttpGet(siteUri);
     Long currentTime = System.currentTimeMillis();
     Long timeoutTime = currentTime + timeout;
@@ -144,7 +144,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
   }
 
   public static List<HistoryEntry> getHistory(String siteUri, int limit, boolean filter, String token)
-      throws URISyntaxException, IOException, ClientProtocolException {
+      throws URISyntaxException, IOException, ClientProtocolException, Exception {
 
     if(!siteUri.endsWith("/system/history")) {
       siteUri += "/system/history";
@@ -152,7 +152,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
     
     List<HistoryEntry> history = null;
     
-    HttpClient httpClient = new DefaultHttpClient();
+    HttpClient httpClient = setTrustAllSSLCerts(new DefaultHttpClient());
     HttpGet get = null;
     try {
       URIBuilder uriBuilder = new URIBuilder(siteUri);

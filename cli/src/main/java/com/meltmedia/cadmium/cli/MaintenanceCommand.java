@@ -48,9 +48,9 @@ public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCom
 	private MaintenanceRequest.State state;
 	private final String JERSEY_ENDPOINT = "/system/maintenance";
 
-	public void execute() throws ClientProtocolException, IOException {
+	public void execute() throws ClientProtocolException, IOException, Exception {
 		
-		DefaultHttpClient client = new DefaultHttpClient();
+		DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
 
 		if(paramList.size() == 2) {
 		  try {
