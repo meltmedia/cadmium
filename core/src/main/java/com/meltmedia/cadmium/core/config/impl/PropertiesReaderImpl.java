@@ -20,36 +20,40 @@ import com.meltmedia.cadmium.core.config.PropertiesReader;
  */
 
 public class PropertiesReaderImpl implements PropertiesReader {
-
-  @Override
-  public Properties getProperties(String fileName, Logger log) {
-
-    Properties properties = new Properties();
-
-    if(new File(fileName).canRead()) {
-
-      FileInputStream in = null;
-      try {
-
-        in = new FileInputStream(fileName);        
-        properties.load(in);
-      }
-      catch(Exception e){
-
-        log.warn("Failed to read in properties file.", e);
-      } 
-      finally {
-        IOUtils.closeQuietly(in);
-      }
-    }
-
-    return properties;
-  }
-
+  
   @Override
   public Properties getProperties(File file, Logger log) {
 
     Properties properties = new Properties();    
+    readPropertiesWithReader(properties, file, log);
+    return properties;
+  }
+
+  @Override
+  public Properties getProperties(ServletContext context, String path, Logger log) {
+
+    Properties properties = new Properties();    
+    readPropertiesWithContext(properties, context, path, log);
+    return properties;
+  }
+
+  @Override
+  public Properties getProperties(Properties properties, String path, Logger log) {
+
+    File file = new File(path);
+    readPropertiesWithReader(properties, file, log);
+    return properties;
+  }  
+
+  @Override
+  public Properties appendProperties(Properties properties, File configFile, Logger log) {
+
+    readPropertiesWithReader(properties, configFile, log);
+    return properties;
+  }
+
+  private void readPropertiesWithReader(Properties properties, File file, Logger log) {
+
     Reader reader = null;
     try{
 
@@ -68,13 +72,10 @@ public class PropertiesReaderImpl implements PropertiesReader {
       IOUtils.closeQuietly(reader);
     }
 
-    return properties;
   }
 
-  @Override
-  public Properties getProperties(ServletContext context, String path, Logger log) {
+  private void readPropertiesWithContext(Properties properties, ServletContext context, String path, Logger log) {
 
-    Properties properties = new Properties();
     Reader reader = null;
     try{
 
@@ -92,29 +93,8 @@ public class PropertiesReaderImpl implements PropertiesReader {
       IOUtils.closeQuietly(reader);
     }
 
-    return properties;
   }
-
-  @Override
-  public Properties getProperties(Properties properties, String path, Logger log) {
-
-    FileReader reader = null;
-    try {
-
-      reader = new FileReader(path);
-      properties.load(reader);
-    }
-    catch(Exception e) {
-
-      log.warn("Failed to load in properties for path: {}", path);
-    }
-    finally {
-      IOUtils.closeQuietly(reader);
-    }  
-
-    return properties;
-  }
-
+  
   public void logProperties( Logger log, Properties properties, String name ) {
     if( log.isDebugEnabled() ) {
       StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
@@ -123,34 +103,6 @@ public class PropertiesReaderImpl implements PropertiesReader {
       }
       log.debug(sb.toString());
     }
-  }
-
-  @Override
-  public Properties appendProperties(Properties properties, File configFile, Logger log) {
-
-    if( !configFile.exists() /*|| !configFile.canRead()*/) return properties;
-
-    Reader reader = null;
-    try{
-
-      log.info("configFile path: {}", configFile.getPath());
-
-      reader = new FileReader(configFile);
-      properties.load(reader);
-
-      logProperties(log, properties, configFile.getCanonicalPath());
-    }
-    catch(Exception e) {
-
-      log.warn("Failed to load properties file ["
-          + configFile.getAbsolutePath() + "] from content directory.", e);
-    }
-    finally {
-
-      IOUtils.closeQuietly(reader);
-    }
-
-    return properties;
   }
 
 }

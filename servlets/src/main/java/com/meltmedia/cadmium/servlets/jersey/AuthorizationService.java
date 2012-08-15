@@ -48,6 +48,8 @@ public class AuthorizationService {
            
       String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties");
       Properties teamsProps = configManager.getPropertiesByFileName(teamsFile);
+      
+      log.info("teamsProps: {}", teamsProps);
            
       String defaultId = teamsProps.getProperty("default");
       String teamIdString = teamsProps.getProperty(env);
