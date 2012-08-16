@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.http.HttpMessage;
 import org.apache.http.conn.scheme.Scheme;
@@ -33,9 +34,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AbstractAuthorizedOnly implements AuthorizedOnly {
-  private final Logger logger = LoggerFactory.getLogger(getClass());
+  private static final Logger logger = LoggerFactory.getLogger(AbstractAuthorizedOnly.class);
   
-  private static final Pattern URL_PATTERN = Pattern.compile("\\Ahttp://([^/:]+)(?:\\:\\d+)?(?:/[^/]*)*\\Z");
+  private static final Pattern URL_PATTERN = compilePattern("\\Ahttp://([^/:]+)(?:\\:\\d+)?(?:/[^/]*)*\\Z", logger);
+
+  /**
+   * Compiles the given regex.  Returns null if the pattern could not be compiled and logs an error message to the
+   * specified logger.
+   *
+   * @param regex the regular expression to compile.
+   * @param logger the logger to notify of errors.
+   * @return The compiled regular expression, or null if it could not be compiled.
+   */
+  private static Pattern compilePattern( String regex, Logger logger ) {
+    try {
+      return Pattern.compile(regex);
+    }
+    catch( PatternSyntaxException pse ) {
+      logger.error("Could not compile regex "+regex, pse);
+    }
+    return null;
+  }
 
   protected String token;
   
