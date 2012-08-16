@@ -70,7 +70,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	public void execute() throws ClientProtocolException, IOException {
 	  
-		String siteUrl = site.get(0);
+		String siteUrl = getSecureBaseUrl(site.get(0));
 
 		System.out.println("Getting status of ["+ siteUrl +"]");
     GitService gitValidation = null;
@@ -204,7 +204,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	}
   
   public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token) throws Exception {
-    HttpClient client = new DefaultHttpClient();
+    HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
     addAuthHeader(token, post);

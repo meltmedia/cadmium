@@ -33,7 +33,8 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
       System.exit(1);
     }
     try{
-    List<String> deployed = getDeployed(args.get(0), token);
+      String site = getSecureBaseUrl(args.get(0));
+    List<String> deployed = getDeployed(site, token);
     if(deployed == null || deployed.isEmpty()) {
       System.out.println("There are no cadmium wars currently deployed.");
       return;
@@ -68,7 +69,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
     
     String undeploy = deployed.get(selectedIndex);
     
-    System.out.println("Undeploying "+undeploy+" from "+args.get(0));
+    System.out.println("Undeploying "+undeploy+" from "+site);
     
     String domain = null;
     String context = null;
@@ -79,7 +80,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
       } else {
         context = "";
       }
-      undeploy(args.get(0), domain, context, token);
+      undeploy(site, domain, context, token);
       
     } else {
       System.err.println("Invalid app name: "+undeploy);
@@ -95,7 +96,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
   
   public static List<String> getDeployed(String url, String token) throws Exception {
     List<String> deployed = new ArrayList<String> ();
-    DefaultHttpClient client = new DefaultHttpClient();
+    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpGet get = new HttpGet(url + "/system/deployment/list");
     addAuthHeader(token, get);
@@ -114,7 +115,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
   }
   
   public static void undeploy(String url, String domain, String context, String token) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
+    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpPost del = new HttpPost(url + "/system/undeploy");
     addAuthHeader(token, del);
