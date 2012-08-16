@@ -46,7 +46,7 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
       
       if( params.size() == 2 ) {
         content = params.get(0);
-        siteUrl = params.get(1);
+        siteUrl = getSecureBaseUrl(params.get(1));
       }
       else if( params.size() == 0 ) {
         System.err.println("The content directory and site must be specifed.");

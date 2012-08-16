@@ -58,8 +58,8 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
    * Called to execute this command.
    */
   public void execute() throws Exception {
-    String site1 = sites.get(0);
-    String site2 = sites.get(1);
+    String site1 = getSecureBaseUrl(sites.get(0));
+    String site2 = getSecureBaseUrl(sites.get(1));
     if(site1.equalsIgnoreCase(site2)) {
       System.err.println("Cannot clone a site into itself.");
       System.exit(1);
