@@ -25,6 +25,13 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
 
+/**
+ * Creates a content directory for a Cadmium site.
+ * 
+ * @author John McEntire
+ * @author Brian Barr
+ *
+ */
 @Parameters(commandDescription = "Initializes the content directory for a new war", separators="=")
 public class InitializeContentCommand implements CliCommand {
   

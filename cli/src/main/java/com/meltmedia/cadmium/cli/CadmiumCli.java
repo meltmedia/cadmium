@@ -32,12 +32,28 @@ import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.github.ApiClient;
 
+/**
+ * The core class to every Cadmium command line interface commands.
+ * 
+ * @author Christian Trimble
+ * @author John McEntire
+ * @author Brian Barr
+ *
+ */
 public class CadmiumCli {
 
   private static final Logger logger = LoggerFactory.getLogger(CadmiumCli.class);
+  
+  /**
+   * The Object used to parse and populate the command line arguments into the command object instances.
+   * 
+   * @see <a href="http://jcommander.org/">JCommander</a>
+   */
 	public static JCommander jCommander = null;
 
 	/**
+	 * The main entry point to Cadmium cli.
+	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
@@ -100,6 +116,12 @@ public class CadmiumCli {
 
 	}
 
+	/**
+	 * Sets up the ssh configuration that git will use to communicate with the remote git repositories.
+	 * 
+	 * @param noPrompt True if there should be authentication prompts for the users username and password. 
+	 *        If false, the program will fail with an exit code of 1 if not authorized. 
+	 */
 	private static void setupSsh(boolean noPrompt) {
 		File sshDir = new File(System.getProperty("user.home"), ".ssh");
 		if(sshDir.exists()) {
@@ -107,6 +129,15 @@ public class CadmiumCli {
 		}
 	}
 	
+	/**
+	 * <p>Retrieves and applies whatever previously authorized Github token was used. If the requested command
+	 * requests quiet authentication this will exit with 1 when not authenticated. Otherwise, if the requested 
+	 * command doesn't request quiet authentication this will prompt for and authorize the current user in Github.</p>
+	 * 
+	 * @see {@link AuthorizedOnly.isAuthQuiet}
+	 * @param authCmd
+	 * @throws Exception
+	 */
 	private static void setupAuth(AuthorizedOnly authCmd) throws Exception {
 	  String token = ApiClient.getToken();
 	  if(token != null) {
@@ -138,6 +169,16 @@ public class CadmiumCli {
 	  }
 	}
 	
+	/**
+	 * <p>Automatically wires in all CliCommand subtypes using Reflections library.</p>
+	 * 
+	 * @see <a href="http://code.google.com/p/reflections/">Reflections</a>
+	 * @see <a href="http://jcommander.org/">JCommander</a>
+	 * 
+	 * @param jCommander The JCommander instance to wire the commands into.
+	 * @return A map of all commands found mapped to their command names.
+	 * @throws Exception
+	 */
 	private static Map<String, CliCommand> wireCommands(JCommander jCommander) throws Exception {
     Map<String, CliCommand> commands = new LinkedHashMap<String, CliCommand>();
     Reflections reflections = new Reflections("com.meltmedia.cadmium");

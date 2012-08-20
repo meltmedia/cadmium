@@ -33,6 +33,13 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Implements functionality to facilitate authentication to Cadmium rest endpoints.
+ * 
+ * @author John McEntire
+ * @author Christian Trimble
+ *
+ */
 public class AbstractAuthorizedOnly implements AuthorizedOnly {
   private static final Logger logger = LoggerFactory.getLogger(AbstractAuthorizedOnly.class);
   
@@ -56,26 +63,51 @@ public class AbstractAuthorizedOnly implements AuthorizedOnly {
     return null;
   }
 
+  /**
+   * The Github API token for the user of the current instance.
+   */
   protected String token;
   
+  /**
+   * @param token The users Github API token.
+   */
   @Override
   public void setToken(String token) {
     this.token = token;
   }
   
+  /**
+   * @return The users Github API token.
+   */
   @Override
   public String getToken() {
     return token;
   }
   
+  /**
+   * Adds the Authorization Header to the given message.
+   * @param token The users Github API Token.
+   * @param message The Apache Commons HttpClient message to add the authentication to.
+   */
   protected static void addAuthHeader(String token, HttpMessage message) {
     message.addHeader("Authorization", "token " + token);
   }
   
+  /**
+   * Calls the static method with the same name to add the Authorization Header to the given message.
+   * 
+   * @param message The Apache Commons HttpClient message to add the authentication to.
+   */
   protected void addAuthHeader(HttpMessage message) {
     addAuthHeader(token, message);
   }
   
+  /**
+   * Converts the passed in siteUrl to be https if not already or not local.
+   * 
+   * @param siteUrl The url of a cadmium site.
+   * @return The passed in siteUrl or the same url but converted to https.
+   */
   protected String getSecureBaseUrl(String siteUrl) {
     Matcher urlMatcher = URL_PATTERN.matcher(siteUrl);
     if(urlMatcher.matches()) {
@@ -96,6 +128,11 @@ public class AbstractAuthorizedOnly implements AuthorizedOnly {
     return siteUrl;
   }
 
+  /**
+   * Tells the {@link CadmiumCli} instance that this command should silence the authentication and just fail if not authorized.
+   * 
+   * @return true if the authentication should not prompt for a username and password.
+   */
   @Override
   public boolean isAuthQuiet() {
     return false;

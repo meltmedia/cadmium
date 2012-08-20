@@ -21,7 +21,16 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
 
-
+/**
+ * Initializes a Cadmium Content Project.
+ * 
+ * @deprecated
+ * 
+ * @author Chris Haley
+ * @author Brian Barr
+ * @author John McEntire
+ *
+ */
 @Parameters(commandDescription = "Initializes New Cadmium Project", separators="=")
 public class InitializeProjectCommand implements CliCommand {
 	

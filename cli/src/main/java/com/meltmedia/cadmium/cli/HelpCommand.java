@@ -20,8 +20,17 @@ import java.util.List;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+/**
+ * An Object used to facilitate the help function of the Cadmium CLI. This class gets wired in explicitly.
+ * 
+ * @author Christian Trimble
+ *
+ */
 @Parameters(commandDescription = "Displays usage information for a command.")
 public class HelpCommand {
+  /**
+   * A field that will be set with the name of the command that help was requested for.
+   */
 	@Parameter(description = "<subcommand>", arity=1)
 	public List<String> subCommand;
 }

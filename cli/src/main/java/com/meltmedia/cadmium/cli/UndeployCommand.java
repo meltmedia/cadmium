@@ -1,3 +1,18 @@
+/**
+ *    Copyright 2012 meltmedia
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package com.meltmedia.cadmium.cli;
 
 import java.util.ArrayList;
@@ -19,6 +34,12 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.api.UndeployRequest;
 
+/**
+ * Displays a list of Cadmium wars deployed to a JBoss server with a Cadmium-Deployer war deployed and tells it to undeploy any of them.
+ * 
+ * @author John McEntire
+ *
+ */
 @Parameters(commandDescription="Undeploys a cadmium war", separators="=")
 public class UndeployCommand extends AbstractAuthorizedOnly implements
     CliCommand {
@@ -94,6 +115,14 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
     return "undeploy";
   }
   
+  /**
+   * Retrieves a list of Cadmium wars that are deployed.
+   *  
+   * @param url The uri to a Cadmium deployer war.
+   * @param token The Github API token used for authentication.
+   * @return
+   * @throws Exception
+   */
   public static List<String> getDeployed(String url, String token) throws Exception {
     List<String> deployed = new ArrayList<String> ();
     DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
@@ -114,6 +143,15 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
     return deployed;
   }
   
+  /**
+   * Sends the undeploy command to a Cadmium-Deployer war.
+   * 
+   * @param url The uri to a Cadmium-Deployer war.
+   * @param domain The domain to undeploy.
+   * @param context The context to undeploy.
+   * @param token The Github API token used for authentication.
+   * @throws Exception
+   */
   public static void undeploy(String url, String domain, String context, String token) throws Exception {
     DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     

@@ -35,7 +35,13 @@ import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.status.Status;
 import com.meltmedia.cadmium.status.StatusMember;
 
-
+/**
+ * Displays the status information from a Cadmium site.
+ * 
+ * @author Brian Barr
+ * @author John McEntire
+ *
+ */
 @Parameters(commandDescription = "Displays status info for a site")
 public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand {
 
@@ -92,6 +98,14 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
     return "status";
   }
 
+  /**
+   * Retrieves the status of a Cadmium site into a {@link Status} Object.
+   * 
+   * @param site The site uri of the Cadmium site to get the status from.
+   * @param token The Github API token used for authenticating the request.
+   * @return
+   * @throws Exception
+   */
   public static Status getSiteStatus(String site, String token) throws Exception {
     HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     

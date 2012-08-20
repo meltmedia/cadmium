@@ -35,6 +35,15 @@ import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.api.BasicApiResponse;
 import com.meltmedia.cadmium.core.api.MaintenanceRequest;
 
+/**
+ * Controls a Cadmium sites maintenance page. 
+ * 
+ * @author Chris Haley
+ * @author John McEntire
+ * @author Brian Barr
+ * @author Christian Trimble
+ *
+ */
 @Parameters(commandDescription = "Toggles on and off maintenance page", separators="=")
 public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCommand {
 

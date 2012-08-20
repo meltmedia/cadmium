@@ -37,26 +37,22 @@ import com.beust.jcommander.Parameters;
 import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.api.DeployRequest;
 
-
+/**
+ * This command is used to tell a Cadmium-Deployer instance to create and deploy a new Cadmium war.
+ * 
+ * 
+ * @author Brian Barr
+ * @author John McEntire
+ * @author Christian Trimble
+ *
+ */
 @Parameters(commandDescription = "Deploys the cadmium war to the specified(domain) server", separators="=")
 public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
-
-	//@Parameter(names="--domain", description="The domain where the cadmium application will be deployed", required=false)
-	//private String domain;
-	
-  //@Parameter(names="--context", description="The context root where the cadmium application will be deployed", required=false)
-  //private String context;
-	
-	//@Parameter(names="--repo", description="The repo from which cadmium will serve content initially", required=true)
-	//private String repo;
 	
 	@Parameter(names="--branch", description="The branch from which cadmium will serve content initially", required=false)
 	private String branch;
-	
-	//@Parameter(description="<site>", required=true)
-	//private List<String> site;
   
   @Parameter(names="--artifact", description="The maven coordinates to a cadmium war.", required=false)
   private String artifact;
@@ -64,13 +60,12 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	@Parameter(description="<repo> <site>", required=true)
   private List<String> parameters;
 
-	//public static final String JERSEY_ENDPOINT = "/deploy";
-
+	/**
+	 * 
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
 	public void execute() throws ClientProtocolException, IOException {
-	  //if(domain == null && context == null) {
-	  //  System.err.println("Please specify either --domain and/or --context");
-	  //  System.exit(1);
-	  //}
 	  if( parameters.size() < 2 ) {
 	    System.err.println("The site and repository must be specified.");
 	    System.exit(1);
@@ -116,18 +111,23 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 			}
 		} 
 		catch (Exception e) {
-		  //e.printStackTrace();
 			System.err.println("Failed to deploy cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
 			System.exit(1);
 		}		
 
 	}
-
+	
   @Override
   public String getCommandName() {
     return "deploy";
   }
   
+  /**
+   * Removes the subdomain of the passed in url to get the url of the deployer instance.
+   * 
+   * @param url
+   * @return
+   */
   static String removeSubDomain(String url) {
     return url.replaceAll("\\A([^:]+://)[^\\.]+\\.(.*)\\Z", "$1$2");
   }

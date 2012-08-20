@@ -38,6 +38,12 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 
+/**
+ * Retrieves and displays the history of the requested Cadmium site in a human readable format.
+ * 
+ * @author John McEntire
+ *
+ */
 @Parameters(commandDescription = "Lists history for a given site in human readable form.", separators="=")
 public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand {
   private static final Pattern URI_PATTERN = Pattern.compile("^(http[s]{0,1}://.*)$");
@@ -68,6 +74,12 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
     }
   }
 
+  /**
+   * Displays a list of {@link HistoryEntry} objects.
+   * @param history The list of entries to display.
+   * @param filter If true then only revertable history entries will be displayed.
+   * @param limitHistory If set this will limit the number of history entries to display.
+   */
   public static void displayHistory(List<HistoryEntry> history, boolean filter, Integer limitHistory) {
     if(history != null && history.size() > 0) {
       System.console().format("%7s|%12s|%7s|%14s|%52s|%18s|%42s|%24s|%6s|%6s|%6s|%6s\n", "Index", "Date", "Time", "User", "Repository", "Branch", "Revision", "Time Live", "Maint", "Revert", "Done", "Fail");
@@ -104,6 +116,15 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
     }
   }
   
+  /**
+   * Waits until a timeout is reached or a token shows up in the history of a site as finished or failed.
+   * 
+   * @param siteUri The uri to a cadmium site.
+   * @param token The token that represents a history event to wait for.
+   * @param since A timestamp to pass on the the cadmium site to set a limit on how far back to check the history for a token.
+   * @param timeout The timeout in milliseconds to wait for if the token never shows up or fails in the sites log.
+   * @throws Exception
+   */
   public static void waitForToken(String siteUri, String token, Long since, Long timeout) throws Exception {
 
     if(!siteUri.endsWith("/system/history")) {
@@ -143,6 +164,21 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
     }
   }
 
+  /**
+   * Retrieves the history of a Cadmium site.
+   * 
+   * @param siteUri The uri of a cadmium site.
+   * @param limit The maximum number of history entries to retrieve or if set to -1 tells the site to retrieve all history.
+   * @param filter If true filters out the non revertable history entries.
+   * @param token The Github API token to pass to the Cadmium site for authentication.
+   * 
+   * @return A list of {@link HistoryEntry} Objects that are populated with the history returned from the Cadmium site.
+   * 
+   * @throws URISyntaxException
+   * @throws IOException
+   * @throws ClientProtocolException
+   * @throws Exception
+   */
   public static List<HistoryEntry> getHistory(String siteUri, int limit, boolean filter, String token)
       throws URISyntaxException, IOException, ClientProtocolException, Exception {
 
@@ -189,6 +225,11 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
     return history;
   }
 
+  /**
+   * Helper method to format comments to standard out.
+   * 
+   * @param comment
+   */
   private static void printComments(String comment) {
     int index = 0;
     int nextIndex = 154;
@@ -221,6 +262,12 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
     }
   }
 
+  /**
+   * Helper method to format a timestamp.
+   * 
+   * @param timeLive
+   * @return
+   */
   private static String formatTimeLive(long timeLive) {
     String timeString = "ms";
     timeString = (timeLive % 1000) + timeString;
