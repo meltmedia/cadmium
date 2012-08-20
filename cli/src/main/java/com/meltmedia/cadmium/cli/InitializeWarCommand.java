@@ -64,6 +64,16 @@ public class InitializeWarCommand implements CliCommand {
 			if (secure && secureContentRoot != null) {
 				System.setProperty("com.meltmedia.cadmium.contentRoot", secureContentRoot);
 			}
+			
+			if(newWarNames != null && newWarNames.size() != 0) {
+			  String warName = newWarNames.get(0);
+			  if(!warName.toLowerCase().trim().endsWith(".war")) {
+			    warName = warName + ".war";
+			    newWarNames.clear();
+			    newWarNames.add(warName);
+			  }
+			}
+			
 	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, domain, context, secure);
 		} else {
 			System.err.println("ERROR: \""+war+"\" does not exist or cannot be read.");
