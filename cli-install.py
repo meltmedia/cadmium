@@ -16,6 +16,7 @@
 #
 
 import os, os.path, sys, stat, shutil, string, urllib, xml.etree.ElementTree, subprocess
+from termios import tcflush, TCIOFLUSH
 
 cadmium_version = '0.0.1-SNAPSHOT'
 
@@ -193,5 +194,8 @@ if os.path.exists(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cad
 
 print 'Downloading latest version of cadmium...'
 subprocess.call(['mvn', '-q', '-U', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:' + cadmium_version + ':jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
+
+sys.stdout.flush()
+tcflush(sys.stdin, TCIOFLUSH)
 
 subprocess.call([user_dir + '/bin/cadmium', 'check'])
