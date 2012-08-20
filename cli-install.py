@@ -195,7 +195,14 @@ if os.path.exists(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cad
 print 'Downloading latest version of cadmium...'
 subprocess.call(['mvn', '-q', '-U', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:' + cadmium_version + ':jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
 
-sys.stdout.flush()
-tcflush(sys.stdin, TCIOFLUSH)
+exitCode = 1;
+tries = 2;
+while exitCode == 1 and tries > 0:
+  sys.stdout.flush()
+  tcflush(sys.stdin, TCIOFLUSH)
+  exitCode = subprocess.call([user_dir + '/bin/cadmium', 'check'])
+  tries = tries - 1
 
-subprocess.call([user_dir + '/bin/cadmium', 'check'])
+if exitCode == 1:
+  print "Authentication with github has failed. Please check you username and password to make sure they are correct and try again."
+  sys.exit(1)
