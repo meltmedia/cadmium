@@ -30,6 +30,14 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.FileSystemManager;
 
+/**
+ * Parses all html files in a directory with a Jerry Library. This does not make any changes, it just tells if the files are parseable with Jerry. 
+ * 
+ * @see <a href="http://jodd.org/doc/jerry/index.html">Jerry Library</a>
+ * 
+ * @author John McEntire
+ *
+ */
 @Parameters(commandDescription = "Validates a cadmium static content project.", separators="=")
 public class ValidateCommand implements CliCommand {
   private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -75,6 +83,9 @@ public class ValidateCommand implements CliCommand {
     }
   }
   
+  /**
+   * @return A list of html files in the paths specified by the CLI.
+   */
   private List<File> listHtmlFiles() {
     File currentDir = new File(paths == null || paths.size() == 0 ? "." : paths.get(0));
     List<File> theFiles = new ArrayList<File>();
@@ -87,6 +98,13 @@ public class ValidateCommand implements CliCommand {
     return theFiles;
   }
   
+  /**
+   * Adds all html files to the list passed in.
+   * 
+   * @param theFiles The list to populate with the current directory's html files.
+   * @param theDirs The list to populate with the current directory's child directories.
+   * @param currentDir The current directory.
+   */
   private void addCurrentDirFiles(List<File> theFiles, List<File> theDirs, File currentDir) {
     File dirs[] = currentDir.listFiles(new FileFilter() {
 

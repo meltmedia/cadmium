@@ -35,6 +35,15 @@ import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.api.BasicApiResponse;
 import com.meltmedia.cadmium.core.api.MaintenanceRequest;
 
+/**
+ * Controls a Cadmium sites maintenance page. 
+ * 
+ * @author Chris Haley
+ * @author John McEntire
+ * @author Brian Barr
+ * @author Christian Trimble
+ *
+ */
 @Parameters(commandDescription = "Toggles on and off maintenance page", separators="=")
 public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCommand {
 
@@ -48,16 +57,16 @@ public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCom
 	private MaintenanceRequest.State state;
 	private final String JERSEY_ENDPOINT = "/system/maintenance";
 
-	public void execute() throws ClientProtocolException, IOException {
+	public void execute() throws ClientProtocolException, IOException, Exception {
 		
-		DefaultHttpClient client = new DefaultHttpClient();
+		DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
 
 		if(paramList.size() == 2) {
 		  try {
 		    state = MaintenanceRequest.State.valueOf(paramList.get(0).toUpperCase());
 		  } catch(Exception e) {
 		  }
-			site = paramList.get(1);
+			site = getSecureBaseUrl(paramList.get(1));
 			String url = site + JERSEY_ENDPOINT;
 			if(state != null) {
 				HttpPost post = new HttpPost(url);

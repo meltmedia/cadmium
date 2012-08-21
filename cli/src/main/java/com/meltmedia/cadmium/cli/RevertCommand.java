@@ -24,11 +24,20 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 
+/**
+ * Displays the history of a Cadmium site and allows a selection of a revertable history entry to revert the site to, in normal mode.  
+ * If a in <code>-n</code> option is passed, then the history is not displayed and a update is issued to the Cadmium site with the 
+ * information from the given history index.
+ * 
+ * @author John McEntire
+ * @author Brian Barr
+ *
+ */
 @Parameters(commandDescription="Displays history from a site and allows a selection of which item to revert to.", separators="=")
 public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
-  @Parameter(names="-n", description="Specifies which history item to revert to. (Not to be used with -i option)", required=false)
+  @Parameter(names="-n", description="Specifies which history item to revert to.", required=false)
   private Long index;
   
   @Parameter(description="<site>", required=true)
@@ -40,7 +49,7 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
   public void execute() throws Exception {    
     boolean interactive = index == null;
     
-    String siteUrl = site.get(0);
+    String siteUrl = getSecureBaseUrl(site.get(0));
     
     List<HistoryEntry> history = HistoryCommand.getHistory(siteUrl, -1, false, token);
     HistoryEntry selectedEntry = null;
@@ -74,6 +83,12 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
     
   }
 
+  /**
+   * Prompts for and returns a selected history entry or if the <code>-n</code> option is passed that history entry is returned.
+   * 
+   * @param history
+   * @return
+   */
   private HistoryEntry processIndex(List<HistoryEntry> history) {
     log.debug("I received entry: "+index);
     HistoryEntry selectedEntry = null;

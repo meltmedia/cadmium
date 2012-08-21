@@ -22,6 +22,15 @@ import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import static com.meltmedia.cadmium.core.util.WarUtils.updateWar;
 
+/**
+ * Initializes a Cadmium site war for deployment without Cadmium Deployer war.
+ * 
+ * @author John McEntire
+ * @author Brian Barr
+ * @author Christian Trimble
+ * @author Chris Haley
+ *
+ */
 @Parameters(commandDescription="Initializes a new sites war from an existing war.", separators="=")
 public class InitializeWarCommand implements CliCommand {
 	
@@ -30,7 +39,6 @@ public class InitializeWarCommand implements CliCommand {
 
 	@Parameter(names="--repo", description="Uri to remote github repo.", required=false)
 	private String repoUri;  
-
 
 	@Parameter(names={"--branch", "-b","--tag", "-t"}, description="Initial branch to serve content from.", required=false)
 	private String branch;
@@ -56,6 +64,16 @@ public class InitializeWarCommand implements CliCommand {
 			if (secure && secureContentRoot != null) {
 				System.setProperty("com.meltmedia.cadmium.contentRoot", secureContentRoot);
 			}
+			
+			if(newWarNames != null && newWarNames.size() != 0) {
+			  String warName = newWarNames.get(0);
+			  if(!warName.toLowerCase().trim().endsWith(".war")) {
+			    warName = warName + ".war";
+			    newWarNames.clear();
+			    newWarNames.add(warName);
+			  }
+			}
+			
 	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, domain, context, secure);
 		} else {
 			System.err.println("ERROR: \""+war+"\" does not exist or cannot be read.");

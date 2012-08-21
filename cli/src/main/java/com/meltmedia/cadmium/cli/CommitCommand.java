@@ -25,6 +25,14 @@ import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
+/**
+ * Replaces the content in a git repository branch with the contents of a given directory and tells a Cadmium site to update to it.
+ * 
+ * @author John McEntire
+ * @author Christian Trimble
+ * @author Brian Barr
+ *
+ */
 @Parameters(commandDescription="Commits content from a specific directory into a repo:branch that a site is serving from then updates the site to serve the new content.", separators="=")
 public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand {
   
@@ -40,13 +48,18 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
   @Parameter(names="--quiet-auth", description="Option to skip updating/prompting for new credentials.", required=false)
   private Boolean skipAuth = false;
   
+  /**
+   * Does the work for this command.
+   * 
+   * @throws Exception
+   */
   public void execute() throws Exception {
       String content = null;
       String siteUrl = null;
       
       if( params.size() == 2 ) {
         content = params.get(0);
-        siteUrl = params.get(1);
+        siteUrl = getSecureBaseUrl(params.get(1));
       }
       else if( params.size() == 0 ) {
         System.err.println("The content directory and site must be specifed.");
@@ -94,11 +107,17 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
     
   }
 
+  /**
+   * The command name used to invoke this command.
+   */
   @Override
   public String getCommandName() {
     return "commit";
   }
 
+  /**
+   * @return true when <code>--quiet-auth</code> is passed from the command line.
+   */
   @Override
   public boolean isAuthQuiet() {
     return skipAuth;

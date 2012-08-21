@@ -15,7 +15,23 @@
  */
 package com.meltmedia.cadmium.cli;
 
+/**
+ * The interface to implements in order to be discovered by the {@link CadmiumCli.wireCommands} method.
+ *  
+ * @author John McEntire
+ *
+ */
 public interface CliCommand {
+  
+  /**
+   * @return The command name to use to invoke the command that implements this interface.
+   */
   public String getCommandName();
+  
+  /**
+   * Called to do the work of the implemented command.
+   * 
+   * @throws Exception
+   */
   public void execute() throws Exception;
 }

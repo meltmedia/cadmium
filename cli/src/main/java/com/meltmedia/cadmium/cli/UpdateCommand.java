@@ -40,6 +40,14 @@ import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
+/**
+ * Sends a raw update command to a Cadmium site.
+ * 
+ * @author Brian Barr
+ * @author John McEntire
+ * @author Christian Trimble
+ *
+ */
 @Parameters(commandDescription = "Instructs a site to update its content.", separators="=")
 public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand {
 
@@ -70,7 +78,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	public void execute() throws ClientProtocolException, IOException {
 	  
-		String siteUrl = site.get(0);
+		String siteUrl = getSecureBaseUrl(site.get(0));
 
 		System.out.println("Getting status of ["+ siteUrl +"]");
     GitService gitValidation = null;
@@ -203,8 +211,20 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		return "update";
 	}
   
+	/**
+	 * Sends a update message to a Cadmium site. This method will block until the update is complete.
+	 * 
+	 * @param site2 The uri to a Cadmium site.
+	 * @param repo The git repository to tell the site to change to.
+	 * @param branch The branch to switch to.
+	 * @param revision The revision to reset to.
+	 * @param comment The message to record with this event in the history on the Cadmium site.
+	 * @param token The Github API token to authenticate with.
+	 * @return true if successfull or false otherwise.
+	 * @throws Exception
+	 */
   public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token) throws Exception {
-    HttpClient client = new DefaultHttpClient();
+    HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
     addAuthHeader(token, post);

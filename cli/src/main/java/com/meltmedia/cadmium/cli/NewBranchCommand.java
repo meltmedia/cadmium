@@ -20,6 +20,15 @@ import java.util.List;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+/**
+ * Creates branches in git.
+ * 
+ * @deprecated
+ * 
+ * @author John McEntire
+ * @author Brian Barr
+ *
+ */
 @Parameters(commandDescription = "Sets up new dev and meltqa branches with a command given basename.", separators="=")
 public class NewBranchCommand implements CliCommand {
   
