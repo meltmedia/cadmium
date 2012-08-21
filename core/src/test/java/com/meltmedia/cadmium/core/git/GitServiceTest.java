@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.Properties;
 
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
@@ -29,7 +28,6 @@ import org.junit.Test;
 
 import com.meltmedia.cadmium.core.config.ConfigManager;
 
-import static org.mockito.Mockito.*;
 
 public class GitServiceTest {
   private File testDir;
@@ -49,7 +47,6 @@ public class GitServiceTest {
   public void createDirForTests() throws Exception {    
           
     
-    // TODO delete every line under here....
     testDir = new File("./target/git-test");
     if(!testDir.exists()) {
       if(testDir.mkdir()){

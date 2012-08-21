@@ -121,7 +121,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
         
         lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
         
-        lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, lastTask));
+        lastTask = pool.submit(new UpdateConfigTask(service, properties, configManager, lastTask));
         
         lastTask = pool.submit(new NotifyListenerTask(listener, properties, lastTask));
         

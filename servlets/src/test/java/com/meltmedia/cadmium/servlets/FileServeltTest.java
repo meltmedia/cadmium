@@ -1,6 +1,5 @@
 package com.meltmedia.cadmium.servlets;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
@@ -12,7 +11,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

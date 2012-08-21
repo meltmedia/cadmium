@@ -78,11 +78,11 @@ public class ConfigManager {
   public Properties getPropertiesByPath(Properties properties, String path) throws IOException {    
         
     return reader.getProperties(properties, path, log);
-  }
-
-  public void persistProperties(Properties properties, String fileName, String message) {
-      
-    writer.persistProperties(properties, fileName, message, log);
+  } 
+  
+  public void persistProperties(Properties properties, File propsFile, String message) {
+    
+    writer.persistProperties(properties, propsFile, message, log);
     
   }
   

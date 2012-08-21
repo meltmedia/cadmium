@@ -17,14 +17,12 @@ package com.meltmedia.cadmium.core.git;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
@@ -199,10 +197,10 @@ public class GitService
     }
     
     Properties configProperties = new Properties();
-    String configPropsFile = FileSystemManager.getFileIfCanRead(warDir, "config.properties");
-    if(configPropsFile != null) {
+    File configPropsFile = new File(warDir, "config.properties");
+    if(configPropsFile.exists()) {
       
-      configProperties = configManager.getPropertiesByPath(configProperties, configPropsFile);         
+      configProperties = configManager.getPropertiesByFile(configPropsFile);         
     }
     
     String renderedContentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
@@ -225,8 +223,8 @@ public class GitService
       }
     } 
     
-    if(configPropsFile == null) {
-      configPropsFile = new File(warDir, "config.properties").getAbsoluteFile().getAbsolutePath();
+    if(!configPropsFile.exists()) {
+      configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
       
       if(renderedContentDir != null) {
         configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);

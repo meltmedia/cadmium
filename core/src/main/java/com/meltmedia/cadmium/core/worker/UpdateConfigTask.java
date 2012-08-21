@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 
@@ -37,19 +38,21 @@ public class UpdateConfigTask implements Callable<Boolean> {
   
   private DelayedGitServiceInitializer service;
   private Map<String, String> properties;
-  private Properties configProperties;
+  private ConfigManager configManager;
   private Future<Boolean> previousTask;
   
-  public UpdateConfigTask(DelayedGitServiceInitializer service, Map<String, String> properties, Properties configProperties, Future<Boolean> previousTask) {
+  public UpdateConfigTask(DelayedGitServiceInitializer service, Map<String, String> properties, ConfigManager manager, Future<Boolean> previousTask) {
     this.service = service;
     this.properties = properties;
-    this.configProperties = configProperties;
+    this.configManager = manager;
     this.previousTask = previousTask;
   }
 
   @Override
   public Boolean call() throws Exception {
     final GitService service = this.service.getGitService();
+    Properties configProperties = configManager.getDefaultProperties();
+    
     try {
       final String branch = configProperties.getProperty("branch");
       final String revision = service.isTag(branch) ? null : configProperties.getProperty("git.ref.sha");
@@ -98,6 +101,7 @@ public class UpdateConfigTask implements Callable<Boolean> {
         
         try{
           updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
+          configManager.persistProperties(updatedProperties, new File(baseDirectory, "config.properties"), null);
         } catch(Exception e) {
           log.warn("Failed to write out config file", e);
         }

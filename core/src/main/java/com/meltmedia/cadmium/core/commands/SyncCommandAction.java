@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
