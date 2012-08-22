@@ -13,6 +13,10 @@
 
   <name>cadmium :: Demos</name>
 
+  <properties>
+    <license.header>../src/etc/header.txt</license.header>
+  </properties>
+
   <modules>
   </modules>
 

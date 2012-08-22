@@ -11,6 +11,10 @@
   <artifactId>cadmium-email</artifactId>
   <packaging>jar</packaging>
   <name>cadmium :: Email Intergration</name>
+
+  <properties>
+    <license.header>../src/etc/header.txt</license.header>
+  </properties>
   
   <dependencies>
   

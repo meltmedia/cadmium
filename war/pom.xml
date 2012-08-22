@@ -12,6 +12,10 @@
   <packaging>war</packaging>
   <name>cadmium :: War</name>
   <description>The standard cadmium war for serving content.</description>
+
+  <properties>
+    <license.header>../src/etc/header.txt</license.header>
+  </properties>
   
   <build>
     <plugins>

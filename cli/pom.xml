@@ -13,6 +13,10 @@
   <packaging>jar</packaging>
   <name>cadmium :: Command Line Interface</name>
 
+  <properties>
+    <license.header>../src/etc/header.txt</license.header>
+  </properties>
+
   <build>
     <plugins>
       <plugin>

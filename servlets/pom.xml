@@ -16,6 +16,7 @@
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <license.header>../src/etc/header.txt</license.header>
   </properties>
   <dependencies>
     <dependency>
@@ -94,6 +95,15 @@
         <plugin>
           <groupId>org.reflections</groupId>
           <artifactId>reflections-maven</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila.maven-license-plugin</groupId>
+        <artifactId>maven-license-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>src/test/resources/test-content/**</exclude>
+          </excludes>
+        </configuration>
       </plugin>
     </plugins>
   </build>

@@ -16,6 +16,7 @@
   <properties>
     <maven.build.timestamp.format>yyyyMMdd HH:mm:ss.SSS</maven.build.timestamp.format>
     <timestamp>${maven.build.timestamp}</timestamp>
+    <license.header>../src/etc/header.txt</license.header>
   </properties>
   
   <build>
@@ -43,6 +44,15 @@
             </configuration>    
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila.maven-license-plugin</groupId>
+        <artifactId>maven-license-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>src/test/resources/test-content/**</exclude>
+          </excludes>
+        </configuration>
       </plugin>
     </plugins>
   </build>

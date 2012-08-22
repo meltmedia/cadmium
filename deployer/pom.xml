@@ -12,6 +12,10 @@
   <packaging>war</packaging>
   <name>cadmium :: Deployer</name>
   <description>A webapp that will deploy new cadmium projects to a server</description>
+
+  <properties>
+    <license.header>../src/etc/header.txt</license.header>
+  </properties>
   
   <build>
     <resources>

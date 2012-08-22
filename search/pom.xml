@@ -11,6 +11,10 @@
   <packaging>jar</packaging>
   <name>cadmium :: Search</name>
 
+  <properties>
+    <license.header>../src/etc/header.txt</license.header>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
