@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
+import java.io.File;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -47,7 +48,7 @@ public class AuthorizationService {
       String env = systemProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
            
       String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties");
-      Properties teamsProps = configManager.getPropertiesByFileName(teamsFile);
+      Properties teamsProps = configManager.getProperties(new File(teamsFile));
       
       log.info("teamsProps: {}", teamsProps);
            

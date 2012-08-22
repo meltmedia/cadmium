@@ -211,7 +211,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
     
     
-    configProperties = configManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+    configProperties = configManager.appendProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
     
     configManager.setDefaultProperties(configProperties);
     
@@ -334,7 +334,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         Properties configProperties = new Properties();
 
         configProperties = configManager.getSystemProperties();         
-        configProperties = configManager.loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+        configProperties = configManager.appendProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
        
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);

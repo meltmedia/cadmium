@@ -35,14 +35,7 @@ public class PropertiesReaderImpl implements PropertiesReader {
     readPropertiesWithContext(properties, context, path, log);
     return properties;
   }
-
-  @Override
-  public Properties getProperties(Properties properties, String path, Logger log) {
-
-    File file = new File(path);
-    readPropertiesWithReader(properties, file, log);
-    return properties;
-  }  
+ 
 
   @Override
   public Properties appendProperties(Properties properties, File configFile, Logger log) {
@@ -94,8 +87,8 @@ public class PropertiesReaderImpl implements PropertiesReader {
 
   }
   
-  public void logProperties( Logger log, Properties properties, String name ) {
-    if( log.isDebugEnabled() ) {
+  public void logProperties(Logger log, Properties properties, String name) {
+    if(log.isDebugEnabled()) {
       StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
       for(Object key : properties.keySet()) {
         sb.append("  ").append(key.toString()).append(properties.getProperty(key.toString())).append("\n");

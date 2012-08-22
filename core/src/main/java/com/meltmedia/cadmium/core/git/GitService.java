@@ -200,7 +200,7 @@ public class GitService
     File configPropsFile = new File(warDir, "config.properties");
     if(configPropsFile.exists()) {
       
-      configProperties = configManager.getPropertiesByFile(configPropsFile);         
+      configProperties = configManager.getProperties(configPropsFile);         
     }
     
     String renderedContentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");

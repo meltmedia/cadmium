@@ -17,7 +17,6 @@ public interface PropertiesReader {
 
   public Properties getProperties(File file, Logger log);
   public Properties getProperties(ServletContext context, String path, Logger log);
-  public Properties getProperties(Properties properties, String path,  Logger log);
   public Properties appendProperties(Properties properties, File configFile, Logger log);
   
 }

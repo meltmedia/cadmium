@@ -1,16 +1,11 @@
 package com.meltmedia.cadmium.core.config;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.Properties;
 
 import javax.inject.Singleton;
 import javax.servlet.ServletContext;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +27,16 @@ public class ConfigManager {
   private PropertiesReader reader = new PropertiesReaderImpl();
   private PropertiesWriter writer = new PropertiesWriterImpl();
 
-  public Properties getPropertiesByFile(File configFile) {   
+  public Properties getProperties(File configFile) {   
     
     return reader.getProperties(configFile, log);
   }
   
-  public Properties loadProperties(Properties properties, File configFile) {    
+  /*
+   * Add new properties to an existing Properties object 
+   * 
+   */
+  public Properties appendProperties(Properties properties, File configFile) {    
     
     if( !configFile.exists() ) {
       
@@ -47,6 +46,10 @@ public class ConfigManager {
     return reader.appendProperties(properties, configFile, log);
   }
 
+  /*
+   * Read in The system properties
+   * 
+   */
   public Properties getSystemProperties() {
 
     Properties properties = new Properties();     
@@ -56,30 +59,20 @@ public class ConfigManager {
     return properties;
   }
 
+  /*
+   * Read in properties based on a ServletContext and a path to a config file
+   * 
+   */
   public Properties getPropertiesByContext(ServletContext context, String path) {   
 
     return reader.getProperties(context, path, log);
-  }
+  }   
   
-  public Properties getPropertiesByFileName(String fileName) {    
-    
-    Properties properties = new Properties();
-    File file = new File(fileName);
 
-    if( !file.exists() ) {
-      
-      return properties;
-    
-    }
-    
-    return reader.getProperties(file, log);
-  }
-  
-  public Properties getPropertiesByPath(Properties properties, String path) throws IOException {    
-        
-    return reader.getProperties(properties, path, log);
-  } 
-  
+  /*
+   * Read in properties based on a ServletContext and a path to a config file
+   * 
+   */
   public void persistProperties(Properties properties, File propsFile, String message) {
     
     writer.persistProperties(properties, propsFile, message, log);
@@ -103,96 +96,5 @@ public class ConfigManager {
   public void setDefaultProperties(Properties defaultProperties) {
     this.defaultProperties = defaultProperties;
   }
-
-  /**
-  * <p>A template for reading resources from a file.</p>
-  * <pre>
-  * return new ReadFileTemplate<Properties>(file, "UTF-8", log) {
-  *   public Properties withReader(Reader reader) throws IOException {
-  *     Properties properties = new Properties();
-  *     properties.load(reader);
-  *     return properties;
-  *   }
-  * }.read();
-  * </pre>
-  * 
-  * @author Christian Trimble
-  */
-  public abstract class ReadFileTemplate<T>
-  {
-    private File file;
-    private String encoding;
-    private Logger log;
-
-    public ReadFileTemplate( File file, String encoding, Logger log ) {
-      this.file = file;
-      this.encoding = encoding;
-      this.log = log;
-    }
-    
-    public final T read() throws IOException {
-      Reader reader = null;
-      try {
-        reader = new InputStreamReader(new FileInputStream(file), encoding);
-        return withReader(reader);
-      }
-      catch(IOException ioe) {
-        log.debug("Failed to read file: {}", file.getPath(), ioe);
-        throw ioe;
-      }
-      finally {
-        IOUtils.closeQuietly(reader);
-      }  
-    }
-    
-    public abstract T withReader( Reader reader ) throws IOException;
-  }
-  
-  /**
-   * <p>A template for reading resources from a servlet context.</p>
-   * <pre>
-   * return new ReadResourceTemplate<Properties>(servletContext, "/path/to/file", "UTF-8", log) {
-   *   public Properties withReader(Reader reader) throws IOException {
-   *     Properties properties = new Properties();
-   *     properties.load(reader);
-   *     return properties;
-   *   }
-   * }.read();
-   * </pre>
-   * 
-   * @author Christian Trimble
-   *
-   */
-  public abstract class ReadResourceTemplate<T>
-  {
-    private ServletContext context;
-    private String path;
-    private String encoding;
-    private Logger log;
-
-    public ReadResourceTemplate( ServletContext context, String path, String encoding, Logger log ) {
-      this.context = context;
-      this.path = path;
-      this.encoding = encoding;
-      this.log = log;
-    }
-    
-    public final T read() throws IOException {
-      Reader reader = null;
-      try {
-        reader = new InputStreamReader(context.getResourceAsStream(path), encoding);
-        return withReader(reader);
-      }
-      catch(IOException ioe) {
-        log.debug("Failed to read resource from context: {}", path, ioe);
-        throw ioe;
-      }
-      finally {
-        IOUtils.closeQuietly(reader);
-      }  
-    }
-    
-    public abstract T withReader( Reader reader ) throws IOException;
-  }
-
+ 
 }
