@@ -63,7 +63,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
     if(siteMatcher.matches()) {
       siteUri = siteMatcher.group(1);
       
-      System.out.println("Showing history for "+site+":");
+      System.out.println("Showing history for "+siteUri+":");
       
       List<HistoryEntry> history = getHistory(siteUri, limit, filter, token);
             
