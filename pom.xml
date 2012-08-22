@@ -14,6 +14,10 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
+  <name>cadmium :: Parent POM</name>
+  <description>Cadmium is a static content versioning and distribution system.</description>
+  <url>https://github.com/meltmedia/cadmium</url>
+
   <scm>
     <connection>scm:git@github.com:meltmedia/cadmium.git</connection>
     <developerConnection>scm:git:git@github.com:meltmedia/cadmium.git</developerConnection>
@@ -288,9 +292,6 @@
     <module>email</module>
     <module>search</module>
   </modules>
-
-  <name>cadmium :: Parent POM</name>
-  <url>https://github.com/meltmedia/cadmium</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
