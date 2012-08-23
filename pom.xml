@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -11,8 +10,12 @@
 
   <groupId>com.meltmedia.cadmium</groupId>
   <artifactId>cadmium</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
+
+  <name>cadmium :: Parent POM</name>
+  <description>Cadmium is a static content versioning and distribution system.</description>
+  <url>https://github.com/meltmedia/cadmium</url>
 
   <scm>
     <connection>scm:git@github.com:meltmedia/cadmium.git</connection>
@@ -30,16 +33,6 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>com.meltmedia.cadmium.epsilon</groupId>
-        <artifactId>meltmedia-epsilon-client</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>com.meltmedia.cadmium.hcpregform</groupId>
-        <artifactId>hcp-reg-form</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
-      </dependency>
       <dependency>
         <groupId>com.meltmedia.cadmium</groupId>
         <artifactId>cadmium-servlets</artifactId>
@@ -134,7 +127,7 @@
       <dependency>
         <groupId>com.meltmedia.jgroups</groupId>
         <artifactId>jgroups-aws</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>1.0.0</version>
       </dependency>
 
       <dependency>
@@ -280,14 +273,11 @@
         <artifactId>aether-connector-asynchttpclient</artifactId>
         <version>${aetherVersion}</version>
       </dependency>
-      <!--
       <dependency>
-            <groupId>org.jboss</groupId>
-            <artifactId>jboss-vfs</artifactId>
-            <version>3.0.1.GA</version>
+        <groupId>com.beust</groupId>
+        <artifactId>jcommander</artifactId>
+        <version>1.25</version>
       </dependency>
-        -->
-     
     </dependencies>
   </dependencyManagement>
 
@@ -295,16 +285,12 @@
     <module>core</module>
     <module>servlets</module>
     <module>cli</module>
-    <module>demos</module>
     <module>war</module>
     <module>maven</module>
     <module>deployer</module>
     <module>email</module>
     <module>search</module>
   </modules>
-
-  <name>cadmium :: Parent POM</name>
-  <url>https://github.com/meltmedia/cadmium</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -344,6 +330,15 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila.maven-license-plugin</groupId>
+        <artifactId>maven-license-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/src/test/resources/test-content/**</exclude>
+          </excludes>
+        </configuration>
       </plugin>
       </plugins>
     </pluginManagement>

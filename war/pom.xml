@@ -1,17 +1,19 @@
 <?xml version="1.0"?>
-<project
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-  xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.meltmedia.cadmium</groupId>
     <artifactId>cadmium</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
   </parent>
   <artifactId>cadmium-war</artifactId>
   <packaging>war</packaging>
   <name>cadmium :: War</name>
   <description>The standard cadmium war for serving content.</description>
+
+  <properties>
+    <license.header>../src/etc/header.txt</license.header>
+  </properties>
   
   <build>
     <plugins>
@@ -71,24 +73,6 @@
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-web</artifactId>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>org.jboss</groupId>
-      <artifactId>jboss-vfs</artifactId>
-    </dependency>-->
-    
-   <!--
-   <dependency>      
-     <groupId>xerces</groupId>
-     <artifactId>xercesImpl</artifactId>
-     <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>xml-apis</groupId>
-      <artifactId>xmlParserAPIs</artifactId>
-      <version>2.0.2</version>
-      <scope>provided</scope>
-    </dependency>-->
     <dependency>
       <groupId>stax</groupId>
       <artifactId>stax-api</artifactId>

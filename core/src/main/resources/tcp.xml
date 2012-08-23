@@ -1,12 +1,12 @@
 <!--
 
-      Copyright 2012 meltmedia
+       Copyright 2012 meltmedia
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
        You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+           http://www.apache.org/licenses/LICENSE-2.0
 
        Unless required by applicable law or agreed to in writing, software
        distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@
     <MERGE2 min_interval="5000" max_interval="10000"></MERGE2>
     <FD timeout="2500" max_tries="5"></FD>
     <VERIFY_SUSPECT timeout="1500"></VERIFY_SUSPECT>
-    <pbcast.NAKACK retransmit_timeout="3000"></pbcast.NAKACK>
+    <pbcast.NAKACK retransmit_timeout="3000" use_mcast_xmit="false"></pbcast.NAKACK>
     <pbcast.STABLE desired_avg_gossip="20000"></pbcast.STABLE>
     <pbcast.GMS join_timeout="5000"
                 print_local_addr="false"></pbcast.GMS>
