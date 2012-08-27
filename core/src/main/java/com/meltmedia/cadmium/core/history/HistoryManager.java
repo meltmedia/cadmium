@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,15 +57,19 @@ public class HistoryManager implements Closeable {
   }
   
   public void logEvent(boolean maint, String openId, String comment) {
-    logEvent("", "", openId, "", "", comment, maint, false, false, true);
+    logEvent("", "", "", openId, "", "", comment, maint, false, false, true);
   }
   
-  public void logEvent(String branch, String sha, String openId, String directory, String uuid, String comment, boolean revertible, boolean finished) {
-    logEvent(branch, sha, openId, directory, uuid, comment, false, revertible, false, finished);
+  public void logEvent(String repoUrl, String branch, String sha, String openId, String directory, String uuid, String comment, boolean revertible, boolean finished) {
+    logEvent(repoUrl, branch, sha, openId, directory, uuid, comment, false, revertible, false, finished);
   }
 
-  public void logEvent(String branch, String sha, String openId, String directory, String uuid, String comment, boolean maint, boolean revertible, boolean failed, boolean finished) {
+  public void logEvent(String repoUrl, String branch, String sha, String openId, String directory, String uuid, String comment, boolean maint, boolean revertible, boolean failed, boolean finished) {
     HistoryEntry lastEntry = history.size() > 0 ? history.get(0) : null;
+    if(uuid != null && lastEntry != null && lastEntry.getUuid() != null && uuid.trim().length() > 0 && uuid.equals(lastEntry.getUuid())) {
+      log.debug("Last history entry was a dup.");
+      return;
+    }
     HistoryEntry newEntry = new HistoryEntry();
     newEntry.setTimestamp(new Date());
     if(lastEntry != null) {
@@ -85,6 +89,7 @@ public class HistoryManager implements Closeable {
       lastEntry.setTimeLive(newEntry.getTimestamp().getTime() - lastEntry.getTimestamp().getTime());
       log.debug("The last history event lived [{}ms]", lastEntry.getTimeLive());
     }
+    newEntry.setRepoUrl(repoUrl);
     newEntry.setBranch(branch);
     newEntry.setRevision(sha);
     newEntry.setOpenId(openId);
@@ -94,7 +99,7 @@ public class HistoryManager implements Closeable {
     newEntry.setRevertible(revertible);
     newEntry.setFailed(failed);
     newEntry.setFinished(finished);
-    log.info("Logging new History Event: branch[{}], sha[{}], openId[{}], directory[{}], uuid[{}], revertible[{}], maint[{}], failed[{}], comment[{}]", new Object[] {branch, sha, openId, directory, uuid, revertible, maint, failed, comment});
+    log.info("Logging new History Event: repoUrl[{}], branch[{}], sha[{}], openId[{}], directory[{}], uuid[{}], revertible[{}], maint[{}], failed[{}], comment[{}]", new Object[] {repoUrl, branch, sha, openId, directory, uuid, revertible, maint, failed, comment});
     
     history.add(0, newEntry);
     

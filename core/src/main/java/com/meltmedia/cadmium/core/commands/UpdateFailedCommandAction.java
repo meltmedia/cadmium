@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -53,6 +53,10 @@ public class UpdateFailedCommandAction implements CommandAction {
       worker.killUpdate();
       lifecycleService.updateMyState(UpdateState.IDLE);
       if(historyManager != null) {
+        String repo = "";
+        if(ctx.getMessage().getProtocolParameters().containsKey("repo")) {
+          repo = ctx.getMessage().getProtocolParameters().get("repo");
+        }
         String branch = "";
         if(ctx.getMessage().getProtocolParameters().containsKey("branch")) {
           branch = ctx.getMessage().getProtocolParameters().get("branch");
@@ -65,7 +69,7 @@ public class UpdateFailedCommandAction implements CommandAction {
         if(ctx.getMessage().getProtocolParameters().containsKey("openId")) {
           openId = ctx.getMessage().getProtocolParameters().get("openId");
         }
-        historyManager.logEvent(branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
+        historyManager.logEvent(repo, branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
       }
     }
     return true;

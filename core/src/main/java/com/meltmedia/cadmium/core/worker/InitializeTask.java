@@ -1,3 +1,18 @@
+/**
+ *    Copyright 2012 meltmedia
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package com.meltmedia.cadmium.core.worker;
 
 import java.io.File;
@@ -32,9 +47,9 @@ public class InitializeTask implements Callable<GitService> {
   private HistoryManager historyManager = null;
   
   @Inject
-  public InitializeTask(@Named("config.properties") Properties configProperties, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("com.meltmedia.cadmium.git.uri") String repoUri, @Named("initialCadmiumBranch") String branch, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
-    this.branch = branch;
-    this.repoUri = repoUri;
+  public InitializeTask(@Named("config.properties") Properties configProperties, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
+    this.branch = configProperties.getProperty("com.meltmedia.cadmium.branch");
+    this.repoUri = configProperties.getProperty("com.meltmedia.cadmium.git.uri");
     this.contentRoot = contentRoot;
     this.warName = warName;
     this.contentDirectory = contentDirectory;

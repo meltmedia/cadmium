@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ public class HistoryEntry {
   private Date timestamp;
   private String branch;
   private String revision;
+  private String repoUrl;
   private long timeLive;
   private String openId;
   private String servedDirectory;
@@ -34,8 +35,9 @@ public class HistoryEntry {
   
   public HistoryEntry(){}
   
-  public HistoryEntry(Date timestamp, String branch, String revision, long timeLive, String openId, String servedDirectory, boolean revertible, String comment) {
+  public HistoryEntry(Date timestamp, String repoUrl, String branch, String revision, long timeLive, String openId, String servedDirectory, boolean revertible, String comment) {
     this.timestamp = timestamp;
+    this.repoUrl = repoUrl;
     this.branch = branch;
     this.revision = revision;
     this.timeLive = timeLive;
@@ -59,6 +61,14 @@ public class HistoryEntry {
 
   public void setTimestamp(Date timestamp) {
     this.timestamp = timestamp;
+  }
+
+  public String getRepoUrl() {
+    return repoUrl;
+  }
+
+  public void setRepoUrl(String repoUrl) {
+    this.repoUrl = repoUrl;
   }
 
   public String getBranch() {

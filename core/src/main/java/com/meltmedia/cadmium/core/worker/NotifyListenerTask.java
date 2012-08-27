@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,7 +43,7 @@ public class NotifyListenerTask implements Callable<Boolean> {
       Boolean lastResponse = previousTask.get();
       if(lastResponse != null && !lastResponse.booleanValue() ) {
         log.warn("Notification of work failed!");
-        listener.workFailed(properties.get("branch"), properties.get("sha"), properties.get("openId"), properties.get("uuid"));
+        listener.workFailed(properties.get("repo"), properties.get("branch"), properties.get("sha"), properties.get("openId"), properties.get("uuid"));
         throw new Exception("Previous task failed");
       }
     }

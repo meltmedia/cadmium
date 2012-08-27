@@ -58,8 +58,8 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
    * Called to execute this command.
    */
   public void execute() throws Exception {
-    String site1 = sites.get(0);
-    String site2 = sites.get(1);
+    String site1 = getSecureBaseUrl(sites.get(0));
+    String site2 = getSecureBaseUrl(sites.get(1));
     if(site1.equalsIgnoreCase(site2)) {
       System.err.println("Cannot clone a site into itself.");
       System.exit(1);
@@ -72,25 +72,18 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
       System.out.println("Getting status of ["+site2+"]");
       Status site2Status = StatusCommand.getSiteStatus(site2, token);
       if(site1Status != null && site2Status != null) {
-        String repo1 = site1Status.getRepo();
-        String repo2 = site2Status.getRepo();
         
-        //Make sure that the 2 sites are on the same repository.
-        if(!repo1.equals(repo2)) {
-          System.err.println("Cannot clone between sites with different Git repositories.");
-          System.exit(1);
-        }
-        
+        String repo = site1Status.getRepo();
         String revision = site1Status.getRevision();
         String branch = site1Status.getBranch();
         
-        if(site2Status.getBranch().equals(branch) && site2Status.getRevision().equals(revision)) {
-          System.err.println("Source [" + site1 + "] is on the same branch and revision as the target [" + site2 + "].");
+        if(site2Status.getRepo().equals(repo) && site2Status.getBranch().equals(branch) && site2Status.getRevision().equals(revision)) {
+          System.err.println("Source [" + site1 + "] is on the same repo, branch, and revision as the target [" + site2 + "].");
           System.exit(1);
         }
         
         System.out.println("Sending update message to ["+site2+"]");
-        UpdateCommand.sendUpdateMessage(site2, branch, revision, "Cloned from ["+site1+"]: " + comment, token);
+        UpdateCommand.sendUpdateMessage(site2, repo, branch, revision, "Cloned from ["+site1+"]: " + comment, token);
       } else {
         System.err.println("Failed to get status from source and/or target.");
         System.exit(1);

@@ -69,9 +69,13 @@ public class UpdateService extends AuthorizationService {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
+    String repo = "";
     String branch = "";
     String sha = "";
     String comment = req.getComment();
+    if(req.getRepo() != null) {
+      repo = req.getRepo();
+    }
     if(req.getBranch() != null) {
       branch = req.getBranch();
     }
@@ -85,6 +89,9 @@ public class UpdateService extends AuthorizationService {
         log.debug("Sending update message");
         Message msg = new Message();
         msg.setCommand(ProtocolMessage.UPDATE);
+        if(repo != null && repo.trim().length() > 0) {
+          msg.getProtocolParameters().put("repo", repo);
+        }
         if(branch != null && branch.trim().length() > 0) {
           msg.getProtocolParameters().put("branch", branch);
         }

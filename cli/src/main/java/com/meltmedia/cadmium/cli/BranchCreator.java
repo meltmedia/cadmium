@@ -20,10 +20,23 @@ import java.io.File;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.git.GitService;
 
+/**
+ * Supplies helper methods to help in git repository management.
+ * 
+ * @author John McEntire
+ * @author Chris Haley
+ *
+ */
 public class BranchCreator {
   private GitService clonedRemote;
   private File tmpRepoLocal;
   
+  /**
+   * Creates a temporary directory with a cloned remote git repository in it.
+   * 
+   * @param repoUri The git repository uri.
+   * @throws Exception Thrown if the clone fails.
+   */
   public BranchCreator(String repoUri) throws Exception {
     tmpRepoLocal = File.createTempFile("tmpClone", ".git");
     if(tmpRepoLocal.delete()) {
@@ -37,6 +50,17 @@ public class BranchCreator {
     }
   }
   
+  /**
+   * <p>Creates 2 branches with different prefixes and the given basename.</p>
+   * <p>The branch name prefixes used are <code>cd-dev-</code> and 
+   * <code>cd-qa-</code></p>
+   * 
+   * @param basename The common basename to use for the branches.
+   * @return true if both of the branches where created and pushed successfully onto the remote repository.
+   * @throws Exception 
+   * 
+   * @deprecated
+   */
   public boolean createBranchForDevAndQa(String basename) throws Exception {
     boolean branchCreated = clonedRemote.newRemoteBranch("cd-dev-"+basename);
     System.out.println("Created branch \"cd-dev-"+basename+"\"");
@@ -45,16 +69,33 @@ public class BranchCreator {
     return branchCreated;
   }
   
+  /**
+   * <p>Creates a branch with the prefix of <code>cd-gene-</code> and the given basename.</p>
+   * 
+   * @param basename The basename to user for the branch.
+   * @return true if the branch was created and pushed successfully onto the remote repository.
+   * @throws Exception
+   * 
+   * @deprecated
+   */
   public boolean createBranchForGene(String basename) throws Exception {
     boolean branchCreated = clonedRemote.newRemoteBranch("cd-gene-"+basename);
     System.out.println("Created branch \"cd-gene-"+basename+"\"");
     return branchCreated;
   }
   
+  /**
+   * @return The wrapped GitService instance.
+   */
   public GitService getGitService() {
     return this.clonedRemote;
   }
   
+  /**
+   * Closes the wrapped GitService instance and removes the directory and all of the contents of the locally cloned repository.
+   * 
+   * @throws Exception
+   */
   public void closeAndRemoveLocal() throws Exception {
     try{
       clonedRemote.close();

@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,6 +41,7 @@ public class SyncCommandActionTest {
     tracker.getMembers().add(new ChannelMember(new IpAddress(4321), false, false));
     
     Properties configProperties = new Properties();
+    configProperties.setProperty("repo", "oldRepo");
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "good_key");
     
@@ -58,6 +59,9 @@ public class SyncCommandActionTest {
     
     assertTrue("Message not sent", sender.dest != null && sender.msg != null && sender.dest.getAddress() == ctx.getSource());
     assertTrue("Message not sync", sender.msg.getCommand() == ProtocolMessage.SYNC);
+    assertTrue("Incorrent repo", sender.msg.getProtocolParameters().containsKey("repo")
+        && sender.msg.getProtocolParameters().get("repo").equals("oldRepo"));
+    
     assertTrue("Incorrent branch", sender.msg.getProtocolParameters().containsKey("branch")
         && sender.msg.getProtocolParameters().get("branch").equals("master"));
 
@@ -83,13 +87,14 @@ public class SyncCommandActionTest {
       }
 
       @Override
-      public void workFailed(String branch, String sha, String openId, String uuid) {
+      public void workFailed(String repo, String branch, String sha, String openId, String uuid) {
       }
       
     };
     worker.setListener(listener);
     
     Properties configProperties = new Properties();
+    configProperties.setProperty("repo", "oldRepo");
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "old_key");
     
@@ -105,6 +110,7 @@ public class SyncCommandActionTest {
     
     CommandContext ctx = new CommandContext(new IpAddress(4321), new Message());
     ctx.getMessage().setCommand(ProtocolMessage.SYNC);
+    ctx.getMessage().getProtocolParameters().put("repo", "newRepo");
     ctx.getMessage().getProtocolParameters().put("branch", "master");
     ctx.getMessage().getProtocolParameters().put("git.ref.sha", "good_key");
     

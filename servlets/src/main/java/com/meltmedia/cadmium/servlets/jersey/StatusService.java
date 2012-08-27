@@ -74,15 +74,9 @@ public class StatusService extends AuthorizationService {
 	protected Properties configProperties;
 	
 	@Inject
-	@Named("com.meltmedia.cadmium.git.uri")
-	protected String repoUri;
-	
-	@Inject
 	@Named("contentDir")
 	protected String initialContentDir;
 	
-	private GitService git;
-
 	@GET
 	@Path("/Ping")
 	@Produces("text/plain")
@@ -97,6 +91,9 @@ public class StatusService extends AuthorizationService {
       throw new Exception("Unauthorized!");
     }
 		Status returnObj = new Status();
+		String rev = null;
+		String branch = null;
+		String repo = null;
 		
 		// Get content directory
 		String contentDir = this.initialContentDir;
@@ -104,21 +101,22 @@ public class StatusService extends AuthorizationService {
 			
 			contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");			
 		}
-		
-		GitService git = null;
-		if(this.git == null && !configProperties.containsKey("git.ref.sha") && !configProperties.containsKey("branch")) {
-  		try {
-  		  git = gitService.getGitService();
-  		} catch(Exception e){
-        logger.info("Interrupted while waiting on git service to initialize.", e);
-      }
-		}
-		
+	
+	
+	  GitService git = null;
+    try {
+      git = gitService.getGitService();
+      rev = git.getCurrentRevision();
+      branch = git.getBranchName();
+      repo = git.getRemoteRepository();
+    } finally {
+      gitService.releaseGitService();
+    }
+			
 		// Get cadmium project info (branch, repo and revision)
-		String rev = configProperties.getProperty("git.ref.sha", (git != null ? git.getCurrentRevision() : null));
-		String branch = configProperties.getProperty("branch", (git != null ? git.getBranchName() : null));
-		String repo = repoUri;
-		
+		rev = configProperties.getProperty("git.ref.sha", rev);
+		branch = configProperties.getProperty("branch", branch);
+	
 		// Get source project info (branch, repo and revision)
 		String sourceFile = contentDir + File.separator + "META-INF" + File.separator + "source";
 		String source = "{}";

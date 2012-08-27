@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -53,6 +53,7 @@ public class UpdateDoneCommandAction implements CommandAction {
     if(manager != null) {
       try {
         Map<String, String> props = ctx.getMessage().getProtocolParameters();
+        String repo = props.get("repo");
         String branch = props.get("BranchName");
         String rev = props.get("CurrentRevision");
         String openId = props.get("openId");
@@ -60,7 +61,7 @@ public class UpdateDoneCommandAction implements CommandAction {
         String uuid = props.get("uuid");
         String comment = props.get("comment");
         boolean revertible = !new Boolean(props.get("nonRevertible"));
-        manager.logEvent(branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
+        manager.logEvent(repo, branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }

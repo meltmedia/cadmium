@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
-import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
@@ -76,8 +75,6 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   
   private CoordinatedWorkerListener listener;
   
-  private GitService gitService = null;
-  
   public CoordinatedWorkerImpl() {
     pool = Executors.newSingleThreadExecutor();
     listener = this;
@@ -89,15 +86,14 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
       log.info("Beginning Update...");
       lastTask = null;
       try {
-        GitService service = gitService;
-        if(gitService == null) {
-          log.debug("Waiting for git service to initialize.");
-          service = this.service.getGitService();
-          gitService = service;
+        log.debug("Waiting for git service to initialize.");
+        service.getGitService();
+        service.releaseGitService();
+        
+        if(properties.containsKey("repo") && properties.get("repo").trim().length() > 0) {
+          lastTask = pool.submit(new SwitchRepositoryTask(service, properties.get("repo"), lastTask));
         }
-        if(service == null) {
-          throw new Exception("Git service not initialized yet!");
-        }
+        
         if(properties.containsKey("sha")) {
           configProperties.setProperty("updating.to.sha", properties.get("sha"));
         }
@@ -166,10 +162,13 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void workFailed(String branch, String sha, String openId, String uuid) {
+  public void workFailed(String repo, String branch, String sha, String openId, String uuid) {
     log.info("Work has failed");
     Message doneMessage = new Message();
     doneMessage.setCommand(ProtocolMessage.UPDATE_FAILED);
+    if(repo != null) {
+      doneMessage.getProtocolParameters().put("repo", repo);
+    }
     if(branch != null) {
       doneMessage.getProtocolParameters().put("branch", branch);
     }

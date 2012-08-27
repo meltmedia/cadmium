@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,14 +30,16 @@ import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 public class HistoryRequestCommandActionTest {
+  
+  @SuppressWarnings("resource")
   @Test
   public void testCommand() throws Exception {
     DummyMessageSender sender = new DummyMessageSender();
     HistoryManager historyManager = new HistoryManager(null);
-    historyManager.getHistory().add(new HistoryEntry(new Date(), "master", "sha", 3000l, "me", "dir", true, "comment"));
-    historyManager.getHistory().add(new HistoryEntry(new Date(), "master", "sha1", 3000l, "me", "dir_1", true, "comment1"));
-    historyManager.getHistory().add(new HistoryEntry(new Date(), "master", "sha2", 3000l, "me", "dir_2", false, "comment2"));
-    historyManager.getHistory().add(new HistoryEntry(new Date(), "master", "sha3", 3000l, "me", "dir_3", false, "comment3"));
+    historyManager.getHistory().add(new HistoryEntry(new Date(), "", "master", "sha", 3000l, "me", "dir", true, "comment"));
+    historyManager.getHistory().add(new HistoryEntry(new Date(), "", "master", "sha1", 3000l, "me", "dir_1", true, "comment1"));
+    historyManager.getHistory().add(new HistoryEntry(new Date(), "", "master", "sha2", 3000l, "me", "dir_2", false, "comment2"));
+    historyManager.getHistory().add(new HistoryEntry(new Date(), "", "master", "sha3", 3000l, "me", "dir_3", false, "comment3"));
     
     HistoryRequestCommandAction command = new HistoryRequestCommandAction();
     command.sender = sender;

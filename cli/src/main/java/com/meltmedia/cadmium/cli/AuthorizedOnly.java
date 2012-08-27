@@ -15,8 +15,36 @@
  */
 package com.meltmedia.cadmium.cli;
 
+/**
+ * The interface to implement in order to tell {@link CadmiumCli} instance 
+ * that the command that implements this interface should be authenticated 
+ * in the Github API. The {@link AbstractAuthorizedOnly} class should be 
+ * extended as it already has implementations of each of the methods 
+ * required by this interface and provides helper methods that can be used 
+ * in authentication purposes.
+ * 
+ * @author John McEntire
+ *
+ */
 public interface AuthorizedOnly {
+  
+  /**
+   * Sets the Github API token for the current instance.
+   * 
+   * @param token 
+   */
   public void setToken(String token);
+  
+  /**
+   * @return The Github API token for the current instance.
+   */
   public String getToken();
+  
+
+  /**
+   * Tells the {@link CadmiumCli} instance that this command should silence the authentication and just fail if not authorized.
+   * 
+   * @return true if the authentication should not prompt for a username and password.
+   */
   public boolean isAuthQuiet();
 }

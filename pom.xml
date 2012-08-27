@@ -1,31 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.meltmedia</groupId>
     <artifactId>meltmedia-oss</artifactId>
-    <version>1-SNAPSHOT</version>
+    <version>1</version>
   </parent>
 
   <groupId>com.meltmedia.cadmium</groupId>
   <artifactId>cadmium</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
+
+  <name>cadmium :: Parent POM</name>
+  <description>Cadmium is a static content versioning and distribution system.</description>
+  <url>https://github.com/meltmedia/cadmium</url>
+
+  <scm>
+    <connection>scm:git@github.com:meltmedia/cadmium.git</connection>
+    <developerConnection>scm:git:git@github.com:meltmedia/cadmium.git</developerConnection>
+    <url>git@github.com:meltmedia/cadmium.git</url>
+  </scm>
+
+  <repositories>
+    <repository>
+      <id>jboss-releases</id>
+      <name>JBoss Release Repository</name>
+      <url>https://repository.jboss.org/nexus/content/repositories/releases</url>
+    </repository>
+  </repositories>
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>com.meltmedia.cadmium.epsilon</groupId>
-        <artifactId>meltmedia-epsilon-client</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>com.meltmedia.cadmium.hcpregform</groupId>
-        <artifactId>hcp-reg-form</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
-      </dependency>
       <dependency>
         <groupId>com.meltmedia.cadmium</groupId>
         <artifactId>cadmium-servlets</artifactId>
@@ -38,17 +45,17 @@
       </dependency>
       <dependency>
         <groupId>com.meltmedia.cadmium</groupId>
-        <artifactId>cadmium-vault</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.meltmedia.cadmium</groupId>
         <artifactId>cadmium-email</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.meltmedia.cadmium</groupId>
         <artifactId>cadmium-search</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.meltmedia.cadmium</groupId>
+        <artifactId>cadmium-maven</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -118,9 +125,9 @@
     </dependency>
 
       <dependency>
-        <groupId>com.meltmedia.jgroups.aws</groupId>
+        <groupId>com.meltmedia.jgroups</groupId>
         <artifactId>jgroups-aws</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>1.0.0</version>
       </dependency>
 
       <dependency>
@@ -180,6 +187,7 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
         <version>1.6.4</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>javax.servlet</groupId>
@@ -234,14 +242,42 @@
         <artifactId>shiro-web</artifactId>
         <version>1.2.0</version>
       </dependency>
-      <!--
       <dependency>
-            <groupId>org.jboss</groupId>
-            <artifactId>jboss-vfs</artifactId>
-            <version>3.0.1.GA</version>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-api</artifactId>
+        <version>${aetherVersion}</version>
       </dependency>
-        -->
-     
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-util</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-impl</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-aether-provider</artifactId>
+        <version>${mavenVersion}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-connector-file</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.aether</groupId>
+        <artifactId>aether-connector-asynchttpclient</artifactId>
+        <version>${aetherVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.beust</groupId>
+        <artifactId>jcommander</artifactId>
+        <version>1.25</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -249,21 +285,20 @@
     <module>core</module>
     <module>servlets</module>
     <module>cli</module>
-    <module>demos</module>
     <module>war</module>
+    <module>maven</module>
     <module>deployer</module>
-    <module>vault</module>
     <module>email</module>
     <module>search</module>
   </modules>
-
-  <name>cadmium :: Parent POM</name>
-  <url>https://github.com/meltmedia/cadmium</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <copyright.owner>meltmedia</copyright.owner>
     <copyright.year>2012</copyright.year>
+    <aetherVersion>1.13.1</aetherVersion>
+    <mavenVersion>3.0.3</mavenVersion>
+    <wagonVersion>1.0</wagonVersion>
   </properties>
 
   <build>
@@ -295,6 +330,15 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila.maven-license-plugin</groupId>
+        <artifactId>maven-license-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/src/test/resources/test-content/**</exclude>
+          </excludes>
+        </configuration>
       </plugin>
       </plugins>
     </pluginManagement>

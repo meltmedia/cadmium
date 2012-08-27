@@ -38,6 +38,8 @@ import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 @CadmiumSystemEndpoint
 @Path("/deploy")
 public class DeployerService extends AuthorizationService {
+  
+  private String version = "${project.version}";
 	
   @Inject
   protected MessageSender sender;
@@ -53,6 +55,7 @@ public class DeployerService extends AuthorizationService {
 	  String repo = req.getRepo();
 	  String domain = req.getDomain();
 	  String contextRoot = req.getContextRoot();
+	  String artifact = req.getArtifact();
 	  
 	  if( StringUtils.isEmptyOrNull(branch) || StringUtils.isEmptyOrNull(repo) || StringUtils.isEmptyOrNull(domain) ) {
 	    Response.serverError();
@@ -62,6 +65,10 @@ public class DeployerService extends AuthorizationService {
 	  if( StringUtils.isEmptyOrNull(contextRoot) ) {
 	    contextRoot = "/";
 	  }
+	  
+	  if( StringUtils.isEmptyOrNull(artifact) ) {
+	    artifact = "com.meltmedia.cadmium:cadmium-war:war:" + version;
+	  }
 		
     Message msg = new Message();
     msg.setCommand(DeployCommandAction.DEPLOY_ACTION);
@@ -70,6 +77,7 @@ public class DeployerService extends AuthorizationService {
     msg.getProtocolParameters().put("domain", domain);
     msg.getProtocolParameters().put("context", contextRoot);
     msg.getProtocolParameters().put("secure", Boolean.toString(!req.isDisableSecurity()));
+    msg.getProtocolParameters().put("artifact", artifact);
 
     sender.sendMessage(msg, null);
     return "ok";

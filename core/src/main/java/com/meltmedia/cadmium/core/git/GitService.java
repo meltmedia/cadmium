@@ -1,11 +1,11 @@
 /**
- *   Copyright 2012 meltmedia
+ *    Copyright 2012 meltmedia
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,17 +56,14 @@ public class GitService
 {
   private static final Logger log = LoggerFactory.getLogger(GitService.class);
   
-  protected Repository repository;
   protected Git git;
   
   public GitService(Repository repository) {
-    this.repository = repository;
-    git = new Git(this.repository);
+    git = new Git(repository);
   }
   
   protected GitService(Git gitRepo) {
     this.git = gitRepo;
-    this.repository = gitRepo.getRepository();
   }
   
   public static void setupSsh(String sshDir) {
@@ -240,6 +237,7 @@ public class GitService
       }
       configProperties.setProperty("branch", cloned.getBranchName());
       configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
+      configProperties.setProperty("repo", uri);
       
 
       String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
@@ -264,7 +262,7 @@ public class GitService
         writer = new FileWriter(configPropsFile);
         configProperties.store(writer, "initialized configuration properties");
         if(historyManager != null) {
-          historyManager.logEvent(cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+          historyManager.logEvent(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
         }
       } finally {
         IOUtils.closeQuietly(writer);
@@ -299,7 +297,7 @@ public class GitService
   }
   
   public String getRepositoryDirectory() throws Exception {
-    return this.repository.getDirectory().getAbsolutePath();
+    return git.getRepository().getDirectory().getAbsolutePath();
   }
   
   public String getBaseDirectory() throws Exception {
@@ -320,6 +318,7 @@ public class GitService
   }
   
   public void switchBranch(String branchName) throws RefNotFoundException, Exception {
+    Repository repository = git.getRepository();
     if(branchName != null && !repository.getBranch().equals(branchName)) {
       log.info("Switching branch from {} to {}", repository.getBranch(), branchName);
       CheckoutCommand checkout = git.checkout();
@@ -327,7 +326,7 @@ public class GitService
         checkout.setName(branchName);
       } else {
         checkout.setName("refs/heads/"+branchName);
-        if(this.repository.getRef("refs/heads/"+ branchName) == null) {
+        if(repository.getRef("refs/heads/"+ branchName) == null) {
           CreateBranchCommand create = git.branchCreate();
           create.setName(branchName);
           create.setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM);
@@ -467,7 +466,7 @@ public class GitService
   }
   
   public boolean isTag(String tagname) throws Exception {
-    Map<String, Ref> allRefs = repository.getTags();
+    Map<String, Ref> allRefs = git.getRepository().getTags();
     for(String key : allRefs.keySet()) {
       Ref ref = allRefs.get(key);
       log.debug("Checking tag key{}, ref{}", key, ref.getName());
@@ -493,6 +492,7 @@ public class GitService
   }
   
   public String getBranchName() throws Exception {
+    Repository repository = git.getRepository();
     if(ObjectId.isId(repository.getFullBranch()) && repository.getFullBranch().equals(repository.resolve("HEAD").getName())) {
       RevWalk revs = null;
       try {
@@ -519,10 +519,14 @@ public class GitService
   }
   
   public String getCurrentRevision() throws Exception {
-    return repository.getRef(getBranchName()).getObjectId().getName();
+    return git.getRepository().getRef(getBranchName()).getObjectId().getName();
+  }
+  
+  public String getRemoteRepository() {
+    return git.getRepository().getConfig().getString("remote", "origin", "url");
   }
   
   public void close() throws IOException {
-    this.repository.close();
+    git.getRepository().close();
   }
 }
