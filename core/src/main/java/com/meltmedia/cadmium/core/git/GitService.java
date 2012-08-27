@@ -182,7 +182,7 @@ public class GitService
       cloned = cloneRepo(uri, new File(warDir, "git-checkout").getAbsolutePath());
       
       if(!cloned.checkForRemoteBranch(branch)) {
-        String envString = System.getProperty("com.meltmedia.cadmium.environment", "dev");
+        String envString = System.getProperty("com.meltmedia.cadmium.environment", "development");
         branch = "cd-"+envString+"-"+branch;
       }
       log.info("Switching to branch {}", branch);

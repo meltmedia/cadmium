@@ -45,7 +45,7 @@ public class AuthorizationService {
     try {
       gitClient = new ApiClient(authString);
           
-      String env = systemProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
+      String env = systemProperties.getProperty("com.meltmedia.cadmium.environment", "development");
            
       String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties");
       Properties teamsProps = configManager.getProperties(new File(teamsFile));

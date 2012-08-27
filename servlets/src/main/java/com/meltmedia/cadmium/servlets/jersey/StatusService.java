@@ -50,8 +50,9 @@ public class StatusService extends AuthorizationService {
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	//constants
-	public final String ENVIRON_DEV = "dev";
+	public final String ENVIRON_DEV = "development";
 	public final String ENVIRON_QA = "qa";
+  public final String ENVIRON_STAGING = "staging";
 	public final String ENVIRON_GENE = "gene";
 	public final String ENVIRON_PROD = "prod";
 	public final String MAINT_ON = "on";

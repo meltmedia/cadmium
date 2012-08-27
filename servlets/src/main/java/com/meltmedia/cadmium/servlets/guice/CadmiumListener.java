@@ -386,7 +386,6 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
 
         String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
-        //String environment = System.getProperty("com.meltmedia.cadmium.environment", "dev");
         
         // Bind channel name
         bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
