@@ -16,14 +16,19 @@
 package com.meltmedia.cadmium.core.commands;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.jgroups.stack.IpAddress;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
@@ -33,6 +38,15 @@ import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 public class UpdateDoneCommandActionTest {
 
+  ConfigManager configManager;  
+
+  @Before
+  public void setupConfigManager() throws Exception {
+    configManager = mock(ConfigManager.class);      
+
+    when(configManager.getDefaultProperties()).thenReturn(new Properties());
+  }
+  
   @Test
   public void testCommand() throws Exception {
     DummyMessageSender sender = new DummyMessageSender();
@@ -45,6 +59,7 @@ public class UpdateDoneCommandActionTest {
     service.setMembers(members);
     
     UpdateDoneCommandAction cmd = new UpdateDoneCommandAction();
+    cmd.configManager = configManager;
     cmd.lifecycleService = service;
     
     CommandContext ctx = new CommandContext(new IpAddress(1234), new Message());

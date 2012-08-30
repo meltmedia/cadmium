@@ -26,10 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ContentService;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -44,11 +44,9 @@ public class FileServlet extends BasicFileServlet implements ContentService {
 	protected MimeTypeConfigProcessor mimeTypes;
 	
 	@Inject
-	@Named("config.properties")
-	protected Properties configProperties;
+	protected ConfigManager configManager;
 	
-	void setMimeTypeConfigProcessor( MimeTypeConfigProcessor mimeTypes ) { this.mimeTypes = mimeTypes; }
-	void setProperties(Properties configProperties) { this.configProperties = configProperties; }
+	void setMimeTypeConfigProcessor( MimeTypeConfigProcessor mimeTypes ) { this.mimeTypes = mimeTypes; }	
 	void setLastModifiedForTesting(long lastModified) {
 	  super.setLastUpdated(lastModified);
 	}
@@ -59,6 +57,8 @@ public class FileServlet extends BasicFileServlet implements ContentService {
 
   @Override
 	public void switchContent(Long requestTime) {
+    
+    Properties configProperties = configManager.getDefaultProperties();
 		
 		try {
 		  if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {

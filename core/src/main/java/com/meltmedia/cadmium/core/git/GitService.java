@@ -17,7 +17,6 @@ package com.meltmedia.cadmium.core.git;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -49,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 
 public class GitService
@@ -57,6 +57,7 @@ public class GitService
   private static final Logger log = LoggerFactory.getLogger(GitService.class);
   
   protected Git git;
+    
   
   public GitService(Repository repository) {
     git = new Git(repository);
@@ -149,6 +150,7 @@ public class GitService
     return git.checkinNewContent(source, comment);
   }
   
+  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager, ConfigManager configManager) throws Exception {
   /**
    * Initializes war content directory for a Cadmium war.
    * @param uri The remote Git repository ssh URI.
@@ -160,7 +162,6 @@ public class GitService
    * @throws RefNotFoundException
    * @throws Exception
    */
-  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager) throws RefNotFoundException, Exception {
     if(!FileSystemManager.exists(root)) {
       log.info("Content Root directory [{}] does not exist. Creating!!!", root);
       if(!new File(root).mkdirs()) {
@@ -196,17 +197,10 @@ public class GitService
     }
     
     Properties configProperties = new Properties();
-    String configPropsFile = FileSystemManager.getFileIfCanRead(warDir, "config.properties");
-    if(configPropsFile != null) {
-      FileReader reader = null;
-      try {
-        reader = new FileReader(configPropsFile);
-        configProperties.load(reader);
-      } finally {
-        if(reader != null) {
-          reader.close();
-        }
-      }
+    File configPropsFile = new File(warDir, "config.properties");
+    if(configPropsFile.exists()) {
+      
+      configProperties = configManager.getProperties(configPropsFile);         
     }
     
     String renderedContentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
@@ -229,8 +223,8 @@ public class GitService
       }
     } 
     
-    if(configPropsFile == null) {
-      configPropsFile = new File(warDir, "config.properties").getAbsoluteFile().getAbsolutePath();
+    if(!configPropsFile.exists()) {
+      configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
       
       if(renderedContentDir != null) {
         configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
@@ -251,6 +245,8 @@ public class GitService
         configProperties.setProperty("source", "{}");
       }
       
+      configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
+
       boolean closeHistoryManager = false;
       if(historyManager == null) {
         closeHistoryManager = true;

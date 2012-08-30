@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -74,8 +75,7 @@ public class StatusService extends AuthorizationService {
 	protected DelayedGitServiceInitializer gitService;
 
 	@Inject
-	@Named("config.properties")
-	protected Properties configProperties;
+	protected ConfigManager configManager;
 	
 	@Inject
 	@Named("contentDir")
@@ -137,6 +137,8 @@ public class StatusService extends AuthorizationService {
 		String rev = null;
 		String branch = null;
 		String repo = null;
+		
+		Properties configProperties = configManager.getDefaultProperties();
 		
 		// Get content directory
 		String contentDir = this.initialContentDir;

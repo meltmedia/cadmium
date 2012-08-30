@@ -33,11 +33,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -102,6 +99,7 @@ import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
@@ -152,6 +150,8 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String warName;
   private String vHostName;
   private String channelConfigUrl;
+  private ConfigManager configManager;
+  
   private String failOver;
   
   private ServletContext context;
@@ -207,10 +207,15 @@ public class CadmiumListener extends GuiceServletContextListener {
     MaintenanceFilter.siteDown.start();
     context = servletContextEvent.getServletContext();
     
+    configManager = new ConfigManager();
+    
+    Properties cadmiumProperties = configManager.getPropertiesByContext(context, "/WEB-INF/cadmium.properties");
+    
+    
     Properties configProperties = new Properties();
-    configProperties.putAll(System.getenv());
-    configProperties.putAll(System.getProperties());
-
+    configProperties = configManager.getSystemProperties();
+    configProperties.putAll(cadmiumProperties);
+    
     sharedContentRoot = sharedContextRoot(configProperties, context, log);
 
     // compute the directory for this application, based on the war name.
@@ -220,18 +225,24 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
     
+    
+    configProperties = configManager.appendProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+    
+    configManager.setDefaultProperties(configProperties);
+    
     try {
       configureLogback(servletContextEvent.getServletContext(), applicationContentRoot);
     } catch(IOException e) {
       log.error("Failed to reconfigure logging", e);
     }
     
-    loadProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE), log);
 
     if ((sshDir = getSshDir(configProperties, sharedContentRoot )) != null) {
       GitService.setupSsh(sshDir.getAbsolutePath());
     }
     
+
+
     String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
     if (repoDir != null && repoDir.trim().length() > 0) {
       this.repoDir = repoDir;
@@ -264,7 +275,8 @@ public class CadmiumListener extends GuiceServletContextListener {
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     }
     
-    String channelCfgUrl = System.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
+    String channelCfgUrl = configProperties.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
+    //String channelCfgUrl = System.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
     if(channelCfgUrl != null) {
       File channelCfgFile = null;
       URL fileUrl = null;
@@ -335,20 +347,10 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
         Properties configProperties = new Properties();
-        configProperties.putAll(System.getenv());
-        configProperties.putAll(System.getProperties());
-        loadProperties(configProperties, context, "/WEB-INF/cadmium.properties", log);
 
-        if (new File(applicationContentRoot, CONFIG_PROPERTIES_FILE).exists()) {
-          try {
-            configProperties.load(new FileReader(new File(
-                applicationContentRoot, CONFIG_PROPERTIES_FILE)));
-          } catch (Exception e) {
-            log.warn("Failed to load properties file ["
-                + CONFIG_PROPERTIES_FILE + "] from content directory.", e);
-          }
-        }
-
+        configProperties = configManager.getSystemProperties();         
+        configProperties = configManager.appendProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+       
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
 
@@ -383,7 +385,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
         bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
 
-        String environment = System.getProperty("com.meltmedia.cadmium.environment", "development");
+        String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
         
         // Bind channel name
         bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
@@ -391,8 +393,10 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named("applicationContentRoot")).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
         
         bind(HistoryManager.class);
-
-        bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
+        
+        //bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
+        
+        bind(ConfigManager.class).toInstance(configManager);
 
         // Bind Config file URL
         if(channelConfigUrl == null) {
@@ -504,33 +508,6 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
   }
   
-  public static Properties loadProperties( Properties properties, ServletContext context, String path, Logger log ) {
-    Reader reader = null;
-    try{
-      reader = new InputStreamReader(context.getResourceAsStream(path), "UTF-8");
-      properties.load(reader);
-    } catch(Exception e) {
-      log.warn("Failed to load "+path);
-    } finally {
-      IOUtils.closeQuietly(reader);
-    }
-    return properties;
-  }
-  
-  public static Properties loadProperties( Properties properties, File configFile, Logger log ) {
-    if( !configFile.exists() || !configFile.canRead()) return properties;
-    
-    Reader reader = null;
-    try{
-      reader = new FileReader(configFile);
-      properties.load(reader);
-    } catch(Exception e) {
-      log.warn("Failed to load "+configFile.getAbsolutePath());
-    } finally {
-      IOUtils.closeQuietly(reader);
-    }
-    return properties;
-  }
   
   public static File sharedContextRoot( Properties configProperties, ServletContext context, Logger log ) {
     File sharedContentRoot = null;
