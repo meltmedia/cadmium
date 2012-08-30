@@ -17,16 +17,20 @@ package com.meltmedia.cadmium.servlets.jersey;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
@@ -82,6 +86,45 @@ public class StatusService extends AuthorizationService {
 	@Produces("text/plain")
 	public String ping() {
 	  return "Ok";
+	}
+	
+  @GET
+	@Path("/health")
+	@Produces("text/plain")
+	public String health(@Context HttpServletRequest request) {
+	  StringBuilder builder = new StringBuilder();
+	  builder.append("Server: "+request.getServerName() + "\n");
+	  builder.append("Scheme: "+request.getScheme() + "\n");
+    builder.append("Port: "+request.getServerPort() + "\n");
+    builder.append("ContextPath:  " + request.getContextPath() + "\n");
+    builder.append("ServletPath: " + request.getServletPath() + "\n");
+    builder.append("Uri: " + request.getRequestURI() + "\n");
+    builder.append("Query: " + request.getQueryString() + "\n");
+	  Enumeration<?> headerNames = request.getHeaderNames();
+	  builder.append("Headers:\n");
+	  while(headerNames.hasMoreElements()) {
+	    String name = (String) headerNames.nextElement();
+	    Enumeration<?> headers = request.getHeaders(name);
+	    builder.append("  '" + name + "':\n");
+	    while(headers.hasMoreElements()) {
+	      String headerValue = (String) headers.nextElement();
+	      builder.append("    -"+headerValue+"\n");
+	    }
+	  }
+	  if(request.getCookies() != null) {
+  	  builder.append("Cookies:\n");
+  	  for(Cookie cookie : request.getCookies()) {
+  	    builder.append("  '" + cookie.getName() + "':\n");
+        builder.append("    value: " + cookie.getValue() + "\n");
+  	    builder.append("    domain: " + cookie.getDomain() + "\n");
+        builder.append("    path: " + cookie.getPath() + "\n");
+        builder.append("    maxAge: " + cookie.getMaxAge() + "\n");
+        builder.append("    version: " + cookie.getVersion() + "\n");
+        builder.append("    comment: " + cookie.getComment() + "\n");
+        builder.append("    secure: " + cookie.getSecure() + "\n");
+  	  }
+	  }
+	  return builder.toString();
 	}
 	
 	@GET	
