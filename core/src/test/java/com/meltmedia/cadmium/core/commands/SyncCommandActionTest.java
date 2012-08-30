@@ -54,11 +54,9 @@ public class SyncCommandActionTest {
     tracker.setConfigManager(configManager);
     tracker.setMembers(new ArrayList<ChannelMember>());
     tracker.getMembers().add(new ChannelMember(new IpAddress(1234), true, true));
-    tracker.getMembers().add(new ChannelMember(new IpAddress(4321), false, false));
-    
+    tracker.getMembers().add(new ChannelMember(new IpAddress(4321), false, false));    
    
     configProperties.setProperty("repo", "oldRepo");
-
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "good_key");
     
@@ -113,7 +111,6 @@ public class SyncCommandActionTest {
     worker.setListener(listener);    
 
     configProperties.setProperty("repo", "oldRepo");
-
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "old_key");
     

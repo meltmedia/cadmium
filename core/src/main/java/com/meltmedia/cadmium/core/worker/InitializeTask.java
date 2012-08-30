@@ -33,9 +33,7 @@ import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 public class InitializeTask implements Callable<GitService> {
   private final Logger logger = LoggerFactory.getLogger(getClass());
-
-  private String repoUri = null;
-  private String branch = null;
+  
   private String contentRoot = null;
   private String warName = null;
   private SiteConfigProcessor metaProcessor = null;
@@ -43,7 +41,6 @@ public class InitializeTask implements Callable<GitService> {
   private ContentService servlet = null;
   private ConfigManager configManager;  
   private HistoryManager historyManager = null;
-  private Properties configProperties = new Properties();
 
   @Inject
   public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
@@ -60,9 +57,9 @@ public class InitializeTask implements Callable<GitService> {
   @Override
   public GitService call() throws Exception {
     
-    configProperties = configManager.getDefaultProperties();
-    branch = configProperties.getProperty("com.meltmedia.cadmium.branch");
-    repoUri = configProperties.getProperty("com.meltmedia.cadmium.git.uri");
+    Properties configProperties = configManager.getDefaultProperties();
+    String branch = configProperties.getProperty("com.meltmedia.cadmium.branch");
+    String repoUri = configProperties.getProperty("com.meltmedia.cadmium.git.uri");
     
     GitService cloned = null;
     if(repoUri != null && branch != null) {
