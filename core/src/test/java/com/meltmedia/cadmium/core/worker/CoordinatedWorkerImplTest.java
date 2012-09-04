@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -42,9 +43,15 @@ import static org.mockito.Mockito.*;
 public class CoordinatedWorkerImplTest {
   private DelayedGitServiceInitializer service;
   private File baseDir;
+  ConfigManager configManager;
+  Properties configProps = new Properties();
   
   @Before
   public void setupForTest() throws Exception {
+    
+    configManager = mock(ConfigManager.class);      
+    when(configManager.getDefaultProperties()).thenReturn(configProps);
+    
     if(FileSystemManager.exists("./target/worker-test")) {
       FileSystemManager.deleteDeep("./target/worker-test");
     }
@@ -75,8 +82,8 @@ public class CoordinatedWorkerImplTest {
   
   @Test
   public void testBeginPullUpdates() throws Exception {
-    Properties configProperties = new Properties();
-    configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", new File(baseDir, "renderedContent_3").getAbsolutePath());
+    
+    configProps.setProperty("com.meltmedia.cadmium.lastUpdated", new File(baseDir, "renderedContent_3").getAbsolutePath());
     
     Map<String,String> properties = new HashMap<String, String>();
     properties.put("branch", "cd-dev-testing");
@@ -95,7 +102,8 @@ public class CoordinatedWorkerImplTest {
     
     @SuppressWarnings("resource")
     CoordinatedWorkerImpl worker = new CoordinatedWorkerImpl();
-    worker.configProperties = configProperties;
+    worker.configManager = configManager;
+    worker.configProperties = configProps;
     worker.sender = sender;
     worker.service = service;
     worker.lifecycleService = lifecycleService;

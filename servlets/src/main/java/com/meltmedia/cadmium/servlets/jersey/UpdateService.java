@@ -15,8 +15,6 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
-import java.util.Properties;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.Consumes;
@@ -53,11 +51,7 @@ public class UpdateService extends AuthorizationService {
   
   @Inject
   protected LifecycleService lifecycleService;
-  
-  @Inject
-  @Named("config.properties")
-  protected Properties configProperties;
-  
+    
   @Inject
   @Named("contentDir")
   protected String initialContentDir;

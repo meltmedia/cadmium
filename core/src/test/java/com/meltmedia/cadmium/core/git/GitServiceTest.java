@@ -26,6 +26,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.meltmedia.cadmium.core.config.ConfigManager;
+
+
 public class GitServiceTest {
   private File testDir;
   private File gitRepo1;
@@ -38,9 +41,12 @@ public class GitServiceTest {
   private GitService localGit;
   private File localGitRepoCloned;
   private GitService localClone;
+  ConfigManager configManager = new ConfigManager();
   
   @Before
-  public void createDirForTests() throws Exception {
+  public void createDirForTests() throws Exception {    
+          
+    
     testDir = new File("./target/git-test");
     if(!testDir.exists()) {
       if(testDir.mkdir()){
@@ -186,7 +192,7 @@ public class GitServiceTest {
   public void testInitializeContentDirectory() throws Exception {
     GitService cloned = null;
     try {
-      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", null);
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", null, configManager);
     } finally {
       if(cloned != null) {
         cloned.close();
@@ -195,7 +201,7 @@ public class GitServiceTest {
     assertTrue("Initialize method failed", cloned != null);
     cloned = null;
     try {
-      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", null);
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", null, configManager);
     } finally {
       if(cloned != null) {
         cloned.close();

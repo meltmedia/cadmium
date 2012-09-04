@@ -15,13 +15,15 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.util.Properties;
+
+import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.github.ApiClient;
 
 public class AuthorizationService {
@@ -29,33 +31,27 @@ public class AuthorizationService {
   protected String openId;
   protected ApiClient gitClient;
   
+  @Inject
+  protected ConfigManager configManager;
+  
   protected boolean isAuth(String authString) {
     if(authString.toLowerCase().startsWith("token ")){
       authString = authString.substring(6).trim();
     }
     log.info("Authenticating request through github api with token [{}]", authString);
+    
+    Properties systemProperties = configManager.getSystemProperties();
+    
     try {
       gitClient = new ApiClient(authString);
-      String env = System.getProperty("com.meltmedia.cadmium.environment", "development");
-      Properties teamsProps = new Properties();
-      String teamsFile = System.getProperty("com.meltmedia.cadmium.teams.properties");
-      FileInputStream inStream = null;
-      try {
-        if(teamsFile != null && FileSystemManager.canRead(teamsFile)) {
-          inStream = new FileInputStream(teamsFile);
-          teamsProps.load(inStream);
-        } else {
-          teamsProps.load(getClass().getClassLoader().getResourceAsStream("teams.properties"));
-        }
-      } catch(Exception e){
-        log.warn("Failed to load a team.properties file, skipping team based authentication.", e);
-      } finally {
-        if(inStream != null) {
-          try {
-            inStream.close();
-          } catch(Exception e){}
-        }
-      }
+          
+      String env = systemProperties.getProperty("com.meltmedia.cadmium.environment", "development");
+           
+      String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties");
+      Properties teamsProps = configManager.getProperties(new File(teamsFile));
+      
+      log.info("teamsProps: {}", teamsProps);
+           
       String defaultId = teamsProps.getProperty("default");
       String teamIdString = teamsProps.getProperty(env);
       if(teamIdString == null && defaultId == null) {

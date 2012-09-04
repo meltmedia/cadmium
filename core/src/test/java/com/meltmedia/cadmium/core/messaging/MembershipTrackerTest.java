@@ -16,6 +16,7 @@
 package com.meltmedia.cadmium.core.messaging;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,13 +25,24 @@ import java.util.Vector;
 
 import org.jgroups.Address;
 import org.jgroups.stack.IpAddress;
+import org.junit.Before;
 import org.junit.Test;
 
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.messaging.jgroups.DummyJChannel;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 
 public class MembershipTrackerTest {
 
+  ConfigManager configManager;
+  
+  @Before
+  public void setupConfigManager() throws Exception {
+    configManager = mock(ConfigManager.class);      
+
+    when(configManager.getDefaultProperties()).thenReturn(new Properties());
+  }
+  
   @Test
   public void testNewMember() throws Exception {
     Address me = new IpAddress(12345);
@@ -48,12 +60,11 @@ public class MembershipTrackerTest {
     ChannelMember oldMember = new ChannelMember(other, true, false);
     members.add(oldMember);
     
-    Properties configProps = new Properties();
     
     JGroupsMessageSender sender = new JGroupsMessageSender();
     sender.setChannel(channel);
     
-    new MembershipTracker(sender, channel, members, configProps, null);
+    new MembershipTracker(sender, channel, members, configManager, null);
     
     Thread.sleep(1000l);
     

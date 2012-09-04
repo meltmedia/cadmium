@@ -21,8 +21,11 @@ import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import javax.inject.Inject;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.GitService;
 
 /**
@@ -40,6 +43,9 @@ public class InitializeContentCommand implements CliCommand {
 
   @Parameter(description="\"path to war\"", required=true)
   private List<String> wars;
+  
+  @Inject
+  ConfigManager configManager;
   
   public void execute() throws Exception {
     
@@ -60,7 +66,7 @@ public class InitializeContentCommand implements CliCommand {
         String repo = cadmiumProps.getProperty("com.meltmedia.cadmium.git.uri");
         
         if(branch != null && repo != null) {
-          service = GitService.initializeContentDirectory(repo, branch, root, warName, null);
+          service = GitService.initializeContentDirectory(repo, branch, root, warName, null, configManager);
         }
       } catch (Exception e) {
         System.err.println("Failed to initialize content for "+war);

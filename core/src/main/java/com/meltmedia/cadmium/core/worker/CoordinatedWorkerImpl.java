@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
@@ -52,8 +53,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   protected DelayedGitServiceInitializer service;
 
   @Inject
-  @Named("config.properties")
-  protected Properties configProperties;
+  protected ConfigManager configManager;
   
   @Inject
   @Named("contentDir")
@@ -70,10 +70,12 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   
   @Inject
   protected HistoryManager historyManager;
-  
+    
   protected Future<Boolean> lastTask = null;
   
-  private CoordinatedWorkerListener listener;
+
+  protected CoordinatedWorkerListener listener;
+  protected Properties configProperties; 
   
   public CoordinatedWorkerImpl() {
     pool = Executors.newSingleThreadExecutor();
@@ -85,6 +87,8 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
     synchronized(pool) {
       log.info("Beginning Update...");
       lastTask = null;
+      configProperties = configManager.getDefaultProperties();
+      
       try {
         log.debug("Waiting for git service to initialize.");
         service.getGitService();
@@ -117,7 +121,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
         
         lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
         
-        lastTask = pool.submit(new UpdateConfigTask(service, properties, configProperties, lastTask));
+        lastTask = pool.submit(new UpdateConfigTask(service, properties, configManager, lastTask));
         
         lastTask = pool.submit(new NotifyListenerTask(listener, properties, lastTask));
         
