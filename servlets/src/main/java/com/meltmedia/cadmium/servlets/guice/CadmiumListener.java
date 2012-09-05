@@ -461,8 +461,6 @@ public class CadmiumListener extends GuiceServletContextListener {
         for( Class<? extends Object> jerseyService : jerseySet ) {
           bind(jerseyService).asEagerSingleton();
         }
-          
-       
         
       }
     };

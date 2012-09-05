@@ -56,7 +56,7 @@ public class ConfigurationParserProvider implements Provider<ConfigurationParser
    * @throws NoSuchMethodException
    */
   @Inject
-  public ConfigurationParserProvider(Class<? extends ConfigurationParser> parserType) throws SecurityException, NoSuchMethodException {
+  public ConfigurationParserProvider(@ConfigurationParserClass Class<? extends ConfigurationParser> parserType) throws SecurityException, NoSuchMethodException {
     parserConstructor = parserType.getConstructor();
   }
 
