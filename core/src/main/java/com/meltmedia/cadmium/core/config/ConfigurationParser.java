@@ -16,15 +16,25 @@
 package com.meltmedia.cadmium.core.config;
 
 import java.io.File;
+import java.util.Collection;
 
 import javassist.NotFoundException;
 
 /**
- * <p>An interface of a Configuration Parser that will be created for each configuration update. This will be run in the following steps:<br />
+ * <p>An interface of a Configuration Parser that will be created for each configuration update. 
+ * An implementation of this interface must have a zero argument constructor. This will be run 
+ * in the following steps:<br />
  *   <ol>
- *     <li>The implementation of this interface will be initialized with a List of Class Objects. (<em>The Class Objects passed in will be wired via Guice and must be Pojo's annotated with {@link CadmiumConfig}.</em>)</li>
- *     <li>The {@link ConfigurationParser#parseDirectory(File)} method will be called with a File Object that will point to the directory that holds the configuration files.</li>
- *     <li>When ever a module needs access to a configuration the call will be delegated to the {@link ConfigurationParser#getConfiguration(String, Class)} method.</li> 
+ *     <li>The implementation of this interface will be initialized.</li>
+ *     <li>The {@link ConfigurationParser#setConfigurationClasses(Collection)} will be invoked 
+ *     with a List of Class Objects. (<em>The Class Objects passed in will be wired via Guice 
+ *     and must be Pojo's annotated with {@link CadmiumConfig}.</em>)</li>
+ *     <li>The {@link ConfigurationParser#setEnvironment(String)} will be invoked with the token
+ *      for the current environment.</li>
+ *     <li>The {@link ConfigurationParser#parseDirectory(File)} method will be called with a File
+ *      Object that will point to the directory that holds the configuration files.</li>
+ *     <li>When ever a module needs access to a configuration the call will be delegated to the 
+ *     {@link ConfigurationParser#getConfiguration(String, Class)} method.</li> 
  *   </ol>
  * </p>
  * 
@@ -34,9 +44,24 @@ import javassist.NotFoundException;
 public interface ConfigurationParser {
   
   /**
+   * Sets the classes that will be expected in the configuration files.
+   * 
+   * @param configurationClasses
+   */
+  public void setConfigurationClasses(Collection<Class<?>> configurationClasses);
+  
+  /**
+   * Sets the environment token for this instances environment.
+   * 
+   * @param environment
+   */
+  public void setEnvironment(String environment);
+  
+  /**
    * This method will process all configuration files that are contained in the directory specified.
    * 
-   * @param configurationDirectory A File Object that references the directory where all configuration file will be stored.
+   * @param configurationDirectory A File Object that references the directory where all 
+   * configuration file will be stored.
    * @throws Exception 
    */
   public void parseDirectory(File configurationDirectory) throws Exception;

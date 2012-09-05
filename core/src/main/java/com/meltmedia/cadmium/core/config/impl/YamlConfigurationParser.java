@@ -74,15 +74,7 @@ public class YamlConfigurationParser implements ConfigurationParser {
   protected Map<String, Map<String, ?>> configuration = new HashMap<String, Map<String, ?>>();
   protected String environment;
   
-  /**
-   * @param configurationClasses The classes that are expected to be in the Yaml configuration files.
-   */
-  public YamlConfigurationParser(String environment, List<Class<?>> configurationClasses) {
-    if(configurationClasses != null) {
-      this.configurationClasses.addAll(configurationClasses);
-    }
-    this.environment = environment;
-  }
+  public YamlConfigurationParser() {}
 
   /**
    * This will only parse the files with the extensions of <code>.yml</code> or <code>.yaml</code> in the directory specified.
@@ -207,6 +199,18 @@ public class YamlConfigurationParser implements ConfigurationParser {
       }
     }
     return null;
+  }
+
+  @Override
+  public void setConfigurationClasses(Collection<Class<?>> configurationClasses) {
+    if(configurationClasses != null) {
+      this.configurationClasses.addAll(configurationClasses);
+    }
+  }
+
+  @Override
+  public void setEnvironment(String environment) {
+    this.environment = environment;
   }
 
 }

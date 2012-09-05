@@ -32,7 +32,7 @@ public class ConfigManager {
     return reader.getProperties(configFile, log);
   }
   
-  /*
+  /**
    * Add new properties to an existing Properties object 
    * 
    */
@@ -46,7 +46,7 @@ public class ConfigManager {
     return reader.appendProperties(properties, configFile, log);
   }
 
-  /*
+  /**
    * Read in The system properties
    * 
    */
@@ -59,7 +59,7 @@ public class ConfigManager {
     return properties;
   }
 
-  /*
+  /**
    * Read in properties based on a ServletContext and a path to a config file
    * 
    */
@@ -69,7 +69,7 @@ public class ConfigManager {
   }   
   
 
-  /*
+  /**
    * Read in properties based on a ServletContext and a path to a config file
    * 
    */

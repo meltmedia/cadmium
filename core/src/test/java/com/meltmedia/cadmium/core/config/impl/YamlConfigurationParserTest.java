@@ -34,7 +34,9 @@ public class YamlConfigurationParserTest {
 
   @Test
   public void testParseDirectory() throws Exception {
-    YamlConfigurationParser parser = new YamlConfigurationParser("production", Arrays.asList(new Class<?>[] {TestConfigPojo.class}));
+    YamlConfigurationParser parser = new YamlConfigurationParser();
+    parser.setConfigurationClasses(Arrays.asList(new Class<?>[] {TestConfigPojo.class}));
+    parser.setEnvironment("production");
     parser.parseDirectory(new File("src/test/resources/test-configurations"));
     
     assertTrue("No configuration was parsed.", !parser.configuration.isEmpty());
@@ -57,7 +59,9 @@ public class YamlConfigurationParserTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testGetConfiguration() throws Exception {
-    YamlConfigurationParser parser = new YamlConfigurationParser("production", Arrays.asList(new Class<?>[] {TestConfigPojo.class}));
+    YamlConfigurationParser parser = new YamlConfigurationParser();
+    parser.setConfigurationClasses(Arrays.asList(new Class<?>[] {TestConfigPojo.class}));
+    parser.setEnvironment("production");
     
     parser.configuration.put(YamlConfigurationParser.DEFAULT, new HashMap<String, Object>());
     parser.configuration.put("production", new HashMap<String, Object>());
