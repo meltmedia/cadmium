@@ -23,25 +23,35 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class CurrentStateCommandAction implements CommandAction {
+public class ConfigUpdateCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
-  
+    
   @Inject
   protected LifecycleService lifecycleService;
   
-  public String getName() { return ProtocolMessage.CURRENT_STATE; };
+  @Inject
+  protected CoordinatedWorker worker;
+  
+  public String getName() { return ProtocolMessage.CONFIG_UPDATE; }
+  
+  public ConfigUpdateCommandAction(){}
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
-    log.info("Responding with current state {}", lifecycleService.getCurrentState());
-    lifecycleService.sendStateUpdate(new ChannelMember(ctx.getSource()));
-    log.info("Responding with current config state {}", lifecycleService.getCurrentConfigState());
-    lifecycleService.sendConfigStateUpdate(new ChannelMember(ctx.getSource()));
+    if(lifecycleService.getCurrentConfigState() == UpdateState.IDLE) {
+      log.info("Beginning an config update, started by {}", ctx.getSource());
+      lifecycleService.updateMyConfigState(UpdateState.UPDATING, ctx.getMessage().getProtocolParameters().get("uuid"));
+      worker.beginPullUpdates(ctx.getMessage().getProtocolParameters());
+      
+    } else {
+      log.info("Received CONFIG_UPDATE message with current config state [{}] not IDLE from {}", lifecycleService.getCurrentConfigState(), ctx.getSource());
+    }
     return true;
   }
 
@@ -49,5 +59,4 @@ public class CurrentStateCommandAction implements CommandAction {
   public void handleFailure(CommandContext ctx, Exception e) {
 
   }
-
 }
