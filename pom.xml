@@ -302,6 +302,12 @@
         <artifactId>jcommander</artifactId>
         <version>1.25</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>1.10</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
