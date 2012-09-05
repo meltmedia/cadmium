@@ -1,8 +1,14 @@
 package com.meltmedia.cadmium.core.config;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
+import javassist.NotFoundException;
+
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletContext;
 
@@ -11,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.config.impl.PropertiesReaderImpl;
 import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
+import com.meltmedia.cadmium.core.config.impl.YamlConfigurationParser;
 
 /**
  * This centralizes and manages how other classes read and write to properties files. 
@@ -19,14 +26,25 @@ import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
  */
 
 @Singleton
-public class ConfigManager {
-
+public class ConfigManager implements Closeable {
+  
   private final Logger log = LoggerFactory.getLogger(ConfigManager.class);
   
   private Properties defaultProperties;    
   private PropertiesReader reader = new PropertiesReaderImpl();
   private PropertiesWriter writer = new PropertiesWriterImpl();
+  private ConfigurationParser stagedConfigParser;
+  private ConfigurationParser liveConfigParser;
+  private CountDownLatch latch;
 
+  @Inject
+  protected ConfigurationParserFactory configParserFactory;
+  
+  public ConfigManager() {
+    
+    latch = new CountDownLatch(1);
+  }
+  
   public Properties getProperties(File configFile) {   
     
     return reader.getProperties(configFile, log);
@@ -95,6 +113,51 @@ public class ConfigManager {
 
   public void setDefaultProperties(Properties defaultProperties) {
     this.defaultProperties = defaultProperties;
+  } 
+  
+  public void parseConfigurationDirectory(File directory) {
+    
+    ConfigurationParser parser = configParserFactory.newInstance();
+    try {
+      
+      parser.parseDirectory(directory);
+      stagedConfigParser = parser;
+    } 
+    catch (Exception e) {
+      
+      log.error("Problem gettign config data from directory: {}", directory);
+    }
   }
+  
+  public void makeConfigParserLive() {
+    
+    if(stagedConfigParser != null) {
+      
+      liveConfigParser = stagedConfigParser;
+      latch.countDown();
+    }
+  }
+  
+  public <T> T getConfiguration(String key, Class <T> type) throws NotFoundException {    
+    
+    try {
+      
+      latch.await();
+    }
+    catch (InterruptedException e) {
+      
+      log.error("Latch interrupted, Not able to get configuration for key: {}, and class: {}", key, type);
+      return null;
+    }
+    
+    return liveConfigParser.getConfiguration(key, type); 
+  }
+
+  @Override
+  public void close() throws IOException {
+    
+    latch.countDown();
+    
+  }  
  
 }
