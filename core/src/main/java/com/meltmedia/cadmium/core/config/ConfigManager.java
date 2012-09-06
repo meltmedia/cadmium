@@ -156,8 +156,7 @@ public class ConfigManager implements Closeable {
   @Override
   public void close() throws IOException {
     
-    latch.countDown();
-    
+    latch.countDown();    
   }  
  
 }
