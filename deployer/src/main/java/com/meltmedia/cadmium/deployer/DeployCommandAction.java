@@ -49,16 +49,18 @@ public class DeployCommandAction implements CommandAction {
     String domain = params.get("domain").trim();
     String branch = params.get("branch").trim();
     String repo = params.get("repo").trim();
+    String configBranch = params.get("configBranch").trim();
+    String configRepo = params.get("configRepo").trim();
     String context = params.get("context").trim();
     String artifact = params.get("artifact").trim();
     
     // make sure our state is OK.  We need some proper validation.
-    if( domain.isEmpty() || branch.isEmpty() || repo.isEmpty() || context.isEmpty()) {
-      log.warn("Invalid deploy request: Empty field. branch: {}, repo {}, domain {}, context {}", new String[]{branch, repo, domain, context});
+    if( domain.isEmpty() || branch.isEmpty() || repo.isEmpty() || configBranch.isEmpty() || context.isEmpty()) {
+      log.warn("Invalid deploy request: Empty field. branch: {}, repo {}, config branch: {}, config repo {}, domain {}, context {}", new String[]{branch, repo, configBranch, configRepo, domain, context});
       throw new Exception("Invalid deploy message.");
     }
     
-    log.info("Beginning war creation. branch: {}, repo {}, domain {}, context {}", new String[]{branch, repo, domain, context});
+    log.info("Beginning war creation. branch: {}, repo {}, config branch: {}, config repo {}, domain {}, context {}", new String[]{branch, repo, configBranch, configRepo, domain, context});
 
     JBossUtil.addVirtualHost(domain, log);    
     
@@ -81,7 +83,7 @@ public class DeployCommandAction implements CommandAction {
     
     File artifactFile = artifactResolver.resolveMavenArtifact(artifact);
     
-    updateWar(null, artifactFile.getAbsolutePath(), newWarNames, repo, branch, domain, context, secure);
+    updateWar(null, artifactFile.getAbsolutePath(), newWarNames, repo, branch, configRepo, configBranch, domain, context, secure);
     
     String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
     

@@ -18,6 +18,8 @@ package com.meltmedia.cadmium.core.api;
 public class DeployRequest {
   private String branch;
   private String repo;
+  private String configBranch;
+  private String configRepo;
   private String domain;
   private String contextRoot;
   private String artifact;
@@ -39,6 +41,22 @@ public class DeployRequest {
 
   public void setRepo(String repo) {
     this.repo = repo;
+  }
+
+  public String getConfigBranch() {
+    return configBranch;
+  }
+
+  public void setConfigBranch(String configBranch) {
+    this.configBranch = configBranch;
+  }
+
+  public String getConfigRepo() {
+    return configRepo;
+  }
+
+  public void setConfigRepo(String configRepo) {
+    this.configRepo = configRepo;
   }
 
   public String getDomain() {

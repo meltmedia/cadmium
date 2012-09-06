@@ -17,6 +17,8 @@ package com.meltmedia.cadmium.cli;
 
 import java.util.List;
 
+import org.eclipse.jgit.util.StringUtils;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.FileSystemManager;
@@ -37,11 +39,17 @@ public class InitializeWarCommand implements CliCommand {
 	@Parameter(names="--existingWar", description="Path to an existing cadmium war.", required=false)
 	private String war;
 
-	@Parameter(names="--repo", description="Uri to remote github repo.", required=false)
+	@Parameter(names={"--repo", "-r"}, description="Uri to remote github repo.", required=false)
 	private String repoUri;  
 
 	@Parameter(names={"--branch", "-b","--tag", "-t"}, description="Initial branch to serve content from.", required=false)
 	private String branch;
+
+  @Parameter(names={"--configuration-repo", "-R"}, description="Uri to remote github repo for configuration (only specify if different from --repo).", required=false)
+  private String configRepoUri = null;  
+
+  @Parameter(names={"--configuration-branch", "-C"}, description="Initial branch to pull configuration from.", required=false)
+  private String configBranch;
 
 	@Parameter(names="--domain", description="Sets the domain name that this war will bind to.", required=false)
 	private String domain = "localhost";
@@ -74,7 +82,7 @@ public class InitializeWarCommand implements CliCommand {
 			  }
 			}
 			
-	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, domain, context, secure);
+	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, StringUtils.isEmptyOrNull(configRepoUri) || configRepoUri.equals(repoUri) ? repoUri : configRepoUri, configBranch, domain, context, secure);
 		} else {
 			System.err.println("ERROR: \""+war+"\" does not exist or cannot be read.");
 			System.exit(1);
