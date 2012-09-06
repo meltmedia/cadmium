@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.worker;
 
+import java.io.File;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
@@ -25,29 +26,23 @@ import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
-import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
-public class InitializeTask implements Callable<GitService> {
+public class ConfigInitializeTask implements Callable<GitService> {
   private final Logger logger = LoggerFactory.getLogger(getClass());
   
   private String contentRoot = null;
   private String warName = null;
-  private SiteConfigProcessor metaProcessor = null;
-  private ContentService servlet = null;
   private ConfigManager configManager;  
   private HistoryManager historyManager = null;
 
   @Inject
-  public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, HistoryManager historyManager) {
+  public ConfigInitializeTask(ConfigManager configManager, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, HistoryManager historyManager) {
     
     this.contentRoot = contentRoot;
     this.warName = warName;
-    this.metaProcessor = metaProcessor;
-    this.servlet = servlet;
     this.configManager = configManager;
     this.historyManager = historyManager;
   }
@@ -56,33 +51,30 @@ public class InitializeTask implements Callable<GitService> {
   public GitService call() throws Exception {
     
     Properties configProperties = configManager.getDefaultProperties();
-    String branch = configProperties.getProperty("com.meltmedia.cadmium.branch");
-    String repoUri = configProperties.getProperty("com.meltmedia.cadmium.git.uri");
+    String branch = configProperties.getProperty("com.meltmedia.cadmium.config.branch");
+    String repoUri = configProperties.getProperty("com.meltmedia.cadmium.config.git.uri", configProperties.getProperty("com.meltmedia.cadmium.git.uri"));
     
     GitService cloned = null;
     if(repoUri != null && branch != null) {
       Throwable t = null;
 
       try {
-        logger.debug("Attempting to initialize content for `{}` into `{}`", warName, contentRoot);
-        cloned = GitService.initializeContentDirectory(repoUri, branch, contentRoot, warName, historyManager, configManager);
+        logger.debug("Attempting to initialize config for `{}` into `{}`", warName, contentRoot);
+        cloned = GitService.initializeConfigDirectory(repoUri, branch, contentRoot, warName, historyManager, configManager);
 
-        String contentDirectory = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+        String contentDirectory = configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated");
         
-        if(metaProcessor != null && contentDirectory != null) {
+        if(configManager != null && contentDirectory != null) {
           logger.debug("Processing META-INF dir in `{}`", warName);
-          this.metaProcessor.processDir(contentDirectory);
+          this.configManager.parseConfigurationDirectory(new File(contentDirectory));
         }
-        if(servlet != null) {
-          logger.debug("Switching content root of {}", warName);
-          this.servlet.switchContent(System.currentTimeMillis());
-        }
-        logger.debug("Successfully initialized `{}`", warName);
+        configManager.makeConfigParserLive();
+        logger.debug("Successfully initialized config for `{}`", warName);
       } catch(RefNotFoundException e) {
         logger.warn("Branch `"+branch+"` does not exist.", e);
         return null;
       } catch(Throwable t1) {
-        logger.error("Failed to initialize git repo `"+warName+"`", t);
+        logger.error("Failed to initialize config git repo `"+warName+"`", t);
         t = t1;
       }
       if(t != null) {

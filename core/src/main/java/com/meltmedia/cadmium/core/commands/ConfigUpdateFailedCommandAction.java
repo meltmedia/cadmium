@@ -23,7 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.ConfigurationWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
+import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
@@ -36,6 +38,7 @@ public class ConfigUpdateFailedCommandAction implements CommandAction {
   public static final String FAILED_LOG_MESSAGE = "Config update failed to run!";
   
   @Inject
+  @ConfigurationWorker
   protected CoordinatedWorker worker;
   
   @Inject
@@ -69,7 +72,7 @@ public class ConfigUpdateFailedCommandAction implements CommandAction {
         if(ctx.getMessage().getProtocolParameters().containsKey("openId")) {
           openId = ctx.getMessage().getProtocolParameters().get("openId");
         }
-        historyManager.logEvent(repo, branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
+        historyManager.logEvent(EntryType.CONFIG, repo, branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
       }
     }
     return true;

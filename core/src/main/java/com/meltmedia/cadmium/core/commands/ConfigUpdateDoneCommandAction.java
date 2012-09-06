@@ -28,6 +28,7 @@ import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
@@ -63,7 +64,7 @@ public class ConfigUpdateDoneCommandAction implements CommandAction {
         String uuid = props.get("uuid");
         String comment = props.get("comment");
         boolean revertible = true;
-        manager.logEvent(repo, branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
+        manager.logEvent(EntryType.CONFIG, repo, branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }

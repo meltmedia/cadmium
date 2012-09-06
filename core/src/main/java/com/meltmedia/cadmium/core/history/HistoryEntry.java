@@ -18,6 +18,8 @@ package com.meltmedia.cadmium.core.history;
 import java.util.Date;
 
 public class HistoryEntry {
+  public static enum EntryType { CONTENT, CONFIG, MAINT }
+  
   private long index = 1;
   private Date timestamp;
   private String branch;
@@ -32,10 +34,12 @@ public class HistoryEntry {
   private boolean finished = true;
   private String uuid;
   private String comment;
+  private EntryType type;
   
   public HistoryEntry(){}
   
-  public HistoryEntry(Date timestamp, String repoUrl, String branch, String revision, long timeLive, String openId, String servedDirectory, boolean revertible, String comment) {
+  public HistoryEntry(EntryType type, Date timestamp, String repoUrl, String branch, String revision, long timeLive, String openId, String servedDirectory, boolean revertible, String comment) {
+    this.type = type;
     this.timestamp = timestamp;
     this.repoUrl = repoUrl;
     this.branch = branch;
@@ -157,5 +161,13 @@ public class HistoryEntry {
 
   public void setFinished(boolean finished) {
     this.finished = finished;
+  }
+
+  public EntryType getType() {
+    return type;
+  }
+
+  public void setType(EntryType type) {
+    this.type = type;
   }
 }

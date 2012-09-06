@@ -92,7 +92,11 @@ import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
 import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.CommandAction;
+import com.meltmedia.cadmium.core.ConfigurationGitService;
+import com.meltmedia.cadmium.core.ConfigurationWorker;
+import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.ContentService;
+import com.meltmedia.cadmium.core.ContentWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
@@ -115,6 +119,7 @@ import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
+import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
@@ -346,11 +351,12 @@ public class CadmiumListener extends GuiceServletContextListener {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
         
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
-        Properties configProperties = new Properties();
+        Properties configProperties = configManager.getDefaultProperties();
 
+        /*
         configProperties = configManager.getSystemProperties();         
         configProperties = configManager.appendProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
-       
+        */
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
 
@@ -359,7 +365,8 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(MessageSender.class).to(JGroupsMessageSender.class);
 
-        bind(DelayedGitServiceInitializer.class).toInstance(new DelayedGitServiceInitializer());
+        bind(DelayedGitServiceInitializer.class).annotatedWith(ContentGitService.class).toInstance(new DelayedGitServiceInitializer());
+        bind(DelayedGitServiceInitializer.class).annotatedWith(ConfigurationGitService.class).toInstance(new DelayedGitServiceInitializer());
 
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
@@ -385,7 +392,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
         bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
 
-        String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
+        String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "development");
         
         // Bind channel name
         bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
@@ -419,7 +426,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(MessageListener.class).to(MessageReceiver.class);
 
         bind(LifecycleService.class);
-        bind(CoordinatedWorker.class).to(CoordinatedWorkerImpl.class);
+        bind(CoordinatedWorker.class).annotatedWith(ContentWorker.class).to(CoordinatedWorkerImpl.class);
+        bind(CoordinatedWorker.class).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
         
         bind(SiteConfigProcessor.class);
         

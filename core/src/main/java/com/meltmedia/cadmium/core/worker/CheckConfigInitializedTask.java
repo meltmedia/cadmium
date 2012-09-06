@@ -27,39 +27,33 @@ import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.ContentGitService;
-import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.ConfigurationGitService;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
-import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
-public class CheckInitializedTask implements Callable<Boolean> {
+public class CheckConfigInitializedTask implements Callable<Boolean> {
   private final Logger logger = LoggerFactory.getLogger(getClass());
   private Callable<GitService> taskToCheck = null;
   private ExecutorService pool = null;
   private Future<GitService> futureTask = null;
-  private SiteDownService service = null;
-  private SiteConfigProcessor metaProcessor = null;
   private DelayedGitServiceInitializer gitInit = null;
   private String sharedContentRoot = null;
   private String warName = null;
   
   @Inject
-  public CheckInitializedTask(InitializeTask taskToCheck, SiteConfigProcessor metaProcessor, SiteDownService service, @ContentGitService DelayedGitServiceInitializer gitInit, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName) {
+  public CheckConfigInitializedTask(ConfigInitializeTask taskToCheck, @ConfigurationGitService DelayedGitServiceInitializer gitInit, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName) {
     this.taskToCheck = taskToCheck;
-    this.metaProcessor = metaProcessor;
-    this.service = service;
     this.gitInit = gitInit;
     this.sharedContentRoot = contentRoot;
     this.warName = warName;
   }
   
-  public CheckInitializedTask setFuture(Future<GitService> futureTask) {
+  public CheckConfigInitializedTask setFuture(Future<GitService> futureTask) {
     this.futureTask = futureTask;
     return this;
   }
   
-  public CheckInitializedTask setExecutor(ExecutorService pool) {
+  public CheckConfigInitializedTask setExecutor(ExecutorService pool) {
     this.pool = pool;
     return this;
   }
@@ -75,14 +69,14 @@ public class CheckInitializedTask implements Callable<Boolean> {
             git = GitService.createGitService(gitCheckout.getAbsolutePath());
             gitInit.setGitService(git);
           } catch(Exception e){
-            logger.warn("Git Service did not initialize.", e);
+            logger.warn("Config Git Service did not initialize.", e);
           }
         }
         return true;
       }
     } catch(Exception e){
       try {
-        logger.info("Initialize task `" + taskToCheck + "` failed.  Retrying in 30 seconds.", e);
+        logger.info("Config initialize task `" + taskToCheck + "` failed.  Retrying in 30 seconds.", e);
         Thread.sleep(30000l);
       } catch(Exception e1){}
       try {
@@ -93,12 +87,6 @@ public class CheckInitializedTask implements Callable<Boolean> {
       }
       return true;
     }
-    if(metaProcessor != null) {
-      logger.debug("Making meta config live `{}`", taskToCheck);
-      metaProcessor.makeLive();
-    }
-    logger.debug("Stopping Maintenance page `{}`", taskToCheck);
-    service.stop();
     gitInit.setGitService(git);
     return true;
   }

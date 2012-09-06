@@ -84,7 +84,7 @@ public class StateUpdateCommandAction implements CommandAction {
         if(lifecycleService.getCurrentConfigState() == UpdateState.WAITING && lifecycleService.allEqualsConfig(UpdateState.WAITING)) {
           log.info("Done updating config now switching config.");
           
-          //TODO: configManager.makeConfigParserLive();
+          configManager.makeConfigParserLive();
           
           setHistoryDone(ctx);
           lifecycleService.updateMyConfigState(UpdateState.IDLE, ctx.getMessage().getProtocolParameters().get("uuid"));

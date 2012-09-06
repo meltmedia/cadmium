@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.config.impl.PropertiesReaderImpl;
 import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
-import com.meltmedia.cadmium.core.config.impl.YamlConfigurationParser;
 
 /**
  * This centralizes and manages how other classes read and write to properties files. 
@@ -48,6 +47,20 @@ public class ConfigManager implements Closeable {
   public Properties getProperties(File configFile) {   
     
     return reader.getProperties(configFile, log);
+  }
+  
+  /**
+   * Adds properties from file to the default properties if the file exists.
+   * 
+   * @param configFile
+   * @return default properties instance
+   */
+  public Properties appendToDefaultProperties(File configFile) {
+    if(defaultProperties != null && configFile.canRead()) {
+      defaultProperties = appendProperties(defaultProperties, configFile);      
+    }
+    
+    return defaultProperties;
   }
   
   /**

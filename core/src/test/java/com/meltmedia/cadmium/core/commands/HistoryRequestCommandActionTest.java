@@ -25,6 +25,7 @@ import org.junit.Test;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
 import com.meltmedia.cadmium.core.messaging.DummyMessageSender;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -36,10 +37,10 @@ public class HistoryRequestCommandActionTest {
   public void testCommand() throws Exception {
     DummyMessageSender sender = new DummyMessageSender();
     HistoryManager historyManager = new HistoryManager(null);
-    historyManager.getHistory().add(new HistoryEntry(new Date(), "", "master", "sha", 3000l, "me", "dir", true, "comment"));
-    historyManager.getHistory().add(new HistoryEntry(new Date(), "", "master", "sha1", 3000l, "me", "dir_1", true, "comment1"));
-    historyManager.getHistory().add(new HistoryEntry(new Date(), "", "master", "sha2", 3000l, "me", "dir_2", false, "comment2"));
-    historyManager.getHistory().add(new HistoryEntry(new Date(), "", "master", "sha3", 3000l, "me", "dir_3", false, "comment3"));
+    historyManager.getHistory().add(new HistoryEntry(EntryType.CONTENT, new Date(), "", "master", "sha", 3000l, "me", "dir", true, "comment"));
+    historyManager.getHistory().add(new HistoryEntry(EntryType.CONTENT, new Date(), "", "master", "sha1", 3000l, "me", "dir_1", true, "comment1"));
+    historyManager.getHistory().add(new HistoryEntry(EntryType.CONTENT, new Date(), "", "master", "sha2", 3000l, "me", "dir_2", false, "comment2"));
+    historyManager.getHistory().add(new HistoryEntry(EntryType.CONTENT, new Date(), "", "master", "sha3", 3000l, "me", "dir_3", false, "comment3"));
     
     HistoryRequestCommandAction command = new HistoryRequestCommandAction();
     command.sender = sender;

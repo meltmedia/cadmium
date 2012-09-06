@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
+import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.config.ConfigManager;
@@ -72,6 +73,7 @@ public class StatusService extends AuthorizationService {
 	protected LifecycleService lifecycleService;
 	
 	@Inject
+	@ContentGitService
 	protected DelayedGitServiceInitializer gitService;
 
 	@Inject
