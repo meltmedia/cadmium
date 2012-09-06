@@ -18,25 +18,13 @@ package com.meltmedia.cadmium.cli;
 import java.io.IOException;
 import java.util.List;
 
-import javax.ws.rs.core.MediaType;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.FileSystemManager;
-import com.meltmedia.cadmium.core.api.BasicApiResponse;
-import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
@@ -154,7 +142,7 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
           }
         } 
 
-        if(sendUpdateConfigMessage(siteUrl, repo, newBranch, rev, message, token)){
+        if(UpdateCommand.sendUpdateMessage(siteUrl, repo, newBranch, rev, message, token, UPDATE_CONFIG_ENDPOINT)){
           System.out.println("Update successful");
         }
 
@@ -177,61 +165,7 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
 
   @Override
   public String getCommandName() {
-    return "update";
+    return "update-config";
   }
-
-  /**
-   * Sends a update config message to a Cadmium site. This method will block until the update is complete.
-   * 
-   * @param site2 The uri to a Cadmium site.
-   * @param repo The git repository to tell the site to change to.
-   * @param branch The branch to switch to.
-   * @param revision The revision to reset to.
-   * @param comment The message to record with this event in the history on the Cadmium site.
-   * @param token The Github API token to authenticate with.
-   * @return true if successfull or false otherwise.
-   * @throws Exception
-   */
-  public static boolean sendUpdateConfigMessage(String site2, String repo, String branch, String revision, String comment, String token) throws Exception {
-    HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
-
-    HttpPost post = new HttpPost(site2 + UPDATE_CONFIG_ENDPOINT);
-    addAuthHeader(token, post);
-
-    post.addHeader("Content-Type", MediaType.APPLICATION_JSON);
-
-    UpdateRequest req = new UpdateRequest();
-
-    if(repo != null) {
-      req.setRepo(repo);
-    }
-
-    if(branch != null) {
-      req.setBranch(branch);
-    }
-
-    if(revision != null) {
-      req.setSha(revision);
-    }
-
-    req.setComment(comment);
-
-    post.setEntity(new StringEntity(new Gson().toJson(req), "UTF-8"));
-
-    HttpResponse response = client.execute(post);
-
-    if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-      String responseString = EntityUtils.toString(response.getEntity());
-      BasicApiResponse resp = new Gson().fromJson(responseString, BasicApiResponse.class);
-      if(!"ok".equals(resp.getMessage())) {
-        System.err.println("Update Config message to ["+site2+"] failed. ["+resp.getMessage()+"]");
-      } else {
-        if(resp.getUuid() != null) {
-          HistoryCommand.waitForToken(site2, resp.getUuid(), resp.getTimestamp(), 600000l);
-        }
-        return true;
-      }
-    }
-    return false;
-  }
+  
 }

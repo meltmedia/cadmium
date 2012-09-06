@@ -210,6 +210,24 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	public String getCommandName() {
 		return "update";
 	}
+	
+
+  
+  /**
+   * Sends a update message to a Cadmium site. This method will block until the update is complete.
+   * 
+   * @param site2 The uri to a Cadmium site.
+   * @param repo The git repository to tell the site to change to.
+   * @param branch The branch to switch to.
+   * @param revision The revision to reset to.
+   * @param comment The message to record with this event in the history on the Cadmium site.
+   * @param token The Github API token to authenticate with.
+   * @return true if successfull or false otherwise.
+   * @throws Exception
+   */
+  public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token) throws Exception {
+    return sendUpdateMessage(site2, repo, branch, revision, comment, token, UPDATE_ENDPOINT);
+  }
   
 	/**
 	 * Sends a update message to a Cadmium site. This method will block until the update is complete.
@@ -220,13 +238,14 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	 * @param revision The revision to reset to.
 	 * @param comment The message to record with this event in the history on the Cadmium site.
 	 * @param token The Github API token to authenticate with.
+	 * @param endpoint The endpoint to send the update request to.
 	 * @return true if successfull or false otherwise.
 	 * @throws Exception
 	 */
-  public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token) throws Exception {
+  public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token, String endpoint) throws Exception {
     HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
-    HttpPost post = new HttpPost(site2 + UPDATE_ENDPOINT);
+    HttpPost post = new HttpPost(site2 + endpoint);
     addAuthHeader(token, post);
     
     post.addHeader("Content-Type", MediaType.APPLICATION_JSON);
