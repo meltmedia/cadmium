@@ -41,6 +41,10 @@ public class Status {
 	private String source;
 	private String maintPageState;
 	private List<StatusMember> members;
+  private String configDir;
+  private String configRepo;
+  private String configBranch;
+  private String configRevision;
 	
 	
 	public String getGroupName() {
@@ -108,7 +112,37 @@ public class Status {
 	public List<StatusMember> getMembers() {
 		return members;
 	}
-	
-	
+
+  public String getConfigDir() {
+    return configDir;
+  }
+
+  public void setConfigDir(String configDir) {
+    this.configDir = configDir;
+  }
+
+  public String getConfigRepo() {
+    return configRepo;
+  }
+
+  public void setConfigRepo(String configRepo) {
+    this.configRepo = configRepo;
+  }
+
+  public String getConfigBranch() {
+    return configBranch;
+  }
+
+  public void setConfigBranch(String configBranch) {
+    this.configBranch = configBranch;
+  }
+
+  public String getConfigRevision() {
+    return configRevision;
+  }
+
+  public void setConfigRevision(String configRevision) {
+    this.configRevision = configRevision;
+  }
 	
 }
