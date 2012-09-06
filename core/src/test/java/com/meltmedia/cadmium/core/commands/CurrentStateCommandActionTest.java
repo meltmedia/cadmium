@@ -41,7 +41,7 @@ public class CurrentStateCommandActionTest {
     
     service.setSender(sender);
     List<ChannelMember> members = new ArrayList<ChannelMember>();
-    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.UPDATING));
+    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.UPDATING, UpdateState.WAITING));
     service.setMembers(members);
     
     CurrentStateCommandAction cmd = new CurrentStateCommandAction();
@@ -56,6 +56,13 @@ public class CurrentStateCommandActionTest {
     assertTrue("message not state_update", sender.msg.getCommand() == ProtocolMessage.STATE_UPDATE);
     assertTrue("State not correct in message", sender.msg.getProtocolParameters().containsKey("state")
         && sender.msg.getProtocolParameters().get("state").equals(UpdateState.UPDATING.name()));
+
+    
+    assertTrue("Second message not sent", sender.msg2 != null);
+    assertTrue("Second destination not set correctly", sender.dest2 != null && sender.dest2.getAddress() == ctx.getSource());
+    assertTrue("Second message not state_update", sender.msg2.getCommand() == ProtocolMessage.STATE_UPDATE);
+    assertTrue("Second state not correct in message", sender.msg2.getProtocolParameters().containsKey("configState")
+        && sender.msg2.getProtocolParameters().get("configState").equals(UpdateState.WAITING.name()));
     
   }
 

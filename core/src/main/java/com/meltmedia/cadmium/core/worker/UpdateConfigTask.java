@@ -16,7 +16,6 @@
 package com.meltmedia.cadmium.core.worker;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
@@ -25,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +40,21 @@ public class UpdateConfigTask implements Callable<Boolean> {
   private Map<String, String> properties;
   private ConfigManager configManager;
   private Future<Boolean> previousTask;
+  private String prefix = "";
+  private String type = "content.";
   
-  public UpdateConfigTask(DelayedGitServiceInitializer service, Map<String, String> properties, ConfigManager manager, Future<Boolean> previousTask) {
+  public UpdateConfigTask(String prefix, DelayedGitServiceInitializer service, Map<String, String> properties, ConfigManager manager, Future<Boolean> previousTask) {
     this.service = service;
     this.properties = properties;
     this.configManager = manager;
     this.previousTask = previousTask;
+    if(!StringUtils.isEmptyOrNull(prefix)){
+      if(!prefix.endsWith(".")) {
+        prefix = prefix + ".";
+      }
+      this.prefix = prefix;
+      this.type = prefix;
+    }
   }
 
   @Override
@@ -54,8 +63,8 @@ public class UpdateConfigTask implements Callable<Boolean> {
     Properties configProperties = configManager.getDefaultProperties();
     
     try {
-      final String branch = configProperties.getProperty("branch");
-      final String revision = service.isTag(branch) ? null : configProperties.getProperty("git.ref.sha");
+      final String branch = configProperties.getProperty(prefix + "branch");
+      final String revision = service.isTag(branch) ? null : configProperties.getProperty(prefix + "git.ref.sha");
       try {
         if(previousTask != null) {
           Boolean lastResponse = previousTask.get();
@@ -70,37 +79,36 @@ public class UpdateConfigTask implements Callable<Boolean> {
         
         Properties updatedProperties = new Properties();
         
-        if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
-          updatedProperties.setProperty("com.meltmedia.cadmium.previous", configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
+        if(configProperties.containsKey("com.meltmedia.cadmium."+prefix+"lastUpdated")) {
+          updatedProperties.setProperty("com.meltmedia.cadmium."+prefix+"previous", configProperties.getProperty("com.meltmedia.cadmium."+prefix+"lastUpdated"));
         }
-        updatedProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
-        configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", lastUpdatedDir);
-        if(configProperties.containsKey("branch")) {
-          updatedProperties.setProperty("branch.last", configProperties.getProperty("branch"));
+        updatedProperties.setProperty("com.meltmedia.cadmium."+prefix+"lastUpdated", lastUpdatedDir);
+        configProperties.setProperty("com.meltmedia.cadmium."+prefix+"lastUpdated", lastUpdatedDir);
+        if(configProperties.containsKey(prefix + "branch")) {
+          updatedProperties.setProperty(prefix + "branch.last", configProperties.getProperty(prefix + "branch"));
         }
-        updatedProperties.setProperty("branch", service.getBranchName());
-        configProperties.setProperty("branch", service.getBranchName());
-        if(configProperties.containsKey("git.ref.sha")) {
-          updatedProperties.setProperty("git.ref.sha.last", configProperties.getProperty("git.ref.sha"));
+        updatedProperties.setProperty(prefix + "branch", service.getBranchName());
+        configProperties.setProperty(prefix + "branch", service.getBranchName());
+        if(configProperties.containsKey(prefix + "git.ref.sha")) {
+          updatedProperties.setProperty(prefix + "git.ref.sha.last", configProperties.getProperty(prefix + "git.ref.sha"));
         }
-        updatedProperties.setProperty("git.ref.sha", service.getCurrentRevision());
-        configProperties.setProperty("git.ref.sha", service.getCurrentRevision());
+        updatedProperties.setProperty(prefix + "git.ref.sha", service.getCurrentRevision());
+        configProperties.setProperty(prefix + "git.ref.sha", service.getCurrentRevision());
         
-        updatedProperties.setProperty("repo", service.getRemoteRepository());
-        configProperties.setProperty("repo", service.getRemoteRepository());
+        updatedProperties.setProperty(prefix + "repo", service.getRemoteRepository());
+        configProperties.setProperty(prefix + "repo", service.getRemoteRepository());
         
         properties.put("BranchName", service.getBranchName());
         properties.put("CurrentRevision", service.getCurrentRevision());
         
-        if(configProperties.containsKey("updating.to.sha")) {
-          configProperties.remove("updating.to.sha");
+        if(configProperties.containsKey("updating."+type+"to.sha")) {
+          configProperties.remove("updating."+type+"to.sha");
         }
-        if(configProperties.containsKey("updating.to.branch")) {
-          configProperties.remove("updating.to.branch");
+        if(configProperties.containsKey("updating."+type+"to.branch")) {
+          configProperties.remove("updating."+type+"to.branch");
         }
         
         try{
-          updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
           configManager.persistProperties(updatedProperties, new File(baseDirectory, "config.properties"), null);
         } catch(Exception e) {
           log.warn("Failed to write out config file", e);

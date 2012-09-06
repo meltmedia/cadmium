@@ -15,8 +15,8 @@
  */
 package com.meltmedia.cadmium.core.worker;
 
+import java.io.File;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -24,22 +24,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
-import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 
-public class CleanUpTask implements Callable<Boolean> {
+public class ParseConfigDirectoryTask implements Callable<Boolean> {
   private final Logger log = LoggerFactory.getLogger(getClass());
-  private Properties configProperties;
   private Future<Boolean> previousTask;
   private CoordinatedWorkerListener listener;
   private Map<String, String> properties;
-  private String configKey;
+  private ConfigManager configManager;
   
-  public CleanUpTask(String configKey, CoordinatedWorkerListener listener, Properties configProperties, Map<String, String> properties, Future<Boolean> previousTask) {
-    this.configProperties = configProperties;
+  public ParseConfigDirectoryTask(CoordinatedWorkerListener listener, ConfigManager configManager, Map<String, String> properties, Future<Boolean> previousTask) {
     this.previousTask = previousTask;
     this.properties = properties;
     this.listener = listener;
-    this.configKey = configKey;
+    this.configManager = configManager;
   }
 
   @Override
@@ -57,9 +55,8 @@ public class CleanUpTask implements Callable<Boolean> {
       }
     }
     
-    log.info("Cleaning up directories");
-    
-    FileSystemManager.cleanUpOld(configProperties.getProperty(configKey), 1);
+    log.info("Parsing config directory");
+    configManager.parseConfigurationDirectory(new File(properties.get("nextDirectory")));
     
     return true;
   }

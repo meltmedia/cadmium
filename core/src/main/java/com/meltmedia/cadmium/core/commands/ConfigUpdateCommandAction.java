@@ -23,36 +23,36 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
-import com.meltmedia.cadmium.core.ContentWorker;
+import com.meltmedia.cadmium.core.ConfigurationWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class UpdateCommandAction implements CommandAction {
+public class ConfigUpdateCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
     
   @Inject
   protected LifecycleService lifecycleService;
   
   @Inject
-  @ContentWorker
+  @ConfigurationWorker
   protected CoordinatedWorker worker;
   
-  public String getName() { return ProtocolMessage.UPDATE; }
+  public String getName() { return ProtocolMessage.CONFIG_UPDATE; }
   
-  public UpdateCommandAction(){}
+  public ConfigUpdateCommandAction(){}
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
-    if(lifecycleService.getCurrentState() == UpdateState.IDLE) {
-      log.info("Beginning an update, started by {}", ctx.getSource());
-      lifecycleService.updateMyState(UpdateState.UPDATING, ctx.getMessage().getProtocolParameters().get("uuid"));
+    if(lifecycleService.getCurrentConfigState() == UpdateState.IDLE) {
+      log.info("Beginning an config update, started by {}", ctx.getSource());
+      lifecycleService.updateMyConfigState(UpdateState.UPDATING, ctx.getMessage().getProtocolParameters().get("uuid"));
       worker.beginPullUpdates(ctx.getMessage().getProtocolParameters());
       
     } else {
-      log.info("Received UPDATE message with current state [{}] not IDLE from {}", lifecycleService.getCurrentState(), ctx.getSource());
+      log.info("Received CONFIG_UPDATE message with current config state [{}] not IDLE from {}", lifecycleService.getCurrentConfigState(), ctx.getSource());
     }
     return true;
   }

@@ -27,6 +27,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
+
 public class HistoryManagerTest {
   private static final String INIT_HISTORY_CONTENT = "[{\"timestamp\":\"May 29, 2012 2:10:32 PM\",\"repoUrl\":\"\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":1000,\"openId\":\"me\",\"servedDirectory\":\"./target/history-test\",\"revertible\":true,\"comment\":\"This is it\"}," +
   		"{\"timestamp\":\"May 29, 2012 2:10:31 PM\",\"repoUrl\":\"\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":0,\"openId\":\"auto\",\"servedDirectory\":\"./target/history-test\",\"revertible\":false,\"comment\":\"This is an init log\"}]";
@@ -75,13 +77,13 @@ public class HistoryManagerTest {
   public void testLogEntry() throws Exception {
     long size = historyFile.length();
     
-    manager.logEvent("", "test1", "sha1", "me", testDirectory, null, "This is a test", true, true);
+    manager.logEvent(EntryType.CONTENT, "", "test1", "sha1", "me", testDirectory, null, "This is a test", true, true);
     
     Thread.sleep(3000l);
     
     assertTrue("History file not written", size < historyFile.length());
     
-    manager.logEvent("", "test2", "sha2", "me", testDirectory, null, "This is a test2", true, true);
+    manager.logEvent(EntryType.CONTENT, "", "test2", "sha2", "me", testDirectory, null, "This is a test2", true, true);
   }
   
   @Test

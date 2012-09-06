@@ -27,13 +27,13 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.config.ConfigManager;
-import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class UpdateDoneCommandAction implements CommandAction {
+public class ConfigUpdateDoneCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
@@ -45,14 +45,14 @@ public class UpdateDoneCommandAction implements CommandAction {
   @Inject
   protected ConfigManager configManager;
 
-  public String getName() { return ProtocolMessage.UPDATE_DONE; }
+  public String getName() { return ProtocolMessage.CONFIG_UPDATE_DONE; }
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
     
     Properties configProperties = configManager.getDefaultProperties();
     
-    log.info("Update is done @ {}, my state {}", ctx.getSource(), lifecycleService.getCurrentState());
+    log.info("Config update is done @ {}, my state {}", ctx.getSource(), lifecycleService.getCurrentConfigState());
     if(manager != null) {
       try {
         Map<String, String> props = ctx.getMessage().getProtocolParameters();
@@ -60,16 +60,16 @@ public class UpdateDoneCommandAction implements CommandAction {
         String branch = props.get("BranchName");
         String rev = props.get("CurrentRevision");
         String openId = props.get("openId");
-        String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+        String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated");
         String uuid = props.get("uuid");
         String comment = props.get("comment");
-        boolean revertible = !new Boolean(props.get("nonRevertible"));
-        manager.logEvent(EntryType.CONTENT, repo, branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
+        boolean revertible = true;
+        manager.logEvent(EntryType.CONFIG, repo, branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }
     }
-    lifecycleService.sendStateUpdate(null, ctx.getMessage().getProtocolParameters().get("uuid"));
+    lifecycleService.sendConfigStateUpdate(null, ctx.getMessage().getProtocolParameters().get("uuid"));
     return true;
   }
 

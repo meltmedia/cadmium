@@ -23,22 +23,22 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
-import com.meltmedia.cadmium.core.ContentWorker;
+import com.meltmedia.cadmium.core.ConfigurationWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
-import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class UpdateFailedCommandAction implements CommandAction {
+public class ConfigUpdateFailedCommandAction implements CommandAction {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
-  public static final String FAILED_LOG_MESSAGE = "Update failed to run!";
+  public static final String FAILED_LOG_MESSAGE = "Config update failed to run!";
   
   @Inject
-  @ContentWorker
+  @ConfigurationWorker
   protected CoordinatedWorker worker;
   
   @Inject
@@ -47,14 +47,14 @@ public class UpdateFailedCommandAction implements CommandAction {
   @Inject
   protected HistoryManager historyManager;
 
-  public String getName() { return ProtocolMessage.UPDATE_FAILED; }
+  public String getName() { return ProtocolMessage.CONFIG_UPDATE_FAILED; }
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
-    if(lifecycleService.getCurrentState() != UpdateState.IDLE) {
-      log.info("update has failed @ {}", ctx.getSource());
+    if(lifecycleService.getCurrentConfigState() != UpdateState.IDLE) {
+      log.info("config update has failed @ {}", ctx.getSource());
       worker.killUpdate();
-      lifecycleService.updateMyState(UpdateState.IDLE);
+      lifecycleService.updateMyConfigState(UpdateState.IDLE);
       if(historyManager != null) {
         String repo = "";
         if(ctx.getMessage().getProtocolParameters().containsKey("repo")) {
@@ -72,7 +72,7 @@ public class UpdateFailedCommandAction implements CommandAction {
         if(ctx.getMessage().getProtocolParameters().containsKey("openId")) {
           openId = ctx.getMessage().getProtocolParameters().get("openId");
         }
-        historyManager.logEvent(EntryType.CONTENT, repo, branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
+        historyManager.logEvent(EntryType.CONFIG, repo, branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
       }
     }
     return true;

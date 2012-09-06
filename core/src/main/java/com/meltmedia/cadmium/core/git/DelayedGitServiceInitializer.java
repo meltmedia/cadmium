@@ -150,15 +150,16 @@ public class DelayedGitServiceInitializer implements Closeable {
       IOUtils.closeQuietly(git);
       git = null;
     }
+    latch.countDown();
     try {
       latch.notifyAll();
     } catch(Exception e) {
-      logger.debug("Failed to notifyAll", e);
+      logger.debug("Failed to notifyAll");
     }
     try {
       locker.notifyAll();
     } catch(Exception e) {
-      logger.debug("Failed to notifyAll", e);
+      logger.debug("Failed to notifyAll");
     }
   }
   
