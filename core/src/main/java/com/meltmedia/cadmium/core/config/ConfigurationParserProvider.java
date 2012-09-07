@@ -39,9 +39,10 @@ public class ConfigurationParserProvider implements Provider<ConfigurationParser
   /**
    * The Guice Multibindings of Class Objects wired to Annotation {@link ConfigurationClass}.
    */
+  @SuppressWarnings("rawtypes")
   @Inject
   @ConfigurationClass
-  protected Set<Class<?>> configurationClasses;
+  protected Set<Class> configurationClasses;
   
   /**
    * The zero argument constructor of the ConfigurationParser implementation used by this provider.
@@ -55,9 +56,14 @@ public class ConfigurationParserProvider implements Provider<ConfigurationParser
    * @throws SecurityException
    * @throws NoSuchMethodException
    */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   @Inject
-  public ConfigurationParserProvider(@ConfigurationParserClass Class<? extends ConfigurationParser> parserType) throws SecurityException, NoSuchMethodException {
-    parserConstructor = parserType.getConstructor();
+  public ConfigurationParserProvider(@ConfigurationParserClass Class parserType) throws SecurityException, NoSuchMethodException {
+    if(ConfigurationParser.class.isAssignableFrom(parserType)) {
+      parserConstructor = (Constructor<? extends ConfigurationParser>) parserType.getConstructor();
+    } else {
+      throw new IllegalArgumentException("Class passed in must be a sub type of ConfigurationParser.");
+    }
   }
 
   /**

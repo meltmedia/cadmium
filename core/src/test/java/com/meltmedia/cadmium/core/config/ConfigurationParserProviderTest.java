@@ -36,10 +36,11 @@ public class ConfigurationParserProviderTest {
     System.setProperty("com.meltmedia.cadmium.environment", "testing");
   }
   
+  @SuppressWarnings("rawtypes")
   @Before
   public void testProviderConstructor() throws Exception {
     provider = new ConfigurationParserProvider(ConfigurationParserImpl.class);
-    provider.configurationClasses = new HashSet<Class<?>>();
+    provider.configurationClasses = new HashSet<Class>();
     provider.configurationClasses.add(DummyClass.class);
   }
   
@@ -67,12 +68,14 @@ public class ConfigurationParserProviderTest {
   
   public static class ConfigurationParserImpl implements ConfigurationParser {
     
-    Collection<Class<?>> configurationClasses;
+    @SuppressWarnings("rawtypes")
+    Collection<Class> configurationClasses;
     String environment;
 
+    @SuppressWarnings("rawtypes")
     @Override
     public void setConfigurationClasses(
-        Collection<Class<?>> configurationClasses) {
+        Collection<Class> configurationClasses) {
       this.configurationClasses = configurationClasses;
     }
 

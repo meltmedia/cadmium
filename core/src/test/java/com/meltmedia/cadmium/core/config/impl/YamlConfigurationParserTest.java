@@ -35,7 +35,7 @@ public class YamlConfigurationParserTest {
   @Test
   public void testParseDirectory() throws Exception {
     YamlConfigurationParser parser = new YamlConfigurationParser();
-    parser.setConfigurationClasses(Arrays.asList(new Class<?>[] {TestConfigPojo.class}));
+    parser.setConfigurationClasses(Arrays.asList(new Class[] {TestConfigPojo.class}));
     parser.setEnvironment("production");
     parser.parseDirectory(new File("src/test/resources/test-configurations"));
     
@@ -60,7 +60,7 @@ public class YamlConfigurationParserTest {
   @Test
   public void testGetConfiguration() throws Exception {
     YamlConfigurationParser parser = new YamlConfigurationParser();
-    parser.setConfigurationClasses(Arrays.asList(new Class<?>[] {TestConfigPojo.class}));
+    parser.setConfigurationClasses(Arrays.asList(new Class[] {TestConfigPojo.class}));
     parser.setEnvironment("production");
     
     parser.configuration.put(YamlConfigurationParser.DEFAULT, new HashMap<String, Object>());

@@ -104,21 +104,20 @@ public class ConfigManager implements Closeable {
    * Read in properties based on a ServletContext and a path to a config file
    * 
    */
-  public void persistProperties(Properties properties, File propsFile, String message) {
-    
-    writer.persistProperties(properties, propsFile, message, log);
+  public synchronized void persistProperties(Properties properties, File propsFile, String message) {
+    Properties toWrite = new Properties();
+    for(String key : properties.stringPropertyNames()) {
+      if(System.getProperties().containsKey(key) && !properties.getProperty(key).equals(System.getProperty(key))) {
+        toWrite.setProperty(key, properties.getProperty(key));
+      } else if(System.getenv().containsKey(key) && !properties.getProperty(key).equals(System.getenv(key))) {
+        toWrite.setProperty(key, properties.getProperty(key));
+      } else if(!System.getProperties().containsKey(key) && !System.getenv().containsKey(key)){
+        toWrite.setProperty(key, properties.getProperty(key));
+      }
+    }
+    writer.persistProperties(toWrite, propsFile, message, log);
     
   }
-  
-  public void logProperties( Logger log, Properties properties, String name ) {
-    if( log.isDebugEnabled() ) {
-      StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
-      for(Object key : properties.keySet()) {
-        sb.append("  ").append(key.toString()).append(properties.getProperty(key.toString())).append("\n");
-      }
-      log.debug(sb.toString());
-    }
-  }  
 
   public Properties getDefaultProperties() {
     return defaultProperties;
@@ -151,7 +150,7 @@ public class ConfigManager implements Closeable {
     }
   }
   
-  public <T> T getConfiguration(String key, Class <T> type) throws NotFoundException {    
+  public <T> T getConfiguration(String key, Class<T> type) throws NotFoundException {    
     
     try {
       

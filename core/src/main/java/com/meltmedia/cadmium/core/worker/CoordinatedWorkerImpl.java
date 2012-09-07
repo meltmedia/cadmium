@@ -28,6 +28,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +116,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
         }
         
         String contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
-        if(contentDir == null || contentDir.length() == 0) {
+        if(StringUtils.isEmptyOrNull(contentDir)) {
           contentDir = this.contentDir;
         }
         

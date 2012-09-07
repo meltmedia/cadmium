@@ -48,7 +48,8 @@ public interface ConfigurationParser {
    * 
    * @param configurationClasses
    */
-  public void setConfigurationClasses(Collection<Class<?>> configurationClasses);
+  @SuppressWarnings("rawtypes")
+  public void setConfigurationClasses(Collection<Class> configurationClasses);
   
   /**
    * Sets the environment token for this instances environment.

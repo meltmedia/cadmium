@@ -70,7 +70,8 @@ public class YamlConfigurationParser implements ConfigurationParser {
 
   private final Logger logger = LoggerFactory.getLogger(getClass());
   
-  protected List<Class<?>> configurationClasses = new ArrayList<Class<?>>();
+  @SuppressWarnings("rawtypes")
+  protected List<Class> configurationClasses = new ArrayList<Class>();
   protected Map<String, Map<String, ?>> configuration = new HashMap<String, Map<String, ?>>();
   protected String environment;
   
@@ -201,8 +202,9 @@ public class YamlConfigurationParser implements ConfigurationParser {
     return null;
   }
 
+  @SuppressWarnings("rawtypes")
   @Override
-  public void setConfigurationClasses(Collection<Class<?>> configurationClasses) {
+  public void setConfigurationClasses(Collection<Class> configurationClasses) {
     if(configurationClasses != null) {
       this.configurationClasses.addAll(configurationClasses);
     }

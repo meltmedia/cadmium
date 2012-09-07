@@ -51,9 +51,7 @@ public class PropertiesReaderImpl implements PropertiesReader {
 
       log.info("configFile path: {}", file.getPath());
       reader = new FileReader(file);
-      properties.load(reader);     
-
-      logProperties(log, properties, file.getCanonicalPath());
+      properties.load(reader); 
     }
     catch(Exception e) {
 
@@ -74,7 +72,6 @@ public class PropertiesReaderImpl implements PropertiesReader {
       reader = new InputStreamReader(context.getResourceAsStream(path), "UTF-8");
       properties.load(reader);
 
-      logProperties(log, properties, path);
     } 
     catch(Exception e) {
 
@@ -85,16 +82,6 @@ public class PropertiesReaderImpl implements PropertiesReader {
       IOUtils.closeQuietly(reader);
     }
 
-  }
-  
-  public void logProperties(Logger log, Properties properties, String name) {
-    if(log.isDebugEnabled()) {
-      StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
-      for(Object key : properties.keySet()) {
-        sb.append("  ").append(key.toString()).append(properties.getProperty(key.toString())).append("\n");
-      }
-      log.debug(sb.toString());
-    }
   }
 
 }

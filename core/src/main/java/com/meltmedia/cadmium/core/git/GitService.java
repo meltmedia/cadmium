@@ -17,7 +17,6 @@ package com.meltmedia.cadmium.core.git;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -174,36 +173,30 @@ public class GitService
     String renderedContentDir = initializeSnapshotDirectory(warDir,
         configProperties, "com.meltmedia.cadmium.config.lastUpdated", "git-config-checkout", "config"); 
     
-    if(!configPropsFile.exists()) {
-      configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
-      
-      if(renderedContentDir != null) {
-        configProperties.setProperty("com.meltmedia.cadmium.config.lastUpdated", renderedContentDir);
-      }
-      configProperties.setProperty("config.branch", cloned.getBranchName());
-      configProperties.setProperty("config.git.ref.sha", cloned.getCurrentRevision());
-      configProperties.setProperty("config.repo", uri);
-      
-      configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties for configuration");
+    configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
+    
+    if(renderedContentDir != null) {
+      configProperties.setProperty("com.meltmedia.cadmium.config.lastUpdated", renderedContentDir);
+    }
+    configProperties.setProperty("config.branch", cloned.getBranchName());
+    configProperties.setProperty("config.git.ref.sha", cloned.getCurrentRevision());
+    configProperties.setProperty("config.repo", uri);
+    
+    configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties for configuration");
 
-      boolean closeHistoryManager = false;
-      if(historyManager == null) {
-        closeHistoryManager = true;
-        historyManager = new HistoryManager(warDir);
+    boolean closeHistoryManager = false;
+    if(historyManager == null) {
+      closeHistoryManager = true;
+      historyManager = new HistoryManager(warDir);
+    }
+    
+    try{
+      if(historyManager != null) {
+        historyManager.logEvent(EntryType.CONFIG, cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial config pull.", true, true);
       }
-      
-      FileWriter writer = null;
-      try{
-        writer = new FileWriter(configPropsFile);
-        configProperties.store(writer, "initialized configuration properties for configuration");
-        if(historyManager != null) {
-          historyManager.logEvent(EntryType.CONFIG, cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial config pull.", true, true);
-        }
-      } finally {
-        IOUtils.closeQuietly(writer);
-        if(closeHistoryManager) {
-          IOUtils.closeQuietly(historyManager);
-        }
+    } finally {
+      if(closeHistoryManager) {
+        IOUtils.closeQuietly(historyManager);
       }
     }
     
@@ -232,48 +225,42 @@ public class GitService
     String renderedContentDir = initializeSnapshotDirectory(warDir,
         configProperties, "com.meltmedia.cadmium.lastUpdated", "git-checkout", "renderedContent"); 
     
-    if(!configPropsFile.exists()) {
-      configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
-      
-      if(renderedContentDir != null) {
-        configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
-      }
-      configProperties.setProperty("branch", cloned.getBranchName());
-      configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
-      configProperties.setProperty("repo", uri);
-      
+    configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
+    
+    if(renderedContentDir != null) {
+      configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
+    }
+    configProperties.setProperty("branch", cloned.getBranchName());
+    configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
+    configProperties.setProperty("repo", uri);
+    
 
-      String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
-      if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
-        try {
-          configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
-        } catch(Exception e) {
-          log.warn("Failed to read source file {}", sourceFilePath);
-        }
-      } else {
-        configProperties.setProperty("source", "{}");
+    String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
+    if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
+      try {
+        configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
+      } catch(Exception e) {
+        log.warn("Failed to read source file {}", sourceFilePath);
       }
-      
-      configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
+    } else {
+      configProperties.setProperty("source", "{}");
+    }
+    
+    configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
 
-      boolean closeHistoryManager = false;
-      if(historyManager == null) {
-        closeHistoryManager = true;
-        historyManager = new HistoryManager(warDir);
+    boolean closeHistoryManager = false;
+    if(historyManager == null) {
+      closeHistoryManager = true;
+      historyManager = new HistoryManager(warDir);
+    }
+    
+    try{
+      if(historyManager != null) {
+        historyManager.logEvent(EntryType.CONTENT, cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
       }
-      
-      FileWriter writer = null;
-      try{
-        writer = new FileWriter(configPropsFile);
-        configProperties.store(writer, "initialized configuration properties");
-        if(historyManager != null) {
-          historyManager.logEvent(EntryType.CONTENT, cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
-        }
-      } finally {
-        IOUtils.closeQuietly(writer);
-        if(closeHistoryManager) {
-          IOUtils.closeQuietly(historyManager);
-        }
+    } finally {
+      if(closeHistoryManager) {
+        IOUtils.closeQuietly(historyManager);
       }
     }
     
