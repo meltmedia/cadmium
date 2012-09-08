@@ -22,6 +22,7 @@ import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.repository.LocalRepository;
+import org.sonatype.aether.repository.RepositoryPolicy;
 import org.sonatype.aether.spi.locator.ServiceLocator;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
@@ -83,6 +84,9 @@ public class ArtifactResolver {
     Artifact artifactObj = new DefaultArtifact( artifact );
     
     RemoteRepository repo = new RemoteRepository( "cadmium-central", "default", remoteMavenRepository );
+    // TODO: we should remove the snapshot policy in production mode.
+    repo.setPolicy(true, new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN));
+    repo.setPolicy(false, new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN));
     
     ArtifactRequest artifactRequest = new ArtifactRequest();
     artifactRequest.setArtifact( artifactObj );
