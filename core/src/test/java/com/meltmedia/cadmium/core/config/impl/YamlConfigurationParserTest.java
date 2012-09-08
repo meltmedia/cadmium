@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.core.config.impl;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,11 +49,14 @@ public class YamlConfigurationParserTest {
     
     assertTrue("No production env was found.", parser.configuration.containsKey("production"));
     Map<String, ?> prodSection = parser.configuration.get("production");
-    assertTrue("Wrong number of configurations found in production env.", prodSection.size() == 3);
+    assertTrue("Wrong number of configurations found in production env.", prodSection.size() == 7);
     validateConfig(prodSection, "test", "updated value", "value", 15);
     validateConfig(prodSection, "test2", "updated value 2", "another value", 17);
     validateConfig(prodSection, "test3", "test 3", "yet another value", 99);
-    
+    validateType(prodSection, "test4", Number.class);
+    validateType(prodSection, "test5", Collection.class);
+    validateType(prodSection, "test6", Map.class);
+    validateType(prodSection, "test7", Collection.class);
     
   }
   
@@ -85,11 +89,18 @@ public class YamlConfigurationParserTest {
   }
 
   private void validateConfig(Map<String, ?> defaultSection, String key, String name, String field, Integer anotherField) {
-    assertTrue("No "+key+" section was found in default environment.", defaultSection.containsKey(key));
+    assertTrue("No "+key+" section was not found in section.", defaultSection.containsKey(key));
     assertTrue(key+" section was not correct type.", defaultSection.get(key) instanceof TestConfigPojo);
     TestConfigPojo config = (TestConfigPojo) defaultSection.get(key);
     assertTrue("Incorrect name ["+config.getName()+"]", name.equals(config.getName()));
     assertTrue("Incorrect field ["+config.getField()+"]", field.equals(config.getField()));
     assertTrue("Incorrect anotherField ["+config.getAnotherField()+"]", anotherField.equals(config.getAnotherField()));
+  }
+  
+  private void validateType(Map<String, ?> section, String key, Class<?> type) {
+    assertTrue("No "+key+" section was not found in section.", section.containsKey(key));
+    Object value = section.get(key);
+    assertTrue("Value is not expected type. "+type, type.isAssignableFrom(value.getClass()));
+    System.out.println(key+"=["+value+"]");
   }
 }

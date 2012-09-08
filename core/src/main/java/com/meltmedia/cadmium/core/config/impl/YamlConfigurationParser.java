@@ -144,7 +144,7 @@ public class YamlConfigurationParser implements ConfigurationParser {
    * @return A new Representer Instance with the tags specified by the {@link configurationClasses} list.
    */
   private Constructor getClassTags() {
-    Constructor rep = new Constructor();
+    Constructor constructor = new YamlLenientConstructor();
     if(configurationClasses != null) {
       for(Class<?> configClass : configurationClasses) {
         CadmiumConfig configAnnotation = configClass.getAnnotation(CadmiumConfig.class);
@@ -155,12 +155,12 @@ public class YamlConfigurationParser implements ConfigurationParser {
           }
           
           if(key != null) {
-            rep.addTypeDescription(new TypeDescription(configClass, "!" + key));
+            constructor.addTypeDescription(new TypeDescription(configClass, "!" + key));
           }
         }
       }
     }
-    return rep;
+    return constructor;
   }
 
   @Override

@@ -11,3 +11,17 @@ production:
   test3: !test
     <<: *Test
     anotherField: 78
+  test4: !unknownScalar 8
+  test5: !unknownSeq
+    - "hello"
+    - "all"
+  test6: !unknownMap
+    blah: 56
+    foo: 'bar'
+  test7: !unknownSeq2
+    - 
+      test: '2'
+      foo: 'bar2'
+    -
+      test: 3
+      foo: 'blah'
