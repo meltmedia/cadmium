@@ -2,6 +2,7 @@ package com.meltmedia.cadmium.core.config.impl;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
@@ -35,6 +36,14 @@ public class PropertiesReaderImpl implements PropertiesReader {
     readPropertiesWithContext(properties, context, path, log);
     return properties;
   }
+  
+  @Override
+  public Properties getProperties(InputStream stream, Logger log) {
+
+    Properties properties = new Properties();    
+    readPropertiesWithInputStream(properties, stream, log);
+    return properties;
+  }
  
 
   @Override
@@ -61,6 +70,23 @@ public class PropertiesReaderImpl implements PropertiesReader {
 
       IOUtils.closeQuietly(reader);
     }
+
+  }
+  
+  private void readPropertiesWithInputStream(Properties properties, InputStream stream, Logger log) {
+        
+    try{      
+      
+      properties.load(stream);
+    } 
+    catch(Exception e) {
+      
+      log.warn("Failed to load properties");
+    } 
+    finally {
+      
+      IOUtils.closeQuietly(stream);
+    }   
 
   }
 

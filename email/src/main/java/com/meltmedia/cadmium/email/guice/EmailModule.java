@@ -18,13 +18,15 @@ package com.meltmedia.cadmium.email.guice;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.apache.commons.io.IOUtils;
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.meltmedia.cadmium.core.CadmiumModule;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.email.jersey.EmailResource;
 
 
@@ -36,12 +38,14 @@ public class EmailModule extends AbstractModule {
   private String mailJNDIName;
   private String mailSessionStrategy;
   private String mailMessageTransformer;
-  private Properties emailProperties;
+  
+  @Inject
+  private ConfigManager configManager;
 	
 	@Override
 	protected void configure() {
-	// bind Epsilon 
-		emailProperties = loadProperties(new Properties(), log);
+	  // bind Epsilon		
+	  Properties emailProperties = configManager.getPropertiesByInputStream(loadInputStream());
     mailJNDIName = emailProperties.getProperty("com.meltmedia.email.jndi");
     mailMessageTransformer = emailProperties.getProperty("melt.mail.messagetransformer");
     mailSessionStrategy = emailProperties.getProperty("melt.mail.sessionstrategy");
@@ -55,17 +59,14 @@ public class EmailModule extends AbstractModule {
 		
 	}
 	
-	 public static Properties loadProperties( Properties properties, Logger log ) {
-	    InputStream reader = null;
+	 private InputStream loadInputStream() {
+	    InputStream stream = null;
 	    try{
-	      reader = EmailModule.class.getClassLoader().getResourceAsStream("email.properties");
-	      properties.load(reader);
+	      stream = EmailModule.class.getClassLoader().getResourceAsStream("email.properties");	      
 	    } catch(Exception e) {
-	      log.warn("Failed to load ");
-	    } finally {
-	      IOUtils.closeQuietly(reader);
-	    }
-	    return properties;
+	      log.warn("Failed to load properties file: {}", "email.properties");	      
+	    } 
+	    return stream;
 	  }
 
 }
