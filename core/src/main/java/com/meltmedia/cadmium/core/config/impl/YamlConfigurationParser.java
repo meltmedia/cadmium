@@ -32,9 +32,8 @@ import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
-import javassist.NotFoundException;
-
 import com.meltmedia.cadmium.core.config.CadmiumConfig;
+import com.meltmedia.cadmium.core.config.ConfigurationNotFoundException;
 import com.meltmedia.cadmium.core.config.ConfigurationParser;
 
 /**
@@ -156,6 +155,7 @@ public class YamlConfigurationParser implements ConfigurationParser {
           
           if(key != null) {
             constructor.addTypeDescription(new TypeDescription(configClass, "!" + key));
+            logger.debug("Adding configuration tag {} for class {}", "!"+key, configClass);
           }
         }
       }
@@ -165,7 +165,7 @@ public class YamlConfigurationParser implements ConfigurationParser {
 
   @Override
   public <T> T getConfiguration(String key, Class<T> type)
-      throws NotFoundException {
+      throws ConfigurationNotFoundException {
     Map<String, ?> envMap = configuration.get(environment);
     Map<String, ?> defaultMap = configuration.get(DEFAULT);
     if(envMap != null && envMap.containsKey(key)) {
@@ -181,7 +181,7 @@ public class YamlConfigurationParser implements ConfigurationParser {
       }
     }
     
-    throw new NotFoundException("No configuration with the key \""+key+"\" and type \""+type+"\" were found in environment \""+environment+"\".");
+    throw new ConfigurationNotFoundException("No configuration with the key \""+key+"\" and type \""+type+"\" were found in environment \""+environment+"\".");
   }
   
   /**

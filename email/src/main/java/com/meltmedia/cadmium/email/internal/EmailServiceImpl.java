@@ -19,12 +19,13 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.mail.Session;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.config.ConfigManager;
+import com.meltmedia.cadmium.core.config.ConfigurationNotFoundException;
 import com.meltmedia.cadmium.email.Email;
 import com.meltmedia.cadmium.email.EmailConnection;
 import com.meltmedia.cadmium.email.EmailConnectionImpl;
@@ -32,6 +33,7 @@ import com.meltmedia.cadmium.email.EmailException;
 import com.meltmedia.cadmium.email.EmailService;
 import com.meltmedia.cadmium.email.MessageTransformer;
 import com.meltmedia.cadmium.email.SessionStrategy;
+import com.meltmedia.cadmium.email.config.EmailConfiguration;
 
 /**
  * Email service implementation based on the cadmium email
@@ -64,40 +66,54 @@ public class EmailServiceImpl implements EmailService {
   /** The Message Transformer for this service instance */
   protected MessageTransformer messageTransformer = null;
   
+  @Inject
+  protected ConfigManager configManager = null;
+  
+  protected EmailConfiguration config = null;
+  
   public EmailServiceImpl() {
-  	
+  	log.debug("Initialized EmailService...");
   }
 
   /**
-   * Activates the Email Service component.
+   * Updates the Email Service component configuration.
    * 
-   * @param context the component context for this component.
    */
-  @Inject
   @SuppressWarnings("unchecked")
   //@Activate
-  public EmailServiceImpl(@Named("com.meltmedia.email.jndi") String jndiName,@Named(MESSAGE_TRANSFORMER_CLASS) String transformerClassName,@Named(SESSION_STRATEGY_CLASS) String sessionClassName) {
-    // Need to get the Session Strategy and Transform class names out of the 
-    // Dictionary, and then use reflection to use them
-    Dictionary<String,Object> props = new Hashtable<String,Object>();
-    props.put("com.meltmedia.email.jndi",jndiName);
-    
+  public void updateConfiguration() throws EmailException {
     try {
-      Class<SessionStrategy> ssc = (Class<SessionStrategy>) Class.forName(sessionClassName);
+      EmailConfiguration config = configManager.getConfiguration(EmailConfiguration.KEY, EmailConfiguration.class);
+      if(config != null && config != this.config) {
+        log.info("Updating configuration for email.");
+        this.config = config;
       
-      SessionStrategy strategy = ssc.newInstance();
-      strategy.configure(props);
-      this.sessionStrategy = strategy;
+        // Need to get the Session Strategy and Transform class names out of the 
+        // Dictionary, and then use reflection to use them
+        Dictionary<String,Object> props = new Hashtable<String,Object>();
+        props.put("com.meltmedia.email.jndi",config.getJndiName());
+        
+        try {
+          Class<SessionStrategy> ssc = (Class<SessionStrategy>) Class.forName(config.getSessionStrategy());
+          
+          SessionStrategy strategy = ssc.newInstance();
+          strategy.configure(props);
+          this.sessionStrategy = strategy;
+          
+          Class<MessageTransformer> mtc = (Class<MessageTransformer>) Class.forName(config.getMessageTransformer());
+          
+          MessageTransformer transformer = mtc.newInstance();
+          this.messageTransformer = transformer;
+          
+         // log.info("Service Started {}", context.getProperties());
+          
+        } catch (Exception e) {
+          throw new EmailException("Error Registering Mail Service", e);
+        }
+      }
+    } catch (ConfigurationNotFoundException e) {
+      throw new EmailException("ConfigurationNotFoundException: " + e.getMessage(), e);
       
-      Class<MessageTransformer> mtc = (Class<MessageTransformer>) Class.forName(transformerClassName);
-      
-      MessageTransformer transformer = mtc.newInstance();
-      this.messageTransformer = transformer;
-      
-     // log.info("Service Started {}", context.getProperties());
-      
-    } catch (Exception e) {
-      throw new RuntimeException("Error Registering Mail Service", e);
     }
   }
 
@@ -155,6 +171,7 @@ public class EmailServiceImpl implements EmailService {
     throws EmailException
   {
     synchronized( this ) {
+      updateConfiguration();
       // create a new email connection.
       return new EmailConnectionImpl(sessionStrategy.getSession(), messageTransformer);
     }

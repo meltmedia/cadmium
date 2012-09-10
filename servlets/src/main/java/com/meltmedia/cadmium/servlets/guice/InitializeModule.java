@@ -15,6 +15,9 @@
  */
 package com.meltmedia.cadmium.servlets.guice;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.PrivateModule;
 import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.worker.CheckConfigInitializedTask;
@@ -24,9 +27,11 @@ import com.meltmedia.cadmium.core.worker.InitializeTask;
 
 @CadmiumModule
 public class InitializeModule extends PrivateModule {
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   @Override
   protected void configure() {
+    log.debug("Initializing content and configuration.");
     bind(InitializeTask.class);
     bind(CheckInitializedTask.class);
     bind(ConfigInitializeTask.class);

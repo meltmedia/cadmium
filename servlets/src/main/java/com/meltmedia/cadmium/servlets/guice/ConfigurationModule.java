@@ -18,6 +18,8 @@ package com.meltmedia.cadmium.servlets.guice;
 import java.util.Set;
 
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
@@ -38,6 +40,7 @@ import com.meltmedia.cadmium.core.config.impl.YamlConfigurationParser;
  */
 @CadmiumModule
 public class ConfigurationModule extends AbstractModule {
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   @SuppressWarnings("rawtypes")
   @Override
@@ -45,8 +48,10 @@ public class ConfigurationModule extends AbstractModule {
     Multibinder<Class> configurationClassBinder = Multibinder.newSetBinder(binder(), Class.class, ConfigurationClass.class);
     Reflections reflections = new Reflections("com.meltmedia.cadmium");
     Set<Class<?>> configClasses = reflections.getTypesAnnotatedWith(CadmiumConfig.class);
+    log.debug("Found {} configuration classes", configClasses.size());
     for(Class<?> configClass : configClasses) {
       configurationClassBinder.addBinding().toInstance(configClass);
+      log.debug("Adding configuration type {}", configClass.getName());
     }
     
     bind(Class.class).annotatedWith(ConfigurationParserClass.class).toInstance(YamlConfigurationParser.class);

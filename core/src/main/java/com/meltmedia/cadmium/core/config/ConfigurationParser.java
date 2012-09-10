@@ -18,8 +18,6 @@ package com.meltmedia.cadmium.core.config;
 import java.io.File;
 import java.util.Collection;
 
-import javassist.NotFoundException;
-
 /**
  * <p>An interface of a Configuration Parser that will be created for each configuration update. 
  * An implementation of this interface must have a zero argument constructor. This will be run 
@@ -73,7 +71,7 @@ public interface ConfigurationParser {
    * @param key The key that references the configuration wanted.
    * @param type The type of the Pojo that the configuration was parsed in as.
    * @return The instance of the Pojo that is created off of the configuration parsed.
-   * @throws NotFoundException Thrown if the configuration requested does not exist.
+   * @throws ConfigurationNotFoundException Thrown if the configuration requested does not exist.
    */
-  public <T> T getConfiguration(String key, Class<T> type) throws NotFoundException;
+  public <T> T getConfiguration(String key, Class<T> type) throws ConfigurationNotFoundException;
 }

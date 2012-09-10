@@ -64,20 +64,20 @@ public class InitializeTask implements Callable<GitService> {
       Throwable t = null;
 
       try {
-        logger.debug("Attempting to initialize content for `{}` into `{}`", warName, contentRoot);
+        logger.info("Attempting to initialize content for `{}` into `{}`", warName, contentRoot);
         cloned = GitService.initializeContentDirectory(repoUri, branch, contentRoot, warName, historyManager, configManager);
 
         String contentDirectory = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
         
         if(metaProcessor != null && contentDirectory != null) {
-          logger.debug("Processing META-INF dir in `{}`", warName);
+          logger.info("Processing META-INF dir in `{}`", warName);
           this.metaProcessor.processDir(contentDirectory);
         }
         if(servlet != null) {
-          logger.debug("Switching content root of {}", warName);
+          logger.info("Switching content root of {}", warName);
           this.servlet.switchContent(System.currentTimeMillis());
         }
-        logger.debug("Successfully initialized `{}`", warName);
+        logger.info("Successfully initialized `{}`", warName);
       } catch(RefNotFoundException e) {
         logger.warn("Branch `"+branch+"` does not exist.", e);
         return null;
@@ -88,6 +88,8 @@ public class InitializeTask implements Callable<GitService> {
       if(t != null) {
         throw new Exception(t);
       }
+    } else {
+      logger.warn("Invalid setting for content repo {} and branch {}", repoUri, branch);
     }
     return cloned;
   }

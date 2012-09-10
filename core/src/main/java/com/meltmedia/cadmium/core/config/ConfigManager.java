@@ -7,8 +7,6 @@ import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
-import javassist.NotFoundException;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletContext;
@@ -168,7 +166,7 @@ public class ConfigManager implements Closeable {
     }
   }
 
-  public <T> T getConfiguration(String key, Class<T> type) throws NotFoundException {    
+  public <T> T getConfiguration(String key, Class<T> type) throws ConfigurationNotFoundException {    
 
     try {
 

@@ -467,6 +467,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         log.debug("Found {} jersey services with the Path annotation.", jerseySet.size());
         
         for( Class<? extends Object> jerseyService : jerseySet ) {
+          log.debug("Binding jersey endpoint class {}", jerseyService.getName());
           bind(jerseyService).asEagerSingleton();
         }
         

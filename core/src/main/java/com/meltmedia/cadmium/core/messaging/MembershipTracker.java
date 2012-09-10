@@ -111,14 +111,14 @@ public class MembershipTracker implements MembershipListener {
           log.debug("I'm not the coordinator!!!");
           if(gitService != null) {
             try {
-              log.debug("Wainting for content git service to initialize.");
+              log.debug("Waiting for content git service to initialize.");
               gitService.getGitService();
               gitService.releaseGitService();
             } catch(Throwable t){}
           }
           if(configGitService != null) {
             try {
-              log.debug("Wainting for config git service to initialize.");
+              log.debug("Waiting for config git service to initialize.");
               configGitService.getGitService();
               configGitService.releaseGitService();
             } catch(Throwable t){}

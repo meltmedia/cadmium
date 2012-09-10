@@ -54,6 +54,10 @@ public class EmailResource {
 	
 	@Inject
 	private ContentService contentService;
+	
+	public EmailResource() {
+	  log.debug("Initialized EmailResource...");
+	}
 
  	
 	@POST

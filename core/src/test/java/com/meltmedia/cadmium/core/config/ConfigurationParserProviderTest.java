@@ -21,8 +21,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 
-import javassist.NotFoundException;
-
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -91,7 +89,7 @@ public class ConfigurationParserProviderTest {
 
     @Override
     public <T> T getConfiguration(String key, Class<T> type)
-        throws NotFoundException {
+        throws ConfigurationNotFoundException {
       return null;
     }
     

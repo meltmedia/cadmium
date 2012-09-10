@@ -59,17 +59,17 @@ public class ConfigInitializeTask implements Callable<GitService> {
       Throwable t = null;
 
       try {
-        logger.debug("Attempting to initialize config for `{}` into `{}`", warName, contentRoot);
+        logger.info("Attempting to initialize config for `{}` into `{}`", warName, contentRoot);
         cloned = GitService.initializeConfigDirectory(repoUri, branch, contentRoot, warName, historyManager, configManager);
 
         String contentDirectory = configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated");
         
         if(configManager != null && contentDirectory != null) {
-          logger.debug("Processing META-INF dir in `{}`", warName);
+          logger.info("Processing configuration dir in `{}`", warName);
           this.configManager.parseConfigurationDirectory(new File(contentDirectory));
         }
         configManager.makeConfigParserLive();
-        logger.debug("Successfully initialized config for `{}`", warName);
+        logger.info("Successfully initialized config for `{}`", warName);
       } catch(RefNotFoundException e) {
         logger.warn("Branch `"+branch+"` does not exist.", e);
         return null;
@@ -80,6 +80,8 @@ public class ConfigInitializeTask implements Callable<GitService> {
       if(t != null) {
         throw new Exception(t);
       }
+    } else {
+      logger.warn("Invalid setting for configuration repo {} and branch {}", repoUri, branch);
     }
     return cloned;
   }
