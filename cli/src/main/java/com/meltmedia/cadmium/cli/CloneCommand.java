@@ -18,6 +18,8 @@ package com.meltmedia.cadmium.cli;
 import java.io.File;
 import java.util.List;
 
+import org.eclipse.jgit.util.StringUtils;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
@@ -55,6 +57,13 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
   private String comment;
   
   /**
+   * 
+   * @see <a href="http://jcommander.org/">JCommander</a>
+   */
+  @Parameter(names={"--include-config", "-c"}, description="Clone configuration", required=false)
+  private boolean includeConfig = false;
+  
+  /**
    * Called to execute this command.
    */
   public void execute() throws Exception {
@@ -84,6 +93,7 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
         
         System.out.println("Sending update message to ["+site2+"]");
         UpdateCommand.sendUpdateMessage(site2, repo, branch, revision, "Cloned from ["+site1+"]: " + comment, token);
+        checkSendUpdateConfigMessage(site1, site2, site1Status, site2Status);
       } else {
         System.err.println("Failed to get status from source and/or target.");
         System.exit(1);
@@ -91,6 +101,33 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
     } catch(Exception e) {
       e.printStackTrace();
       System.err.println("Failed to clone ["+site1+"] to ["+site2+"]: "+e.getMessage());
+    }
+  }
+
+  /**
+   * Checks if a config update message is necessary and sends it if it is.
+   * 
+   * @param site1 The source site for the configuration.
+   * @param site2 The target site for the configuration.
+   * @param site1Status The status of the source site.
+   * @param site2Status The status of the target site.
+   * @throws Exception
+   */
+  private void checkSendUpdateConfigMessage(String site1, String site2,
+      Status site1Status, Status site2Status) throws Exception {
+    String repo;
+    String revision;
+    String branch;
+    if(includeConfig) {
+      repo = site1Status.getConfigRepo();
+      revision = site1Status.getConfigRevision();
+      branch = site1Status.getBranch();
+      if(!StringUtils.isEmptyOrNull(repo) && StringUtils.isEmptyOrNull(revision) && StringUtils.isEmptyOrNull(branch)) {
+        if(!repo.equals(site2Status.getConfigRepo()) || !revision.equals(site2Status.getConfigRevision()) || ! branch.equals(site2Status.getConfigBranch())) {
+          System.out.println("Sending update/config message to ["+site2+"]");
+          UpdateCommand.sendUpdateMessage(site2, repo, branch, revision, "Cloned config from ["+site1+"]: " + comment, token, UpdateConfigCommand.UPDATE_CONFIG_ENDPOINT);
+        }
+      }
     }
   }
 
