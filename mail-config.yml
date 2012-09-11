@@ -1,0 +1,6 @@
+default: 
+  Email: !Email
+    &Email
+    jndiName: 'java:/Mail'
+    sessionStrategy: 'com.meltmedia.cadmium.email.JndiSessionStrategy'
+    messageTransformer: 'com.meltmedia.cadmium.email.IdentityMessageTransformer'
