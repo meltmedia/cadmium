@@ -76,6 +76,22 @@ public final class CadmiumAssertions {
     } 
   }
   
+  public static void assertUrlStatus(String message, String url, int status) {
+    DefaultHttpClient client = new DefaultHttpClient();
+    try {
+      HttpGet get = new HttpGet(url);
+     
+      HttpResponse resp = client.execute(get);
+      if(resp.getStatusLine().getStatusCode() != status) {
+        throw new AssertionFailedError(message);
+      }
+    } catch (ClientProtocolException e) {
+      throw new AssertionFailedError(e.getMessage() + ": " + message);
+    } catch (IOException e) {
+      throw new AssertionFailedError(e.getMessage() + ": " + message);
+    }     
+  }
+  
   /**
    * <p>Asserts that the local and remote files pass to this method exist and are identical.</p>
    * @param message The message that will be in the error if the local file isn't the same as the remote file.
