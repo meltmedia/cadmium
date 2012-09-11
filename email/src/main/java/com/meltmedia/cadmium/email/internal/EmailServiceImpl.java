@@ -80,7 +80,6 @@ public class EmailServiceImpl implements EmailService {
    * 
    */
   @SuppressWarnings("unchecked")
-  //@Activate
   public void updateConfiguration() throws EmailException {
     try {
       EmailConfiguration config = configManager.getConfiguration(EmailConfiguration.KEY, EmailConfiguration.class);
@@ -105,7 +104,7 @@ public class EmailServiceImpl implements EmailService {
           MessageTransformer transformer = mtc.newInstance();
           this.messageTransformer = transformer;
           
-         // log.info("Service Started {}", context.getProperties());
+          log.debug("Using new config jndi {}, strategy {}, transformer {}", new Object[] {config.getJndiName(), config.getSessionStrategy(), config.getMessageTransformer()});
           
         } catch (Exception e) {
           throw new EmailException("Error Registering Mail Service", e);

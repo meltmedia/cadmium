@@ -75,8 +75,16 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
       if(interactive) {
         System.out.println("Switching content on ["+siteUrl+"]");
       }
-      log.debug("Reverting to repo {}, branch {}, revision {}, comment [{}]", new Object [] {selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), selectedEntry.getComment()});
-      UpdateCommand.sendUpdateMessage(siteUrl, selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token);
+      String endpoint = UpdateCommand.UPDATE_ENDPOINT;
+      if(selectedEntry.getType() == HistoryEntry.EntryType.CONFIG) {
+        endpoint = UpdateConfigCommand.UPDATE_CONFIG_ENDPOINT;
+      } else if(selectedEntry.getType() == HistoryEntry.EntryType.MAINT) {
+        log.error("Invalid history entry type: {}", selectedEntry.getType());
+        System.err.println("Invalid history entry type: "+selectedEntry.getType());
+        System.exit(1);
+      }
+      log.debug("Reverting {} to repo {}, branch {}, revision {}, comment [{}]", new Object [] {endpoint, selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), selectedEntry.getComment()});
+      UpdateCommand.sendUpdateMessage(siteUrl, selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token, endpoint);
     } else {
       System.exit(1);
     }

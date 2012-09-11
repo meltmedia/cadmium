@@ -51,7 +51,7 @@ public class JndiSessionStrategy implements SessionStrategy {
       session = (Session)initialContext().lookup(jndiName);
     }
     catch( Exception e ) {
-    	log.info(e.getMessage());
+    	log.info(e.getMessage(), e);
       throw new EmailException("Exception caught while looking up email session with jndi name '"+jndiName+"'.", e);
     }
 

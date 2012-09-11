@@ -110,7 +110,7 @@ public class EmailResource {
 			  	emailService.send(email);
 			  	log.debug("After Sending Email");
 				} catch (EmailException e) {
-					log.info("EmailException Caught " + e.getMessage());
+					log.info("EmailException Caught " + e.getMessage(), e);
 					return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 				} catch (ValidationException e) {
 					log.info("ValidationException Caught");

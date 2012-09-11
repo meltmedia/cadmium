@@ -87,7 +87,8 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
         String branch = site1Status.getBranch();
         
         if(site2Status.getRepo().equals(repo) && site2Status.getBranch().equals(branch) && site2Status.getRevision().equals(revision)) {
-          System.err.println("Source [" + site1 + "] is on the same repo, branch, and revision as the target [" + site2 + "].");
+          System.err.println("Source [" + site1 + "] is on the same content repo, branch, and revision as the target [" + site2 + "].");
+          checkSendUpdateConfigMessage(site1, site2, site1Status, site2Status);
           System.exit(1);
         }
         
@@ -121,12 +122,16 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
     if(includeConfig) {
       repo = site1Status.getConfigRepo();
       revision = site1Status.getConfigRevision();
-      branch = site1Status.getBranch();
-      if(!StringUtils.isEmptyOrNull(repo) && StringUtils.isEmptyOrNull(revision) && StringUtils.isEmptyOrNull(branch)) {
+      branch = site1Status.getConfigBranch();
+      if(!StringUtils.isEmptyOrNull(repo) && !StringUtils.isEmptyOrNull(revision) && !StringUtils.isEmptyOrNull(branch)) {
         if(!repo.equals(site2Status.getConfigRepo()) || !revision.equals(site2Status.getConfigRevision()) || ! branch.equals(site2Status.getConfigBranch())) {
           System.out.println("Sending update/config message to ["+site2+"]");
           UpdateCommand.sendUpdateMessage(site2, repo, branch, revision, "Cloned config from ["+site1+"]: " + comment, token, UpdateConfigCommand.UPDATE_CONFIG_ENDPOINT);
+        } else {
+          System.out.println("Source [" + site1 + "] is on the same configuration repo, branch, and revision as the target [" + site2 + "].");
         }
+      } else {
+        System.out.println("Configuration status not available from source site [" + site1 + "]");
       }
     }
   }
