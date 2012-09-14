@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Properties;
 
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
@@ -45,8 +46,8 @@ public class GitServiceTest {
   
   @Before
   public void createDirForTests() throws Exception {    
-          
-    
+    configManager.setDefaultProperties(new Properties());      
+ 
     testDir = new File("./target/git-test");
     if(!testDir.exists()) {
       if(testDir.mkdir()){
