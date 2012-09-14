@@ -94,6 +94,11 @@ public class EmailResource {
 			  	// Set Properties
 			  	email.setProperty(Constants.TO_NAME, emailForm.getToName());
 			  	email.setProperty(Constants.FROM_NAME, emailForm.getFromName());
+			  	
+			    // setting message to at least empty string to assure that ${message} gets replaced on the email form.
+			  	if (emailForm.getMessage() == null) { 
+			  		emailForm.setMessage("");
+	        }
 			  	email.setProperty(Constants.MESSAGE, emailForm.getMessage());
 			  	
 			  	// Set up link

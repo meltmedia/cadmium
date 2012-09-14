@@ -46,10 +46,6 @@ public class EmailFormValidator {
   		errors.add(new ValidationError(Constants.FROM_NAME, "From Name is required."));
   	}
   	
-  	if (StringUtils.isEmpty(emailForm.getMessage())) {
-  		errors.add(new ValidationError(Constants.MESSAGE, "message is required."));
-  	}
-  	
   	if (StringUtils.isEmpty(emailForm.getPagePath())) {
   		errors.add(new ValidationError(Constants.PAGE_PATH, "Page Path is required."));
   	}
