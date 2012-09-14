@@ -91,4 +91,9 @@ public class ChannelMember {
     return true;
   }
   
+  @Override
+  public String toString() {
+    return address.toString()+(coordinator?":coord":"");
+  }
+  
 }

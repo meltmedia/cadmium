@@ -202,6 +202,28 @@ public class MembershipTracker implements MembershipListener {
     }
     return null;
   }
+  
+  public ChannelMember getMe() {
+    if(members != null) {
+      for(ChannelMember member : members) {
+        if(member.isMine()) {
+          return member;
+        }
+      }
+    }
+    return null;
+  }
+  
+  public ChannelMember getMember(ChannelMember mem) {
+    if(members != null) {
+      for(ChannelMember member : members) {
+        if(member.equals(mem)) {
+          return member;
+        }
+      }
+    }
+    return mem;
+  }
 
   @Override
   public void block() {

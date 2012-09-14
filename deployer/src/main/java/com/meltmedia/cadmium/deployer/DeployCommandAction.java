@@ -29,6 +29,9 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.MembershipTracker;
+import com.meltmedia.cadmium.deployer.DeploymentTracker.DeploymentStatus;
 import com.meltmedia.cadmium.maven.ArtifactResolver;
 
 public class DeployCommandAction implements CommandAction {
@@ -40,11 +43,18 @@ public class DeployCommandAction implements CommandAction {
   
   @Inject
   protected ArtifactResolver artifactResolver;
+  
+  @Inject
+  protected DeploymentTracker tracker;
+  
+  @Inject
+  protected MembershipTracker memberTracker;
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
     log.info("Beginning Deploy Command, started by {}", ctx.getSource());
     Map<String,String> params = ctx.getMessage().getProtocolParameters();
+    ChannelMember me = memberTracker.getMe();
     
     String domain = params.get("domain").trim();
     String branch = params.get("branch").trim();
@@ -57,42 +67,64 @@ public class DeployCommandAction implements CommandAction {
       log.warn("Invalid deploy request: Empty field. branch: {}, repo {}, domain {}, context {}", new String[]{branch, repo, domain, context});
       throw new Exception("Invalid deploy message.");
     }
-    
-    log.info("Beginning war creation. branch: {}, repo {}, domain {}, context {}", new String[]{branch, repo, domain, context});
-
-    JBossUtil.addVirtualHost(domain, log);    
-    
-    //setup war name and inset into list in initCommand
-    List<String> newWarNames = new ArrayList<String>();
-    String tmpFileName = domain.replace("\\.", "_") + ".war";   
-    File tmpZip = File.createTempFile(tmpFileName, null);
-    tmpZip.deleteOnExit();
-    newWarNames.add(tmpZip.getAbsolutePath());
-    boolean secure = new Boolean(params.get("secure"));
-    
-    // If the shiro config file can't be read lets not make this war secure.
-    if(secure) {
-      File shiroIniFile = new File(System.getProperty("com.meltmedia.cadmium.contentRoot"), "shiro.ini");
-      if(!shiroIniFile.canRead()) {
-        log.warn("Not adding security to war! The shiro config file \"{}\": either doesn't exist or cannot be read.", shiroIniFile.getAbsoluteFile());
-        secure = false;
+    DeploymentStatus status = tracker.initializeDeployment(domain, context);
+    List<String> messages = status.getMemberLogs(me);
+    status.setMemberStarted(me);
+    String warName = null;
+    try {
+      messages.add("Beginning war creation with repo "+repo+", branch "+branch+", domain "+domain+", context "+context);
+      
+      
+      log.info("Beginning war creation. branch: {}, repo {}, domain {}, context {}", new String[]{branch, repo, domain, context});
+      
+      //setup war name and inset into list in initCommand
+      List<String> newWarNames = new ArrayList<String>();
+      String tmpFileName = domain.replace("\\.", "_") + ".war";   
+      File tmpZip = File.createTempFile(tmpFileName, null);
+      tmpZip.deleteOnExit();
+      newWarNames.add(tmpZip.getAbsolutePath());
+      boolean secure = new Boolean(params.get("secure"));
+      
+      // If the shiro config file can't be read lets not make this war secure.
+      if(secure) {
+        File shiroIniFile = new File(System.getProperty("com.meltmedia.cadmium.contentRoot"), "shiro.ini");
+        if(!shiroIniFile.canRead()) {
+          log.warn("Not adding security to war! The shiro config file \"{}\": either doesn't exist or cannot be read.", shiroIniFile.getAbsoluteFile());
+          secure = false;
+        }
       }
+      
+      messages.add("Fetching maven artifact ["+artifact+"] from maven repository....");
+      File artifactFile = artifactResolver.resolveMavenArtifact(artifact);
+      messages.add("Done, fetching maven artifact ["+artifact+"] from maven repository.");
+  
+      JBossUtil.addVirtualHost(domain, log); 
+      messages.add("Added vHost to jboss.");
+      
+      messages.add("Updating war...");
+      updateWar(null, artifactFile.getAbsolutePath(), newWarNames, repo, branch, domain, context, secure);
+      
+      String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
+      messages.add("Moving war to deploy directory: "+deployPath);
+      
+      tmpZip.renameTo(new File(deployPath, tmpFileName));
+      warName = tmpFileName;
+      
+      messages.add("Waiting for jBoss to deploy war...");
+      status.waiting = true;
+    } catch(Throwable t) {
+      status.exception = new CadmiumDeploymentException("Deployment failed.", t);
+      if(warName != null) {
+        JBossUtil.forceDeleteCadmiumWar(log, warName);
+      }
+      throw new Exception(t);
     }
-    
-    File artifactFile = artifactResolver.resolveMavenArtifact(artifact);
-    
-    updateWar(null, artifactFile.getAbsolutePath(), newWarNames, repo, branch, domain, context, secure);
-    
-    String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
-    
-    tmpZip.renameTo(new File(deployPath, tmpFileName));
     
     return true;
   }
 
   @Override
   public void handleFailure(CommandContext ctx, Exception e) {
-    // TODO Auto-generated method stub
 
   }
 

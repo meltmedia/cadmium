@@ -13,21 +13,22 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.config;
+package com.meltmedia.cadmium.cli;
 
-import java.io.File;
-import java.util.Properties;
-
-import org.slf4j.Logger;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 
 /**
- * This implements the PropertiesWriter Interface.  For use in the ConfigManager class 
+ * The status of a Deployment.
  * 
- * @author Brian Barr
+ * @author John McEntire
+ *
  */
-
-public interface PropertiesWriter {
-
-  public void persistProperties(Properties properties, File propsFile, String message, Logger log);
-  
+public class DeploymentStatus {
+  boolean waiting = false;
+  Map<String, List<String>> memberLogs = new Hashtable<String, List<String>>();
+  Map<String, Boolean> memberStatus = new Hashtable<String, Boolean>();
+  String domain;
+  String contextRoot;
 }

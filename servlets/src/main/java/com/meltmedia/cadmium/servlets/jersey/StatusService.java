@@ -32,6 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,8 +85,16 @@ public class StatusService extends AuthorizationService {
 	@GET
 	@Path("/Ping")
 	@Produces("text/plain")
-	public String ping() {
-	  return "Ok";
+	public Response ping(@Context HttpServletRequest request) {
+	  String myDomain = configManager.getDomain();
+	  if(myDomain == null || request.getServerName().equals(myDomain)) {
+  	  if(maintService.isOn()) {
+  	    return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity("InMaint").build();
+  	  }
+  	  return Response.ok().entity("Ok").build();
+	  } else {
+	    return Response.status(501).entity("Not Deployed").build();
+	  }
 	}
 	
   @GET

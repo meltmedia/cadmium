@@ -16,9 +16,12 @@
 package com.meltmedia.cadmium.deployer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -33,6 +36,8 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.slf4j.Logger;
 
 public class JBossUtil {
+  public static enum DeploymentState { DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED, ERROR, NOT_STARTED }
+  
   public static void addVirtualHost(String domain, Logger log) throws InstanceNotFoundException, MalformedObjectNameException, ReflectionException, MBeanException, NullPointerException {
     MBeanServer server = MBeanServerLocator.locateJBoss();
     boolean aliasFound = server.isRegistered(new ObjectName("jboss.web:type=Host,host="+domain));
@@ -45,7 +50,7 @@ public class JBossUtil {
     }
   }
   
-  public static void undeploy(String warName, Logger log) throws MalformedObjectNameException, NullPointerException, InstanceNotFoundException, ReflectionException, MBeanException, AttributeNotFoundException {
+  public static void undeploy(String warName, Logger log) throws MalformedObjectNameException, NullPointerException, InstanceNotFoundException, ReflectionException, MBeanException, AttributeNotFoundException, IOException {
     MBeanServer server = MBeanServerLocator.locateJBoss();
     ObjectName warObj = new ObjectName("jboss.web.deployment:war="+warName);
     if(server.isRegistered(warObj)){
@@ -92,7 +97,30 @@ public class JBossUtil {
     return moduleName;
   }
   
-  public static void removeWar(String contextName, Logger log) throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, MalformedObjectNameException, NullPointerException {
+  public static ObjectName createWarDeploymentObjectName(String warName) throws MalformedObjectNameException, NullPointerException {
+    String deployDir = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
+    ObjectName moduleName = new ObjectName("jboss.deployment:id=\"vfszip:"+deployDir+"/" + warName + "/\",type=Deployment");
+    return moduleName;
+  }
+  
+  public static DeploymentState getDeploymentState(String warName) throws Exception {
+    DeploymentState state = DeploymentState.NOT_STARTED;
+    MBeanServer server = MBeanServerLocator.locateJBoss();
+    ObjectName moduleName = createWarDeploymentObjectName(warName);
+    if(server.isRegistered(moduleName)) {
+      Object deployState = server.getAttribute(moduleName, "State");
+      state = DeploymentState.valueOf(deployState.toString());
+      if(state == DeploymentState.ERROR) {
+        Throwable t = (Throwable) server.getAttribute(moduleName, "Problem");
+        if(t != null) {
+          throw new CadmiumDeploymentException("Failed to deploy war: "+warName, t);
+        }
+      }
+    }
+    return state;
+  }
+  
+  public static void removeWar(String contextName, Logger log) throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, MalformedObjectNameException, NullPointerException, IOException {
     MBeanServer server = MBeanServerLocator.locateJBoss();
     ObjectName moduleName = createWebModuleObjectName(contextName); 
     if(server.isRegistered(moduleName)){
@@ -102,20 +130,35 @@ public class JBossUtil {
         String splitPath[] = docBase.toString().split("/");
         if(splitPath != null && splitPath.length > 0) {
           String warName = splitPath[splitPath.length - 1];
-          if(warName != null) {
-            log.debug("Warname: {}", warName);
-            String deployDir = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
-            File warFile = new File(deployDir, warName);
-            if(warFile.exists()) {
-              log.debug("Deleting: {}", warFile);
-              warFile.delete();
-            }
-          }
+          forceDeleteCadmiumWar(log, warName);
         }
       }
     }
   }
+
+  public static void forceDeleteCadmiumWar(Logger log, String warName) throws IOException {
+    if(warName != null) {
+      log.debug("Warname: {}", warName);
+      String deployDir = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
+      File warFile = new File(deployDir, warName);
+      if(warFile.exists() && checkIfCadmiumWar(log, warFile)) {
+        log.debug("Deleting: {}", warFile);
+        warFile.delete();
+      }
+    }
+  }
   
-  
+  private static boolean checkIfCadmiumWar(Logger log, File warFile) throws IOException {
+    ZipFile warZip = new ZipFile(warFile);
+    try{ 
+      ZipEntry cadmiumPropsEntry = warZip.getEntry("WEB-INF/cadmium.properties");
+      if(cadmiumPropsEntry != null && !cadmiumPropsEntry.isDirectory()) {
+        return true;
+      }
+      return false;
+    } finally {
+      warZip.close();
+    }
+  }
 
 }

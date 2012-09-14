@@ -223,6 +223,8 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     vHostName = getVHostName(context);
     
+    configManager.setDomain(vHostName);
+    
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
     
     

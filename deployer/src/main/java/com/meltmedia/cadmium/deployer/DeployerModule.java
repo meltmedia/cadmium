@@ -56,6 +56,7 @@ public class DeployerModule extends AbstractModule {
       String remoteMavenRepo = System.getProperty(MAVEN_REPOSITORY);
       ArtifactResolver resolver = new ArtifactResolver(remoteMavenRepo, appRoot.getAbsolutePath());
       bind(ArtifactResolver.class).toInstance(resolver);
+      bind(DeploymentTracker.class).asEagerSingleton();
     } catch(Exception e) {
       logger.error("Failed to initialize maven artifact resolver.", e);
     }

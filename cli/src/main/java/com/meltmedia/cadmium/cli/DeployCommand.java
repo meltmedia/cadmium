@@ -17,14 +17,18 @@ package com.meltmedia.cadmium.cli;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 
-import org.apache.http.HttpEntity;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -80,7 +84,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	  String url = removeSubDomain(site)+"system/deploy";
 	  System.out.println(url);
     log.debug("siteUrl + JERSEY_ENDPOINT = {}", url);
-
+    HttpResponse response = null;
 		try {
 	    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
 			
@@ -96,34 +100,114 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 		  
  		  post.setEntity(new StringEntity(new Gson().toJson(req), "UTF-8"));
 			
-			HttpResponse response = client.execute(post);
-			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-  			HttpEntity entity = response.getEntity();
-  			String resp = EntityUtils.toString(entity);
-  			if(resp.equalsIgnoreCase("ok")) {
-    			log.debug("entity content type: {}", entity.getContentType().getValue());
-    			System.out.println("Successfully deployed cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
+			response = client.execute(post);
+			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+			  Header hdr = response.getFirstHeader("Location");
+			  post.releaseConnection();
+			  if(hdr != null) {
+    			log.debug("Location: {}", hdr.getValue());
+    		  waitForDeployment(client, site, repo, hdr.getValue());
   			} else {
-  			  throw new Exception("");
+  			  System.err.println("Error response: "+response);
+  			  throw new Exception("Error response: "+response);
   			}
 			} else {
         throw new Exception("Bad response status: "+response.getStatusLine().toString());
 			}
 		} 
 		catch (Exception e) {
+		  e.printStackTrace();
 			System.err.println("Failed to deploy cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
 			System.exit(1);
-		}		
+		}
 
 	}
 	
+	/**
+	 * Waits for deployment to complete or fail.
+	 * 
+	 * @param client
+	 * @param site
+	 * @param repo
+	 * @param location
+	 */
+  private void waitForDeployment(HttpClient client, String site, String repo, String location) {
+    Map<String, Integer> lastLogIndexes = new HashMap<String, Integer>();
+    long startTime = System.currentTimeMillis();
+    long timeoutTime = startTime + (5 * 60 * 1000l);
+    while(System.currentTimeMillis() < timeoutTime) {
+      String response = null;
+      try {
+        HttpGet get = new HttpGet(location);
+        HttpResponse resp = client.execute(get);
+        int statusCode = resp.getStatusLine().getStatusCode();
+        response = EntityUtils.toString(resp.getEntity());
+        get.releaseConnection();
+        if(statusCode == HttpStatus.SC_ACCEPTED) {
+          updateMessages(lastLogIndexes, new Gson().fromJson(response, DeploymentStatus.class));
+          Thread.sleep(5000l);
+        } else if(statusCode == HttpStatus.SC_OK) {
+          System.out.println("Successfully deployed cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
+          break;
+        } else if(statusCode == HttpStatus.SC_INTERNAL_SERVER_ERROR) {
+          System.err.println("Failed to deploy to [" + site + "], with repo [" + repo + "], and branch [" + branch + "]:\n" + response);
+          System.exit(1);
+        }
+      } catch(Throwable t) {
+        throw new RuntimeException("Failed to check status of deployment["+response+"].", t);
+      }
+    }
+    
+  }
+
+  /**
+   * Displays any new messages that have been replied with.
+   * 
+   * @param lastLogIndexes
+   * @param status
+   */
+  private void updateMessages(Map<String, Integer> lastLogIndexes,
+      DeploymentStatus status) {
+    if(status != null && status.memberLogs != null) {
+      for(String member : status.memberLogs.keySet()) {
+        int i = getLastIndex(member, lastLogIndexes);
+        List<String> memLogs = status.memberLogs.get(member);
+        if(memLogs.size() > i) {
+          for(; i < memLogs.size(); i = incLastIndex(member, lastLogIndexes, i)) {
+            System.out.println("["+member+"] "+memLogs.get(i));
+          }
+        }
+      }
+    }
+  }
+
+  private int incLastIndex(String member,
+      Map<String, Integer> lastLogIndexes, int i) {
+    i++;
+    lastLogIndexes.put(member, i);
+    return i;
+  }
+
+  /**
+   * @param member
+   * @param lastLogIndexes
+   * @return Gets the last log index for the given member.
+   */
+  private int getLastIndex(String member,
+      Map<String, Integer> lastLogIndexes) {
+    if(lastLogIndexes.containsKey(member)) {
+      return lastLogIndexes.get(member);
+    }
+    return 0;
+  }
+
   @Override
   public String getCommandName() {
     return "deploy";
   }
   
   /**
-   * Removes the subdomain of the passed in url to get the url of the deployer instance.
+   * Removes the sub-domain of the passed in url to get the url of the deployer instance.
    * 
    * @param url
    * @return

@@ -13,21 +13,18 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.config;
+package com.meltmedia.cadmium.deployer;
 
-import java.io.File;
-import java.util.Properties;
+public class CadmiumDeploymentException extends Exception {
 
-import org.slf4j.Logger;
-
-/**
- * This implements the PropertiesWriter Interface.  For use in the ConfigManager class 
- * 
- * @author Brian Barr
- */
-
-public interface PropertiesWriter {
-
-  public void persistProperties(Properties properties, File propsFile, String message, Logger log);
+  private static final long serialVersionUID = -1364784645532435130L;
   
+  public CadmiumDeploymentException(String message, Throwable t) {
+    super(message, t);
+  }
+  
+  public CadmiumDeploymentException(String message) {
+    super(message);
+  }
+
 }
