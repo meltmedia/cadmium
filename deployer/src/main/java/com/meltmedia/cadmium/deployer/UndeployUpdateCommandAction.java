@@ -24,20 +24,20 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
-import com.meltmedia.cadmium.deployer.DeploymentTracker.DeploymentStatus;
+import com.meltmedia.cadmium.deployer.DeploymentTracker.UndeploymentStatus;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 
 /**
- * A CommandAction that updates the {@link DeploymentTracker} with the responses from the 
+ * A CommandAction that updates the {@link UndeploymentTracker} with the responses from the 
  * other nodes in a cluster.
  * 
  * @author John McEntire
  *
  */
-public class DeployUpdateResponseCommandAction implements CommandAction {
+public class UndeployUpdateCommandAction implements CommandAction {
   
-  public static final String DEPLOY_UPDATE_RESPONSE_ACTION = "DEPLOY_UPDATE_RESPONSE";
+  public static final String DEPLOY_UPDATE_ACTION = "UNDEPLOY_UPDATE";
   
   @Inject
   protected DeploymentTracker tracker;
@@ -47,23 +47,19 @@ public class DeployUpdateResponseCommandAction implements CommandAction {
 
   @Override
   public String getName() {
-    return DEPLOY_UPDATE_RESPONSE_ACTION;
+    return DEPLOY_UPDATE_ACTION;
   }
 
   @Override
   public boolean execute(CommandContext ctx) throws Exception {
     Map<String, String> params = ctx.getMessage().getProtocolParameters();
     if(params.containsKey("domain") && params.containsKey("contextRoot") && !memberTracker.getMe().equals(new ChannelMember(ctx.getSource()))) {
-      DeploymentStatus status = tracker.getDeployment(params.get("domain"), params.get("contextRoot"));
+      UndeploymentStatus status = tracker.getUndeployment(params.get("domain"), params.get("contextRoot"));
       if(status != null) {
         boolean finished = new Boolean(params.get("finished")).booleanValue();
         List<String> msgs = null;
         if(params.containsKey("msgs")) {
           msgs = new Gson().fromJson(params.get("msgs"), new TypeToken<List<String>>() {}.getType());
-        }
-        CadmiumDeploymentException exception = null;
-        if(params.containsKey("exception")) {
-          exception = new Gson().fromJson(params.get("exception"), CadmiumDeploymentException.class);
         }
         synchronized(status) {
           ChannelMember mem = memberTracker.getMember(new ChannelMember(ctx.getSource()));
@@ -78,10 +74,6 @@ public class DeployUpdateResponseCommandAction implements CommandAction {
             oldMsgs.addAll(msgs);
           } else {
             status.getMemberLogs(mem).clear();
-          }
-          if(exception != null) {
-            status.setException(exception);
-            status.cancelSitePinger();
           }
         }
       }

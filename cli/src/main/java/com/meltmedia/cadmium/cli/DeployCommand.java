@@ -135,27 +135,40 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
     Map<String, Integer> lastLogIndexes = new HashMap<String, Integer>();
     long startTime = System.currentTimeMillis();
     long timeoutTime = startTime + (5 * 60 * 1000l);
+    boolean finished = false;
     while(System.currentTimeMillis() < timeoutTime) {
       String response = null;
+      HttpGet get = null;
       try {
-        HttpGet get = new HttpGet(location);
+        get = new HttpGet(location);
         HttpResponse resp = client.execute(get);
         int statusCode = resp.getStatusLine().getStatusCode();
         response = EntityUtils.toString(resp.getEntity());
-        get.releaseConnection();
         if(statusCode == HttpStatus.SC_ACCEPTED) {
           updateMessages(lastLogIndexes, new Gson().fromJson(response, DeploymentStatus.class));
           Thread.sleep(5000l);
         } else if(statusCode == HttpStatus.SC_OK) {
           System.out.println("Successfully deployed cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
+          finished = true;
           break;
         } else if(statusCode == HttpStatus.SC_INTERNAL_SERVER_ERROR) {
           System.err.println("Failed to deploy to [" + site + "], with repo [" + repo + "], and branch [" + branch + "]:\n" + response);
+          Header hdr = get.getFirstHeader("Location");
+          if(hdr != null) {
+            System.err.println("Check ["+hdr.getValue()+"] for undeployment state.");
+          }
           System.exit(1);
         }
       } catch(Throwable t) {
         throw new RuntimeException("Failed to check status of deployment["+response+"].", t);
+      } finally {
+        if(get != null) {
+          get.releaseConnection();
+        }
       }
+    }
+    if(!finished) {
+      System.err.println("Timed out waiting for deployment!");
     }
     
   }

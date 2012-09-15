@@ -63,7 +63,7 @@ public class DeployUpdateCommandAction implements CommandAction {
       if(status != null) {
         List<String> myMsgs = status.getMemberLogs(me);
         boolean finished = status.getMemberFinished(me);
-        CadmiumDeploymentException exception = status.exception;
+        CadmiumDeploymentException exception = status.getException();
         
         Message msg = new Message();
         msg.setCommand(DeployUpdateResponseCommandAction.DEPLOY_UPDATE_RESPONSE_ACTION);

@@ -68,18 +68,21 @@ public class DeployCommandAction implements CommandAction {
       throw new Exception("Invalid deploy message.");
     }
     DeploymentStatus status = tracker.initializeDeployment(domain, context);
-    List<String> messages = status.getMemberLogs(me);
+    status.getMemberLogs(me);
     status.setMemberStarted(me);
     String warName = null;
     try {
-      messages.add("Beginning war creation with repo "+repo+", branch "+branch+", domain "+domain+", context "+context);
+      String tmpFileName = domain.replace("\\.", "_") + ".war"; 
+      
+      UndeployCommandAction.undeployWar(me, status, tmpFileName, log);
+      
+      status.logToMember(me, "Beginning war creation with repo "+repo+", branch "+branch+", domain "+domain+", context "+context);
       
       
       log.info("Beginning war creation. branch: {}, repo {}, domain {}, context {}", new String[]{branch, repo, domain, context});
       
       //setup war name and inset into list in initCommand
-      List<String> newWarNames = new ArrayList<String>();
-      String tmpFileName = domain.replace("\\.", "_") + ".war";   
+      List<String> newWarNames = new ArrayList<String>();  
       File tmpZip = File.createTempFile(tmpFileName, null);
       tmpZip.deleteOnExit();
       newWarNames.add(tmpZip.getAbsolutePath());
@@ -94,26 +97,26 @@ public class DeployCommandAction implements CommandAction {
         }
       }
       
-      messages.add("Fetching maven artifact ["+artifact+"] from maven repository....");
+      status.logToMember(me, "Fetching maven artifact ["+artifact+"] from maven repository....");
       File artifactFile = artifactResolver.resolveMavenArtifact(artifact);
-      messages.add("Done, fetching maven artifact ["+artifact+"] from maven repository.");
+      status.logToMember(me, "Done, fetching maven artifact ["+artifact+"] from maven repository.");
   
       JBossUtil.addVirtualHost(domain, log); 
-      messages.add("Added vHost to jboss.");
+      status.logToMember(me, "Added vHost to JBoss.");
       
-      messages.add("Updating war...");
+      status.logToMember(me, "Updating war...");
       updateWar(null, artifactFile.getAbsolutePath(), newWarNames, repo, branch, domain, context, secure);
       
       String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
-      messages.add("Moving war to deploy directory: "+deployPath);
+      status.logToMember(me, "Moving war to deploy directory: "+deployPath);
       
       tmpZip.renameTo(new File(deployPath, tmpFileName));
       warName = tmpFileName;
       
-      messages.add("Waiting for jBoss to deploy war...");
-      status.waiting = true;
+      status.logToMember(me, "Waiting for JBoss to deploy war...");
+      status.setWaiting(true);
     } catch(Throwable t) {
-      status.exception = new CadmiumDeploymentException("Deployment failed.", t);
+      status.setException(new CadmiumDeploymentException("Deployment failed.", t));
       if(warName != null) {
         JBossUtil.forceDeleteCadmiumWar(log, warName);
       }

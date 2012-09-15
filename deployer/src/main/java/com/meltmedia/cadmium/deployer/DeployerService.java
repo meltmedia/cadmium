@@ -15,7 +15,10 @@
  */
 package com.meltmedia.cadmium.deployer;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -45,76 +48,99 @@ import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 @CadmiumSystemEndpoint
 @Path("/deploy")
 public class DeployerService extends AuthorizationService {
-  
+
   private String version = "${project.version}";
-	
+
   @Inject
   protected MessageSender sender;
-  
+
   @Inject
   protected DeploymentTracker tracker;
 
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces("text/plain")
-	public Response deploy(DeployRequest req, @HeaderParam("Authorization") @DefaultValue("no token") String auth, @Context ServletContext context) throws Exception {
-	  if(!this.isAuth(auth)) {
-	    throw new Exception("Unauthorized!");
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces("text/plain")
+  public Response deploy(DeployRequest req,
+      @HeaderParam("Authorization") @DefaultValue("no token") String auth,
+      @Context ServletContext context) throws Exception {
+    if (!this.isAuth(auth)) {
+      throw new Exception("Unauthorized!");
     }
-	  String branch = req.getBranch();
-	  String repo = req.getRepo();
-	  String domain = req.getDomain();
-	  String contextRoot = req.getContextRoot();
-	  String artifact = req.getArtifact();
-	  
-	  if( StringUtils.isEmptyOrNull(branch) || StringUtils.isEmptyOrNull(repo) || StringUtils.isEmptyOrNull(domain) ) {
-	    return Response.serverError().entity("Invalid request").build();
-	  }
-	  
-	  if( StringUtils.isEmptyOrNull(contextRoot) ) {
-	    contextRoot = "/";
-	  }
-	  
-	  if( StringUtils.isEmptyOrNull(artifact) ) {
-	    artifact = "com.meltmedia.cadmium:cadmium-war:war:" + version;
-	  }
-		
+    String branch = req.getBranch();
+    String repo = req.getRepo();
+    String domain = req.getDomain();
+    String contextRoot = req.getContextRoot();
+    String artifact = req.getArtifact();
+
+    if (StringUtils.isEmptyOrNull(branch) || StringUtils.isEmptyOrNull(repo)
+        || StringUtils.isEmptyOrNull(domain)) {
+      return Response.serverError().entity("Invalid request").build();
+    }
+
+    if (StringUtils.isEmptyOrNull(contextRoot)) {
+      contextRoot = "/";
+    }
+
+    if (StringUtils.isEmptyOrNull(artifact)) {
+      artifact = "com.meltmedia.cadmium:cadmium-war:war:" + version;
+    }
+
     Message msg = new Message();
     msg.setCommand(DeployCommandAction.DEPLOY_ACTION);
     msg.getProtocolParameters().put("branch", branch);
     msg.getProtocolParameters().put("repo", repo);
     msg.getProtocolParameters().put("domain", domain);
     msg.getProtocolParameters().put("context", contextRoot);
-    msg.getProtocolParameters().put("secure", Boolean.toString(!req.isDisableSecurity()));
+    msg.getProtocolParameters().put("secure",
+        Boolean.toString(!req.isDisableSecurity()));
     msg.getProtocolParameters().put("artifact", artifact);
 
     sender.sendMessage(msg, null);
-    return Response.created(new URI("/"+domain+( contextRoot.startsWith("/") ? contextRoot : "/" + contextRoot ))).build();
-	}
-	
-	@GET
-	@Path("/{domain}/{contextRoot}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deployStatus(@PathParam("domain") String domain, @PathParam("contextRoot") @DefaultValue("/") String contextRoot) throws CadmiumDeploymentException {
-	  if( StringUtils.isEmptyOrNull(contextRoot) ) {
-	    contextRoot = "/";
-	  }
-	  DeploymentStatus status = tracker.isDeploymentComplete(domain, contextRoot);
-	  if(status != null) {
-  	  if(status.isFinished()) {
-  	    return Response.ok().entity(new Gson().toJson(status)).build();
-  	  } else {
-  	    return Response.status(Status.ACCEPTED).entity(new Gson().toJson(status)).build();
-  	  }
-	  } else {
-	    return Response.status(Status.NOT_FOUND).build();
-	  }
-	}
-	
-	@GET
-	@Path("/{domain}")
-	public Response deployStatus(@PathParam("domain") String domain ) throws CadmiumDeploymentException {
-	  return deployStatus(domain, "/");
-	}
-}
+    return Response.created(
+        new URI("/" + domain
+            + (contextRoot.startsWith("/") ? contextRoot : "/" + contextRoot)))
+        .build();
+  }
 
+  @GET
+  @Path("/{domain}/{contextRoot}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response deployStatus(@PathParam("domain") String domain,
+      @PathParam("contextRoot") @DefaultValue("/") String contextRoot)
+      throws URISyntaxException {
+    if (StringUtils.isEmptyOrNull(contextRoot)) {
+      contextRoot = "/";
+    }
+    try {
+      DeploymentStatus status = tracker.isDeploymentComplete(domain,
+          contextRoot);
+      if (status != null) {
+        if (status.isFinished()) {
+          return Response.ok().entity(new Gson().toJson(status)).build();
+        } else {
+          return Response.status(Status.ACCEPTED)
+              .entity(new Gson().toJson(status)).build();
+        }
+      } else {
+        return Response.status(Status.NOT_FOUND).build();
+      }
+    } catch (CadmiumDeploymentException e) {
+      StringWriter writer = new StringWriter();
+      e.printStackTrace(new PrintWriter(writer));
+      return Response
+          .serverError()
+          .location(
+              new URI("../undeploy/"
+                  + domain
+                  + (contextRoot.startsWith("/") ? contextRoot : "/"
+                      + contextRoot))).entity(writer.toString()).build();
+    }
+  }
+
+  @GET
+  @Path("/{domain}")
+  public Response deployStatus(@PathParam("domain") String domain)
+      throws URISyntaxException {
+    return deployStatus(domain, "/");
+  }
+}

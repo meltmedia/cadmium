@@ -19,7 +19,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -30,6 +29,7 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import com.meltmedia.cadmium.core.messaging.Message;
@@ -47,6 +47,7 @@ public class DeploymentTracker implements Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private List<DeploymentStatus> deploymentStatuses = new ArrayList<DeploymentStatus>();
   private Map<DeploymentStatus, SitePinger> sitePingers = new HashMap<DeploymentStatus, SitePinger>();
+  private List<UndeploymentStatus> undeploymentStatuses = new ArrayList<UndeploymentStatus>();
   private Timer scheduler = new Timer();
   
   @Inject
@@ -86,9 +87,24 @@ public class DeploymentTracker implements Closeable {
    * @return
    */
   public DeploymentStatus getDeployment(String domain, String contextRoot) {
-    DeploymentStatus keyStatus = getEmptyStatus(domain, contextRoot);
+    DeploymentStatus keyStatus = getEmptyDeploymentStatus(domain, contextRoot);
     if(deploymentStatuses.contains(keyStatus)) {
       return deploymentStatuses.get(deploymentStatuses.indexOf(keyStatus));
+    }
+    return null;
+  }
+  
+  /**
+   * Gets a {@link UndeploymentStatus} for the given domain and contextRoot.
+   * 
+   * @param domain
+   * @param contextRoot
+   * @return
+   */
+  public UndeploymentStatus getUndeployment(String domain, String contextRoot) {
+    UndeploymentStatus keyStatus = getEmptyUndeploymentStatus(domain, contextRoot);
+    if(undeploymentStatuses.contains(keyStatus)) {
+      return undeploymentStatuses.get(undeploymentStatuses.indexOf(keyStatus));
     }
     return null;
   }
@@ -105,11 +121,32 @@ public class DeploymentTracker implements Closeable {
   public synchronized DeploymentStatus initializeDeployment(String domain, String contextRoot) {
     DeploymentStatus status = getDeployment(domain, contextRoot);
     if(status == null) {
-      status = getEmptyStatus(domain, contextRoot);
+      status = getEmptyDeploymentStatus(domain, contextRoot);
       deploymentStatuses.add(status);
     } else {
       status.clear();
     }
+    return status;
+  }
+  
+  /**
+   * Initializes or clears a {@link UndeploymentStatus} for the given domain and contextRoot. 
+   * This method make sure that there is only one instance of the {@link UndeploymentStatus} 
+   * for the given domain and contextRoot.
+   * 
+   * @param domain
+   * @param contextRoot
+   * @return
+   */
+  public synchronized UndeploymentStatus initializeUndeployment(String domain, String contextRoot) {
+    UndeploymentStatus status = getUndeployment(domain, contextRoot);
+    if(status == null) {
+      status = getEmptyUndeploymentStatus(domain, contextRoot);
+      undeploymentStatuses.add(status);
+    } else {
+      status.clear();
+    }
+    scheduler.schedule(new UndeploymentTrackerTask(status), 1000l);
     return status;
   }
   
@@ -135,10 +172,50 @@ public class DeploymentTracker implements Closeable {
    * @param contextRoot
    * @return
    */
-  private DeploymentStatus getEmptyStatus(String domain, String contextRoot) {
+  private DeploymentStatus getEmptyDeploymentStatus(String domain, String contextRoot) {
     return new DeploymentStatus(domain, contextRoot);
   }
   
+  /**
+   * Creates an empty {@link UndeploymentStatus} instance with the given domain and contextRoot.
+   * 
+   * @param domain
+   * @param contextRoot
+   * @return
+   */
+  private UndeploymentStatus getEmptyUndeploymentStatus(String domain, String contextRoot) {
+    return new UndeploymentStatus(domain, contextRoot);
+  }
+  
+  /**
+   * A class to track undeployments.
+   * 
+   * @author John McEntire
+   *
+   */
+  public class UndeploymentStatus extends AbstractStatusTracker {
+
+    boolean running = false;
+    boolean notified = false;
+    
+    /**
+     * Creates a new instance with the required fields.
+     * @param domain 
+     * @param contextRoot
+     */
+    public UndeploymentStatus(String domain, String contextRoot) {
+      super(domain, contextRoot);
+    }
+    
+    public void clear() {
+      synchronized(this) {
+        super.clear();
+        running = false;
+        notified = false;
+      }
+    }
+    
+  }  
   
   /**
    * Status Object for tracking a deployment.
@@ -146,14 +223,10 @@ public class DeploymentTracker implements Closeable {
    * @author John McEntire
    *
    */
-  public class DeploymentStatus {
-    CadmiumDeploymentException exception;
-    boolean waiting = false;
-    boolean deployed = false;
-    Map<String, List<String>> memberLogs = new Hashtable<String, List<String>>();
-    Map<String, Boolean> memberStatus = new Hashtable<String, Boolean>();
-    String domain;
-    String contextRoot;
+  public class DeploymentStatus extends AbstractStatusTracker {
+    private CadmiumDeploymentException exception;
+    private boolean waiting = false;
+    private boolean deployed = false;
     
     /**
      * Creates a new instance with the required fields.
@@ -161,115 +234,41 @@ public class DeploymentTracker implements Closeable {
      * @param contextRoot
      */
     public DeploymentStatus(String domain, String contextRoot) {
-      this.domain = domain;
-      this.contextRoot = contextRoot;
+      super(domain, contextRoot);
     }
     
-    /**
-     * @param member
-     * @return The List of current deployment log messages for the given member.
-     * Adds a new list and returns that in the case that the member has no list yet.
-     */
-    public List<String> getMemberLogs(ChannelMember member) {
-      synchronized(this) {
-        String key= getKey(member);
-        if(!memberLogs.containsKey(key)) {
-          memberLogs.put(key, new ArrayList<String>());
-        }
-        return memberLogs.get(key);
-      }
+    public CadmiumDeploymentException getException() {
+      return exception;
     }
-    
-    /**
-     * Adds a message to a members logs if the last log was not the same log.
-     * 
-     * @param member
-     * @param message
-     */
-    public void logToMember(ChannelMember member, String message) {
-      synchronized(this) {
-        String key= getKey(member);
-        if(!memberLogs.containsKey(key)) {
-          memberLogs.put(key, new ArrayList<String>());
-        }
-        List<String> logs = memberLogs.get(key);
-        if(logs.isEmpty() || logs.indexOf(message) != logs.size() - 1){
-          logs.add(message);
-        }
-      }
+
+    public void setException(CadmiumDeploymentException exception) {
+      this.exception = exception;
     }
-    
-    /**
-     * 
-     * @param member
-     * @return The current deployment status of the given member. Adds a false for the 
-     * given member and returns that in the case that the member has no status yet.
-     */
-    public Boolean getMemberFinished(ChannelMember member) {
-      synchronized(this) {
-        String key= getKey(member);
-        if(memberStatus.containsKey(key)) {
-          return memberStatus.get(key);
-        }
-        return false;
-      }
+
+    public boolean isWaiting() {
+      return waiting;
     }
-    
-    /**
-     * Sets the member to finished.
-     * 
-     * @param member
-     */
-    public void setMemberFinished(ChannelMember member) {
-      synchronized(this) {
-        String key= getKey(member);
-        memberStatus.put(key, true);
-      }
+
+    public void setWaiting(boolean waiting) {
+      this.waiting = waiting;
     }
-    
-    /**
-     * Sets the member to not finished.
-     * 
-     * @param member
-     */
-    public void setMemberStarted(ChannelMember member) {
-      synchronized(this) {
-        String key= getKey(member);
-        memberStatus.put(key, false);
-      }
+
+    public boolean isDeployed() {
+      return deployed;
     }
-    
-    /**
-     * Creates a String key from a {@link ChannelMember}.
-     * @param member
-     * @return
-     */
-    private String getKey(ChannelMember member) {
-      return member.toString();
+
+    public void setDeployed(boolean deployed) {
+      this.deployed = deployed;
     }
-  
-    /**
-     * @return True if all members are finished.
-     */
-    public boolean isFinished() {
-      for(String mem : memberStatus.keySet()) {
-        Boolean memFinished = memberStatus.get(mem);
-        if(!memFinished) {
-          return false;
-        }
-      }
-      return !memberStatus.isEmpty();
-    }
-    
+
     /**
      * Clears previously set values for all fields except the domain and contextRoot.
      */
     public void clear() {
       synchronized(this) {
+        super.clear();
         exception = null;
         waiting = false;
-        memberLogs.clear();
-        memberStatus.clear();
         cancelSitePinger();
       }
     }
@@ -287,38 +286,36 @@ public class DeploymentTracker implements Closeable {
         log.debug("Failed to shutdown site pinger for "+domain+":"+contextRoot, e);
       }
     }
+  }
+  
+  /**
+   * TimerTask to track a undeployment.
+   * 
+   * @author John McEntire
+   *
+   */
+  public class UndeploymentTrackerTask extends TimerTask {
     
+    private UndeploymentStatus status;
+    
+    public UndeploymentTrackerTask(UndeploymentStatus status) {
+      this.status = status;
+      status.running = true;
+    }
+
     @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result
-          + ((contextRoot == null) ? 0 : contextRoot.hashCode());
-      result = prime * result + ((domain == null) ? 0 : domain.hashCode());
-      return result;
+    public void run() {
+      ChannelMember me = memberTracker.getMe();
+      String warFileName = status.domain.replace("\\.", "_") + ".war";
+      try {
+        UndeployCommandAction.undeployWar(me, status, warFileName, log);
+      } catch(Exception e) {
+        log.warn("An error happened while undeploying "+warFileName, e);
+        status.logToMember(me, "An error happened while undeploying "+warFileName);
+        status.setMemberFinished(me);
+      }
     }
     
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj)
-        return true;
-      if (obj == null)
-        return false;
-      if (getClass() != obj.getClass())
-        return false;
-      DeploymentStatus other = (DeploymentStatus) obj;
-      if (contextRoot == null) {
-        if (other.contextRoot != null)
-          return false;
-      } else if (!contextRoot.equals(other.contextRoot))
-        return false;
-      if (domain == null) {
-        if (other.domain != null)
-          return false;
-      } else if (!domain.equals(other.domain))
-        return false;
-      return true;
-    }
   }
   
   /**
@@ -334,6 +331,32 @@ public class DeploymentTracker implements Closeable {
       ChannelMember me = memberTracker.getMe();
       pingSites(me);
       getClusterStatuses(me);
+      updateClusterUndeploymentStatuses(me);
+    }
+    
+    /**
+     * 
+     */
+    private void updateClusterUndeploymentStatuses(ChannelMember me) {
+      for(UndeploymentStatus status : undeploymentStatuses) {
+        if(status.running && !status.notified) {
+          try {
+            List<String> myMsgs = status.getMemberLogs(me);
+            boolean finished = status.getMemberFinished(me);
+            
+            Message msg = new Message();
+            msg.setCommand(UndeployUpdateCommandAction.DEPLOY_UPDATE_ACTION);
+            msg.getProtocolParameters().put("domain", status.domain);
+            msg.getProtocolParameters().put("contextRoot", status.contextRoot);
+            msg.getProtocolParameters().put("finished", finished + "");
+            if(myMsgs != null) {
+              msg.getProtocolParameters().put("msgs", new Gson().toJson(myMsgs));
+            }
+          } catch(Exception e){
+            log.warn("Failed to notify cluster.", e);
+          }
+        }
+      }
     }
     
     /**
@@ -345,18 +368,31 @@ public class DeploymentTracker implements Closeable {
           if(status.waiting && !status.deployed) {
             try {
               DeploymentState deployState = JBossUtil.getDeploymentState(status.domain+".war");
-              status.logToMember(me, "JBoss Deployment State changed to: "+deployState);
+              if(deployState != DeploymentState.NOT_STARTED) {
+                status.logToMember(me, "JBoss Deployment State changed to: "+deployState);
+              }
               if(deployState == DeploymentState.DEPLOYED) {
                 status.deployed = true;
+                status.logToMember(me, "Waiting for cadmium site to initialize.");
                 startPinging(status.domain, status.contextRoot);
               }
             } catch(CadmiumDeploymentException e) {
               status.cancelSitePinger();
               status.exception = e;
+              try {
+                UndeployService.sendUndeployMessage(sender, status.domain, status.contextRoot, log);
+              } catch (Exception e1) {
+                log.warn("Failed to send undeploy message for failed deployment.", e1);
+              }
             } catch(Exception e) {
               status.cancelSitePinger();
               status.exception = new CadmiumDeploymentException("Failed to deploy.",e);
               log.warn("Failed to deploy", e);
+              try {
+                UndeployService.sendUndeployMessage(sender, status.domain, status.contextRoot, log);
+              } catch (Exception e1) {
+                log.warn("Failed to send undeploy message for failed deployment.", e1);
+              }
             }
           }
           
@@ -397,11 +433,6 @@ public class DeploymentTracker implements Closeable {
           } catch(CadmiumDeploymentException e) {
             statusKey.exception = e;
             statusKey.cancelSitePinger();
-            try {
-              JBossUtil.forceDeleteCadmiumWar(log, statusKey.domain + "war");
-            } catch (IOException e1) {
-              log.warn("Failed to undeploy war for domain "+statusKey.domain+":"+statusKey.contextRoot, e1);
-            }
           } catch(Exception e) {
             log.warn("Failed to ping site "+statusKey.domain+":"+statusKey.contextRoot, e);
           }
