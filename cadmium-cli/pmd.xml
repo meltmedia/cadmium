@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pmd version="4.3" timestamp="2012-09-17T16:51:40.185">
+<file name="/Users/ctrimble/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/HistoryCommand.java">
+<violation beginline="93" endline="108" begincolumn="11" endcolumn="11" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.cli" class="HistoryCommand" method="displayHistory" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
+These nested if statements could be combined
+</violation>
+<violation beginline="249" endline="251" begincolumn="44" endcolumn="7" rule="EmptyIfStmt" ruleset="Basic Rules" package="com.meltmedia.cadmium.cli" class="HistoryCommand" method="printComments" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyIfStmt" priority="3">
+Avoid empty if statements
+</violation>
+</file>
+<file name="/Users/ctrimble/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/InitializeContentCommand.java">
+<violation beginline="77" endline="77" begincolumn="13" endcolumn="32" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.cli" class="InitializeContentCommand" method="execute" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+Avoid empty catch blocks
+</violation>
+<violation beginline="82" endline="82" begincolumn="13" endcolumn="32" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.cli" class="InitializeContentCommand" method="execute" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+Avoid empty catch blocks
+</violation>
+</file>
+<file name="/Users/ctrimble/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/MaintenanceCommand.java">
+<violation beginline="67" endline="68" begincolumn="21" endcolumn="19" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.cli" class="MaintenanceCommand" method="execute" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+Avoid empty catch blocks
+</violation>
+</file>
+<file name="/Users/ctrimble/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/RevertCommand.java">
+<violation beginline="116" endline="120" begincolumn="11" endcolumn="11" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.cli" class="RevertCommand" method="processIndex" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
+These nested if statements could be combined
+</violation>
+</file>
+<file name="/Users/ctrimble/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/UndeployCommand.java">
+<violation beginline="75" endline="75" begincolumn="9" endcolumn="28" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.cli" class="UndeployCommand" method="execute" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+Avoid empty catch blocks
+</violation>
+</file>
+<file name="/Users/ctrimble/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/UpdateCommand.java">
+<violation beginline="202" endline="203" begincolumn="11" endcolumn="9" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.cli" class="UpdateCommand" method="execute" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+Avoid empty catch blocks
+</violation>
+</file>
+</pmd>
