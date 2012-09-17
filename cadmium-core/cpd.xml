@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pmd-cpd>
+<duplication lines="40" tokens="147">
+<file line="45" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/messaging/ChannelMember.java"/>
+<file line="53" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/status/StatusMember.java"/>
+<codefragment>
+<![CDATA[
+  public Address getAddress() {
+    return address;
+  }
+
+  public boolean isCoordinator() {
+    return coordinator;
+  }
+
+  public void setCoordinator(boolean coordinator) {
+    this.coordinator = coordinator;
+  }
+
+  public boolean isMine() {
+    return mine;
+  }
+
+  public UpdateState getState() {
+    return state;
+  }
+
+  public void setState(UpdateState state) {
+    this.state = state;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((address == null) ? 0 : address.toString().hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+]]>
+</codefragment>
+</duplication>
+<duplication lines="21" tokens="103">
+<file line="74" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/git/GithubConfigSessionFactory.java"/>
+<file line="92" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/git/LocalConfigSessionFactory.java"/>
+<codefragment>
+<![CDATA[
+			}
+			
+		});
+	}
+
+	
+	@Override
+	public synchronized RemoteSession getSession(URIish arg0,
+			CredentialsProvider arg1, FS arg2, int arg3)
+			throws TransportException {
+		return super.getSession(arg0, arg1, arg2, arg3);
+	}
+
+	protected com.jcraft.jsch.JSch getJSch(OpenSshConfig.Host hc, FS fs)
+      throws com.jcraft.jsch.JSchException
+      {
+		JSch jsch = super.getJSch(hc, fs);
+    JSch.setConfig("StrictHostKeyChecking", "no");
+		  if(FileSystemManager.exists(privateKeyFile)) {
+		    jsch.addIdentity(privateKeyFile);
+		  }
+]]>
+</codefragment>
+</duplication>
+<duplication lines="11" tokens="100">
+<file line="80" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/config/ConfigManager.java"/>
+<file line="88" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/config/impl/PropertiesReaderImpl.java"/>
+<codefragment>
+<![CDATA[
+  }
+  
+  public void logProperties( Logger log, Properties properties, String name ) {
+    if( log.isDebugEnabled() ) {
+      StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
+      for(Object key : properties.keySet()) {
+        sb.append("  ").append(key.toString()).append(properties.getProperty(key.toString())).append("\n");
+      }
+      log.debug(sb.toString());
+    }
+  }  
+]]>
+</codefragment>
+</duplication>
+</pmd-cpd>
