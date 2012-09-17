@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pmd version="4.3" timestamp="2012-09-17T16:53:01.871">
+<file name="/Users/ctrimble/git/cadmium/deployer/target/filtered-sources/java/com/meltmedia/cadmium/deployer/DeployCommandAction.java">
+<violation beginline="71" endline="71" begincolumn="22" endcolumn="54" rule="BooleanInstantiation" ruleset="Basic Rules" package="com.meltmedia.cadmium.deployer" class="DeployCommandAction" method="execute" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#BooleanInstantiation" priority="2">
+Avoid instantiating Boolean objects; reference Boolean.TRUE or Boolean.FALSE or call Boolean.valueOf() instead.
+</violation>
+</file>
+</pmd>
