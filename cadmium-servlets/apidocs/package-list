@@ -1,0 +1,3 @@
+com.meltmedia.cadmium.servlets
+com.meltmedia.cadmium.servlets.guice
+com.meltmedia.cadmium.servlets.jersey
