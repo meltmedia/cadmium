@@ -16,7 +16,6 @@
 package com.meltmedia.cadmium.core.worker;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
@@ -100,7 +99,6 @@ public class UpdateConfigTask implements Callable<Boolean> {
         }
         
         try{
-          updatedProperties.store(new FileWriter(new File(baseDirectory, "config.properties")), null);
           configManager.persistProperties(updatedProperties, new File(baseDirectory, "config.properties"), null);
         } catch(Exception e) {
           log.warn("Failed to write out config file", e);

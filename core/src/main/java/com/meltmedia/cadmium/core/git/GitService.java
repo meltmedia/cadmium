@@ -17,7 +17,6 @@ package com.meltmedia.cadmium.core.git;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -196,12 +195,8 @@ public class GitService
       throw new Exception("Failed to clone remote github repo from "+uri);
     }
     
-    Properties configProperties = new Properties();
+    Properties configProperties = configManager.getDefaultProperties();
     File configPropsFile = new File(warDir, "config.properties");
-    if(configPropsFile.exists()) {
-      
-      configProperties = configManager.getProperties(configPropsFile);         
-    }
     
     String renderedContentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
     if(renderedContentDir == null || !FileSystemManager.exists(renderedContentDir)) {
@@ -253,15 +248,11 @@ public class GitService
         historyManager = new HistoryManager(warDir);
       }
       
-      FileWriter writer = null;
       try{
-        writer = new FileWriter(configPropsFile);
-        configProperties.store(writer, "initialized configuration properties");
         if(historyManager != null) {
           historyManager.logEvent(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
         }
       } finally {
-        IOUtils.closeQuietly(writer);
         if(closeHistoryManager) {
           IOUtils.closeQuietly(historyManager);
         }

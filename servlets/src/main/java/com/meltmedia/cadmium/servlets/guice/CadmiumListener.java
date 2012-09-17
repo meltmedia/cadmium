@@ -346,10 +346,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
         
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
-        Properties configProperties = new Properties();
-
-        configProperties = configManager.getSystemProperties();         
-        configProperties = configManager.appendProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+        
+        Properties configProperties = configManager.getDefaultProperties();
        
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);

@@ -67,6 +67,7 @@ public class FileServlet extends BasicFileServlet implements ContentService {
 		    setLastUpdated(requestTime.longValue());
 		  } else {
 		    log.error("Failed to get last updated path");
+		    throw new RuntimeException("Failed to switch content! Configuration properties key 'com.meltmedia.cadmium.lastUpdated' not set.");
 		  }
 			
 		} catch (ServletException e) {
