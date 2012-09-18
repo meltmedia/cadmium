@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pmd version="4.3" timestamp="2012-09-17T16:49:25.540">
+<pmd version="4.3" timestamp="2012-09-17T17:16:44.744">
 <file name="/Users/ctrimble/git/cadmium/servlets/src/main/java/com/meltmedia/cadmium/servlets/BasicFileServlet.java">
 <violation beginline="201" endline="201" begincolumn="99" endcolumn="107" rule="UnnecessaryConversionTemporary" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets" class="BasicFileServlet" method="processRequest" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#UnnecessaryConversionTemporary" priority="3">
 Avoid unnecessary temporaries when converting primitives to Strings
