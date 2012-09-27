@@ -21,11 +21,12 @@ import java.util.Hashtable;
 import javax.inject.Inject;
 import javax.mail.Session;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.config.ConfigManager;
-import com.meltmedia.cadmium.core.config.ConfigurationNotFoundException;
+import com.meltmedia.cadmium.core.config.ConfigurationListener;
 import com.meltmedia.cadmium.email.Email;
 import com.meltmedia.cadmium.email.EmailConnection;
 import com.meltmedia.cadmium.email.EmailConnectionImpl;
@@ -44,45 +45,31 @@ import com.meltmedia.cadmium.email.config.EmailConfiguration;
  * @author chaley
  * @author jmcentire
  */
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl implements EmailService, ConfigurationListener<EmailConfiguration> {
   /** The logger for the Email Service */
   private final Logger log = LoggerFactory.getLogger(getClass());
   
-  /** The default session strategy class name */
-  public static final String DEFAULT_SESSION_STRATEGY = "com.meltmedia.cadmium.email.InitialSessionStrategy";
-  
   /** The default message transformer class name */
   public static final String DEFAULT_MESSAGE_TRANSFORMER = "com.meltmedia.cadmium.email.IdentityMessageTransformer";
-  
-  /** The name of the service property for setting the class name to use for the Session Strategy */
-  public static final String SESSION_STRATEGY_CLASS = "melt.mail.sessionstrategy";
-  
-  /** The name of the service property for setting the class name to be used for the message transformer */
-  public static final String MESSAGE_TRANSFORMER_CLASS = "melt.mail.messagetransformer";
-    
-  /** The Session Strategy for this service instance */
-  protected SessionStrategy sessionStrategy = null;
-  
-  /** The Message Transformer for this service instance */
-  protected MessageTransformer messageTransformer = null;
   
   @Inject
   protected ConfigManager configManager = null;
   
   protected EmailConfiguration config = null;
   
+  protected EmailSetup setup = null;
+  
   public EmailServiceImpl() {
   	log.debug("Initialized EmailService...");
+  	configurationNotFound();
   }
 
   /**
    * Updates the Email Service component configuration.
    * 
    */
-  @SuppressWarnings("unchecked")
-  public void updateConfiguration() throws EmailException {
-    try {
-      EmailConfiguration config = configManager.getConfiguration(EmailConfiguration.KEY, EmailConfiguration.class);
+  public void configurationUpdated(Object emailConfig) {
+      EmailConfiguration config = (EmailConfiguration) emailConfig;
       if(config != null && config != this.config) {
         log.info("Updating configuration for email.");
         this.config = config;
@@ -90,30 +77,103 @@ public class EmailServiceImpl implements EmailService {
         // Need to get the Session Strategy and Transform class names out of the 
         // Dictionary, and then use reflection to use them
         Dictionary<String,Object> props = new Hashtable<String,Object>();
-        props.put("com.meltmedia.email.jndi",config.getJndiName());
-        
-        try {
-          Class<SessionStrategy> ssc = (Class<SessionStrategy>) Class.forName(config.getSessionStrategy());
-          
-          SessionStrategy strategy = ssc.newInstance();
-          strategy.configure(props);
-          this.sessionStrategy = strategy;
-          
-          Class<MessageTransformer> mtc = (Class<MessageTransformer>) Class.forName(config.getMessageTransformer());
-          
-          MessageTransformer transformer = mtc.newInstance();
-          this.messageTransformer = transformer;
-          
-          log.debug("Using new config jndi {}, strategy {}, transformer {}", new Object[] {config.getJndiName(), config.getSessionStrategy(), config.getMessageTransformer()});
-          
-        } catch (Exception e) {
-          throw new EmailException("Error Registering Mail Service", e);
+        if(!StringUtils.isEmptyOrNull(config.getJndiName())) {
+          props.put("com.meltmedia.email.jndi",config.getJndiName());
+          log.debug("Using jndiName: "+config.getJndiName());
         }
+        if(StringUtils.isEmptyOrNull(config.getSessionStrategy())) {
+          config.setSessionStrategy(null);
+        }
+        log.debug("Using mail session strategy: " + config.getSessionStrategy());
+        if(StringUtils.isEmptyOrNull(config.getMessageTransformer())) {
+          config.setMessageTransformer(DEFAULT_MESSAGE_TRANSFORMER);
+        }
+        log.debug("Using message transformer: " + config.getMessageTransformer());
+        EmailSetup newSetup = new EmailSetup();
+        SessionStrategy strategy = null;
+        MessageTransformer transformer = null;
+        try {
+          if(config.getSessionStrategy() != null) {
+            strategy = setSessionStrategy(config, props, newSetup);
+          }
+        } catch (Exception e) {
+          log.error("Error Registering Mail Session Strategy "+config.getSessionStrategy(), e);
+          config.setSessionStrategy(null);
+        }
+        try {  
+          transformer = setMessageTransformer(config, newSetup);
+        } catch(Exception e) {
+          log.error("Error Registering Mail Session Strategy "+config.getSessionStrategy(), e);
+          config.setMessageTransformer(DEFAULT_MESSAGE_TRANSFORMER);
+          try {
+            transformer = setMessageTransformer(config, newSetup);
+          } catch(Exception e1) {
+            log.error("Failed to fall back to default message transformer.", e1);
+          }
+        }
+        
+        this.setup = newSetup;
+        
+        log.debug("Using new config jndi {}, strategy {}, transformer {}", new Object[] {config.getJndiName(), strategy, transformer});
       }
-    } catch (ConfigurationNotFoundException e) {
-      throw new EmailException("ConfigurationNotFoundException: " + e.getMessage(), e);
-      
+  }
+
+  /**
+   * Instantiates and sets up a new {@link MessageTransformer} instance and assigns a reference to it in the new setup object passed in.
+   * 
+   * @param config The configuration to pull the class name for the class to instantiate.
+   * @param newSetup The {@link EmailSetup} reference to assign the new instance to.
+   * @return The new instance of the {@link MessageTransformer} class requested.
+   * @throws ClassNotFoundException
+   * @throws InstantiationException
+   * @throws IllegalAccessException
+   * @throws IllegalArgumentException
+   */
+  @SuppressWarnings("unchecked")
+  private MessageTransformer setMessageTransformer(EmailConfiguration config,
+      EmailSetup newSetup) throws ClassNotFoundException,
+      InstantiationException, IllegalAccessException {
+    MessageTransformer transformer;
+    Class<?> mtcCandidate = Class.forName(config.getMessageTransformer());
+    
+    if(MessageTransformer.class.isAssignableFrom(mtcCandidate)){     
+      transformer = ((Class<MessageTransformer>)mtcCandidate).newInstance();
+      newSetup.messageTransformer = transformer;
+    } else {
+      throw new IllegalArgumentException(config.getMessageTransformer() + " is not an instance of " + MessageTransformer.class.getName());
     }
+    return transformer;
+  }
+
+  /**
+   * Instantiates and sets up a new {@link SessionStrategy} instance and assigns a reference to it in the new setup object passed in.
+   * 
+   * @param config The configuration to pull the class name for the class to instantiate.
+   * @param props The properties to configure the new {@link SessionStrategy} with.
+   * @param newSetup The {@link EmailSetup} reference to assign the new instance to.
+   * @return The new instance of the {@link SessionStrategy} class requested.
+   * @throws ClassNotFoundException
+   * @throws InstantiationException
+   * @throws IllegalAccessException
+   * @throws EmailException
+   * @throws IllegalAccessException
+   */
+  @SuppressWarnings("unchecked")
+  private SessionStrategy setSessionStrategy(EmailConfiguration config,
+      Dictionary<String, Object> props, EmailSetup newSetup)
+      throws ClassNotFoundException, InstantiationException,
+      IllegalAccessException, EmailException, IllegalAccessException {
+    SessionStrategy strategy;
+    Class<?> ssc = Class.forName(config.getSessionStrategy());
+    
+    if(SessionStrategy.class.isAssignableFrom(ssc)) {
+      strategy = ((Class<SessionStrategy>)ssc).newInstance();
+      strategy.configure(props);
+      newSetup.sessionStrategy = strategy;
+    } else {
+      throw new IllegalArgumentException(config.getSessionStrategy() + " is not an instance of " + SessionStrategy.class.getName());
+    }
+    return strategy;
   }
 
   /**
@@ -131,37 +191,6 @@ public class EmailServiceImpl implements EmailService {
       connection.close();
     }
   }
-  
-  /**
-   * Set a new session strategy
-   * 
-   * @param sessionStrategy the session strategy to use
-   */
-  public void setSessionStrategy( SessionStrategy sessionStrategy )
-  {
-    if( sessionStrategy == null ) {
-      throw new  IllegalArgumentException("The session strategy cannot be null.");
-    }
-    synchronized( this ) {
-      this.sessionStrategy = sessionStrategy;
-    }
-  }
-
-  /**
-   * Set a new message transformer
-   * 
-   * @param messageTransformer the message transformer to use
-   */
-  public void setMessageTransformer( MessageTransformer messageTransformer )
-  {
-    if( messageTransformer == null ) {
-      throw new IllegalArgumentException("The message transformer cannot be null.");
-    }
-
-    synchronized( this ) {
-      this.messageTransformer = messageTransformer;
-    }
-  }
 
   /**
    * Open a connection using the current session strategy and transformer
@@ -169,11 +198,9 @@ public class EmailServiceImpl implements EmailService {
   public EmailConnection openConnection()
     throws EmailException
   {
-    synchronized( this ) {
-      updateConfiguration();
-      // create a new email connection.
-      return new EmailConnectionImpl(sessionStrategy.getSession(), messageTransformer);
-    }
+    
+    // create a new email connection.
+    return new EmailConnectionImpl(setup.sessionStrategy.getSession(), setup.messageTransformer);
   }
 
   /**
@@ -194,5 +221,34 @@ public class EmailServiceImpl implements EmailService {
     public void configure(Dictionary<String, Object> config)
         throws EmailException {
     }
+  }
+  
+  /**
+   * An Object to hold staged instances of the {@link SessionStrategy} and the 
+   * {@link MessageTransformer} so that the switching of their references will be atomic.
+   * 
+   * @author John McEntire
+   *
+   */
+  public static class EmailSetup {
+      
+    /** The Session Strategy for this service instance */
+    SessionStrategy sessionStrategy = null;
+    
+    /** The Message Transformer for this service instance */
+    MessageTransformer messageTransformer = null;
+    
+  }
+
+  /**
+   * Sets default configurations on this {@link EmailService}.
+   */
+  @Override
+  public void configurationNotFound() {
+    EmailConfiguration defaultConfiguration = new EmailConfiguration();
+    defaultConfiguration.setMessageTransformer(DEFAULT_MESSAGE_TRANSFORMER);
+    defaultConfiguration.setSessionStrategy(null);
+    
+    configurationUpdated(defaultConfiguration);
   }
 }

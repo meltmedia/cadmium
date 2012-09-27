@@ -16,14 +16,19 @@
 package com.meltmedia.cadmium.email.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import com.meltmedia.cadmium.core.CadmiumModule;
+import com.meltmedia.cadmium.core.config.ConfigurationListener;
 
 @CadmiumModule
 public class EmailModule extends AbstractModule {
 	
-	@Override
+	@SuppressWarnings("rawtypes")
+  @Override
 	protected void configure() {
     bind(com.meltmedia.cadmium.email.internal.EmailServiceImpl.class).asEagerSingleton();
+    Multibinder<ConfigurationListener> listenerBinder = Multibinder.newSetBinder(binder(), ConfigurationListener.class);
+    listenerBinder.addBinding().to(com.meltmedia.cadmium.email.internal.EmailServiceImpl.class);
     //bind(EmailResource.class).asEagerSingleton();
 	}
 

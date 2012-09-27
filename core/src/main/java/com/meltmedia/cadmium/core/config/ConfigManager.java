@@ -19,16 +19,24 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletContext;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.Inject;
 import com.meltmedia.cadmium.core.config.impl.PropertiesReaderImpl;
 import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
 
@@ -36,6 +44,7 @@ import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
  * This centralizes and manages how other classes read and write to properties files. 
  * 
  * @author Brian Barr
+ * @author John McEntire
  */
 
 @Singleton
@@ -49,6 +58,7 @@ public class ConfigManager implements Closeable {
   private ConfigurationParser stagedConfigParser;
   private ConfigurationParser liveConfigParser;
   private CountDownLatch latch;
+  private Set<ConfigurationListener<?>> listeners = Collections.synchronizedSet(new HashSet<ConfigurationListener<?>>());
 
   @Inject
   protected ConfigurationParserFactory configParserFactory;
@@ -56,6 +66,18 @@ public class ConfigManager implements Closeable {
   public ConfigManager() {
 
     latch = new CountDownLatch(1);
+  }
+  
+  @SuppressWarnings("rawtypes")
+  @Inject(optional=true)
+  protected void getListenersFromGuice(Set<ConfigurationListener> listeners) {
+    if(listeners != null) {
+      log.debug("Installing " + listeners.size() + " configuration listeners from guice.");
+      for(ConfigurationListener listener : listeners) {
+        log.debug("Registering configuration listener: "+listener);
+        this.listeners.add(listener);
+      }
+    }
   }
 
   public Properties getProperties(File configFile) {   
@@ -172,12 +194,96 @@ public class ConfigManager implements Closeable {
     }
   }
 
+  /**
+   * This notifies all registered listeners then make a staged configuration live.
+   */
   public void makeConfigParserLive() {
 
     if(stagedConfigParser != null) {
-
+      notifyListeners(listeners, stagedConfigParser, log);
+      
       liveConfigParser = stagedConfigParser;
       latch.countDown();
+    }
+  }
+  
+  /**
+   * This notifies listeners from a given set of the state of the configurations from a {@link ConfigurationParser}.
+   * @param listeners
+   * @param configParser
+   * @param log
+   */
+  protected static void notifyListeners(Set<ConfigurationListener<?>> listeners, ConfigurationParser configParser, Logger log) {
+    if(!listeners.isEmpty()) {
+      for(ConfigurationListener<?> listener : listeners) {
+        log.debug("Trying to notify listener {}", listener);
+        Class<?> configClasses[] = getListenerGenericTypes(listener.getClass(), log);
+        if(configClasses != null) {
+          for(Class<?> type : configClasses) {
+            CadmiumConfig cfgAnnotation = type.getAnnotation(CadmiumConfig.class);
+            if(cfgAnnotation != null) {
+              String key = type.getName();
+              if(!StringUtils.isEmptyOrNull(cfgAnnotation.value())) {
+                key = cfgAnnotation.value();
+              }
+              log.debug("Fetching configuration with key {}", key);
+              try {
+                Object cfg = configParser.getConfiguration(key, type);
+                log.debug("Notifying listener {} with new configuration {}", listener, cfg);
+                listener.configurationUpdated(cfg);
+              } catch(ConfigurationNotFoundException e) {
+                log.debug("Configuration not found. Notifying listener {}.", listener);
+                listener.configurationNotFound();
+              }
+            } 
+          }
+        }
+      }
+    }
+  }
+  
+  /**
+   * Gets a list of classes that the listenerClass is interesting in listening to.
+   * 
+   * @param listenerClass
+   * @param log
+   * @return
+   */
+  private static Class<?>[] getListenerGenericTypes(Class<?> listenerClass, Logger log) {
+    List<Class<?>> configClasses = new ArrayList<Class<?>>();
+    Type[] typeVars = listenerClass.getGenericInterfaces();
+    if(typeVars != null) {
+      for(Type interfaceClass : typeVars) {
+        if(interfaceClass instanceof ParameterizedType) {
+          if(((ParameterizedType) interfaceClass).getRawType() instanceof Class) {
+            if(ConfigurationListener.class.isAssignableFrom((Class<?>) ((ParameterizedType) interfaceClass).getRawType())) {
+              ParameterizedType pType = (ParameterizedType) interfaceClass;
+              Type[] typeArgs = pType.getActualTypeArguments();
+              if(typeArgs != null && typeArgs.length == 1 && typeArgs[0] instanceof Class) {
+                Class<?> type = (Class<?>) typeArgs[0];
+                if(type.isAnnotationPresent(CadmiumConfig.class)){
+                  log.debug("Adding "+type+" to the configuration types interesting to "+listenerClass);
+                  configClasses.add(type);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return configClasses.toArray(new Class<?>[] {});
+  }
+  
+  /**
+   * Registers a {@link ConfigurationListener} instance with the current instance of ConfigurationManager.
+   * @param listener
+   */
+  public void registerListener(ConfigurationListener<?> listener) {
+    if(!listeners.contains(listener)) {
+      listeners.add(listener);
+      Set<ConfigurationListener<?>> newListener = new HashSet<ConfigurationListener<?>>();
+      newListener.add(listener);
+      notifyListeners(newListener, liveConfigParser, log);
     }
   }
 

@@ -119,7 +119,7 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
         String rev = null;
 
         if(branch == null || branch.length() == 0) {
-          gitValidation.switchBranch(siteStatus.getBranch());
+          gitValidation.switchBranch(siteStatus.getConfigBranch());
         }
         if(branch != null) {
           if(gitValidation.isBranch(branch)) {
