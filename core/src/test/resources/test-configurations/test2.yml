@@ -1,0 +1,14 @@
+default:
+  test2: !test
+    &Test2
+    name: 'test2'
+    field: 'another value'
+    anotherField: 17
+production:
+  test2: !test
+    <<: *Test2
+    name: 'updated value 2'
+  test3: !test
+    name: 'test 3'
+    field: 'yet another value'
+    anotherField: 99

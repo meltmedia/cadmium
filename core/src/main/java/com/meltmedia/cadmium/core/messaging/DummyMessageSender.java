@@ -19,16 +19,30 @@ public class DummyMessageSender implements MessageSender {
   
   public Message msg;
   public ChannelMember dest;
+  public Message msg2;
+  public ChannelMember dest2;
 
   @Override
   public void sendMessage(Message msg, ChannelMember dest) throws Exception {
-    this.msg = msg;
-    this.dest = dest;
+    if(this.msg == null) {
+      this.msg = msg;
+      this.dest = dest;
+    } else {
+      this.msg2 = msg;
+      this.dest2 = dest;
+    }
   }
 
   @Override
   public String getGroupName() {
     return "";
+  }
+  
+  public void clear() {
+    msg = null;
+    dest = null;
+    msg2 = null;
+    dest2 = null;
   }
 
 }

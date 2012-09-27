@@ -22,14 +22,16 @@ public class StatusMember {
   private boolean coordinator = false;
   private boolean mine = false;
   private UpdateState state = UpdateState.IDLE;
+  private UpdateState configState = UpdateState.IDLE;
   
   public StatusMember(){}
   
-  public StatusMember(String address, boolean coordinator, boolean mine, UpdateState state) {
+  public StatusMember(String address, boolean coordinator, boolean mine, UpdateState state, UpdateState configState) {
     this.address = address;
     this.coordinator = coordinator;
     this.mine = mine;
     this.state = state;
+    this.configState = configState;
   }
   
   public StatusMember(String address, boolean coordinator, boolean mine) {
@@ -72,6 +74,14 @@ public class StatusMember {
 
   public void setState(UpdateState state) {
     this.state = state;
+  }
+
+  public UpdateState getConfigState() {
+    return configState;
+  }
+
+  public void setConfigState(UpdateState configState) {
+    this.configState = configState;
   }
 
   @Override

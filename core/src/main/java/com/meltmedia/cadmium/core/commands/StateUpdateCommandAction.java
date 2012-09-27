@@ -25,6 +25,7 @@ import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
@@ -50,6 +51,9 @@ public class StateUpdateCommandAction implements CommandAction {
   
   @Inject
   protected HistoryManager historyManager;
+  
+  @Inject
+  protected ConfigManager configManager;
 
   public String getName() { return ProtocolMessage.STATE_UPDATE; }
   
@@ -68,11 +72,22 @@ public class StateUpdateCommandAction implements CommandAction {
           if(processor != null) {
             processor.makeLive();
           }
-          if(ctx.getMessage().getProtocolParameters().containsKey("uuid")) {
-            historyManager.markHistoryEntryAsFinished(ctx.getMessage().getProtocolParameters().get("uuid"));
-          }
+          setHistoryDone(ctx);
           maintFilter.stop();
           lifecycleService.updateMyState(UpdateState.IDLE, ctx.getMessage().getProtocolParameters().get("uuid"));
+        }
+      } else if(ctx.getMessage().getProtocolParameters().containsKey("configState")) {
+        UpdateState newState = UpdateState.valueOf(ctx.getMessage().getProtocolParameters().get("configState"));
+        if(newState != UpdateState.UPDATING || !lifecycleService.isMe(new ChannelMember(ctx.getSource())) || lifecycleService.getCurrentConfigState() != UpdateState.WAITING) {
+          lifecycleService.updateConfigState(new ChannelMember(ctx.getSource()), newState);
+        }
+        if(lifecycleService.getCurrentConfigState() == UpdateState.WAITING && lifecycleService.allEqualsConfig(UpdateState.WAITING)) {
+          log.info("Done updating config now switching config.");
+          maintFilter.start();
+          configManager.makeConfigParserLive();
+          setHistoryDone(ctx);
+          maintFilter.stop();
+          lifecycleService.updateMyConfigState(UpdateState.IDLE, ctx.getMessage().getProtocolParameters().get("uuid"));
         }
       }
     } catch(Exception e) {
@@ -80,6 +95,12 @@ public class StateUpdateCommandAction implements CommandAction {
       return false;
     }
     return true;
+  }
+
+  private void setHistoryDone(CommandContext ctx) {
+    if(ctx.getMessage().getProtocolParameters().containsKey("uuid")) {
+      historyManager.markHistoryEntryAsFinished(ctx.getMessage().getProtocolParameters().get("uuid"));
+    }
   }
 
   @Override

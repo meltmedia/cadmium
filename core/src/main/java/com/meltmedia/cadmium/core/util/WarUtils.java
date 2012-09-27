@@ -38,6 +38,7 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -61,13 +62,16 @@ public class WarUtils {
    * @param newWarNames The name to give the new war. (note: only the first element of this list is used.)
    * @param repoUri The uri to a github repo to pull content from.
    * @param branch The branch of the github repo to pull content from.
+   * @param configRepoUri The uri to a github repo to pull config from.
+   * @param configBranch The branch of the github repo to pull config from.
    * @param domain The domain to bind a vHost to.
    * @param context The context root that this war will deploy to.
    * @param secure A flag to set if this war needs to have its contents password protected.
    * @throws Exception
    */
   public static void updateWar(String templateWar, String war,
-      List<String> newWarNames, String repoUri, String branch, String domain,
+      List<String> newWarNames, String repoUri, String branch,
+      String configRepoUri, String configBranch, String domain,
       String context, boolean secure) throws Exception {
     ZipFile inZip = null;
     ZipOutputStream outZip = null;
@@ -98,7 +102,7 @@ public class WarUtils {
       cadmiumPropertiesEntry = inZip.getEntry("WEB-INF/cadmium.properties");
 
       Properties cadmiumProps = updateProperties(inZip, cadmiumPropertiesEntry,
-          repoUri, branch);
+          repoUri, branch, configRepoUri, configBranch);
 
       ZipEntry jbossWeb = null;
       jbossWeb = inZip.getEntry("WEB-INF/jboss-web.xml");
@@ -423,11 +427,14 @@ public class WarUtils {
    * @param cadmiumPropertiesEntry The entry of a properties file in the zip to load.
    * @param repoUri The value to set the "com.meltmedia.cadmium.git.uri" property with.
    * @param branch The value to set the "com.meltmedia.cadmium.branch" property with.
+   * @param configRepoUri The value to set the "com.meltmedia.cadmium.config.git.uri" property with.
+   * @param configBranch The value to set the "com.meltmedia.cadmium.config.branch" property with.
    * @return The updated properties object that was loaded from the zip file.
    * @throws IOException
    */
   public static Properties updateProperties(ZipFile inZip,
-      ZipEntry cadmiumPropertiesEntry, String repoUri, String branch)
+      ZipEntry cadmiumPropertiesEntry, String repoUri, String branch, 
+      String configRepoUri, String configBranch)
       throws IOException {
     Properties cadmiumProps = new Properties();
     cadmiumProps.load(inZip.getInputStream(cadmiumPropertiesEntry));
@@ -437,6 +444,13 @@ public class WarUtils {
     }
     if (branch != null) {
       cadmiumProps.setProperty("com.meltmedia.cadmium.branch", branch);
+    }
+
+    if (!StringUtils.isEmptyOrNull(configRepoUri) && !configRepoUri.equals(repoUri)) {
+      cadmiumProps.setProperty("com.meltmedia.cadmium.config.git.uri", configRepoUri);
+    } 
+    if (configBranch != null) {
+      cadmiumProps.setProperty("com.meltmedia.cadmium.config.branch", configBranch);
     }
     return cadmiumProps;
   }

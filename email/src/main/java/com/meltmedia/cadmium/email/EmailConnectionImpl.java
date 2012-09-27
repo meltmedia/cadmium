@@ -88,7 +88,7 @@ public class EmailConnectionImpl
       message = email.newMessage(session);
     }
     catch( MessagingException me ) {
-      throw new EmailException("Could not create a JavarMail message for an email.", me);
+      throw new EmailException("Could not create a JavaMail message for an email.", me);
     }
 
     // transformer the message.
