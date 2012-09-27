@@ -47,13 +47,13 @@ import com.meltmedia.cadmium.core.config.ConfigurationParser;
  * <pre>
  * default:
  *   email: !email
- *   &email
+ *     &email
  *     jndiName: 'java:/Mail'
  *     sessionStrategy: 'com.meltmedia.cadmium.email.JndiSessionStrategy'
  *     messageTransformer: 'com.meltmedia.cadmium.email.IdentityMessageTransformer'
  * production:
  *   email: !email
- *   <<: *email
+ *     <<: *email
  *     jndiName: 'java/ProdMail'
  * </pre>
  * </p>
