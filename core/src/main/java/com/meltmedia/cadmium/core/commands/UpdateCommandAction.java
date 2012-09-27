@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.ContentWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
@@ -36,6 +37,7 @@ public class UpdateCommandAction implements CommandAction {
   protected LifecycleService lifecycleService;
   
   @Inject
+  @ContentWorker
   protected CoordinatedWorker worker;
   
   public String getName() { return ProtocolMessage.UPDATE; }

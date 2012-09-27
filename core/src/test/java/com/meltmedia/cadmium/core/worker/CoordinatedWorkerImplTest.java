@@ -96,7 +96,7 @@ public class CoordinatedWorkerImplTest {
     lifecycleService.setSender(sender);
     
     List<ChannelMember> members = new ArrayList<ChannelMember>();
-    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.UPDATING));
+    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.UPDATING, UpdateState.IDLE));
     lifecycleService.setMembers(members);
     
     

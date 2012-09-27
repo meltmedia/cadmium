@@ -21,6 +21,10 @@ public final class ProtocolMessage {
   public static String UPDATE = "UPDATE";
   public static String UPDATE_DONE = "UPDATE_DONE";
   public static String UPDATE_FAILED = "UPDATE_FAILED";
+  public static String CONFIG_UPDATE = "CONFIG_UPDATE";
+  public static String CONFIG_UPDATE_DONE = "CONFIG_UPDATE_DONE";
+  public static String CONFIG_UPDATE_FAILED = "CONFIG_UPDATE_FAILED";
+  
   public static String CURRENT_STATE = "CURRENT_STATE";
   public static String STATE_UPDATE = "STATE_UPDATE";
   public static String SYNC = "SYNC";

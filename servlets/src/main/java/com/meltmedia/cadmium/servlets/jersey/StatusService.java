@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
@@ -37,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
+import com.meltmedia.cadmium.core.ConfigurationGitService;
+import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.config.ConfigManager;
@@ -72,14 +73,15 @@ public class StatusService extends AuthorizationService {
 	protected LifecycleService lifecycleService;
 	
 	@Inject
+	@ContentGitService
 	protected DelayedGitServiceInitializer gitService;
+  
+  @Inject
+  @ConfigurationGitService
+  protected DelayedGitServiceInitializer configGitService;
 
 	@Inject
 	protected ConfigManager configManager;
-	
-	@Inject
-	@Named("contentDir")
-	protected String initialContentDir;
 	
 	@GET
 	@Path("/Ping")
@@ -137,15 +139,16 @@ public class StatusService extends AuthorizationService {
 		String rev = null;
 		String branch = null;
 		String repo = null;
+    String configRev = null;
+    String configBranch = null;
+    String configRepo = null;
 		
 		Properties configProperties = configManager.getDefaultProperties();
 		
 		// Get content directory
-		String contentDir = this.initialContentDir;
-		if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
-			
-			contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");			
-		}
+		String contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated", "");
+    // Get config directory
+    String configDir = configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated", "");
 	
 	
 	  GitService git = null;
@@ -161,6 +164,20 @@ public class StatusService extends AuthorizationService {
 		// Get cadmium project info (branch, repo and revision)
 		rev = configProperties.getProperty("git.ref.sha", rev);
 		branch = configProperties.getProperty("branch", branch);
+		
+		git = null;
+    try {
+      git = configGitService.getGitService();
+      configRev = git.getCurrentRevision();
+      configBranch = git.getBranchName();
+      configRepo = git.getRemoteRepository();
+    } finally {
+      configGitService.releaseGitService();
+    }
+      
+    // Get cadmium project info (branch, repo and revision)
+    configRev = configProperties.getProperty("config.git.ref.sha", configRev);
+    configBranch = configProperties.getProperty("config.branch", configBranch);
 	
 		// Get source project info (branch, repo and revision)
 		String sourceFile = contentDir + File.separator + "META-INF" + File.separator + "source";
@@ -187,6 +204,7 @@ public class StatusService extends AuthorizationService {
 				peer.setAddress(member.getAddress().toString());
 				peer.setCoordinator(member.isCoordinator());
 				peer.setState(member.getState());
+				peer.setConfigState(member.getConfigState());
 				peer.setMine(member.isMine());
 				peers.add(peer);			
 				
@@ -221,9 +239,13 @@ public class StatusService extends AuthorizationService {
 		
 		returnObj.setGroupName(sender.getGroupName());
 		returnObj.setContentDir(contentDir);
+		returnObj.setConfigDir(configDir);
 		returnObj.setBranch(branch);
 		returnObj.setRevision(rev);		
 		returnObj.setRepo(repo);
+    returnObj.setConfigBranch(configBranch);
+    returnObj.setConfigRevision(configRev);   
+    returnObj.setConfigRepo(configRepo);
 		returnObj.setMaintPageState(maintStatus);
 		returnObj.setSource(source);
 		

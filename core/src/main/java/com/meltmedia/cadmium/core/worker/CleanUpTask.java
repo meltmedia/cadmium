@@ -32,12 +32,14 @@ public class CleanUpTask implements Callable<Boolean> {
   private Future<Boolean> previousTask;
   private CoordinatedWorkerListener listener;
   private Map<String, String> properties;
+  private String configKey;
   
-  public CleanUpTask(CoordinatedWorkerListener listener, Properties configProperties, Map<String, String> properties, Future<Boolean> previousTask) {
+  public CleanUpTask(String configKey, CoordinatedWorkerListener listener, Properties configProperties, Map<String, String> properties, Future<Boolean> previousTask) {
     this.configProperties = configProperties;
     this.previousTask = previousTask;
     this.properties = properties;
     this.listener = listener;
+    this.configKey = configKey;
   }
 
   @Override
@@ -55,9 +57,9 @@ public class CleanUpTask implements Callable<Boolean> {
       }
     }
     
-    log.info("Cleaning up content directories");
+    log.info("Cleaning up directories");
     
-    FileSystemManager.cleanUpOld(configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"), 1);
+    FileSystemManager.cleanUpOld(configProperties.getProperty(configKey), 1);
     
     return true;
   }

@@ -40,6 +40,8 @@ public class CurrentStateCommandAction implements CommandAction {
   public boolean execute(CommandContext ctx) throws Exception {
     log.info("Responding with current state {}", lifecycleService.getCurrentState());
     lifecycleService.sendStateUpdate(new ChannelMember(ctx.getSource()));
+    log.info("Responding with current config state {}", lifecycleService.getCurrentConfigState());
+    lifecycleService.sendConfigStateUpdate(new ChannelMember(ctx.getSource()));
     return true;
   }
 

@@ -51,7 +51,7 @@ public class CreateNewRenderedDirectoryTask implements Callable<Boolean> {
     }
     GitService service = this.service.getGitService();
     try {
-      log.info("Creating a new directory for the rendered content");
+      log.info("Creating a new directory for the git service snapshot.");
       try{
         String nextDirectory = FileSystemManager.getNextDirInSequence(lastDirectory);
         if(nextDirectory != null) {

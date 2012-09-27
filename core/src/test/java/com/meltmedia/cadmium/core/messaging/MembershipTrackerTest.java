@@ -64,7 +64,7 @@ public class MembershipTrackerTest {
     JGroupsMessageSender sender = new JGroupsMessageSender();
     sender.setChannel(channel);
     
-    new MembershipTracker(sender, channel, members, configManager, null);
+    new MembershipTracker(sender, channel, members, configManager, null, null);
     
     Thread.sleep(1000l);
     

@@ -31,11 +31,13 @@ public class PullUpdateTask implements Callable<Boolean> {
   private DelayedGitServiceInitializer service;
   private Future<Boolean> previousTask;
   private Properties configProperties;
+  private String type;
   
-  public PullUpdateTask(DelayedGitServiceInitializer service, Properties configProperties, Future<Boolean> previousTask) {
+  public PullUpdateTask(String type, DelayedGitServiceInitializer service, Properties configProperties, Future<Boolean> previousTask) {
     this.service = service;
     this.previousTask = previousTask;
     this.configProperties = configProperties;
+    this.type = type;
   }
   
   @Override
@@ -51,12 +53,12 @@ public class PullUpdateTask implements Callable<Boolean> {
       if(!service.isTag(service.getBranchName())) {
         log.info("Pulling latest Github updates.");
         boolean retVal = service.pull();
-        configProperties.setProperty("updating.to.sha", service.getCurrentRevision());
-        configProperties.setProperty("updating.to.branch", service.getBranchName());
+        configProperties.setProperty("updating."+type+".to.sha", service.getCurrentRevision());
+        configProperties.setProperty("updating."+type+".to.branch", service.getBranchName());
         return retVal;
       } else {
-        //configProperties.setProperty("updating.to.sha", service.getCurrentRevision());
-        configProperties.setProperty("updating.to.branch", service.getBranchName());
+        //configProperties.setProperty("updating."+type+".to.sha", service.getCurrentRevision());
+        configProperties.setProperty("updating."+type+".to.branch", service.getBranchName());
         log.info("Skipping pull since tags cannot update.");
         return true;
       }

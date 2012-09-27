@@ -32,12 +32,14 @@ public class ResetToRevTask implements Callable<Boolean> {
   private String revision;
   private Future<Boolean> previousTask;
   private Properties configProperties;
+  private String type;
   
-  public ResetToRevTask(DelayedGitServiceInitializer service, String revision, Properties configProperties, Future<Boolean> previousTask) {
+  public ResetToRevTask(String type, DelayedGitServiceInitializer service, String revision, Properties configProperties, Future<Boolean> previousTask) {
     this.service = service;
     this.revision = revision;
     this.previousTask = previousTask;
     this.configProperties = configProperties;
+    this.type = type;
   }
 
   @Override
@@ -53,8 +55,8 @@ public class ResetToRevTask implements Callable<Boolean> {
       log.info("Resetting to revision {}", revision);
       boolean isBranch = service.isBranch(service.getBranchName());
       if(isBranch && service.checkRevision(revision)) {
-        configProperties.setProperty("updating.to.sha", revision);
-        configProperties.setProperty("updating.to.branch", service.getBranchName());
+        configProperties.setProperty("updating."+type+".to.sha", revision);
+        configProperties.setProperty("updating."+type+".to.branch", service.getBranchName());
         service.resetToRev(revision);
       } else if (!isBranch){
         throw new Exception("Cannot switch to ["+revision+"] when on a tag ["+service.getBranchName()+"]");

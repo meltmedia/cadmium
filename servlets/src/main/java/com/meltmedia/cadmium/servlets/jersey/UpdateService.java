@@ -16,7 +16,6 @@
 package com.meltmedia.cadmium.servlets.jersey;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.HeaderParam;
@@ -30,10 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
-import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.api.BasicApiResponse;
 import com.meltmedia.cadmium.core.api.UpdateRequest;
-import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -46,20 +43,23 @@ public class UpdateService extends AuthorizationService {
   @Inject
   protected MessageSender sender;
   
-  @Inject
-  protected SiteDownService sd;
-  
-  @Inject
-  protected LifecycleService lifecycleService;
-    
-  @Inject
-  @Named("contentDir")
-  protected String initialContentDir;
-  
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public BasicApiResponse update(UpdateRequest req, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+    return sendJgroupsMessage(req, auth, ProtocolMessage.UPDATE);
+  }
+  
+  @POST
+  @Path("/config")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public BasicApiResponse updateConfig(UpdateRequest req, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+    return sendJgroupsMessage(req, auth, ProtocolMessage.CONFIG_UPDATE);
+  }
+
+  private BasicApiResponse sendJgroupsMessage(UpdateRequest req, String auth, String cmd)
+      throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
@@ -80,9 +80,9 @@ public class UpdateService extends AuthorizationService {
     resp.setUuid(UUID.randomUUID().toString());
     if(sender != null) {
       if(comment != null && comment.trim().length() > 0) {
-        log.debug("Sending update message");
+        log.debug("Sending "+cmd+" message");
         Message msg = new Message();
-        msg.setCommand(ProtocolMessage.UPDATE);
+        msg.setCommand(cmd);
         if(repo != null && repo.trim().length() > 0) {
           msg.getProtocolParameters().put("repo", repo);
         }
