@@ -19,12 +19,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.comparator.NameFileComparator;
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,9 +85,11 @@ public class YamlConfigurationParser implements ConfigurationParser {
   public void parseDirectory(File configurationDirectory) throws Exception {
     if(configurationDirectory != null && configurationDirectory.isDirectory() && configurationDirectory.canRead()) {
       Collection<File> configFiles = FileUtils.listFiles(configurationDirectory, new String[] {"yml", "yaml"}, true);
+      List<File> files = new ArrayList<File>(configFiles);
+      Collections.sort(files, NameFileComparator.NAME_INSENSITIVE_COMPARATOR);
       Map<String, Map<String, ?>> configurationMap = new HashMap<String, Map<String, ?>>();
       Yaml yamlParser = new Yaml(getClassTags());
-      for(File configFile : configFiles) {
+      for(File configFile : files) {
         FileReader reader = null;
         try {
           reader = new FileReader(configFile);
