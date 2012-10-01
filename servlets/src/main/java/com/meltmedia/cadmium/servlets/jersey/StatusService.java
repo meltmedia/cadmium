@@ -160,7 +160,11 @@ public class StatusService extends AuthorizationService {
     } catch(IllegalStateException e) {
       logger.debug("Content git service is not yet set: " + e.getMessage());
     } finally {
-      gitService.releaseGitService();
+      try {
+        gitService.releaseGitService();
+      } catch(IllegalMonitorStateException e) {
+        logger.debug("Released unattained read lock.");
+      }
     }
 			
 		// Get cadmium project info (branch, repo and revision)
@@ -179,7 +183,11 @@ public class StatusService extends AuthorizationService {
     } catch(IllegalStateException e) {
       logger.debug("Config git service is not yet set: " + e.getMessage());
     } finally {
-      configGitService.releaseGitService();
+      try {
+        configGitService.releaseGitService();
+      } catch(IllegalMonitorStateException e) {
+        logger.debug("Released unattained read lock.");
+      }
     }
       
     // Get cadmium project info (branch, repo and revision)
