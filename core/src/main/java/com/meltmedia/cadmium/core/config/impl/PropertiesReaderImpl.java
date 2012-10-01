@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.core.config.impl;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
@@ -50,6 +51,14 @@ public class PropertiesReaderImpl implements PropertiesReader {
     readPropertiesWithContext(properties, context, path, log);
     return properties;
   }
+  
+  @Override
+  public Properties getProperties(InputStream stream, Logger log) {
+
+    Properties properties = new Properties();    
+    readPropertiesWithInputStream(properties, stream, log);
+    return properties;
+  }
  
 
   @Override
@@ -66,9 +75,7 @@ public class PropertiesReaderImpl implements PropertiesReader {
 
       log.info("configFile path: {}", file.getPath());
       reader = new FileReader(file);
-      properties.load(reader);     
-
-      logProperties(log, properties, file.getCanonicalPath());
+      properties.load(reader); 
     }
     catch(Exception e) {
 
@@ -80,6 +87,23 @@ public class PropertiesReaderImpl implements PropertiesReader {
     }
 
   }
+  
+  private void readPropertiesWithInputStream(Properties properties, InputStream stream, Logger log) {
+        
+    try{      
+      
+      properties.load(stream);
+    } 
+    catch(Exception e) {
+      
+      log.warn("Failed to load properties");
+    } 
+    finally {
+      
+      IOUtils.closeQuietly(stream);
+    }   
+
+  }
 
   private void readPropertiesWithContext(Properties properties, ServletContext context, String path, Logger log) {
 
@@ -89,7 +113,6 @@ public class PropertiesReaderImpl implements PropertiesReader {
       reader = new InputStreamReader(context.getResourceAsStream(path), "UTF-8");
       properties.load(reader);
 
-      logProperties(log, properties, path);
     } 
     catch(Exception e) {
 
@@ -100,16 +123,6 @@ public class PropertiesReaderImpl implements PropertiesReader {
       IOUtils.closeQuietly(reader);
     }
 
-  }
-  
-  public void logProperties(Logger log, Properties properties, String name) {
-    if(log.isDebugEnabled()) {
-      StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
-      for(Object key : properties.keySet()) {
-        sb.append("  ").append(key.toString()).append(properties.getProperty(key.toString())).append("\n");
-      }
-      log.debug(sb.toString());
-    }
   }
 
 }

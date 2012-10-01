@@ -27,6 +27,7 @@ import javax.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
@@ -44,7 +45,7 @@ public class CheckInitializedTask implements Callable<Boolean> {
   private String warName = null;
   
   @Inject
-  public CheckInitializedTask(InitializeTask taskToCheck, SiteConfigProcessor metaProcessor, SiteDownService service, DelayedGitServiceInitializer gitInit, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName) {
+  public CheckInitializedTask(InitializeTask taskToCheck, SiteConfigProcessor metaProcessor, SiteDownService service, @ContentGitService DelayedGitServiceInitializer gitInit, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName) {
     this.taskToCheck = taskToCheck;
     this.metaProcessor = metaProcessor;
     this.service = service;
@@ -93,17 +94,12 @@ public class CheckInitializedTask implements Callable<Boolean> {
       return true;
     }
     if(metaProcessor != null) {
-      logger.debug("Making meta config live `{}`", taskToCheck);
+      logger.info("Making meta config live `{}`", taskToCheck);
       metaProcessor.makeLive();
     }
-    logger.debug("Stopping Maintenance page `{}`", taskToCheck);
+    logger.info("Stopping Maintenance page `{}`", taskToCheck);
     service.stop();
     gitInit.setGitService(git);
-    try {
-      pool.shutdown();
-    } catch(Throwable t){
-      logger.warn("Failed to shutdown ExecutorService", t);
-    }
     return true;
   }
 

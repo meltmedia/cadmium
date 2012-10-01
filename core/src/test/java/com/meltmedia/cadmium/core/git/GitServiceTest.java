@@ -46,8 +46,7 @@ public class GitServiceTest {
   
   @Before
   public void createDirForTests() throws Exception {    
-    configManager.setDefaultProperties(new Properties());      
- 
+    configManager.setDefaultProperties(new Properties());
     testDir = new File("./target/git-test");
     if(!testDir.exists()) {
       if(testDir.mkdir()){

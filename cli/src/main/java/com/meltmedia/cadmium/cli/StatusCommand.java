@@ -72,6 +72,9 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
       		"Repo URL         => [" + statusObj.getRepo() + "]\n" +
       		"Branch           => [" + statusObj.getBranch() + "]\n" +
       		"Revision         => [" + statusObj.getRevision() + "]\n" +
+          "Config Repo URL  => [" + statusObj.getConfigRepo() + "]\n" +
+          "Config Branch    => [" + statusObj.getConfigBranch() + "]\n" +
+          "Config Revision  => [" + statusObj.getConfigRevision() + "]\n" +
       		"Content Source   => [\n" + statusObj.getSource() + "]\n" +
       		"Maint Page State => [" + statusObj.getMaintPageState() +"]\n");  
       
@@ -83,6 +86,7 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
       			"   Address         : [" + member.getAddress() + "]\n" +
       			"   Is Coordinator? : [" + member.isCoordinator() + "]\n" +
       			"   State           : [" + member.getState() + "]\n" +
+            "   Config State    : [" + member.getConfigState() + "]\n" +
       			"   Is Me?          : [" + member.isMine() + "]\n"  	
       			            	
       	);

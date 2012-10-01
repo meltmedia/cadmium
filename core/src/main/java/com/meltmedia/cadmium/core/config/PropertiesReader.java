@@ -16,6 +16,7 @@
 package com.meltmedia.cadmium.core.config;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Properties;
 
 import javax.servlet.ServletContext;
@@ -33,5 +34,6 @@ public interface PropertiesReader {
   public Properties getProperties(File file, Logger log);
   public Properties getProperties(ServletContext context, String path, Logger log);
   public Properties appendProperties(Properties properties, File configFile, Logger log);
+  public Properties getProperties(InputStream stream, Logger log);
   
 }

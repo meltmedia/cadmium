@@ -43,7 +43,7 @@ public class UpdateCommandActionTest {
     
     service.setSender(sender);
     List<ChannelMember> members = new ArrayList<ChannelMember>();
-    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.IDLE, UpdateState.IDLE));
     service.setMembers(members);
     
     UpdateCommandAction updateCmd = new UpdateCommandAction();

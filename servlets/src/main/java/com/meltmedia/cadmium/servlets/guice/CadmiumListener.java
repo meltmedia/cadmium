@@ -13,20 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-/**
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package com.meltmedia.cadmium.servlets.guice;
 
 import java.io.ByteArrayOutputStream;
@@ -92,7 +78,11 @@ import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
 import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.CommandAction;
+import com.meltmedia.cadmium.core.ConfigurationGitService;
+import com.meltmedia.cadmium.core.ConfigurationWorker;
+import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.ContentService;
+import com.meltmedia.cadmium.core.ContentWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
@@ -115,6 +105,7 @@ import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
+import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
@@ -348,9 +339,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
         
         Reflections reflections = new Reflections("com.meltmedia.cadmium");
-        
         Properties configProperties = configManager.getDefaultProperties();
-       
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
 
@@ -359,7 +348,8 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(MessageSender.class).to(JGroupsMessageSender.class);
 
-        bind(DelayedGitServiceInitializer.class).toInstance(new DelayedGitServiceInitializer());
+        bind(DelayedGitServiceInitializer.class).annotatedWith(ContentGitService.class).toInstance(new DelayedGitServiceInitializer());
+        bind(DelayedGitServiceInitializer.class).annotatedWith(ConfigurationGitService.class).toInstance(new DelayedGitServiceInitializer());
 
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
@@ -385,7 +375,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
         bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
 
-        String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "dev");
+        String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "development");
         
         // Bind channel name
         bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
@@ -419,7 +409,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(MessageListener.class).to(MessageReceiver.class);
 
         bind(LifecycleService.class);
-        bind(CoordinatedWorker.class).to(CoordinatedWorkerImpl.class);
+        bind(CoordinatedWorker.class).annotatedWith(ContentWorker.class).to(CoordinatedWorkerImpl.class);
+        bind(CoordinatedWorker.class).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
         
         bind(SiteConfigProcessor.class);
         
@@ -459,10 +450,9 @@ public class CadmiumListener extends GuiceServletContextListener {
         log.debug("Found {} jersey services with the Path annotation.", jerseySet.size());
         
         for( Class<? extends Object> jerseyService : jerseySet ) {
+          log.debug("Binding jersey endpoint class {}", jerseyService.getName());
           bind(jerseyService).asEagerSingleton();
         }
-          
-       
         
       }
     };

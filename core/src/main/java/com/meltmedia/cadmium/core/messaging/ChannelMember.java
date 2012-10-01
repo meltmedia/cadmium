@@ -24,12 +24,14 @@ public class ChannelMember {
   private boolean coordinator = false;
   private boolean mine = false;
   private UpdateState state = UpdateState.IDLE;
+  private UpdateState configState = UpdateState.IDLE;
   
-  public ChannelMember(Address address, boolean coordinator, boolean mine, UpdateState state) {
+  public ChannelMember(Address address, boolean coordinator, boolean mine, UpdateState state, UpdateState configState) {
     this.address = address;
     this.coordinator = coordinator;
     this.mine = mine;
     this.state = state;
+    this.configState = configState;
   }
   
   public ChannelMember(Address address, boolean coordinator, boolean mine) {
@@ -64,6 +66,14 @@ public class ChannelMember {
 
   public void setState(UpdateState state) {
     this.state = state;
+  }
+
+  public UpdateState getConfigState() {
+    return configState;
+  }
+
+  public void setConfigState(UpdateState configState) {
+    this.configState = configState;
   }
 
   @Override

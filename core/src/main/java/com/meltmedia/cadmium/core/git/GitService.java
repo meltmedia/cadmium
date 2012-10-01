@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
 
 public class GitService
   implements Closeable
@@ -148,8 +150,61 @@ public class GitService
   private static String moveContentToGit(String source, GitService git, String comment) throws Exception {
     return git.checkinNewContent(source, comment);
   }
+
   
-  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager, ConfigManager configManager) throws Exception {
+  /**
+   * Initializes war configuration directory for a Cadmium war.
+   * @param uri The remote Git repository ssh URI.
+   * @param branch The remote branch to checkout.
+   * @param root The shared root.
+   * @param warName The name of the war file.
+   * @param historyManager The history manager to log the initialization event.
+   * @return A GitService object the points to the freshly cloned Git repository.
+   * @throws RefNotFoundException
+   * @throws Exception
+   */
+  public static GitService initializeConfigDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager, ConfigManager configManager) throws Exception {
+    initializeBaseDirectoryStructure(root, warName);
+    String warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
+    GitService cloned = initializeRepo(uri, branch, warDir, "git-config-checkout");
+
+    File configPropsFile = new File(warDir, "config.properties");
+    Properties configProperties = configManager.getDefaultProperties();
+    
+    String renderedContentDir = initializeSnapshotDirectory(warDir,
+        configProperties, "com.meltmedia.cadmium.config.lastUpdated", "git-config-checkout", "config"); 
+    
+    configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
+    
+    boolean hasExisting = configProperties.containsKey("com.meltmedia.cadmium.config.lastUpdated") && renderedContentDir != null && renderedContentDir.equals(configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated"));
+    if(renderedContentDir != null) {
+      configProperties.setProperty("com.meltmedia.cadmium.config.lastUpdated", renderedContentDir);
+    }
+    configProperties.setProperty("config.branch", cloned.getBranchName());
+    configProperties.setProperty("config.git.ref.sha", cloned.getCurrentRevision());
+    configProperties.setProperty("config.repo", uri);
+    
+    configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties for configuration");
+
+    boolean closeHistoryManager = false;
+    if(historyManager == null) {
+      closeHistoryManager = true;
+      historyManager = new HistoryManager(warDir);
+    }
+    
+    try{
+      if(historyManager != null && !hasExisting) {
+        historyManager.logEvent(EntryType.CONFIG, cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial config pull.", true, true);
+      }
+    } finally {
+      if(closeHistoryManager) {
+        IOUtils.closeQuietly(historyManager);
+      }
+    }
+    
+    return cloned;
+  }
+  
   /**
    * Initializes war content directory for a Cadmium war.
    * @param uri The remote Git repository ssh URI.
@@ -161,6 +216,119 @@ public class GitService
    * @throws RefNotFoundException
    * @throws Exception
    */
+  public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager, ConfigManager configManager) throws Exception {
+    initializeBaseDirectoryStructure(root, warName);
+    String warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
+    GitService cloned = initializeRepo(uri, branch, warDir, "git-checkout");
+
+    File configPropsFile = new File(warDir, "config.properties");
+    Properties configProperties = configManager.getDefaultProperties();
+    
+    String renderedContentDir = initializeSnapshotDirectory(warDir,
+        configProperties, "com.meltmedia.cadmium.lastUpdated", "git-checkout", "renderedContent"); 
+    
+    configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
+
+    boolean hasExisting = configProperties.containsKey("com.meltmedia.cadmium.lastUpdated") && renderedContentDir != null && renderedContentDir.equals(configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
+    if(renderedContentDir != null) {
+      configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
+    }
+    configProperties.setProperty("branch", cloned.getBranchName());
+    configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
+    configProperties.setProperty("repo", uri);
+    
+    if(renderedContentDir != null) {
+      String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
+      if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
+        try {
+          configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
+        } catch(Exception e) {
+          log.warn("Failed to read source file {}", sourceFilePath);
+        }
+      } else if(!configProperties.containsKey("source")){
+        configProperties.setProperty("source", "{}");
+      }
+    } else if(!configProperties.containsKey("source")){
+      configProperties.setProperty("source", "{}");
+    }
+    
+    configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
+
+    boolean closeHistoryManager = false;
+    if(historyManager == null) {
+      closeHistoryManager = true;
+      historyManager = new HistoryManager(warDir);
+    }
+    
+    try{
+      if(historyManager != null && !hasExisting) {
+        historyManager.logEvent(EntryType.CONTENT, cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+      }
+    } finally {
+      if(closeHistoryManager) {
+        IOUtils.closeQuietly(historyManager);
+      }
+    }
+    
+    return cloned;
+  }
+
+  private static String initializeSnapshotDirectory(String warDir,
+      Properties configProperties, String key, String checkoutDir, String snapshotDir) throws Exception, IOException {
+    String renderedContentDir = configProperties.getProperty(key);
+    log.debug("Making sure {} exists.", renderedContentDir);
+    if(renderedContentDir == null || !FileSystemManager.exists(renderedContentDir)) {
+      log.info(snapshotDir + " directory does not exist. Creating!!!");
+      GitService rendered = null;
+      File snapshotFile = new File(warDir, snapshotDir);
+      if(snapshotFile.exists()) {
+        log.warn("{} exists @ {}, Deleting and recreating. ", snapshotDir, snapshotFile);
+        FileUtils.forceDelete(snapshotFile);
+      }
+      try {
+        rendered = GitService.cloneRepo(new File(FileSystemManager.getChildDirectoryIfExists(warDir, checkoutDir), ".git").getAbsolutePath(), snapshotFile.getAbsolutePath());
+        renderedContentDir = rendered.getBaseDirectory();
+        log.info("Removing .git directory from freshly cloned " + snapshotDir + " directory @ {}.", renderedContentDir);
+        String gitDir = FileSystemManager.getChildDirectoryIfExists(snapshotFile.getAbsolutePath(), ".git");
+        if(gitDir != null) {
+          FileSystemManager.deleteDeep(gitDir);
+        }
+        
+      } finally {
+        if(rendered != null) {
+          rendered.close();
+        }
+      }
+    }
+    return renderedContentDir;
+  }
+
+  private static GitService initializeRepo(String uri, String branch,
+      String warDir, String checkoutDir) throws Exception, RefNotFoundException {
+    GitService cloned = null;
+    if(FileSystemManager.getChildDirectoryIfExists(warDir, checkoutDir) == null) {
+      log.info("Cloning remote git repository to " + checkoutDir);
+      cloned = cloneRepo(uri, new File(warDir, checkoutDir).getAbsolutePath());
+      
+      if(!cloned.checkForRemoteBranch(branch)) {
+        String envString = System.getProperty("com.meltmedia.cadmium.environment", "development");
+        branch = "cd-"+envString+"-"+branch;
+      }
+      log.info("Switching to branch {}", branch);
+      cloned.switchBranch(branch);
+      
+    } else {
+      cloned = createGitService(FileSystemManager.getChildDirectoryIfExists(warDir, checkoutDir));
+    }
+
+    if(cloned == null) {
+      throw new Exception("Failed to clone remote github repo from "+uri);
+    }
+    return cloned;
+  }
+
+  private static void initializeBaseDirectoryStructure(String root,
+      String warName) throws Exception {
     if(!FileSystemManager.exists(root)) {
       log.info("Content Root directory [{}] does not exist. Creating!!!", root);
       if(!new File(root).mkdirs()) {
@@ -174,92 +342,6 @@ public class GitService
         throw new Exception("Failed to create war content directory @ " + warDir);
       }
     }
-    warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
-    GitService cloned = null;
-    if(FileSystemManager.getChildDirectoryIfExists(warDir, "git-checkout") == null) {
-      log.info("Cloning remote git repository to git-checkout");
-      cloned = cloneRepo(uri, new File(warDir, "git-checkout").getAbsolutePath());
-      
-      if(!cloned.checkForRemoteBranch(branch)) {
-        String envString = System.getProperty("com.meltmedia.cadmium.environment", "development");
-        branch = "cd-"+envString+"-"+branch;
-      }
-      log.info("Switching to branch {}", branch);
-      cloned.switchBranch(branch);
-      
-    } else {
-      cloned = createGitService(FileSystemManager.getChildDirectoryIfExists(warDir, "git-checkout"));
-    }
-
-    if(cloned == null) {
-      throw new Exception("Failed to clone remote github repo from "+uri);
-    }
-    
-    Properties configProperties = configManager.getDefaultProperties();
-    File configPropsFile = new File(warDir, "config.properties");
-    
-    String renderedContentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
-    if(renderedContentDir == null || !FileSystemManager.exists(renderedContentDir)) {
-      log.info("RenderedContent directory does not exist. Creating!!!");
-      GitService rendered = null;
-      try {
-        rendered = GitService.cloneRepo(new File(FileSystemManager.getChildDirectoryIfExists(warDir, "git-checkout"), ".git").getAbsolutePath(), new File(warDir, "renderedContent").getAbsolutePath());
-        renderedContentDir = rendered.getBaseDirectory();
-        log.info("Removing .git directory from freshly cloned renderedContent directory.");
-        String gitDir = FileSystemManager.getChildDirectoryIfExists(new File(warDir, "renderedContent").getAbsolutePath(), ".git");
-        if(gitDir != null) {
-          FileSystemManager.deleteDeep(gitDir);
-        }
-        
-      } finally {
-        if(rendered != null) {
-          rendered.close();
-        }
-      }
-    } 
-    
-    if(!configPropsFile.exists()) {
-      configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
-      
-      if(renderedContentDir != null) {
-        configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
-      }
-      configProperties.setProperty("branch", cloned.getBranchName());
-      configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
-      configProperties.setProperty("repo", uri);
-      
-
-      String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
-      if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
-        try {
-          configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
-        } catch(Exception e) {
-          log.warn("Failed to read source file {}", sourceFilePath);
-        }
-      } else {
-        configProperties.setProperty("source", "{}");
-      }
-      
-      configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
-
-      boolean closeHistoryManager = false;
-      if(historyManager == null) {
-        closeHistoryManager = true;
-        historyManager = new HistoryManager(warDir);
-      }
-      
-      try{
-        if(historyManager != null) {
-          historyManager.logEvent(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
-        }
-      } finally {
-        if(closeHistoryManager) {
-          IOUtils.closeQuietly(historyManager);
-        }
-      }
-    }
-    
-    return cloned;
   }
   
   public static GitService init(String site, String dir) throws Exception {
@@ -469,6 +551,7 @@ public class GitService
   }
   
   public boolean isBranch(String branchname) throws Exception {
+    log.debug("Checking if {} is a branch on {}", branchname, getRemoteRepository());
     for(Ref ref : git.branchList().setListMode(ListMode.ALL).call()){
       log.debug("Checking {}, {}", ref.getName(), branchname);
       if(ref.getName().equals("refs/heads/"+branchname) || ref.getName().equals("refs/remotes/origin/"+branchname)) {

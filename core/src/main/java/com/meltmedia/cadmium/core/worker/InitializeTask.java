@@ -37,17 +37,15 @@ public class InitializeTask implements Callable<GitService> {
   private String contentRoot = null;
   private String warName = null;
   private SiteConfigProcessor metaProcessor = null;
-  private String contentDirectory = null;
   private ContentService servlet = null;
   private ConfigManager configManager;  
   private HistoryManager historyManager = null;
 
   @Inject
-  public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, @Named("contentDir") String contentDirectory, HistoryManager historyManager) {
+  public InitializeTask(ConfigManager configManager, ContentService servlet, SiteConfigProcessor metaProcessor, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, HistoryManager historyManager) {
     
     this.contentRoot = contentRoot;
     this.warName = warName;
-    this.contentDirectory = contentDirectory;
     this.metaProcessor = metaProcessor;
     this.servlet = servlet;
     this.configManager = configManager;
@@ -66,18 +64,20 @@ public class InitializeTask implements Callable<GitService> {
       Throwable t = null;
 
       try {
-        logger.debug("Attempting to initialize content for `{}` into `{}`", warName, contentRoot);
+        logger.info("Attempting to initialize content for `{}` into `{}`", warName, contentRoot);
         cloned = GitService.initializeContentDirectory(repoUri, branch, contentRoot, warName, historyManager, configManager);
 
-        if(metaProcessor != null) {
-          logger.debug("Processing META-INF dir in `{}`", warName);
+        String contentDirectory = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
+        
+        if(metaProcessor != null && contentDirectory != null) {
+          logger.info("Processing META-INF dir in `{}`", warName);
           this.metaProcessor.processDir(contentDirectory);
         }
         if(servlet != null) {
-          logger.debug("Switching content root of {}", warName);
+          logger.info("Switching content root of {}", warName);
           this.servlet.switchContent(System.currentTimeMillis());
         }
-        logger.debug("Successfully initialized `{}`", warName);
+        logger.info("Successfully initialized `{}`", warName);
       } catch(RefNotFoundException e) {
         logger.warn("Branch `"+branch+"` does not exist.", e);
         return null;
@@ -88,6 +88,8 @@ public class InitializeTask implements Callable<GitService> {
       if(t != null) {
         throw new Exception(t);
       }
+    } else {
+      logger.warn("Invalid setting for content repo {} and branch {}", repoUri, branch);
     }
     return cloned;
   }

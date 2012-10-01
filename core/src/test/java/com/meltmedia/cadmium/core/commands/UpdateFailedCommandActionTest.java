@@ -44,7 +44,7 @@ public class UpdateFailedCommandActionTest {
     
     service.setSender(sender);
     List<ChannelMember> members = new ArrayList<ChannelMember>();
-    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.UPDATING));
+    members.add(new ChannelMember(new IpAddress(1234), true, true, UpdateState.UPDATING, UpdateState.IDLE));
     service.setMembers(members);
     
     UpdateFailedCommandAction cmd = new UpdateFailedCommandAction();

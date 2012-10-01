@@ -28,9 +28,11 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.config.ConfigManager;
@@ -50,6 +52,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   private ExecutorService pool;
   
   @Inject
+  @ContentGitService
   protected DelayedGitServiceInitializer service;
 
   @Inject
@@ -99,21 +102,21 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
         }
         
         if(properties.containsKey("sha")) {
-          configProperties.setProperty("updating.to.sha", properties.get("sha"));
+          configProperties.setProperty("updating.content.to.sha", properties.get("sha"));
         }
         if(properties.containsKey("branch")) {
-          configProperties.setProperty("updating.to.branch", properties.get("branch"));
+          configProperties.setProperty("updating.content.to.branch", properties.get("branch"));
           lastTask = pool.submit(new SwitchBranchTask(service, properties.get("branch"), lastTask));
         }
         
-        lastTask = pool.submit(new PullUpdateTask(service, configProperties, lastTask));
+        lastTask = pool.submit(new PullUpdateTask("content", service, configProperties, lastTask));
         
         if(properties.containsKey("sha")) {
-          lastTask = pool.submit(new ResetToRevTask(service, properties.get("sha"), configProperties, lastTask));
+          lastTask = pool.submit(new ResetToRevTask("content", service, properties.get("sha"), configProperties, lastTask));
         }
         
         String contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
-        if(contentDir == null || contentDir.length() == 0) {
+        if(StringUtils.isEmptyOrNull(contentDir)) {
           contentDir = this.contentDir;
         }
         
@@ -121,11 +124,11 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
         
         lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
         
-        lastTask = pool.submit(new UpdateConfigTask(service, properties, configManager, lastTask));
+        lastTask = pool.submit(new UpdateConfigTask(null, service, properties, configManager, lastTask));
         
         lastTask = pool.submit(new NotifyListenerTask(listener, properties, lastTask));
         
-        lastTask = pool.submit(new CleanUpTask(listener, configProperties, properties, lastTask));
+        lastTask = pool.submit(new CleanUpTask("com.meltmedia.cadmium.lastUpdated", listener, configProperties, properties, lastTask));
       } catch(Throwable t) {
         log.error("Failed to run update.", t);
         throw new Error(t);

@@ -23,18 +23,27 @@ import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.meltmedia.cadmium.core.worker.CheckConfigInitializedTask;
 import com.meltmedia.cadmium.core.worker.CheckInitializedTask;
+import com.meltmedia.cadmium.core.worker.ConfigInitializeTask;
 import com.meltmedia.cadmium.core.worker.InitializeTask;
 
 @Singleton
 public class Initializor implements Closeable {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   private ExecutorService pool = null;
   
   @Inject
-  public Initializor(InitializeTask task, CheckInitializedTask task2) {
+  public Initializor(InitializeTask task, CheckInitializedTask task2, ConfigInitializeTask task3, CheckConfigInitializedTask task4) {
+    log.debug("Submitting initialization tasks.");
     this.pool = Executors.newSingleThreadExecutor();
     
     pool.submit(task2.setExecutor(pool).setFuture(pool.submit(task)));
+    
+    pool.submit(task4.setExecutor(pool).setFuture(pool.submit(task3)));
   }
 
   @Override

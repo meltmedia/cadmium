@@ -68,12 +68,14 @@ public class DeployerService extends AuthorizationService {
     }
     String branch = req.getBranch();
     String repo = req.getRepo();
+    String configBranch = req.getConfigBranch();
+    String configRepo = req.getConfigRepo();
     String domain = req.getDomain();
     String contextRoot = req.getContextRoot();
     String artifact = req.getArtifact();
 
     if (StringUtils.isEmptyOrNull(branch) || StringUtils.isEmptyOrNull(repo)
-        || StringUtils.isEmptyOrNull(domain)) {
+        || StringUtils.isEmptyOrNull(domain) || StringUtils.isEmptyOrNull(configBranch)) {
       return Response.serverError().entity("Invalid request").build();
     }
 
@@ -89,6 +91,8 @@ public class DeployerService extends AuthorizationService {
     msg.setCommand(DeployCommandAction.DEPLOY_ACTION);
     msg.getProtocolParameters().put("branch", branch);
     msg.getProtocolParameters().put("repo", repo);
+    msg.getProtocolParameters().put("configBranch", configBranch);
+    msg.getProtocolParameters().put("configRepo", StringUtils.isEmptyOrNull(configRepo) ? repo : configRepo);
     msg.getProtocolParameters().put("domain", domain);
     msg.getProtocolParameters().put("context", contextRoot);
     msg.getProtocolParameters().put("secure",

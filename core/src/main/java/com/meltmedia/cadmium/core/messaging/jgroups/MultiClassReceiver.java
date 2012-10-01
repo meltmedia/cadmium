@@ -44,6 +44,7 @@ public class MultiClassReceiver implements Receiver, MessageListener, Membership
     this.messageListener = messageListener;
     this.membershipListener = membershipListener;
     channel.setReceiver(this);
+    log.debug("Initialized MultiClassReceiver...");
   }
 
   @Override

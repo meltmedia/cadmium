@@ -49,6 +49,14 @@ public class LifecycleService {
     }
   }
   
+  public void updateConfigState(ChannelMember member, UpdateState state) {
+    if(members != null && members.contains(member)) {
+      log.info("Updating config state of {} to {}", member.getAddress().toString(), state);
+      member = members.get(members.indexOf(member));
+      member.setConfigState(state);
+    }
+  }
+  
   public boolean isMe(ChannelMember member) {
     if(members != null && members.contains(member)) {
       return members.get(members.indexOf(member)).isMine();
@@ -60,8 +68,16 @@ public class LifecycleService {
     updateMyState(state, null, true);
   }
   
+  public void updateMyConfigState(UpdateState state) {
+    updateMyConfigState(state, null, true);
+  }
+  
   public void updateMyState(UpdateState state, String uuid) {
     updateMyState(state, uuid, true);
+  }
+  
+  public void updateMyConfigState(UpdateState state, String uuid) {
+    updateMyConfigState(state, uuid, true);
   }
   
   public void updateMyState(UpdateState state, String uuid, boolean sendUpdate) {
@@ -81,6 +97,27 @@ public class LifecycleService {
     }
   }
   
+  public void updateMyConfigState(UpdateState state, String uuid, boolean sendUpdate) {
+    if(members != null) {
+      for(ChannelMember member : members) {
+        if(member.isMine()) {
+          UpdateState oldState = member.getConfigState();
+          member.setConfigState(state);
+          if(oldState != state) {
+            log.info("Updating my config state to {} and sendUpdate is {}", state, sendUpdate);
+            if(sendUpdate) {
+              sendConfigStateUpdate(null, uuid);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  public void sendConfigStateUpdate(ChannelMember dest) {
+    sendConfigStateUpdate(dest, null);
+  }
+  
   public void sendStateUpdate(ChannelMember dest) {
     sendStateUpdate(dest, null);
   }
@@ -89,6 +126,21 @@ public class LifecycleService {
     Message updateStateMsg = new Message();
     updateStateMsg.setCommand(ProtocolMessage.STATE_UPDATE);
     updateStateMsg.getProtocolParameters().put("state", getCurrentState().name());
+    if(uuid != null) {
+      updateStateMsg.getProtocolParameters().put("uuid", uuid);
+    }
+    try{
+      log.info("Sending state update message from state change!");
+      sender.sendMessage(updateStateMsg, dest);
+    } catch(Exception e) {
+      log.warn("Failed to send state update: {}", e.getMessage());
+    }
+  }
+  
+  public void sendConfigStateUpdate(ChannelMember dest, String uuid) {
+    Message updateStateMsg = new Message();
+    updateStateMsg.setCommand(ProtocolMessage.STATE_UPDATE);
+    updateStateMsg.getProtocolParameters().put("configState", getCurrentConfigState().name());
     if(uuid != null) {
       updateStateMsg.getProtocolParameters().put("uuid", uuid);
     }
@@ -135,11 +187,46 @@ public class LifecycleService {
     return false;
   }
   
+  public UpdateState getCurrentConfigState() {
+    if(members != null) {
+      for(ChannelMember member : members) {
+        if(member.isMine()) {
+          return member.getConfigState();
+        }
+      }
+    }
+    return null;
+  }
+  
+  public UpdateState getConfigState(ChannelMember member) {
+    if(members != null) {
+      if(members.contains(member)) {
+        return members.get(members.indexOf(member)).getConfigState();
+      }
+    }
+    return null;
+  }
+  
+  public boolean allEqualsConfig(UpdateState state) {
+    if(members != null) {
+      log.info("Checking if all {} members are in {} state", members.size(), state);
+      boolean allEqual = true;
+      for(ChannelMember member : members) {
+        if(member.getConfigState() != state) {
+          allEqual = false;
+          break;
+        }
+      }
+      return allEqual;
+    }
+    return false;
+  }
+  
   public List<ChannelMember> getPeirStates() {
     List<ChannelMember> peirMembers = new ArrayList<ChannelMember>();
     if(members != null) {
       for(ChannelMember member : members) {
-        peirMembers.add(new ChannelMember(member.getAddress(), member.isCoordinator(), member.isMine(), member.getState()));
+        peirMembers.add(new ChannelMember(member.getAddress(), member.isCoordinator(), member.isMine(), member.getState(), member.getConfigState()));
       }
     }
     return peirMembers;
