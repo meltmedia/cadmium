@@ -110,8 +110,14 @@ public class GitService
         clone.setDirectory(new File(dir));
       }
       clone.setURI(uri);
-      
-      return new GitService(clone.call());
+      try {
+        return new GitService(clone.call());
+      } catch(Exception e) {
+        if(new File(dir).exists()) {
+          FileUtils.forceDelete(new File(dir));
+        }
+        throw e;
+      }
     } 
     return null;
   }
