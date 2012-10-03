@@ -86,6 +86,7 @@ import com.meltmedia.cadmium.core.ContentWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.commands.CommandBodyMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
@@ -353,13 +354,15 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(new TypeLiteral<List<ChannelMember>>() {
         }).annotatedWith(Names.named("members")).toInstance(members);
         
+        @SuppressWarnings("rawtypes")
         Multibinder<CommandAction> commandActionBinder = Multibinder.newSetBinder(binder(), CommandAction.class);
         
+        @SuppressWarnings("rawtypes")
         Set<Class<? extends CommandAction>> commandActionSet = 
             reflections.getSubTypesOf(CommandAction.class);
         log.debug("Found {} CommandAction classes.", commandActionSet.size());
         
-        for( Class<? extends CommandAction> commandActionClass : commandActionSet ) {
+        for( @SuppressWarnings("rawtypes") Class<? extends CommandAction> commandActionClass : commandActionSet ) {
           commandActionBinder.addBinding().to(commandActionClass);
         }
 
@@ -367,7 +370,8 @@ public class CadmiumListener extends GuiceServletContextListener {
             .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE))
             .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
 
-        bind(new TypeLiteral<Map<String, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
+        bind(new TypeLiteral<Map<String, CommandAction<?>>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
+        bind(new TypeLiteral<Map<String, Class<?>>>(){}).annotatedWith(Names.named("commandBodyMap")).toProvider(CommandBodyMapProvider.class);
         
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
         bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
