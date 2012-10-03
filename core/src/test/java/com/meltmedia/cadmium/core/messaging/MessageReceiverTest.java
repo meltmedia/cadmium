@@ -29,7 +29,7 @@ public class MessageReceiverTest {
   @Test
   public void testCommandPass() throws Exception {
     MessageReceiver msg = new MessageReceiver();
-    msg.commandMap = new HashMap<String, CommandAction> ();
+    msg.commandMap = new HashMap<String, CommandAction<?>> ();
     msg.commandMap.put(ProtocolMessage.CURRENT_STATE, new DummyCommandAction(true, false));
     msg.commandMap.put(ProtocolMessage.STATE_UPDATE, new DummyCommandAction(true, false));
     msg.commandMap.put(ProtocolMessage.SYNC, new DummyCommandAction(true, false));
@@ -44,7 +44,7 @@ public class MessageReceiverTest {
   @Test
   public void testCommandFail() throws Exception {
     MessageReceiver msg = new MessageReceiver();
-    msg.commandMap = new HashMap<String, CommandAction> ();
+    msg.commandMap = new HashMap<String, CommandAction<?>> ();
     msg.commandMap.put(ProtocolMessage.CURRENT_STATE, new DummyCommandAction(true, false));
     msg.commandMap.put(ProtocolMessage.STATE_UPDATE, new DummyCommandAction(true, false));
     msg.commandMap.put(ProtocolMessage.SYNC, new DummyCommandAction(true, false));

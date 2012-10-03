@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.commands.StateUpdateRequest;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
@@ -123,12 +124,12 @@ public class LifecycleService {
   }
   
   public void sendStateUpdate(ChannelMember dest, String uuid) {
-    Message updateStateMsg = new Message();
-    updateStateMsg.setCommand(ProtocolMessage.STATE_UPDATE);
-    updateStateMsg.getProtocolParameters().put("state", getCurrentState().name());
+    StateUpdateRequest request = new StateUpdateRequest();
+    request.setState(getCurrentState().name());
     if(uuid != null) {
-      updateStateMsg.getProtocolParameters().put("uuid", uuid);
+      request.setUuid(uuid);
     }
+    Message<StateUpdateRequest> updateStateMsg = new Message<StateUpdateRequest>(ProtocolMessage.STATE_UPDATE, request);
     try{
       log.info("Sending state update message from state change!");
       sender.sendMessage(updateStateMsg, dest);
@@ -138,12 +139,13 @@ public class LifecycleService {
   }
   
   public void sendConfigStateUpdate(ChannelMember dest, String uuid) {
-    Message updateStateMsg = new Message();
-    updateStateMsg.setCommand(ProtocolMessage.STATE_UPDATE);
-    updateStateMsg.getProtocolParameters().put("configState", getCurrentConfigState().name());
+    StateUpdateRequest request = new StateUpdateRequest();
+    request.setConfigState(getCurrentConfigState().name());
     if(uuid != null) {
-      updateStateMsg.getProtocolParameters().put("uuid", uuid);
+      request.setUuid(uuid);
     }
+    Message<StateUpdateRequest> updateStateMsg = new Message<StateUpdateRequest>(ProtocolMessage.STATE_UPDATE, request);
+
     try{
       log.info("Sending state update message from state change!");
       sender.sendMessage(updateStateMsg, dest);

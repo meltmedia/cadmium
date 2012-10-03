@@ -26,6 +26,7 @@ import org.jgroups.stack.IpAddress;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.MessageConverter;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.messaging.jgroups.DummyJChannel;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
@@ -74,6 +75,7 @@ public class LifecycleServiceTest {
     DummyJChannel channel = new DummyJChannel(me, viewMems);
     JGroupsMessageSender sender = new JGroupsMessageSender();
     sender.setChannel(channel);
+    sender.setConverter(new MessageConverter());
     
     List<ChannelMember> members = new ArrayList<ChannelMember>();
     members.add(new ChannelMember(new IpAddress(1234), true, false, UpdateState.IDLE, UpdateState.IDLE));
@@ -88,8 +90,8 @@ public class LifecycleServiceTest {
     
     assertTrue("State not updated", members.get(1).getState() == UpdateState.UPDATING);
     assertTrue("No message sent", channel.getMessageList().size() == 1);
-    assertTrue("Message sent not a STATE_UPDATE", channel.getMessageList().get(0).getObject().toString().contains(ProtocolMessage.STATE_UPDATE));
-    assertTrue("Correct state not sent", channel.getMessageList().get(0).getObject().toString().contains(UpdateState.UPDATING.name()));
+    assertTrue("Message sent not a STATE_UPDATE", new String(channel.getMessageList().get(0).getBuffer(), "UTF-8").contains(ProtocolMessage.STATE_UPDATE));
+    assertTrue("Correct state not sent", new String(channel.getMessageList().get(0).getBuffer(), "UTF-8").contains(UpdateState.UPDATING.name()));
   }
   
   @Test

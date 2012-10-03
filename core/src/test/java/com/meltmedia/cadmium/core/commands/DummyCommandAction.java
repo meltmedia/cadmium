@@ -40,7 +40,7 @@ public class DummyCommandAction implements CommandAction {
 
   @Override
   public void handleFailure(CommandContext ctx, Exception e) {
-    throw new Error("I failed at "+ctx.getMessage().getCommand());
+    throw new Error("I failed at "+ctx.getMessage().getHeader().getCommand());
   }
 
 }

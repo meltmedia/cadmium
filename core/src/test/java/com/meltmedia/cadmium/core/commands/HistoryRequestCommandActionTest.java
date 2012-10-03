@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
@@ -35,7 +36,7 @@ public class HistoryRequestCommandActionTest {
   @SuppressWarnings("resource")
   @Test
   public void testCommand() throws Exception {
-    DummyMessageSender sender = new DummyMessageSender();
+    DummyMessageSender<HistoryResponse, Void> sender = new DummyMessageSender<HistoryResponse, Void>();
     HistoryManager historyManager = new HistoryManager(null);
     historyManager.getHistory().add(new HistoryEntry(EntryType.CONTENT, new Date(), "", "master", "sha", 3000l, "me", "dir", true, "comment"));
     historyManager.getHistory().add(new HistoryEntry(EntryType.CONTENT, new Date(), "", "master", "sha1", 3000l, "me", "dir_1", true, "comment1"));
@@ -46,16 +47,16 @@ public class HistoryRequestCommandActionTest {
     command.sender = sender;
     command.historyManager = historyManager;
     
-    Message msg = new Message();
-    msg.setCommand(ProtocolMessage.HISTORY_REQUEST);
-    msg.getProtocolParameters().put("limit", "1");
-    msg.getProtocolParameters().put("filter", "true");
+    HistoryRequest request = new HistoryRequest();
+    request.setLimit(1);
+    request.setFilter(true);
+    Message<HistoryRequest> msg = new Message<HistoryRequest>(ProtocolMessage.HISTORY_REQUEST, request);
     
-    CommandContext ctx = new CommandContext(new IpAddress(5432), msg);
+    CommandContext<HistoryRequest> ctx = new CommandContext<HistoryRequest>(new IpAddress(5432), msg);
     command.execute(ctx);
     
     assertTrue("Response message was not sent", sender.msg != null && sender.dest != null);
-    assertTrue("Wrong type of message sent", sender.msg.getCommand() == ProtocolMessage.HISTORY_RESPONSE);
-    assertTrue("No history in reply", sender.msg.getProtocolParameters().containsKey("history"));
+    assertTrue("Wrong type of message sent", sender.msg.getHeader().getCommand() == ProtocolMessage.HISTORY_RESPONSE);
+    assertEquals("Incorrect history in reply.", 1, sender.msg.getBody().getHistory().size());
   }
 }

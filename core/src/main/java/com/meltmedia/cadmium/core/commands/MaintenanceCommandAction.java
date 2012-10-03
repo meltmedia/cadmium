@@ -15,11 +15,10 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
-import java.util.Map;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,7 @@ import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class MaintenanceCommandAction implements CommandAction {
+public class MaintenanceCommandAction implements CommandAction<MaintenanceRequest> {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
 	@Inject
@@ -42,31 +41,31 @@ public class MaintenanceCommandAction implements CommandAction {
   public String getName() { return ProtocolMessage.MAINTENANCE; }
 	
 	@Override
-	public boolean execute(CommandContext ctx) throws Exception {
+	public boolean execute(CommandContext<MaintenanceRequest> ctx) throws Exception {
 		log.info("Beginning Maintenance Toggle, started by {}", ctx.getSource());
-		Map<String,String> params = ctx.getMessage().getProtocolParameters();
-		String comment = "";
-		if(params.containsKey("state") && params.get("state") != null) {
-			String state = params.get("state");
-			if(params.containsKey("comment") && params.get("comment") != null) {
-				comment = params.get("comment");
-			}
-			if(state.equalsIgnoreCase("on")) {
-			  log.info("Starting maintenance page.");
-				siteDownService.start();
-			} 
-			else if (state.equalsIgnoreCase("off")) {
+		MaintenanceRequest request = ctx.getMessage().getBody();
+		if( !StringUtils.isEmptyOrNull(request.getState())) {
+		  if( request.getState().equalsIgnoreCase("on") ) {
+		    log.info("Starting maintenance page.");
+        siteDownService.start();
+      } 
+      else if (request.getState().equalsIgnoreCase("off")) {
         log.info("Stopping maintenance page.");
-				siteDownService.stop();
-			}
-		} 		
-		manager.logEvent(siteDownService.isOn(),ctx.getMessage().getProtocolParameters().get("openId"),comment);
+        siteDownService.stop();
+      }
+		}
+		manager.logEvent(siteDownService.isOn(),request.getOpenId(),emptyStringIfNull(request.getComment()));
 		return true;
 	}
 
 	@Override
-	public void handleFailure(CommandContext ctx, Exception e) {
+	public void handleFailure(CommandContext<MaintenanceRequest> ctx, Exception e) {
 		
 	}
+	
+  private static String emptyStringIfNull( final String value ) {
+    if( value == null ) return "";
+    else return value;
+  }
 
 }

@@ -25,19 +25,20 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 
 public class CleanUpTask implements Callable<Boolean> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private Properties configProperties;
   private Future<Boolean> previousTask;
   private CoordinatedWorkerListener listener;
-  private Map<String, String> properties;
   private String configKey;
+  private ContentUpdateRequest contentUpdateBody;
   
-  public CleanUpTask(String configKey, CoordinatedWorkerListener listener, Properties configProperties, Map<String, String> properties, Future<Boolean> previousTask) {
+  public CleanUpTask(String configKey, CoordinatedWorkerListener listener, Properties configProperties, ContentUpdateRequest contentUpdateBody, Future<Boolean> previousTask) {
     this.configProperties = configProperties;
     this.previousTask = previousTask;
-    this.properties = properties;
+    this.contentUpdateBody = contentUpdateBody;
     this.listener = listener;
     this.configKey = configKey;
   }
@@ -52,7 +53,7 @@ public class CleanUpTask implements Callable<Boolean> {
         }
       } catch(Exception e) {
         log.warn("Work failed!", e);
-        listener.workFailed(properties.get("repo"), properties.get("branch"), properties.get("sha"), properties.get("openId"), properties.get("uuid"));
+        listener.workFailed(contentUpdateBody);
         return false;
       }
     }

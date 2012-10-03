@@ -17,7 +17,6 @@ package com.meltmedia.cadmium.core.worker;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.history.HistoryManager;
@@ -46,7 +46,7 @@ import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 @Singleton
-public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWorkerListener, Closeable {
+public class CoordinatedWorkerImpl implements CoordinatedWorker<ContentUpdateRequest>, CoordinatedWorkerListener<ContentUpdateRequest>, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   private ExecutorService pool;
@@ -75,10 +75,10 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   protected HistoryManager historyManager;
     
   protected Future<Boolean> lastTask = null;
-  
+  protected volatile String nextDirectory = null;  
 
-  protected CoordinatedWorkerListener listener;
-  protected Properties configProperties; 
+  protected CoordinatedWorkerListener<ContentUpdateRequest> listener;
+  protected Properties configProperties;
   
   public CoordinatedWorkerImpl() {
     pool = Executors.newSingleThreadExecutor();
@@ -86,7 +86,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void beginPullUpdates(final Map<String, String> properties) {
+  public void beginPullUpdates(final ContentUpdateRequest body) {
     synchronized(pool) {
       log.info("Beginning Update...");
       lastTask = null;
@@ -97,22 +97,22 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
         service.getGitService();
         service.releaseGitService();
         
-        if(properties.containsKey("repo") && properties.get("repo").trim().length() > 0) {
-          lastTask = pool.submit(new SwitchRepositoryTask(service, properties.get("repo"), lastTask));
+        if(!StringUtils.isEmptyOrNull(body.getRepo())) {
+          lastTask = pool.submit(new SwitchRepositoryTask(service, body.getRepo(), lastTask));
         }
         
-        if(properties.containsKey("sha")) {
-          configProperties.setProperty("updating.content.to.sha", properties.get("sha"));
+        if(!StringUtils.isEmptyOrNull(body.getSha())) {
+          configProperties.setProperty("updating.content.to.sha", body.getSha());
         }
-        if(properties.containsKey("branch")) {
-          configProperties.setProperty("updating.content.to.branch", properties.get("branch"));
-          lastTask = pool.submit(new SwitchBranchTask(service, properties.get("branch"), lastTask));
+        if(!StringUtils.isEmptyOrNull(body.getBranchName())) {
+          configProperties.setProperty("updating.content.to.branch", body.getBranchName());
+          lastTask = pool.submit(new SwitchBranchTask(service, body.getBranchName(), lastTask));
         }
         
         lastTask = pool.submit(new PullUpdateTask("content", service, configProperties, lastTask));
         
-        if(properties.containsKey("sha")) {
-          lastTask = pool.submit(new ResetToRevTask("content", service, properties.get("sha"), configProperties, lastTask));
+        if(!StringUtils.isEmptyOrNull(body.getSha())) {
+          lastTask = pool.submit(new ResetToRevTask("content", service, body.getSha(), configProperties, lastTask));
         }
         
         String contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
@@ -120,15 +120,31 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
           contentDir = this.contentDir;
         }
         
-        lastTask = pool.submit(new CreateNewRenderedDirectoryTask(service, contentDir, properties, lastTask));
+        lastTask = pool.submit(new CreateNewRenderedDirectoryTask(service, contentDir, body, lastTask) {
+          @Override
+          public void setNextDirectory(String nextDirectory) {
+            CoordinatedWorkerImpl.this.nextDirectory = nextDirectory;
+          }
+        });
         
-        lastTask = pool.submit(new UpdateMetaConfigsTask(processor, properties, lastTask));
+        lastTask = pool.submit(new UpdateMetaConfigsTask(processor, body, lastTask) {
+          @Override
+          public String getNextDirectory() {
+            return CoordinatedWorkerImpl.this.nextDirectory;
+          }
+        });
         
-        lastTask = pool.submit(new UpdateConfigTask(null, service, properties, configManager, lastTask));
+        lastTask = pool.submit(new UpdateConfigTask(null, service, body, configManager, lastTask) {
+
+          @Override
+          public String getNextDirectory() {
+            return CoordinatedWorkerImpl.this.nextDirectory;
+          }
+        });
         
-        lastTask = pool.submit(new NotifyListenerTask(listener, properties, lastTask));
+        lastTask = pool.submit(new NotifyListenerTask(listener, body, lastTask));
         
-        lastTask = pool.submit(new CleanUpTask("com.meltmedia.cadmium.lastUpdated", listener, configProperties, properties, lastTask));
+        lastTask = pool.submit(new CleanUpTask("com.meltmedia.cadmium.lastUpdated", listener, configProperties, body, lastTask));
       } catch(Throwable t) {
         log.error("Failed to run update.", t);
         throw new Error(t);
@@ -143,24 +159,20 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void setListener(CoordinatedWorkerListener listener) {
+  public void setListener(CoordinatedWorkerListener<ContentUpdateRequest> listener) {
     this.listener = listener;
   }
 
   @Override
-  public CoordinatedWorkerListener getListener() {
+  public CoordinatedWorkerListener<ContentUpdateRequest> getListener() {
     return listener;
   }
 
   @Override
-  public void workDone(Map<String, String> properties) {
+  public void workDone(ContentUpdateRequest body) {
     log.info("Work is done");
     lifecycleService.updateMyState(UpdateState.WAITING, null, false);
-    Message doneMessage = new Message();
-    doneMessage.setCommand(ProtocolMessage.UPDATE_DONE);
-    if(properties != null) {
-      doneMessage.setProtocolParameters(properties);
-    }
+    Message<ContentUpdateRequest> doneMessage = new Message<ContentUpdateRequest>(ProtocolMessage.UPDATE_DONE, body);
     try { 
       sender.sendMessage(doneMessage, null);
     } catch (Exception e) {
@@ -169,25 +181,9 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker, CoordinatedWork
   }
 
   @Override
-  public void workFailed(String repo, String branch, String sha, String openId, String uuid) {
+  public void workFailed(ContentUpdateRequest body) {
     log.info("Work has failed");
-    Message doneMessage = new Message();
-    doneMessage.setCommand(ProtocolMessage.UPDATE_FAILED);
-    if(repo != null) {
-      doneMessage.getProtocolParameters().put("repo", repo);
-    }
-    if(branch != null) {
-      doneMessage.getProtocolParameters().put("branch", branch);
-    }
-    if(sha != null) {
-      doneMessage.getProtocolParameters().put("sha", sha);
-    }
-    if(openId != null) {
-      doneMessage.getProtocolParameters().put("openId", openId);
-    }
-    if(uuid != null) {
-      doneMessage.getProtocolParameters().put("uuid", uuid);
-    }
+    Message<ContentUpdateRequest> doneMessage = new Message<ContentUpdateRequest>(ProtocolMessage.UPDATE_FAILED, body);
     try {
       sender.sendMessage(doneMessage, null);
     } catch (Exception e) {

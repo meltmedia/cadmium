@@ -61,11 +61,10 @@ public class UndeployService extends AuthorizationService {
       domain = "";
     }
     logger.debug("Sending undeploy message with domain [{}] context [{}]", domain, contextRoot);
-    
-    Message msg = new Message();
-    msg.setCommand(UndeployCommandAction.UNDEPLOY_ACTION);
-    msg.getProtocolParameters().put("domain", domain);
-    msg.getProtocolParameters().put("context", contextRoot);
+    com.meltmedia.cadmium.deployer.UndeployRequest mRequest = new com.meltmedia.cadmium.deployer.UndeployRequest();
+    mRequest.setDomain(domain);
+    mRequest.setContext(contextRoot);
+    Message<com.meltmedia.cadmium.deployer.UndeployRequest> msg = new Message<com.meltmedia.cadmium.deployer.UndeployRequest>(UndeployCommandAction.UNDEPLOY_ACTION, mRequest);
 
     sender.sendMessage(msg, null);
     return "ok";

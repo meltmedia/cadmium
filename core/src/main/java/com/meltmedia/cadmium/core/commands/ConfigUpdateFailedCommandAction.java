@@ -32,14 +32,14 @@ import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class ConfigUpdateFailedCommandAction implements CommandAction {
+public class ConfigUpdateFailedCommandAction implements CommandAction<ContentUpdateRequest> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   public static final String FAILED_LOG_MESSAGE = "Config update failed to run!";
   
   @Inject
   @ConfigurationWorker
-  protected CoordinatedWorker worker;
+  protected CoordinatedWorker<ContentUpdateRequest> worker;
   
   @Inject
   protected LifecycleService lifecycleService;
@@ -50,37 +50,38 @@ public class ConfigUpdateFailedCommandAction implements CommandAction {
   public String getName() { return ProtocolMessage.CONFIG_UPDATE_FAILED; }
 
   @Override
-  public boolean execute(CommandContext ctx) throws Exception {
+  public boolean execute(CommandContext<ContentUpdateRequest> ctx) throws Exception {
     if(lifecycleService.getCurrentConfigState() != UpdateState.IDLE) {
       log.info("config update has failed @ {}", ctx.getSource());
       worker.killUpdate();
       lifecycleService.updateMyConfigState(UpdateState.IDLE);
       if(historyManager != null) {
-        String repo = "";
-        if(ctx.getMessage().getProtocolParameters().containsKey("repo")) {
-          repo = ctx.getMessage().getProtocolParameters().get("repo");
-        }
-        String branch = "";
-        if(ctx.getMessage().getProtocolParameters().containsKey("branch")) {
-          branch = ctx.getMessage().getProtocolParameters().get("branch");
-        }
-        String sha = "";
-        if(ctx.getMessage().getProtocolParameters().containsKey("sha")) {
-          sha = ctx.getMessage().getProtocolParameters().get("sha");
-        }
-        String openId = "";
-        if(ctx.getMessage().getProtocolParameters().containsKey("openId")) {
-          openId = ctx.getMessage().getProtocolParameters().get("openId");
-        }
-        historyManager.logEvent(EntryType.CONFIG, repo, branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
+        ContentUpdateRequest body = ctx.getMessage().getBody();
+        historyManager.logEvent(EntryType.CONFIG, 
+            emptyStringIfNull(body.getRepo()),
+            emptyStringIfNull(body.getBranchName()),
+            emptyStringIfNull(body.getSha()), 
+            emptyStringIfNull(body.getOpenId()),
+            "",
+            body.getUuid(),
+            FAILED_LOG_MESSAGE,
+            false,
+            false,
+            true,
+            true);
       }
     }
     return true;
   }
 
   @Override
-  public void handleFailure(CommandContext ctx, Exception e) {
+  public void handleFailure(CommandContext<ContentUpdateRequest> ctx, Exception e) {
 
+  }
+  
+  private static String emptyStringIfNull( final String value ) {
+    if( value == null ) return "";
+    else return value;
   }
 
 }

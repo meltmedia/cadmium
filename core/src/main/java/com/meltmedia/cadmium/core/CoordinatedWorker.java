@@ -15,11 +15,9 @@
  */
 package com.meltmedia.cadmium.core;
 
-import java.util.Map;
-
-public interface CoordinatedWorker {
-  public void beginPullUpdates(Map<String, String> properties);
+public interface CoordinatedWorker<B> {
+  public void beginPullUpdates(B body);
   public void killUpdate();
-  public void setListener(CoordinatedWorkerListener listener);
-  public CoordinatedWorkerListener getListener();
+  public void setListener(CoordinatedWorkerListener<B> listener);
+  public CoordinatedWorkerListener<B> getListener();
 }

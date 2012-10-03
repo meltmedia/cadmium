@@ -29,23 +29,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 
-public class UpdateConfigTask implements Callable<Boolean> {
+public abstract class UpdateConfigTask implements Callable<Boolean> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   private DelayedGitServiceInitializer service;
-  private Map<String, String> properties;
   private ConfigManager configManager;
   private Future<Boolean> previousTask;
   private String prefix = "";
   private String type = "content.";
+
+  private ContentUpdateRequest body;
   
-  public UpdateConfigTask(String prefix, DelayedGitServiceInitializer service, Map<String, String> properties, ConfigManager manager, Future<Boolean> previousTask) {
+  public UpdateConfigTask(String prefix, DelayedGitServiceInitializer service, ContentUpdateRequest body, ConfigManager manager, Future<Boolean> previousTask) {
     this.service = service;
-    this.properties = properties;
+    this.body = body;
     this.configManager = manager;
     this.previousTask = previousTask;
     if(!StringUtils.isEmptyOrNull(prefix)){
@@ -73,7 +75,7 @@ public class UpdateConfigTask implements Callable<Boolean> {
           }
         }
         log.info("Updating config.properties file");
-        String lastUpdatedDir = properties.get("nextDirectory");
+        String lastUpdatedDir = getNextDirectory();
         
         String baseDirectory = FileSystemManager.getParent(service.getBaseDirectory());
         
@@ -98,8 +100,8 @@ public class UpdateConfigTask implements Callable<Boolean> {
         updatedProperties.setProperty(prefix + "repo", service.getRemoteRepository());
         configProperties.setProperty(prefix + "repo", service.getRemoteRepository());
         
-        properties.put("BranchName", service.getBranchName());
-        properties.put("CurrentRevision", service.getCurrentRevision());
+        body.setBranchName(service.getBranchName());
+        body.setCurrentRevision(service.getCurrentRevision());
         
         if(configProperties.containsKey("updating."+type+"to.sha")) {
           configProperties.remove("updating."+type+"to.sha");
@@ -137,5 +139,7 @@ public class UpdateConfigTask implements Callable<Boolean> {
       this.service.releaseGitService();
     }
   }
+  
+  public abstract String getNextDirectory();
 
 }

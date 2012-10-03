@@ -15,9 +15,7 @@
  */
 package com.meltmedia.cadmium.core;
 
-import java.util.Map;
-
-public interface CoordinatedWorkerListener {
-  public void workDone(Map<String, String> properties);
-  public void workFailed(String repo, String branch, String sha, String openId, String uuid);
+public interface CoordinatedWorkerListener<B> {
+  public void workDone(B body);
+  public void workFailed(B body);
 }

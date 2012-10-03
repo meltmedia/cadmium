@@ -49,19 +49,22 @@ public class MaintenanceService extends AuthorizationService {
 	  if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-	  String comment = request.getComment();
-    Message msg = new Message();
-    log.info("state: " + request.getState());
-    log.info("comment: " + comment);
-    msg.setCommand(ProtocolMessage.MAINTENANCE);
-    BasicApiResponse cmdResponse = new BasicApiResponse();
-    if(request.getState() != null) {
-    	msg.getProtocolParameters().put("state", request.getState().name());
-    	if(comment != null && comment.trim().length() > 0) {
-      	msg.getProtocolParameters().put("comment", comment);
-      }
-    	msg.getProtocolParameters().put("openId", openId);
-    	sender.sendMessage(msg, null);
+	  log.info("Maintenance Request: state: {} comment: {}", request.getState(), request.getComment());
+	  
+	  // TODO: This should be a status based response (204) or we should give information about the maintenance state.
+	  BasicApiResponse cmdResponse = new BasicApiResponse();
+	  if(request.getState() != null) {
+  	  // NOTE: if the openId was moved into the headers, then MaintenanceRequest could be reused.
+  	  com.meltmedia.cadmium.core.commands.MaintenanceRequest mRequest = new com.meltmedia.cadmium.core.commands.MaintenanceRequest();
+  	  mRequest.setState(request.getState().name());
+  	  mRequest.setComment(request.getComment());
+  	  mRequest.setOpenId(openId);
+	  
+      Message<com.meltmedia.cadmium.core.commands.MaintenanceRequest> msg =
+        new Message<com.meltmedia.cadmium.core.commands.MaintenanceRequest>(ProtocolMessage.MAINTENANCE, mRequest);
+    
+      sender.sendMessage(msg, null);
+
     	
     	cmdResponse.setMessage("ok");
     } else {

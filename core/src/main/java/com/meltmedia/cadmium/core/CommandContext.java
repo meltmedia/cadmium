@@ -17,14 +17,13 @@ package com.meltmedia.cadmium.core;
 
 import org.jgroups.Address;
 
-import com.meltmedia.cadmium.core.messaging.JacksonMessage;
 import com.meltmedia.cadmium.core.messaging.Message;
 
 public class CommandContext<B> {
   private Address source;
-  private JacksonMessage<B> message;
+  private Message<B> message;
   
-  public CommandContext(Address source, JacksonMessage<B> message) {
+  public CommandContext(Address source, Message<B> message) {
     this.source = source;
     this.message = message;
   }
@@ -33,7 +32,7 @@ public class CommandContext<B> {
     return source;
   }
 
-  public JacksonMessage<B> getMessage() {
+  public Message<B> getMessage() {
     return message;
   }
 }

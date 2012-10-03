@@ -36,24 +36,26 @@ public class MessageReceiver implements MessageListener {
   
   @Inject
   @Named("commandMap")
-  Map<String, CommandAction> commandMap;
+  Map<String, CommandAction<?>> commandMap;
   
   @Inject
-  JacksonMessageConverter converter;
+  MessageConverter converter;
   
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   public void receive(org.jgroups.Message msg) {
-    JacksonMessage<?> message = null;
+    Message<?> message = null;
     try {
       message = converter.toCadmiumMessage(msg);
     }
     catch( Exception e ) {
       log.error("Failed to parse message.", e);
+      return;
     }
     
     CommandContext ctx = new CommandContext(msg.getSrc(), message);
     String command = message.getHeader().getCommand();
-    CommandAction action = commandMap.get(command);
+    CommandAction<?> action = commandMap.get(command);
     if( action == null ) return;
 
     try {

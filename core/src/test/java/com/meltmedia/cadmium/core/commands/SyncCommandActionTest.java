@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -62,29 +63,23 @@ public class SyncCommandActionTest {
     configProperties.setProperty("branch", "master");
     configProperties.setProperty("git.ref.sha", "good_key");
     
-    DummyMessageSender sender = new DummyMessageSender();
+    DummyMessageSender<SyncRequest, Void> sender = new DummyMessageSender<SyncRequest, Void>();
     
     SyncCommandAction cmd = new SyncCommandAction();
     cmd.configManager = configManager;   
     cmd.tracker = tracker;
     cmd.sender = sender;
     
-    CommandContext ctx = new CommandContext(new IpAddress(4321), new Message());
-    ctx.getMessage().setCommand(ProtocolMessage.SYNC);
+    SyncRequest request = new SyncRequest();
+    CommandContext<SyncRequest> ctx = new CommandContext<SyncRequest>(new IpAddress(4321), new Message<SyncRequest>(ProtocolMessage.SYNC, request));
     
     assertTrue("Command failed to execute", cmd.execute(ctx));
     
     assertTrue("Message not sent", sender.dest != null && sender.msg != null && sender.dest.getAddress() == ctx.getSource());
-    assertTrue("Message not sync", sender.msg.getCommand() == ProtocolMessage.SYNC);
-    assertTrue("Incorrent repo", sender.msg.getProtocolParameters().containsKey("repo")
-        && sender.msg.getProtocolParameters().get("repo").equals("oldRepo"));
-    
-    assertTrue("Incorrent branch", sender.msg.getProtocolParameters().containsKey("branch")
-        && sender.msg.getProtocolParameters().get("branch").equals("master"));
-
-    assertTrue("Incorrent sha", sender.msg.getProtocolParameters().containsKey("sha")
-        && sender.msg.getProtocolParameters().get("sha").equals("good_key"));
-    
+    assertTrue("Message not sync", sender.msg.getHeader().getCommand() == ProtocolMessage.SYNC);
+    assertEquals("Incorrent repo", "oldRepo", sender.msg.getBody().getRepo());
+    assertEquals("Incorrent branch", "master", sender.msg.getBody().getBranch());
+    assertEquals("Incorrect sha", "good_key", sender.msg.getBody().getSha());    
   }
 
   @Test
@@ -96,16 +91,16 @@ public class SyncCommandActionTest {
     tracker.getMembers().add(new ChannelMember(new IpAddress(4321), true, false));
     
     final DummySiteDownService maintFilter = new DummySiteDownService();
-    DummyCoordinatedWorker worker = new DummyCoordinatedWorker();
+    DummyCoordinatedWorker<ContentUpdateRequest> worker = new DummyCoordinatedWorker<ContentUpdateRequest>();
     DummyContentService fileServlet = new DummyContentService();
-    CoordinatedWorkerListener listener = new CoordinatedWorkerListener() {
+    CoordinatedWorkerListener<ContentUpdateRequest> listener = new CoordinatedWorkerListener<ContentUpdateRequest>() {
 
       @Override
-      public void workDone(Map<String, String> properties) {
+      public void workDone(ContentUpdateRequest body) {
       }
 
       @Override
-      public void workFailed(String repo, String branch, String sha, String openId, String uuid) {
+      public void workFailed(ContentUpdateRequest body) {
       }
       
     };
@@ -127,11 +122,11 @@ public class SyncCommandActionTest {
     cmd.fileServlet = fileServlet;
     cmd.processor = mock(SiteConfigProcessor.class);
     
-    CommandContext ctx = new CommandContext(new IpAddress(4321), new Message());
-    ctx.getMessage().setCommand(ProtocolMessage.SYNC);
-    ctx.getMessage().getProtocolParameters().put("repo", "newRepo");
-    ctx.getMessage().getProtocolParameters().put("branch", "master");
-    ctx.getMessage().getProtocolParameters().put("git.ref.sha", "good_key");
+    SyncRequest request = new SyncRequest();
+    request.setRepo("newRepo");
+    request.setBranch("master");
+    request.setSha("good_key");
+    CommandContext<SyncRequest> ctx = new CommandContext<SyncRequest>(new IpAddress(4321), new Message<SyncRequest>(ProtocolMessage.SYNC, request));
     
     assertTrue("Command failed to execute", cmd.execute(ctx));
     

@@ -51,15 +51,14 @@ public class DeployerService extends AuthorizationService {
 	  if(!this.isAuth(auth)) {
 	    throw new Exception("Unauthorized!");
     }
-	  String branch = req.getBranch();
-	  String repo = req.getRepo();
-    String configBranch = req.getConfigBranch();
-    String configRepo = req.getConfigRepo();
-	  String domain = req.getDomain();
+
 	  String contextRoot = req.getContextRoot();
 	  String artifact = req.getArtifact();
 	  
-	  if( StringUtils.isEmptyOrNull(branch) || StringUtils.isEmptyOrNull(configBranch) || StringUtils.isEmptyOrNull(repo) || StringUtils.isEmptyOrNull(domain) ) {
+	  if( StringUtils.isEmptyOrNull(req.getBranch()) ||
+	      StringUtils.isEmptyOrNull(req.getConfigBranch()) ||
+	      StringUtils.isEmptyOrNull(req.getRepo()) ||
+	      StringUtils.isEmptyOrNull(req.getDomain()) ) {
 	    Response.serverError();
 	    return "error";
 	  }
@@ -71,17 +70,21 @@ public class DeployerService extends AuthorizationService {
 	  if( StringUtils.isEmptyOrNull(artifact) ) {
 	    artifact = "com.meltmedia.cadmium:cadmium-war:war:" + version;
 	  }
+	  
+	  if( StringUtils.isEmptyOrNull(req.getConfigRepo() ) ) {
+	    req.setConfigRepo(req.getRepo());
+	  }
 		
-    Message msg = new Message();
-    msg.setCommand(DeployCommandAction.DEPLOY_ACTION);
-    msg.getProtocolParameters().put("branch", branch);
-    msg.getProtocolParameters().put("repo", repo);
-    msg.getProtocolParameters().put("configBranch", configBranch);
-    msg.getProtocolParameters().put("configRepo", StringUtils.isEmptyOrNull(configRepo) ? repo : configRepo);
-    msg.getProtocolParameters().put("domain", domain);
-    msg.getProtocolParameters().put("context", contextRoot);
-    msg.getProtocolParameters().put("secure", Boolean.toString(!req.isDisableSecurity()));
-    msg.getProtocolParameters().put("artifact", artifact);
+	  com.meltmedia.cadmium.deployer.DeployRequest mRequest = new com.meltmedia.cadmium.deployer.DeployRequest();
+	  mRequest.setBranch(req.getBranch());
+	  mRequest.setRepo(req.getRepo());
+	  mRequest.setConfigBranch(req.getConfigBranch());
+	  mRequest.setConfigRepo(req.getConfigRepo());
+	  mRequest.setDomain(req.getDomain());
+	  mRequest.setContext(contextRoot);
+	  mRequest.setSecure(!req.isDisableSecurity());
+	  mRequest.setArtifact(artifact);
+    Message<com.meltmedia.cadmium.deployer.DeployRequest> msg = new Message<com.meltmedia.cadmium.deployer.DeployRequest>(DeployCommandAction.DEPLOY_ACTION, mRequest);
 
     sender.sendMessage(msg, null);
     return "ok";

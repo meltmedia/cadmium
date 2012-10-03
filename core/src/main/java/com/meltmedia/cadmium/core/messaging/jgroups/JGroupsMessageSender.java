@@ -30,13 +30,17 @@ public class JGroupsMessageSender implements MessageSender {
   
   @Inject
   protected JChannel channel;
+  
+  @Inject
+  protected MessageConverter messageConverter;
 
   @Override
-  public void sendMessage(Message msg, ChannelMember dest) throws Exception {
-    if(msg != null) {
-      String msgBody = MessageConverter.serialize(msg);
-      channel.send(new org.jgroups.Message(dest != null ? dest.getAddress() : null, null, msgBody));
-    }
+  public <B> void sendMessage(Message<B> msg, ChannelMember dest) throws Exception {
+    if( msg == null ) return;
+    
+    org.jgroups.Message message = messageConverter.toJGroupsMessage(msg);
+    if( dest != null ) message.setDest(dest.getAddress());
+    channel.send(message);
   }
   
   public String getGroupName() {
@@ -45,6 +49,10 @@ public class JGroupsMessageSender implements MessageSender {
   
   public void setChannel(JChannel channel) {
     this.channel = channel;
+  }
+
+  public void setConverter(MessageConverter messageConverter) {
+    this.messageConverter = messageConverter;
   }
 
 }

@@ -15,15 +15,13 @@
  */
 package com.meltmedia.cadmium.deployer;
 
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 
-public class UndeployCommandAction implements CommandAction {
+public class UndeployCommandAction implements CommandAction<UndeployRequest> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   public static String UNDEPLOY_ACTION = "UNDEPLOY";
 
@@ -31,12 +29,12 @@ public class UndeployCommandAction implements CommandAction {
   public String getName() { return UNDEPLOY_ACTION; }
 
   @Override
-  public boolean execute(CommandContext ctx) throws Exception {
+  public boolean execute(CommandContext<UndeployRequest> ctx) throws Exception {
     log.info("Beginning Undeploy Command, started by {}", ctx.getSource());
-    Map<String,String> params = ctx.getMessage().getProtocolParameters();
+    UndeployRequest request = ctx.getMessage().getBody();
     
-    String domain = params.get("domain");
-    String contextRoot = params.get("context");
+    String domain = request.getDomain();
+    String contextRoot = request.getContext();
     log.debug("Undeploying domain {}, context {}", domain, contextRoot);
     if(domain.isEmpty() && contextRoot.isEmpty()) {
       log.info("Invalid undeployment request!");
@@ -49,7 +47,7 @@ public class UndeployCommandAction implements CommandAction {
   }
 
   @Override
-  public void handleFailure(CommandContext ctx, Exception e) {
+  public void handleFailure(CommandContext<UndeployRequest> ctx, Exception e) {
     e.printStackTrace();
   }
 
