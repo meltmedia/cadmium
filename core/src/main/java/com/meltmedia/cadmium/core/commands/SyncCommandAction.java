@@ -238,10 +238,7 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
     if(!StringUtils.isEmptyOrNull(request.getRepo()) &&
        !StringUtils.isEmptyOrNull(request.getBranch()) &&
        !StringUtils.isEmptyOrNull(request.getSha())) {
-      log.info("Sync Content Request has repo {} and branch {} and sha {}", new Object[] {
-          request.getRepo(),
-          request.getBranch(),
-          request.getSha()});
+      log.info("Sync Content Request {}", request);
       if(configProperties.containsKey("repo") &&
          configProperties.containsKey("branch") && 
          configProperties.containsKey("git.ref.sha")) {
@@ -265,10 +262,7 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
     if(!StringUtils.isEmptyOrNull(request.getConfigRepo()) &&
         !StringUtils.isEmptyOrNull(request.getConfigBranch()) &&
         !StringUtils.isEmptyOrNull(request.getConfigSha())) {
-      log.info("Sync Config Request has repo {} and branch {} and sha {}", new Object[] {
-          request.getConfigRepo(),
-          request.getConfigBranch(),
-          request.getConfigSha()});
+      log.info("Sync Config Request has {}", request);
       if(configProperties.containsKey("config.repo") && 
           configProperties.containsKey("config.branch") && 
           configProperties.containsKey("config.git.ref.sha")) {

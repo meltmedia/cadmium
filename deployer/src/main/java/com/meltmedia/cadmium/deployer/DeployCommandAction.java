@@ -52,23 +52,11 @@ public class DeployCommandAction implements CommandAction<DeployRequest> {
         StringUtils.isEmptyOrNull(request.getRepo()) || 
         StringUtils.isEmptyOrNull(request.getConfigBranch()) || 
         StringUtils.isEmptyOrNull(request.getContext())) {
-      log.warn("Invalid deploy request: Empty field. branch: {}, repo {}, config branch: {}, config repo {}, domain {}, context {}",
-          new String[]{request.getBranch(),
-          request.getRepo(),
-          request.getConfigBranch(),
-          request.getConfigRepo(),
-          request.getDomain(),
-          request.getContext()});
+      log.warn("Invalid deploy request: Empty field. {}", request);
       throw new Exception("Invalid deploy message.");
     }
     
-    log.info("Beginning war creation. branch: {}, repo {}, config branch: {}, config repo {}, domain {}, context {}",
-        new String[]{request.getBranch(),
-        request.getRepo(),
-        request.getConfigBranch(),
-        request.getConfigRepo(),
-        request.getDomain(),
-        request.getContext()});
+    log.info("Beginning war creation. {}", request);
 
     JBossUtil.addVirtualHost(request.getDomain(), log);    
     
