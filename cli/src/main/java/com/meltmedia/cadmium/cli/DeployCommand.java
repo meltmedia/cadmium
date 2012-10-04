@@ -29,6 +29,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,12 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	
 	@Parameter(names="--branch", description="The branch from which cadmium will serve content initially", required=false)
 	private String branch;
+  
+  @Parameter(names={"--configuration-branch", "-C"}, description="The branch from which cadmium will load configuration from initially", required=false)
+  private String configBranch;
+  
+  @Parameter(names="--configuration-repo", description="The git repository uri to load the configuration from. If not specified the configuration will load from the same repo as content.", required=false)
+  private String configRepo;
   
   @Parameter(names="--artifact", description="The maven coordinates to a cadmium war.", required=false)
   private String artifact;
@@ -90,7 +97,9 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 			
 			DeployRequest req = new DeployRequest();
 			req.setBranch(branch);
+      req.setConfigBranch(configBranch);
 			req.setRepo(repo);
+      req.setConfigRepo(StringUtils.isEmptyOrNull(configRepo) ? repo : configRepo);
 			req.setDomain(domain);
 			req.setArtifact(artifact);
 		  

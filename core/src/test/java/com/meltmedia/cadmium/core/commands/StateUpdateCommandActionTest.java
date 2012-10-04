@@ -51,9 +51,9 @@ public class StateUpdateCommandActionTest {
     sender.setChannel(channel);
     
     List<ChannelMember> members = new ArrayList<ChannelMember>();
-    members.add(new ChannelMember(new IpAddress(4322), true, false, UpdateState.WAITING));
-    members.add(new ChannelMember(new IpAddress(1234), false, true, UpdateState.IDLE));
-    members.add(new ChannelMember(new IpAddress(4321), false, false, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(4322), true, false, UpdateState.WAITING, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(1234), false, true, UpdateState.IDLE, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(4321), false, false, UpdateState.IDLE, UpdateState.IDLE));
     
     LifecycleService service = new LifecycleService();
     service.setMembers(members);
@@ -87,9 +87,9 @@ public class StateUpdateCommandActionTest {
     sender.setChannel(channel);
     
     List<ChannelMember> members = new ArrayList<ChannelMember>();
-    members.add(new ChannelMember(new IpAddress(4322), true, false, UpdateState.WAITING));
-    members.add(new ChannelMember(new IpAddress(1234), false, true, UpdateState.WAITING));
-    members.add(new ChannelMember(new IpAddress(4321), false, false, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(4322), true, false, UpdateState.WAITING, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(1234), false, true, UpdateState.WAITING, UpdateState.IDLE));
+    members.add(new ChannelMember(new IpAddress(4321), false, false, UpdateState.IDLE, UpdateState.IDLE));
     
     LifecycleService service = new LifecycleService();
     service.setMembers(members);

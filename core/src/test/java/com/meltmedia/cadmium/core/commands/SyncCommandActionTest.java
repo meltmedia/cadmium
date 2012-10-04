@@ -32,6 +32,8 @@ import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.DummyMessageSender;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
+
 import static org.mockito.Mockito.*;
 
 public class SyncCommandActionTest {  
@@ -123,6 +125,7 @@ public class SyncCommandActionTest {
     cmd.maintFilter = maintFilter;
     cmd.worker = worker;
     cmd.fileServlet = fileServlet;
+    cmd.processor = mock(SiteConfigProcessor.class);
     
     CommandContext ctx = new CommandContext(new IpAddress(4321), new Message());
     ctx.getMessage().setCommand(ProtocolMessage.SYNC);

@@ -32,6 +32,8 @@ import org.jgroups.View;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.ConfigurationGitService;
+import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 
@@ -48,15 +50,17 @@ public class MembershipTracker implements MembershipListener {
   protected ConfigManager configManager;
   
   protected DelayedGitServiceInitializer gitService;
+  protected DelayedGitServiceInitializer configGitService;
   private Timer timer = new Timer();
   
   @Inject
-  public MembershipTracker(MessageSender sender, JChannel channel, @Named("members") List<ChannelMember> members, ConfigManager configManager, DelayedGitServiceInitializer gitService) {
+  public MembershipTracker(MessageSender sender, JChannel channel, @Named("members") List<ChannelMember> members, ConfigManager configManager, @ContentGitService DelayedGitServiceInitializer gitService, @ConfigurationGitService DelayedGitServiceInitializer configGitService) {
     this.sender = sender;
     this.channel = channel;
     this.members = members;
     this.configManager = configManager;
     this.gitService = gitService;
+    this.configGitService = configGitService;
     
     if(this.channel != null) {
       viewAccepted(this.channel.getView());
@@ -107,9 +111,16 @@ public class MembershipTracker implements MembershipListener {
           log.debug("I'm not the coordinator!!!");
           if(gitService != null) {
             try {
-              log.debug("Wainting for git service to initialize.");
+              log.debug("Waiting for content git service to initialize.");
               gitService.getGitService();
               gitService.releaseGitService();
+            } catch(Throwable t){}
+          }
+          if(configGitService != null) {
+            try {
+              log.debug("Waiting for config git service to initialize.");
+              configGitService.getGitService();
+              configGitService.releaseGitService();
             } catch(Throwable t){}
           }
           Properties configProperties = configManager.getDefaultProperties();
@@ -120,7 +131,13 @@ public class MembershipTracker implements MembershipListener {
             syncMessage.getProtocolParameters().put("repo", configProperties.getProperty("repo"));
             syncMessage.getProtocolParameters().put("branch", configProperties.getProperty("branch"));
             syncMessage.getProtocolParameters().put("sha", configProperties.getProperty("git.ref.sha"));
-            log.info("I have repo:{}, branch:{}, and sha:{}", new Object[] { configProperties.getProperty("repo"), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
+            log.info("I have repo:{}, branch:{}, and sha:{} for content", new Object[] { configProperties.getProperty("repo"), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
+          }
+          if(configProperties.containsKey("config.repo") && configProperties.containsKey("config.branch") && configProperties.containsKey("config.git.ref.sha")) {
+            syncMessage.getProtocolParameters().put("configRepo", configProperties.getProperty("config.repo"));
+            syncMessage.getProtocolParameters().put("configBranch", configProperties.getProperty("config.branch"));
+            syncMessage.getProtocolParameters().put("configSha", configProperties.getProperty("config.git.ref.sha"));
+            log.info("I have repo:{}, branch:{}, and sha:{} for configuration", new Object[] { configProperties.getProperty("config.repo"), configProperties.getProperty("config.branch"), configProperties.getProperty("config.git.ref.sha")});
           }
           try{
             sender.sendMessage(syncMessage, coordinator);
