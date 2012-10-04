@@ -141,6 +141,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   public static final String JGROUPS_CHANNEL_CONFIG_URL = "com.meltmedia.cadmium.jgroups.channel.config";
   public static final String SSL_HEADER = "REQUEST_IS_SSL";
   public static final String LOG_DIR_INIT_PARAM = "log-directory";
+  public static final String JBOSS_LOG_DIR = "jboss.server.log.dir";
   public File sharedContentRoot;
   public File applicationContentRoot;
   private String repoDir = "git-checkout";
@@ -483,7 +484,11 @@ public class CadmiumListener extends GuiceServletContextListener {
    */
   public void configureLogback( ServletContext servletContext, File logDirFallback ) throws FileNotFoundException, MalformedURLException, IOException {
     log.debug("Reconfiguring Logback!");
-    File logDir = FileSystemManager.getWritableDirectoryWithFailovers(servletContext.getInitParameter(LOG_DIR_INIT_PARAM), logDirFallback.getAbsolutePath());
+    String systemLogDir = System.getProperty(JBOSS_LOG_DIR);
+    if (systemLogDir != null) {
+    	systemLogDir += "/" + getVHostName(servletContext);
+    }
+    File logDir = FileSystemManager.getWritableDirectoryWithFailovers(systemLogDir,servletContext.getInitParameter(LOG_DIR_INIT_PARAM), logDirFallback.getAbsolutePath());
     if(logDir != null) {
       log.debug("Resetting logback context.");
       URL configFile = servletContext.getResource("/WEB-INF/context-logback.xml");
