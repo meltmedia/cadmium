@@ -1,6 +1,6 @@
 package com.meltmedia.cadmium.core.commands;
 
-public class HistoryRequest {
+public class HistoryRequest extends AbstractMessageBody {
 
   private Integer limit;
   private boolean filter;

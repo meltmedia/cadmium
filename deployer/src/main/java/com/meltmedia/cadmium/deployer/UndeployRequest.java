@@ -1,6 +1,8 @@
 package com.meltmedia.cadmium.deployer;
 
-public class UndeployRequest {
+import com.meltmedia.cadmium.core.commands.AbstractMessageBody;
+
+public class UndeployRequest extends AbstractMessageBody {
 
   private String domain;
   private String context;

@@ -1,6 +1,8 @@
 package com.meltmedia.cadmium.deployer;
 
-public class DeployRequest {
+import com.meltmedia.cadmium.core.commands.AbstractMessageBody;
+
+public class DeployRequest extends AbstractMessageBody {
   protected String domain;
   protected String branch;
   protected String repo;

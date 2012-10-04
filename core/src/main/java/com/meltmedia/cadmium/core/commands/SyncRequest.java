@@ -1,6 +1,6 @@
 package com.meltmedia.cadmium.core.commands;
 
-public class SyncRequest {
+public class SyncRequest extends AbstractMessageBody {
   protected String repo;
   protected String branch;
   protected String sha;

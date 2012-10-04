@@ -31,7 +31,6 @@ import org.jgroups.stack.IpAddress;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.commands.SyncRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.messaging.jgroups.DummyJChannel;

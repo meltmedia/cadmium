@@ -9,7 +9,7 @@ import java.util.Date;
  * @author Christian Trimble
  *
  */
-public class ContentUpdateRequest {
+public class ContentUpdateRequest extends AbstractMessageBody {
   
   protected String repo;
   protected String branchName;

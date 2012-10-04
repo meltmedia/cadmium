@@ -1,6 +1,6 @@
 package com.meltmedia.cadmium.core.commands;
 
-public class MaintenanceRequest {
+public class MaintenanceRequest extends AbstractMessageBody {
 
   protected String state;
   protected String comment;

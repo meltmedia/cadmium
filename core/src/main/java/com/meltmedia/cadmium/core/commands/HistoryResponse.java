@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 
-public class HistoryResponse {
+public class HistoryResponse extends AbstractMessageBody {
 
   private List<HistoryEntry> history;
 
