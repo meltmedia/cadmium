@@ -54,7 +54,8 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     public boolean accept(File pathname) {
       return pathname.isFile() 
           && pathname.getPath().toLowerCase().matches(".*\\.htm[l]?\\Z") 
-          && !pathname.getName().toLowerCase().matches("^((\\d{3})|(\\d{2}[x])|(\\d[x]{2}))\\.htm[l]?$");
+          && !pathname.getName().toLowerCase().matches("^((\\d{3})|(\\d{2}[x])|(\\d[x]{2}))\\.htm[l]?$")
+          && !pathname.getName().toLowerCase().matches(".*\\search/index.htm[l]?\\Z"); 
     }
   };
   
