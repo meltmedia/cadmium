@@ -42,6 +42,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Version;
 
+import jodd.lagarto.dom.Node;
 import jodd.lagarto.dom.jerry.Jerry;
 
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
@@ -54,8 +55,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     public boolean accept(File pathname) {
       return pathname.isFile() 
           && pathname.getPath().toLowerCase().matches(".*\\.htm[l]?\\Z") 
-          && !pathname.getName().toLowerCase().matches("^((\\d{3})|(\\d{2}[x])|(\\d[x]{2}))\\.htm[l]?$")
-          && !pathname.getName().toLowerCase().matches(".*\\search/index.htm[l]?\\Z"); 
+          && !pathname.getName().toLowerCase().matches("^((\\d{3})|(\\d{2}[x])|(\\d[x]{2}))\\.htm[l]?$");
     }
   };
   
@@ -171,12 +171,26 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
         Jerry jerry = Jerry.jerry(FileUtils.readFileToString(file, "UTF-8"));
         String title = jerry.$("html > head > title").text();
         String textContent = jerry.$("html > body").text();
-
-        Document doc = new Document();
-        doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
-        doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
-        doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.NOT_ANALYZED));
-        indexWriter.addDocument(doc);
+        boolean skip = false;
+        Jerry metaTags = jerry.$("html > head > meta");
+        if(metaTags.get().length > 0) {
+        	for(Node $this : metaTags.get()){
+							if($this.hasAttribute("name") && "robots".equals($this.getAttribute("name").toLowerCase()) && $this.getAttribute("content") != null) {
+								String contentValue = $this.getAttribute("content");
+								if(contentValue == null || contentValue.toLowerCase().contains("noindex")) {
+									skip = true;
+									break;
+								}
+							}
+        	}
+        }
+        if(!skip) {
+	        Document doc = new Document();
+	        doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
+	        doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
+	        doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.NOT_ANALYZED));
+	        indexWriter.addDocument(doc);
+        }
       }
     }.scan(contentDir); 
     
