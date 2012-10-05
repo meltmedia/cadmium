@@ -42,6 +42,11 @@
     <dependencies>
       <dependency>
         <groupId>com.meltmedia.cadmium</groupId>
+        <artifactId>cadmium-persistence</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.meltmedia.cadmium</groupId>
         <artifactId>cadmium-servlets</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -181,6 +186,12 @@
 
       <dependency>
         <groupId>com.google.inject.extensions</groupId>
+        <artifactId>guice-persist</artifactId>
+        <version>3.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-grapher</artifactId>
         <version>3.0</version>
       </dependency>
@@ -315,6 +326,18 @@
         <artifactId>snakeyaml</artifactId>
         <version>1.10</version>
       </dependency>
+    
+      <dependency>
+        <groupId>org.apache.velocity</groupId>
+        <artifactId>velocity</artifactId>
+        <version>1.6-beta1</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-entitymanager</artifactId>
+        <version>${hibernateVersion}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -322,11 +345,12 @@
     <module>core</module>
     <module>servlets</module>
     <module>cli</module>
-    <module>war</module>
     <module>maven</module>
     <module>deployer</module>
     <module>email</module>
     <module>search</module>
+    <module>persistence</module>
+    <module>war</module>
   </modules>
 
   <properties>
@@ -336,6 +360,7 @@
     <aetherVersion>1.13.1</aetherVersion>
     <mavenVersion>3.0.3</mavenVersion>
     <wagonVersion>1.0</wagonVersion>
+    <hibernateVersion>4.1.7.Final</hibernateVersion>
   </properties>
 
   <build>

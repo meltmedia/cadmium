@@ -33,6 +33,10 @@
   <dependencies>
     <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
+      <artifactId>cadmium-persistence</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.meltmedia.cadmium</groupId>
       <artifactId>cadmium-servlets</artifactId>
     </dependency>
     <dependency>
