@@ -89,6 +89,7 @@ import com.meltmedia.cadmium.core.SiteDownService;
 import com.meltmedia.cadmium.core.commands.CommandBodyMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
@@ -355,7 +356,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         }).annotatedWith(Names.named("members")).toInstance(members);
         
         @SuppressWarnings("rawtypes")
-        Multibinder<CommandAction> commandActionBinder = Multibinder.newSetBinder(binder(), CommandAction.class);
+        Multibinder<CommandAction<?>> commandActionBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<CommandAction<?>>(){});
         
         @SuppressWarnings("rawtypes")
         Set<Class<? extends CommandAction>> commandActionSet = 
@@ -363,7 +364,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         log.debug("Found {} CommandAction classes.", commandActionSet.size());
         
         for( @SuppressWarnings("rawtypes") Class<? extends CommandAction> commandActionClass : commandActionSet ) {
-          commandActionBinder.addBinding().to(commandActionClass);
+          commandActionBinder.addBinding().to((Class<? extends CommandAction<?>>)commandActionClass);
         }
 
         bind(CommandResponse.class)
@@ -411,8 +412,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(MessageListener.class).to(MessageReceiver.class);
 
         bind(LifecycleService.class);
-        bind(CoordinatedWorker.class).annotatedWith(ContentWorker.class).to(CoordinatedWorkerImpl.class);
-        bind(CoordinatedWorker.class).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
+        bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ContentWorker.class).to(CoordinatedWorkerImpl.class);
+        bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
         
         bind(SiteConfigProcessor.class);
         
