@@ -42,6 +42,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Version;
 
+import jodd.lagarto.dom.Node;
 import jodd.lagarto.dom.jerry.Jerry;
 
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
@@ -168,14 +169,19 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
       @Override
       public void handleFile(File file) throws Exception {
         Jerry jerry = Jerry.jerry(FileUtils.readFileToString(file, "UTF-8"));
+        
+        // if we should not index this file, move on.
+        if(!shouldIndex(jerry)) return;
+        
         String title = jerry.$("html > head > title").text();
         String textContent = jerry.$("html > body").text();
 
-        Document doc = new Document();
-        doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
-        doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
-        doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.NOT_ANALYZED));
-        indexWriter.addDocument(doc);
+	      Document doc = new Document();
+	      doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
+	      doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
+	      doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.NOT_ANALYZED));
+	      indexWriter.addDocument(doc);
+
       }
     }.scan(contentDir); 
     
@@ -246,6 +252,28 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   @Override
   public void close() throws IOException {
     finalize();
+  }
+  
+  /**
+   * Returns true if an html file should be indexed, false otherwise.  Currently, this only tests for the existance of a robots meta tag with a
+   * content value containing "noindex".
+   * 
+   * @param jerry the Jerry context for the html page to test.
+   * @return
+   */
+  private static boolean shouldIndex(Jerry jerry) {
+    Jerry metaTags = jerry.$("html > head > meta");
+    if(metaTags.get().length > 0) {
+      for(Node $this : metaTags.get()){
+          if($this.hasAttribute("name") && "robots".equals($this.getAttribute("name").toLowerCase()) && $this.getAttribute("content") != null) {
+            String contentValue = $this.getAttribute("content");
+            if(contentValue == null || contentValue.toLowerCase().contains("noindex")) {
+              return false;
+            }
+          }
+      }
+    }
+    return true;
   }
 
 }
