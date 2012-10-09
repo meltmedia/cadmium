@@ -131,11 +131,6 @@
         <artifactId>commons-lang3</artifactId>
         <version>3.1</version>
       </dependency>
-      <dependency>
-        <groupId>org.hibernate</groupId>
-        <artifactId>hibernate-validator</artifactId>
-        <version>4.3.0.Final</version>
-      </dependency>
 
       <dependency>
         <groupId>org.jgroups</groupId>
@@ -218,11 +213,6 @@
         <artifactId>jboss-vfs</artifactId>
         <version>2.1.0.GA</version>
         <scope>provided</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.jgrapht</groupId>
-       <artifactId>jgrapht-jdk1.5</artifactId>
-       <version>0.7.3</version>
      </dependency>
 
       <dependency>
