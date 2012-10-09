@@ -1,3 +1,18 @@
+/**
+ *    Copyright 2012 meltmedia
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package com.meltmedia.cadmium.persistence;
 
 import java.io.Closeable;
@@ -24,75 +39,6 @@ import com.meltmedia.cadmium.core.config.ConfigurationListener;
 public class PersistenceConfigurationListener implements
     ConfigurationListener<PersistenceConfiguration>, Closeable {
   private static final Logger log = LoggerFactory.getLogger(PersistenceConfigurationListener.class);
-  
-  /*public PersistenceConfigurationListener() {
-    try {
-      PersistenceConfigurationListener.init(Collections.list(Thread.currentThread().getContextClassLoader().getResources("/")));
-    } catch(IOException e) {
-      throw new RuntimeException(e);
-    }
-  }*/
-  
-  /*
-   * Creates the persistence xml dynamically in order to work around jpa not 
-   * having a way to dynamically add entities on the fly.
-   *
-  public static void init(Collection<URL> metaDirUrls) throws IOException {
-    log.info("Started initializing persistence xml.");
-    VelocityEngine engine = new VelocityEngine();
-    VelocityContext context = new VelocityContext();
-    
-    try {
-      engine.init();
-    } catch (Exception e) {
-      log.error("Failed to initialize jpa persistence xml dynamically.", e);
-      throw new RuntimeException("Failed to initialize jpa persistence xml dynamically.", e);
-    }
-    
-    Reflections reflections = new Reflections("com.meltmedia.cadmium");
-    Set<Class<?>> entities = reflections.getTypesAnnotatedWith(Entity.class);
-    if(entities != null) {
-      
-      context.put("entityList", entities);
-    } else {
-      context.put("entityList", new HashSet<Class<?>>());
-    }
-
-    boolean foundOne = false;
-    try {
-      String template = IOUtils.toString(Thread.currentThread().getContextClassLoader().getResourceAsStream("persistence.xml.template"));
-      StringWriter writer = new StringWriter();
-      
-      engine.evaluate(context, writer, "persistence.xml", template);
-      File metaDirToUse = null;
-      for(URL metaDirUrl : metaDirUrls) {
-        File metaDir = null;
-        log.debug("Checking Classpath URL: {}", metaDirUrl);
-        if (metaDirUrl.getProtocol().equals("file")) {
-          metaDir = new File(metaDirUrl.getFile());
-        } else if (metaDirUrl.getProtocol().startsWith("vfs")) {
-          metaDir = new File(new JBossVfsUrlType().createDir(metaDirUrl).getPath());
-        }
-        
-        if(metaDir != null && metaDir.canWrite() && metaDir.getName().endsWith("classes")) {
-          metaDirToUse = new File(metaDir, "META-INF");
-        }
-      }
-
-      if(metaDirToUse != null && (metaDirToUse.canWrite() || (!metaDirToUse.exists() && metaDirToUse.mkdirs() && metaDirToUse.canWrite()))) {
-        File persistenceXmlFile = new File(metaDirToUse, "persistence.xml");
-        log.debug("Writing a new peristence.xml file to {}", metaDirToUse.getAbsoluteFile().getAbsolutePath());
-        FileUtils.write(persistenceXmlFile, writer.toString(), false);
-        foundOne = true;
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to create jpa persistence.xml file dynamically.", e);
-    }
-    if(!foundOne) {
-      throw new IOException("Failed to dynamically create a persistence.xml on the classpath.");
-    }
-    log.info("Done initializing persistence xml.");
-  }*/
   
   @CadmiumJpaProperties
   protected Properties jpaOverrideProperties;
@@ -138,7 +84,6 @@ public class PersistenceConfigurationListener implements
         jpaOverrideProperties.clear();
         jpaOverrideProperties.putAll(oldJpaProperties);
         jpaService.start();
-        //throw new Error(t);
       }
     }
   }

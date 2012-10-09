@@ -15,17 +15,38 @@
  */
 package com.meltmedia.cadmium.persistence;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
 
-import com.google.inject.BindingAnnotation;
+import com.google.inject.persist.Transactional;
 
 /**
- * Annotation to internally bind the jpa override properties object.
+ * JPA Entity DAO used for junit test cases.
  * 
  * @author John McEntire
  *
  */
-@Retention(RetentionPolicy.RUNTIME)
-@BindingAnnotation
-@interface CadmiumJpaProperties {}
+public class TestEntityDAO {
+  
+  @Inject
+  protected EntityManager em = null;
+  
+  @Transactional
+  public void persistEntity(TestEntity entity) {
+    em.persist(entity);
+  }
+
+  @Transactional
+  public void updateEntity(TestEntity entity) {
+    em.persist(em.merge(entity));
+  }
+
+  @Transactional
+  public void deleteEntity(TestEntity entity) {
+    em.remove(em.merge(entity));
+  }
+
+  public TestEntity get(Long id) {
+    return em.find(TestEntity.class, id);  
+  }
+}
