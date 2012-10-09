@@ -77,6 +77,22 @@ public class DelayedGitServiceInitializer implements Closeable {
   }
   
   /**
+   * <p>Retrieves the common reference to a GitService without blocking.</p>
+   * <p>If the reference has not been set yet, any calling threads will not block. This will aquire a read lock on the git service.</p>
+   * 
+   * @return The common reference to {@link GitService}.
+   * @throws Exception Thrown if the GitService is not initialized.
+   */
+  public GitService getGitServiceNoBlock() throws Exception {
+    if(git == null) {
+      throw new IllegalStateException("The git service is not yet initialized.");
+    }
+    logger.debug("Getting git service.");
+    readLock.lock();
+    return git;
+  }
+  
+  /**
    * <p>Switches the current reference to point to a new remote git repository.</p>
    * <p>This method will block if the common reference has not been set or there are any threads currently using the referenced git service.</p>
    * 

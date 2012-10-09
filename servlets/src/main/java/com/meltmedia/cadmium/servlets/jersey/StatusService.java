@@ -153,31 +153,49 @@ public class StatusService extends AuthorizationService {
 	
 	  GitService git = null;
     try {
-      git = gitService.getGitService();
+      git = gitService.getGitServiceNoBlock();
       rev = git.getCurrentRevision();
       branch = git.getBranchName();
       repo = git.getRemoteRepository();
+    } catch(IllegalStateException e) {
+      logger.debug("Content git service is not yet set: " + e.getMessage());
     } finally {
-      gitService.releaseGitService();
+      try {
+        gitService.releaseGitService();
+      } catch(IllegalMonitorStateException e) {
+        logger.debug("Released unattained read lock.");
+      }
     }
 			
 		// Get cadmium project info (branch, repo and revision)
 		rev = configProperties.getProperty("git.ref.sha", rev);
-		branch = configProperties.getProperty("branch", branch);
+		branch = configProperties.getProperty("branch", 
+		    branch == null ? configProperties.getProperty("com.meltmedia.cadmium.branch") : branch);
+		repo = configProperties.getProperty("repo", 
+		    repo == null ? configProperties.getProperty("com.meltmedia.cadmium.git.uri") : repo);
 		
 		git = null;
     try {
-      git = configGitService.getGitService();
+      git = configGitService.getGitServiceNoBlock();
       configRev = git.getCurrentRevision();
       configBranch = git.getBranchName();
       configRepo = git.getRemoteRepository();
+    } catch(IllegalStateException e) {
+      logger.debug("Config git service is not yet set: " + e.getMessage());
     } finally {
-      configGitService.releaseGitService();
+      try {
+        configGitService.releaseGitService();
+      } catch(IllegalMonitorStateException e) {
+        logger.debug("Released unattained read lock.");
+      }
     }
       
     // Get cadmium project info (branch, repo and revision)
     configRev = configProperties.getProperty("config.git.ref.sha", configRev);
-    configBranch = configProperties.getProperty("config.branch", configBranch);
+    configBranch = configProperties.getProperty("config.branch", 
+        configBranch == null ? configProperties.getProperty("com.meltmedia.cadmium.config.branch") : configBranch);
+    configRepo = configProperties.getProperty("config.repo", 
+        configRepo == null ? configProperties.getProperty("com.meltmedia.cadmium.config.git.uri", repo) : configRepo);
 	
 		// Get source project info (branch, repo and revision)
 		String sourceFile = contentDir + File.separator + "META-INF" + File.separator + "source";
