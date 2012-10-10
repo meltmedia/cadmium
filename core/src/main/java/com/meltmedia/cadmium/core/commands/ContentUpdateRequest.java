@@ -18,8 +18,6 @@ package com.meltmedia.cadmium.core.commands;
 import java.util.Date;
 
 /**
- * Questions:
- *   1) The old code uses both the key 'CurrentRevision' and 'sha'.  What is the difference?
  *   
  * @author Christian Trimble
  *

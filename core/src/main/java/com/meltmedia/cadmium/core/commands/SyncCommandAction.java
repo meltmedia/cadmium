@@ -304,6 +304,12 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
         StringUtils.isEmptyOrNull(location.getRevision()));
   }
   
+  /**
+   * Returns true if the git location is not null and all of its components are not empty or null.
+   * 
+   * @param location the location to test.
+   * @return true if the location is not null and all of its components are not empty or null, false otherwise.
+   */
   private static boolean isComplete( GitLocation location ) {
     return location != null &&
         !StringUtils.isEmptyOrNull(location.getRepository()) &&

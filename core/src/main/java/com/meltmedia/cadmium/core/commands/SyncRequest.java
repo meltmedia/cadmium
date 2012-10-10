@@ -18,13 +18,7 @@ package com.meltmedia.cadmium.core.commands;
 public class SyncRequest extends AbstractMessageBody {
   protected GitLocation contentLocation;
   protected GitLocation configLocation;
-  protected String repo;
 
-  protected String branch;
-  protected String sha;
-  protected String configRepo;
-  protected String configBranch;
-  protected String configSha;
   private String comment;
   public void setComment(String comment) {
     this.comment = comment;

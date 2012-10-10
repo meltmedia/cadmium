@@ -29,9 +29,13 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
+/**
+ * Converts message between JGroups and cadmium commands.
+ * 
+ * @author Christian Trimble
+ * @author John McEntire
+ */
 public class MessageConverter {
-
-
   private static ObjectMapper mapper = new ObjectMapper();
   static {
     // this drops null fields from the messages.  Inclusion.NON_DEFAULT may be better.
@@ -51,6 +55,13 @@ public class MessageConverter {
     this.commandToBodyMapping = commandToBodyMapping;
   }
   
+  /**
+   * Serialized the cadmium message object into JSON and returns it as a JGroups message.
+   * 
+   * @param cMessage the cadmium message to convert.
+   * @return The JGroups message containing the JSON string of the cadmium message.
+   * @throws IOException if there is a problem serializing the message.
+   */
   public org.jgroups.Message toJGroupsMessage(Message<?> cMessage) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     JsonGenerator generator = factory.createJsonGenerator(out);
@@ -67,6 +78,13 @@ public class MessageConverter {
     return jgMessage;
   }
   
+  /**
+   * Deserializes the JSON content of a JGroups message into a cadmium message.
+   * @param jgMessage the JGroups message containing the JSON to deserialize.
+   * @return the deserialized cadmium message.
+   * @throws JsonProcessingException if the JSON was malformed.
+   * @throws IOException if an IO problem is encountered.
+   */
   public <B> Message<B> toCadmiumMessage(org.jgroups.Message jgMessage) throws JsonProcessingException, IOException {
     JsonParser parser = factory.createJsonParser(jgMessage.getBuffer());
     parser.nextToken(); // parse the start token for the document.
@@ -93,6 +111,13 @@ public class MessageConverter {
     return cMessage;
   }
   
+  /**
+   * Looks up the body type for a message based on the command in the specified header object.
+   * 
+   * @param header the header object for the message.
+   * @return the type of the body message.
+   * @throws IOException if there is a problem looking up the class.
+   */
   private Class<?> lookupBodyClass(Header header) throws IOException {
     if( header == null ) throw new IOException("Could not deserialize message body: no header.");
     if( header.getCommand() == null ) throw new IOException("Could not deserialize message body: no command declared.");
