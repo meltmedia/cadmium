@@ -33,6 +33,7 @@ import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.api.BasicApiResponse;
 import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -81,9 +82,7 @@ public class UpdateService extends AuthorizationService {
     
     // NOTE: if the headers had the openId and UUID, then we could reuse the request from the client.
     ContentUpdateRequest body = new ContentUpdateRequest();
-    body.setRepo(emptyStringIfNull(req.getRepo()));
-    body.setBranchName(emptyStringIfNull(req.getBranch()));
-    body.setSha(emptyStringIfNull(req.getSha()));
+    body.setContentLocation(new GitLocation(emptyStringIfNull(req.getRepo()), emptyStringIfNull(req.getBranch()), emptyStringIfNull(req.getSha())));
     body.setComment(req.getComment());
     body.setOpenId(openId);
     body.setUuid(resp.getUuid());

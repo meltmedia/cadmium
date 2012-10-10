@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ConfigurationGitService;
 import com.meltmedia.cadmium.core.ContentGitService;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.commands.SyncRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
@@ -127,15 +128,17 @@ public class MembershipTracker implements MembershipListener {
           Properties configProperties = configManager.getDefaultProperties();
           SyncRequest request = new SyncRequest();
           if(configProperties.containsKey("repo") && configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
-            request.setRepo(configProperties.getProperty("repo"));
-            request.setBranch(configProperties.getProperty("branch"));
-            request.setSha(configProperties.getProperty("git.ref.sha"));
+            request.setContentLocation(new GitLocation(
+              configProperties.getProperty("repo"),
+              configProperties.getProperty("branch"),
+              configProperties.getProperty("git.ref.sha")));
             log.info("I have repo:{}, branch:{}, and sha:{} for content", new Object[] { configProperties.getProperty("repo"), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
           }
           if(configProperties.containsKey("config.repo") && configProperties.containsKey("config.branch") && configProperties.containsKey("config.git.ref.sha")) {
-            request.setConfigRepo(configProperties.getProperty("config.repo"));
-            request.setConfigBranch(configProperties.getProperty("config.branch"));
-            request.setConfigSha(configProperties.getProperty("config.git.ref.sha"));
+            request.setConfigLocation(new GitLocation(
+              configProperties.getProperty("config.repo"),
+              configProperties.getProperty("config.branch"),
+              configProperties.getProperty("config.git.ref.sha")));
             log.info("I have repo:{}, branch:{}, and sha:{} for configuration", new Object[] { configProperties.getProperty("config.repo"), configProperties.getProperty("config.branch"), configProperties.getProperty("config.git.ref.sha")});
           }
           Message<SyncRequest> syncMessage = new Message<SyncRequest>(ProtocolMessage.SYNC, request);

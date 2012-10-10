@@ -106,18 +106,8 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
 
   private void handleCommandAsNonCoordinator(final CommandContext<SyncRequest> ctx) {
     log.info("Received SYNC request from coordinator");
-    boolean update = false;
-    boolean updateConfig = false;
-    if(!StringUtils.isEmptyOrNull(ctx.getMessage().getBody().getRepo()) ||
-       !StringUtils.isEmptyOrNull(ctx.getMessage().getBody().getBranch()) ||
-       !StringUtils.isEmptyOrNull(ctx.getMessage().getBody().getSha()) ) {
-      update = true;
-    }
-    if(!StringUtils.isEmptyOrNull(ctx.getMessage().getBody().getConfigRepo()) ||
-        !StringUtils.isEmptyOrNull(ctx.getMessage().getBody().getConfigBranch()) ||
-        !StringUtils.isEmptyOrNull(ctx.getMessage().getBody().getConfigSha())) {
-      updateConfig = true;
-    }   
+    boolean update = !isEmptyOrNull(ctx.getMessage().getBody().getContentLocation());
+    boolean updateConfig = !isEmptyOrNull(ctx.getMessage().getBody().getConfigLocation());
     ctx.getMessage().getBody().setComment("SYNC");
     if(update) {
       performContentUpdate(ctx);
@@ -138,12 +128,9 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
         log.info("Config Sync done");
         configManager.makeConfigParserLive();
         try {
-          String repo = body.getRepo();
-          String branch = body.getBranchName();
-          String rev = body.getCurrentRevision();
           String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated");
           String comment = body.getComment();
-          manager.logEvent(EntryType.CONFIG, repo, branch, rev, "AUTO", lastUpdated, null, comment, true, true);
+          manager.logEvent(EntryType.CONFIG, body.getContentLocation(), "AUTO", lastUpdated, null, comment, true, true);
         } catch(Exception e){
           log.warn("Failed to update log", e);
         }
@@ -159,9 +146,7 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
     });
     SyncRequest request = ctx.getMessage().getBody();
     ContentUpdateRequest body = new ContentUpdateRequest();
-    body.setRepo(request.getConfigRepo());
-    body.setBranchName(request.getConfigBranch());
-    body.setSha(request.getConfigSha());
+    body.setContentLocation(new GitLocation(request.getConfigLocation()));
     body.setComment(request.getComment());
     configWorker.beginPullUpdates(body);
   }
@@ -178,12 +163,9 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
         fileServlet.switchContent(ctx.getMessage().getHeader().getRequestTime());
         processor.makeLive();
         try {
-          String repo = body.getRepo();
-          String branch = body.getBranchName();
-          String rev = body.getCurrentRevision();
           String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");
           String comment = body.getComment();
-          manager.logEvent(EntryType.CONTENT, repo, branch, rev, "AUTO", lastUpdated, null, comment, true, true);
+          manager.logEvent(EntryType.CONTENT, body.getContentLocation(), "AUTO", lastUpdated, null, comment, true, true);
         } catch(Exception e){
           log.warn("Failed to update log", e);
         }
@@ -200,9 +182,7 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
     
     SyncRequest request = ctx.getMessage().getBody();
     ContentUpdateRequest body = new ContentUpdateRequest();
-    body.setRepo(request.getRepo());
-    body.setBranchName(request.getBranch());
-    body.setSha(request.getSha());
+    body.setContentLocation(new GitLocation(request.getContentLocation()));
     body.setComment(request.getComment());
     
     this.worker.beginPullUpdates(body);
@@ -235,9 +215,7 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
     boolean updateConfig = false;
     // NOTE: There must be a way to reduce this block down to a couple of lines.  The properties objects are
     // causing the code to be like this.
-    if(!StringUtils.isEmptyOrNull(request.getRepo()) &&
-       !StringUtils.isEmptyOrNull(request.getBranch()) &&
-       !StringUtils.isEmptyOrNull(request.getSha())) {
+    if(isComplete(request.getContentLocation())) {
       log.info("Sync Content Request {}", request);
       if(configProperties.containsKey("repo") &&
          configProperties.containsKey("branch") && 
@@ -246,9 +224,9 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
             configProperties.get("repo"),
             configProperties.get("branch"),
             configProperties.get("git.ref.sha")});
-        if(!configProperties.getProperty("repo").equals(request.getRepo()) || 
-           !configProperties.getProperty("branch").equals(request.getBranch()) || 
-           !configProperties.getProperty("git.ref.sha").equals(request.getSha())) {
+        if(!configProperties.getProperty("repo").equals(request.getContentLocation().getRepository()) || 
+           !configProperties.getProperty("branch").equals(request.getContentLocation().getBranch()) || 
+           !configProperties.getProperty("git.ref.sha").equals(request.getContentLocation().getRevision())) {
           log.info("Content update is required!");
           update = true;
         }
@@ -259,9 +237,7 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
       log.info("Sync content request has no repo and/or branch and/or sha! update is required!");
       update = true;
     }
-    if(!StringUtils.isEmptyOrNull(request.getConfigRepo()) &&
-        !StringUtils.isEmptyOrNull(request.getConfigBranch()) &&
-        !StringUtils.isEmptyOrNull(request.getConfigSha())) {
+    if(isComplete(request.getConfigLocation())) {
       log.info("Sync Config Request has {}", request);
       if(configProperties.containsKey("config.repo") && 
           configProperties.containsKey("config.branch") && 
@@ -270,9 +246,9 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
             configProperties.get("config.repo"), 
             configProperties.get("config.branch"), 
             configProperties.get("config.git.ref.sha")});
-        if(!configProperties.getProperty("config.repo").equals(request.getConfigRepo()) || 
-            !configProperties.getProperty("config.branch").equals(request.getConfigBranch()) || 
-            !configProperties.getProperty("config.git.ref.sha").equals(request.getConfigSha())) {
+        if(!configProperties.getProperty("config.repo").equals(request.getConfigLocation().getRepository()) || 
+            !configProperties.getProperty("config.branch").equals(request.getConfigLocation().getBranch()) || 
+            !configProperties.getProperty("config.git.ref.sha").equals(request.getConfigLocation().getRevision())) {
           log.info("Config update is required!");
           updateConfig = true;
         }
@@ -287,15 +263,17 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
     if(update || updateConfig) {
       SyncRequest newRequest = new SyncRequest();
       if(update) {
-        newRequest.setRepo(configProperties.getProperty("repo"));
-        newRequest.setBranch(configProperties.getProperty("branch"));
-        newRequest.setSha(configProperties.getProperty("git.ref.sha"));
+        newRequest.setContentLocation(new GitLocation(
+          configProperties.getProperty("repo"),
+          configProperties.getProperty("branch"),
+          configProperties.getProperty("git.ref.sha")));
         log.info("Sending content SYNC message to new member {}, repo {}, branch {}, sha {}", new Object[] {ctx.getSource(), configProperties.getProperty("repo"), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
       }
       if(updateConfig) {
-        newRequest.setConfigRepo(configProperties.getProperty("config.repo"));
-        newRequest.setConfigBranch(configProperties.getProperty("config.branch"));
-        newRequest.setConfigSha(configProperties.getProperty("config.git.ref.sha"));
+        newRequest.setConfigLocation(new GitLocation(
+          configProperties.getProperty("config.repo"),
+          configProperties.getProperty("config.branch"),
+          configProperties.getProperty("config.git.ref.sha")));
         log.info("Sending config SYNC message to new member {}, repo {}, branch {}, sha {}", new Object[] {ctx.getSource(), configProperties.getProperty("config.repo"), configProperties.getProperty("config.branch"), configProperties.getProperty("config.git.ref.sha")});
       }
       Message<SyncRequest> syncMessage = new Message<SyncRequest>(getName(), newRequest);
@@ -310,6 +288,28 @@ public class SyncCommandAction implements CommandAction<SyncRequest> {
   @Override
   public void handleFailure(CommandContext<SyncRequest> ctx, Exception e) {
     
+  }
+  
+  /**
+   * Returns true if a git location object is null or all of its values are
+   * empty or null.
+   * 
+   * @param location the location object to test.
+   * @return true if the git location object is null or all of its values are empty or null, false otherwise.
+   */
+  private static boolean isEmptyOrNull( GitLocation location ) {
+    return location == null ||
+        (StringUtils.isEmptyOrNull(location.getRepository()) &&
+        StringUtils.isEmptyOrNull(location.getBranch()) &&
+        StringUtils.isEmptyOrNull(location.getRevision()));
+  }
+  
+  private static boolean isComplete( GitLocation location ) {
+    return location != null &&
+        !StringUtils.isEmptyOrNull(location.getRepository()) &&
+        !StringUtils.isEmptyOrNull(location.getBranch()) &&
+        !StringUtils.isEmptyOrNull(location.getRevision());
+        
   }
 
 }

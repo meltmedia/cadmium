@@ -26,33 +26,18 @@ import java.util.Date;
  */
 public class ContentUpdateRequest extends AbstractMessageBody {
   
-  protected String repo;
-  protected String branchName;
-  protected String sha;
-  protected String currentRevision;
+  protected GitLocation contentLocation;
   protected String openId;
   protected Date lastUpdated;
   protected String uuid;
   protected String comment;
   protected boolean revertable;
   
-  public String getRepo() {
-    return repo;
+  public GitLocation getContentLocation() {
+    return contentLocation;
   }
-  public void setRepo(String repo) {
-    this.repo = repo;
-  }
-  public String getBranchName() {
-    return branchName;
-  }
-  public void setBranchName(String branchName) {
-    this.branchName = branchName;
-  }
-  public String getCurrentRevision() {
-    return currentRevision;
-  }
-  public void setCurrentRevision(String currentRevision) {
-    this.currentRevision = currentRevision;
+  public void setContentLocation(GitLocation contentLocation) {
+    this.contentLocation = contentLocation;
   }
   public String getOpenId() {
     return openId;
@@ -83,12 +68,6 @@ public class ContentUpdateRequest extends AbstractMessageBody {
   }
   public void setRevertable(boolean revertable) {
     this.revertable = revertable;
-  }
-  public String getSha() {
-    return sha;
-  }
-  public void setSha(String sha) {
-    this.sha = sha;
   }
 
 

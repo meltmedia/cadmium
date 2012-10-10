@@ -27,6 +27,7 @@ import org.jgroups.stack.IpAddress;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageConverter;
@@ -34,15 +35,14 @@ import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.messaging.Header;
 
 public class JGroupsMessageSenderTest {
-  private static final String serializedMessage = "{\"header\":{\"command\":\"UPDATE\",\"requestTime\":233434800},\"body\":{\"branchName\":\"master\",\"sha\":\"HEAD\",\"revertable\":false}}";
+  private static final String serializedMessage = "{\"header\":{\"command\":\"UPDATE\",\"requestTime\":233434800},\"body\":{\"contentLocation\":{\"branch\":\"master\",\"revision\":\"HEAD\"},\"revertable\":false}}";
   private static final Message<ContentUpdateRequest> deserializedMessage = new Message<ContentUpdateRequest>();
   private static final MessageConverter converter = new MessageConverter();
   static {
     Header header = new Header(ProtocolMessage.UPDATE);
     header.setRequestTime(new Long(233434800));
     ContentUpdateRequest body = new ContentUpdateRequest();
-    body.setBranchName("master");
-    body.setSha("HEAD");
+    body.setContentLocation(new GitLocation(null, "master", "HEAD"));
     deserializedMessage.setHeader(header);
     deserializedMessage.setBody(body);
     

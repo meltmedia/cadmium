@@ -26,10 +26,11 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.messaging.Header;
 
 public class MessageConverterTest {
-  private static final String serializedMessage = "{\"header\":{\"command\":\"UPDATE\",\"requestTime\":233434800},\"body\":{\"branchName\":\"master\",\"sha\":\"HEAD\",\"revertable\":false}}";
+  private static final String serializedMessage = "{\"header\":{\"command\":\"UPDATE\",\"requestTime\":233434800},\"body\":{\"contentLocation\":{\"branch\":\"master\",\"revision\":\"HEAD\"},\"revertable\":false}}";
   private static final String serializedNullBodyMessage = "{\"header\":{\"command\":\"CURRENT_STATE\",\"requestTime\":233434800}}";
   private static final Message<ContentUpdateRequest> deserializedMessage = new Message<ContentUpdateRequest>();
   private static final Message<Void> deserializedNullBodyMessage = new Message<Void>();
@@ -38,8 +39,7 @@ public class MessageConverterTest {
     Header header = new Header(ProtocolMessage.UPDATE);
     header.setRequestTime(new Long(233434800));
     ContentUpdateRequest body = new ContentUpdateRequest();
-    body.setBranchName("master");
-    body.setSha("HEAD");
+    body.setContentLocation(new GitLocation(null, "master", "HEAD"));
     deserializedMessage.setHeader(header);
     deserializedMessage.setBody(body);
     
@@ -83,7 +83,7 @@ public class MessageConverterTest {
     assertEquals("Wrong command", deserializedMessage.getHeader().getCommand(), deserialized.getHeader().getCommand());
     assertEquals("Wrong requestTime", deserializedMessage.getHeader().getRequestTime(), deserialized.getHeader().getRequestTime());
     assertNotNull("Deserialized body is null", deserialized.getBody());
-    assertEquals("Incorrect branch name.", deserializedMessage.getBody().getBranchName(), deserialized.getBody().getBranchName());
+    assertEquals("Incorrect branch name.", deserializedMessage.getBody().getContentLocation().getBranch(), deserialized.getBody().getContentLocation().getBranch());
   }
   
   @Test

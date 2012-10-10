@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
@@ -100,8 +101,10 @@ public abstract class UpdateConfigTask implements Callable<Boolean> {
         updatedProperties.setProperty(prefix + "repo", service.getRemoteRepository());
         configProperties.setProperty(prefix + "repo", service.getRemoteRepository());
         
-        body.setBranchName(service.getBranchName());
-        body.setCurrentRevision(service.getCurrentRevision());
+        // NOTE: It is hard to tell if this condition will happen.  Just being defensive.
+        if( body.getContentLocation() == null ) body.setContentLocation(new GitLocation());
+        body.getContentLocation().setBranch(service.getBranchName());
+        body.getContentLocation().setRevision(service.getCurrentRevision());
         
         if(configProperties.containsKey("updating."+type+"to.sha")) {
           configProperties.remove("updating."+type+"to.sha");

@@ -59,9 +59,7 @@ public class UpdateFailedCommandAction implements CommandAction<ContentUpdateReq
       lifecycleService.updateMyState(UpdateState.IDLE);
       if(historyManager != null) {
         historyManager.logEvent(EntryType.CONTENT,
-            emptyStringIfNull(body.getRepo()),
-            emptyStringIfNull(body.getBranchName()),
-            emptyStringIfNull(body.getSha()),
+            body.getContentLocation(),
             emptyStringIfNull(body.getOpenId()),
             "",
             body.getUuid(),

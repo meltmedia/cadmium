@@ -77,9 +77,9 @@ public class SyncCommandActionTest {
     
     assertTrue("Message not sent", sender.dest != null && sender.msg != null && sender.dest.getAddress() == ctx.getSource());
     assertTrue("Message not sync", sender.msg.getHeader().getCommand() == ProtocolMessage.SYNC);
-    assertEquals("Incorrent repo", "oldRepo", sender.msg.getBody().getRepo());
-    assertEquals("Incorrent branch", "master", sender.msg.getBody().getBranch());
-    assertEquals("Incorrect sha", "good_key", sender.msg.getBody().getSha());    
+    assertEquals("Incorrent repo", "oldRepo", sender.msg.getBody().getContentLocation().getRepository());
+    assertEquals("Incorrent branch", "master", sender.msg.getBody().getContentLocation().getBranch());
+    assertEquals("Incorrect sha", "good_key", sender.msg.getBody().getContentLocation().getRevision());    
   }
 
   @Test
@@ -123,9 +123,7 @@ public class SyncCommandActionTest {
     cmd.processor = mock(SiteConfigProcessor.class);
     
     SyncRequest request = new SyncRequest();
-    request.setRepo("newRepo");
-    request.setBranch("master");
-    request.setSha("good_key");
+    request.setContentLocation(new GitLocation("newRepo", "master", "good_key"));
     CommandContext<SyncRequest> ctx = new CommandContext<SyncRequest>(new IpAddress(4321), new Message<SyncRequest>(ProtocolMessage.SYNC, request));
     
     assertTrue("Command failed to execute", cmd.execute(ctx));

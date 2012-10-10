@@ -97,22 +97,22 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker<ContentUpdateReq
         service.getGitService();
         service.releaseGitService();
         
-        if(!StringUtils.isEmptyOrNull(body.getRepo())) {
-          lastTask = pool.submit(new SwitchRepositoryTask(service, body.getRepo(), lastTask));
+        if(body.getContentLocation() != null && !StringUtils.isEmptyOrNull(body.getContentLocation().getRepository())) {
+          lastTask = pool.submit(new SwitchRepositoryTask(service, body.getContentLocation().getRepository(), lastTask));
         }
         
-        if(!StringUtils.isEmptyOrNull(body.getSha())) {
-          configProperties.setProperty("updating.content.to.sha", body.getSha());
+        if(body.getContentLocation() != null && !StringUtils.isEmptyOrNull(body.getContentLocation().getRevision())) {
+          configProperties.setProperty("updating.content.to.sha", body.getContentLocation().getRevision());
         }
-        if(!StringUtils.isEmptyOrNull(body.getBranchName())) {
-          configProperties.setProperty("updating.content.to.branch", body.getBranchName());
-          lastTask = pool.submit(new SwitchBranchTask(service, body.getBranchName(), lastTask));
+        if(body.getContentLocation() != null && !StringUtils.isEmptyOrNull(body.getContentLocation().getBranch())) {
+          configProperties.setProperty("updating.content.to.branch", body.getContentLocation().getBranch());
+          lastTask = pool.submit(new SwitchBranchTask(service, body.getContentLocation().getBranch(), lastTask));
         }
         
         lastTask = pool.submit(new PullUpdateTask("content", service, configProperties, lastTask));
         
-        if(!StringUtils.isEmptyOrNull(body.getSha())) {
-          lastTask = pool.submit(new ResetToRevTask("content", service, body.getSha(), configProperties, lastTask));
+        if(body.getContentLocation() != null && !StringUtils.isEmptyOrNull(body.getContentLocation().getRevision())) {
+          lastTask = pool.submit(new ResetToRevTask("content", service, body.getContentLocation().getRevision(), configProperties, lastTask));
         }
         
         String contentDir = configProperties.getProperty("com.meltmedia.cadmium.lastUpdated");

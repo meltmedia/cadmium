@@ -56,9 +56,7 @@ public class ConfigUpdateDoneCommandAction implements CommandAction<ContentUpdat
       try {
         ContentUpdateRequest body = ctx.getMessage().getBody();
         manager.logEvent(EntryType.CONFIG,
-            body.getRepo(),
-            body.getBranchName(),
-            body.getCurrentRevision(),
+            body.getContentLocation(),
             body.getOpenId(),
             configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated"),
             body.getUuid(),

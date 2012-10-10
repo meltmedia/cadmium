@@ -58,9 +58,7 @@ public class ConfigUpdateFailedCommandAction implements CommandAction<ContentUpd
       if(historyManager != null) {
         ContentUpdateRequest body = ctx.getMessage().getBody();
         historyManager.logEvent(EntryType.CONFIG, 
-            emptyStringIfNull(body.getRepo()),
-            emptyStringIfNull(body.getBranchName()),
-            emptyStringIfNull(body.getSha()), 
+            body.getContentLocation(), 
             emptyStringIfNull(body.getOpenId()),
             "",
             body.getUuid(),

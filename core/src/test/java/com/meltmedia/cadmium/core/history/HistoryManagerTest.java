@@ -27,6 +27,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
 
 public class HistoryManagerTest {
@@ -77,13 +78,13 @@ public class HistoryManagerTest {
   public void testLogEntry() throws Exception {
     long size = historyFile.length();
     
-    manager.logEvent(EntryType.CONTENT, "", "test1", "sha1", "me", testDirectory, null, "This is a test", true, true);
+    manager.logEvent(EntryType.CONTENT, new GitLocation("", "test1", "sha1"), "me", testDirectory, null, "This is a test", true, true);
     
     Thread.sleep(3000l);
     
     assertTrue("History file not written", size < historyFile.length());
     
-    manager.logEvent(EntryType.CONTENT, "", "test2", "sha2", "me", testDirectory, null, "This is a test2", true, true);
+    manager.logEvent(EntryType.CONTENT, new GitLocation("", "test2", "sha2"), "me", testDirectory, null, "This is a test2", true, true);
   }
   
   @Test

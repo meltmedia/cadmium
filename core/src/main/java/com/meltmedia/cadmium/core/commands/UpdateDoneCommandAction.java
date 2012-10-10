@@ -55,7 +55,14 @@ public class UpdateDoneCommandAction implements CommandAction<ContentUpdateReque
     if(manager != null) {
       try {
         ContentUpdateRequest body = ctx.getMessage().getBody();
-        manager.logEvent(EntryType.CONTENT, body.getRepo(), body.getBranchName(), body.getCurrentRevision(), body.getOpenId(), configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"), body.getUuid(), body.getComment(), body.isRevertable(), false);
+        manager.logEvent(EntryType.CONTENT,
+            body.getContentLocation(),
+            body.getOpenId(),
+            configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"),
+            body.getUuid(),
+            body.getComment(),
+            body.isRevertable(),
+            false);
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }

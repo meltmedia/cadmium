@@ -37,6 +37,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 
 @Singleton
 public class HistoryManager implements Closeable {
@@ -57,14 +58,14 @@ public class HistoryManager implements Closeable {
   }
   
   public void logEvent(boolean maint, String openId, String comment) {
-    logEvent(HistoryEntry.EntryType.MAINT, "", "", "", openId, "", "", comment, maint, false, false, true);
+    logEvent(HistoryEntry.EntryType.MAINT, null, openId, "", "", comment, maint, false, false, true);
   }
   
-  public void logEvent(HistoryEntry.EntryType type, String repoUrl, String branch, String sha, String openId, String directory, String uuid, String comment, boolean revertible, boolean finished) {
-    logEvent(type, repoUrl, branch, sha, openId, directory, uuid, comment, false, revertible, false, finished);
+  public void logEvent(HistoryEntry.EntryType type, GitLocation gitPointer, String openId, String directory, String uuid, String comment, boolean revertible, boolean finished) {
+    logEvent(type, gitPointer, openId, directory, uuid, comment, false, revertible, false, finished);
   }
 
-  public void logEvent(HistoryEntry.EntryType type, String repoUrl, String branch, String sha, String openId, String directory, String uuid, String comment, boolean maint, boolean revertible, boolean failed, boolean finished) {
+  public void logEvent(HistoryEntry.EntryType type, GitLocation gitPointer, String openId, String directory, String uuid, String comment, boolean maint, boolean revertible, boolean failed, boolean finished) {
     HistoryEntry lastEntry = history.size() > 0 ? history.get(0) : null;
     if(uuid != null && lastEntry != null && lastEntry.getUuid() != null && uuid.trim().length() > 0 && uuid.equals(lastEntry.getUuid())) {
       log.debug("Last history entry was a dup.");
@@ -89,10 +90,15 @@ public class HistoryManager implements Closeable {
       lastEntry.setTimeLive(newEntry.getTimestamp().getTime() - lastEntry.getTimestamp().getTime());
       log.debug("The last history event lived [{}ms]", lastEntry.getTimeLive());
     }
+    // the git pointer was not added to the HistoryEntry yet, to avoid changes to the message format.
+    String repository = gitPointer != null && gitPointer.getRepository() != null ? gitPointer.getRepository() : "";
+    String branch = gitPointer != null && gitPointer.getBranch() != null ? gitPointer.getBranch() : "";
+    String revision = gitPointer != null && gitPointer.getRevision() != null ? gitPointer.getRevision() : "";
+
     newEntry.setType(type);
-    newEntry.setRepoUrl(repoUrl);
+    newEntry.setRepoUrl(repository);
     newEntry.setBranch(branch);
-    newEntry.setRevision(sha);
+    newEntry.setRevision(revision);
     newEntry.setOpenId(openId);
     newEntry.setServedDirectory(directory);
     newEntry.setUuid(uuid);
@@ -100,7 +106,7 @@ public class HistoryManager implements Closeable {
     newEntry.setRevertible(revertible);
     newEntry.setFailed(failed);
     newEntry.setFinished(finished);
-    log.info("Logging new {} History Event: repoUrl[{}], branch[{}], sha[{}], openId[{}], directory[{}], uuid[{}], revertible[{}], maint[{}], failed[{}], comment[{}]", new Object[] {type, repoUrl, branch, sha, openId, directory, uuid, revertible, maint, failed, comment});
+    log.info("Logging new {} History Event: repoUrl[{}], branch[{}], sha[{}], openId[{}], directory[{}], uuid[{}], revertible[{}], maint[{}], failed[{}], comment[{}]", new Object[] {type, repository, branch, revision, openId, directory, uuid, revertible, maint, failed, comment});
     
     history.add(0, newEntry);
     
