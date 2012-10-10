@@ -16,7 +16,8 @@
 
 -->
 <config>
-    <UDP mcast_addr="228.8.8.8"  mcast_port="45566"  
+    <UDP mcast_addr="228.8.8.8"  
+         mcast_port="45566"  
          ip_ttl="32" 
          ip_mcast="true"  
          mcast_send_buf_size="150000" 
@@ -26,12 +27,13 @@
          loopback="true"  
          max_bundle_size="60000"  
          max_bundle_timeout="30"  
-         enable_bundling="false"></UDP>
-    <MPING timeout="3000" num_initial_members="3"></MPING>
+         enable_bundling="false"
+         log_discard_msgs="false"></UDP>
+    <MPING timeout="3000" num_initial_members="3" level="error"></MPING>
     <MERGE2 min_interval="5000" max_interval="10000"></MERGE2>
     <FD timeout="2500" max_tries="5"></FD>
     <VERIFY_SUSPECT timeout="1500"></VERIFY_SUSPECT>
-    <pbcast.NAKACK retransmit_timeout="3000"></pbcast.NAKACK>
+    <pbcast.NAKACK retransmit_timeout="3000" use_mcast_xmit="false" log_not_found_msgs="false" log_discard_msgs="false"></pbcast.NAKACK>
     <pbcast.STABLE desired_avg_gossip="20000"></pbcast.STABLE>
     <pbcast.GMS join_timeout="5000"
                 print_local_addr="false"></pbcast.GMS>
