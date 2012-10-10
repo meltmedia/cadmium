@@ -19,7 +19,7 @@ import java.util.List;
 
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 
-public class HistoryResponse extends AbstractMessageBody {
+public class HistoryResponse extends AbstractMessageBean {
 
   private List<HistoryEntry> history;
 

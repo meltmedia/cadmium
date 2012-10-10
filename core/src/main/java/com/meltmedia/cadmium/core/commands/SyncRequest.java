@@ -15,7 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
-public class SyncRequest extends AbstractMessageBody {
+public class SyncRequest extends AbstractMessageBean {
   protected GitLocation contentLocation;
   protected GitLocation configLocation;
 

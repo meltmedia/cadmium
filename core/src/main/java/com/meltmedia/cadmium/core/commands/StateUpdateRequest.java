@@ -15,7 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
-public class StateUpdateRequest extends AbstractMessageBody {
+public class StateUpdateRequest extends AbstractMessageBean {
 
   private String state;
   private String uuid;

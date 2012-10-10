@@ -20,12 +20,12 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * An abstract base class for command message bodies.  This class provides reflection based implementations for equals, hashCode, and toString,
+ * An abstract base class for command message beans.  This class provides reflection based implementations for equals, hashCode, and toString,
  * based on the org.apache.commons.lang3.builder package.
  * 
  * @author Christian Trimble
  */
-public abstract class AbstractMessageBody {
+public abstract class AbstractMessageBean {
 
   @Override
   public boolean equals(Object obj) {

@@ -22,7 +22,7 @@ import java.util.Date;
  * @author Christian Trimble
  *
  */
-public class ContentUpdateRequest extends AbstractMessageBody {
+public class ContentUpdateRequest extends AbstractMessageBean {
   
   protected GitLocation contentLocation;
   protected String openId;

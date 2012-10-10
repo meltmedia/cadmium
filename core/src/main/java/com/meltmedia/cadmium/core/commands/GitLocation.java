@@ -26,7 +26,9 @@ package com.meltmedia.cadmium.core.commands;
  * 
  * @author Christian Trimble
  */
-public class GitLocation {
+public class GitLocation
+  extends AbstractMessageBean
+{
   protected String branch;
   protected String repository;
   protected String revision;
