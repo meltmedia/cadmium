@@ -1,3 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pmd-cpd>
+<duplication lines="27" tokens="150">
+<file line="66" path="/Users/ossrelease/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/UpdateCommand.java"/>
+<file line="49" path="/Users/ossrelease/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/UpdateConfigCommand.java"/>
+<codefragment>
+<![CDATA[
+	@Parameter(names={"--revision", "-r"}, description="The revision that you are updating to", required=false)
+	private String revision;
+
+	@Parameter(description="<site>", required=true)
+	private List<String> site;
+
+
+	@Parameter(names={"--message", "-m"}, description="The comment for the history", required=true)
+	private String message;
+
+	@Parameter(names={"--force", "-f"}, description="Force the update", required=false)
+	private boolean force;
+
+	public void execute() throws ClientProtocolException, IOException {
+	  
+		String siteUrl = getSecureBaseUrl(site.get(0));
+
+		System.out.println("Getting status of ["+ siteUrl +"]");
+    GitService gitValidation = null;
+		try {
+
+			Status siteStatus = StatusCommand.getSiteStatus(siteUrl, token);
+
+			boolean repoSame = false;
+			boolean branchSame = false;
+			boolean revisionSame = false;
+			boolean forceUpdate = force;
+]]>
+</codefragment>
+</duplication>
+<duplication lines="22" tokens="120">
+<file line="164" path="/Users/ossrelease/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/UpdateCommand.java"/>
+<file line="122" path="/Users/ossrelease/git/cadmium/cli/src/main/java/com/meltmedia/cadmium/cli/UpdateConfigCommand.java"/>
+<codefragment>
+<![CDATA[
+            gitValidation.switchBranch(siteStatus.getBranch());
+          }
+					if(branch != null) {
+						if(gitValidation.isBranch(branch)) {
+						  newBranch = branch;
+						  gitValidation.switchBranch(branch);
+  						log.debug("branch being added = {}", branch);
+						} else {
+						  System.err.println("The branch ["+branch+"] does not exist.");
+						  throw new Exception("");
+						}
+					}
+					
+					if(revision != null) {
+					  if(gitValidation.checkRevision(revision)){
+					    rev = revision;
+  						log.debug("revision being added = {}", revision);
+					  } else {  
+					    System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
+              throw new Exception("");
+					  }
+					}					
+]]>
+</codefragment>
+</duplication>
 </pmd-cpd>
