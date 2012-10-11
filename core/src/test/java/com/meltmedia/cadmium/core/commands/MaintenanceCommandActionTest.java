@@ -38,7 +38,7 @@ public class MaintenanceCommandActionTest {
 
 	@Test
 	public void testCommand() throws Exception {
-		DummyMessageSender sender = new DummyMessageSender();
+		DummyMessageSender<Void, Void> sender = new DummyMessageSender<Void, Void>();
 		DummySiteDownService siteDownService = new DummySiteDownService();
 		
 		
@@ -52,15 +52,15 @@ public class MaintenanceCommandActionTest {
     MaintenanceCommandAction maintCmd = new MaintenanceCommandAction();
     maintCmd.siteDownService = siteDownService;
     maintCmd.manager = new HistoryManager(null);
-    CommandContext ctx = new CommandContext(new IpAddress(1234), new Message());
-    ctx.getMessage().setCommand(ProtocolMessage.MAINTENANCE);
-    ctx.getMessage().getProtocolParameters().put("state", "on");
-    ctx.getMessage().getProtocolParameters().put("comment", "comment");
+    MaintenanceRequest request = new MaintenanceRequest();
+    request.setState("on");
+    request.setComment("comment");
+    CommandContext<MaintenanceRequest> ctx = new CommandContext<MaintenanceRequest>(new IpAddress(1234), new Message<MaintenanceRequest>(ProtocolMessage.MAINTENANCE, request));
     
     assertTrue("Command failed", maintCmd.execute(ctx));
     assertTrue("Site Down is On", siteDownService.isOn());
     
-    ctx.getMessage().getProtocolParameters().put("state", "off");
+    ctx.getMessage().getBody().setState("off");
     assertTrue("Command failed", maintCmd.execute(ctx));
     Assert.assertEquals("Site Down is Off", false, siteDownService.isOn());
    	

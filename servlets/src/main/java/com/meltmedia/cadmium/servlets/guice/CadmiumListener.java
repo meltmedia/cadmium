@@ -86,8 +86,10 @@ import com.meltmedia.cadmium.core.ContentWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.commands.CommandBodyMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
@@ -354,21 +356,24 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(new TypeLiteral<List<ChannelMember>>() {
         }).annotatedWith(Names.named("members")).toInstance(members);
         
-        Multibinder<CommandAction> commandActionBinder = Multibinder.newSetBinder(binder(), CommandAction.class);
+        @SuppressWarnings("rawtypes")
+        Multibinder<CommandAction<?>> commandActionBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<CommandAction<?>>(){});
         
+        @SuppressWarnings("rawtypes")
         Set<Class<? extends CommandAction>> commandActionSet = 
             reflections.getSubTypesOf(CommandAction.class);
         log.debug("Found {} CommandAction classes.", commandActionSet.size());
         
-        for( Class<? extends CommandAction> commandActionClass : commandActionSet ) {
-          commandActionBinder.addBinding().to(commandActionClass);
+        for( @SuppressWarnings("rawtypes") Class<? extends CommandAction> commandActionClass : commandActionSet ) {
+          commandActionBinder.addBinding().to((Class<? extends CommandAction<?>>)commandActionClass);
         }
 
         bind(CommandResponse.class)
             .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE))
             .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
 
-        bind(new TypeLiteral<Map<String, CommandAction>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
+        bind(new TypeLiteral<Map<String, CommandAction<?>>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
+        bind(new TypeLiteral<Map<String, Class<?>>>(){}).annotatedWith(Names.named("commandBodyMap")).toProvider(CommandBodyMapProvider.class);
         
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
         bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
@@ -408,8 +413,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(MessageListener.class).to(MessageReceiver.class);
 
         bind(LifecycleService.class);
-        bind(CoordinatedWorker.class).annotatedWith(ContentWorker.class).to(CoordinatedWorkerImpl.class);
-        bind(CoordinatedWorker.class).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
+        bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ContentWorker.class).to(CoordinatedWorkerImpl.class);
+        bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
         
         bind(SiteConfigProcessor.class);
         

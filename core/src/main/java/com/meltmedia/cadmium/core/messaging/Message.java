@@ -15,39 +15,37 @@
  */
 package com.meltmedia.cadmium.core.messaging;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class Message {
-  private String command;
-  private Map<String, String> protocolParameters = new HashMap<String, String>();
-  private Long requestTime;
+public class Message<B> {
+  private Header header;
+  private B body;
   
+  public Message( String command, B body ) {
+    this.header = new Header(command);
+    this.body = body;
+  }
+  
+  public Message(Header header, B body) {
+    this.header = header;
+    this.body = body;
+  }
+
   public Message() {
-    this.requestTime = System.currentTimeMillis();
   }
 
-  public String getCommand() {
-    return command;
-  }
-
-  public void setCommand(String command) {
-    this.command = command;
+  public void setHeader( Header header ) {
+    this.header = header;
   }
   
-  public Long getRequestTime() {
-    return requestTime;
+  public Header getHeader() {
+    return this.header;
   }
   
-  public void setRequestTime( Long requestTime ) {
-    this.requestTime = requestTime;
+  public B getBody() {
+    return body;
   }
-
-  public Map<String, String> getProtocolParameters() {
-    return protocolParameters;
-  }
-
-  public void setProtocolParameters(Map<String, String> protocolParameters) {
-    this.protocolParameters = protocolParameters;
+  
+  public void setBody( B body ) {
+    this.body = body;
   }
 }
+

@@ -19,11 +19,11 @@ import org.jgroups.Address;
 
 import com.meltmedia.cadmium.core.messaging.Message;
 
-public class CommandContext {
+public class CommandContext<B> {
   private Address source;
-  private Message message;
+  private Message<B> message;
   
-  public CommandContext(Address source, Message message) {
+  public CommandContext(Address source, Message<B> message) {
     this.source = source;
     this.message = message;
   }
@@ -32,7 +32,7 @@ public class CommandContext {
     return source;
   }
 
-  public Message getMessage() {
+  public Message<B> getMessage() {
     return message;
   }
 }

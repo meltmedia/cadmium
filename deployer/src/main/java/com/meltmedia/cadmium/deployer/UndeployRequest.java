@@ -13,9 +13,29 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.messaging;
+package com.meltmedia.cadmium.deployer;
 
-public interface MessageSender {
-  public <B> void sendMessage(Message<B> msg, ChannelMember dest) throws Exception;
-  public String getGroupName();
+import com.meltmedia.cadmium.core.commands.AbstractMessageBean;
+
+public class UndeployRequest extends AbstractMessageBean {
+
+  private String domain;
+  private String context;
+
+  public String getDomain() {
+    return domain;
+  }
+
+  public String getContext() {
+    return context;
+  }
+
+  public void setDomain(String domain) {
+    this.domain = domain;
+  }
+
+  public void setContext(String context) {
+    this.context = context;
+  }
+
 }

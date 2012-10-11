@@ -20,14 +20,14 @@ import java.util.Map;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
 
-public class DummyCoordinatedWorker implements CoordinatedWorker {
+public class DummyCoordinatedWorker<B> implements CoordinatedWorker<B> {
   
   public boolean updating = false;
   public boolean killed = false;
-  public CoordinatedWorkerListener listener;
+  public CoordinatedWorkerListener<B> listener;
 
   @Override
-  public void beginPullUpdates(Map<String, String> properties) {
+  public void beginPullUpdates(B body) {
     updating = true;
     if(listener != null) {
       listener.workDone(null);
@@ -40,12 +40,12 @@ public class DummyCoordinatedWorker implements CoordinatedWorker {
   }
 
   @Override
-  public void setListener(CoordinatedWorkerListener listener) {
+  public void setListener(CoordinatedWorkerListener<B> listener) {
     this.listener = listener;
   }
 
   @Override
-  public CoordinatedWorkerListener getListener() {
+  public CoordinatedWorkerListener<B> getListener() {
     return listener;
   }
 

@@ -16,38 +16,86 @@
 package com.meltmedia.cadmium.core.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.GitLocation;
+import com.meltmedia.cadmium.core.messaging.Header;
+
 public class MessageConverterTest {
-  private static final String serializedMessage = "{\"command\":\"UPDATE\",\"protocolParameters\":{\"branch\":\"master\",\"rev\":\"HEAD\"},\"requestTime\":233434800}";
-  private static final Message deserializedMessage = new Message();
+  private static final String serializedMessage = "{\"header\":{\"command\":\"UPDATE\",\"requestTime\":233434800},\"body\":{\"contentLocation\":{\"branch\":\"master\",\"revision\":\"HEAD\"},\"revertable\":false}}";
+  private static final String serializedNullBodyMessage = "{\"header\":{\"command\":\"CURRENT_STATE\",\"requestTime\":233434800}}";
+  private static final Message<ContentUpdateRequest> deserializedMessage = new Message<ContentUpdateRequest>();
+  private static final Message<Void> deserializedNullBodyMessage = new Message<Void>();
+  private static final MessageConverter converter = new MessageConverter();
   static {
-    deserializedMessage.setCommand(ProtocolMessage.UPDATE);
-    deserializedMessage.setRequestTime(new Long(233434800));
-    deserializedMessage.setProtocolParameters(new LinkedHashMap<String, String>());
-    deserializedMessage.getProtocolParameters().put("branch", "master");
-    deserializedMessage.getProtocolParameters().put("rev", "HEAD");
+    Header header = new Header(ProtocolMessage.UPDATE);
+    header.setRequestTime(new Long(233434800));
+    ContentUpdateRequest body = new ContentUpdateRequest();
+    body.setContentLocation(new GitLocation(null, "master", "HEAD"));
+    deserializedMessage.setHeader(header);
+    deserializedMessage.setBody(body);
+    
+    Header headerNullBody = new Header(ProtocolMessage.CURRENT_STATE);
+    headerNullBody.setRequestTime(new Long(233434800));
+    deserializedNullBodyMessage.setHeader(headerNullBody);
+    deserializedNullBodyMessage.setBody(null);
+    
+    Map<String, Class<?>> commandToBodyMap = new HashMap<String, Class<?>>();
+    commandToBodyMap.put(ProtocolMessage.UPDATE, ContentUpdateRequest.class);
+    commandToBodyMap.put(ProtocolMessage.CURRENT_STATE, Void.class);
+    converter.setCommandToBodyMapping(commandToBodyMap);
   }
 
   @Test
   public void testSerialize() throws Exception {
-    String serialized = MessageConverter.serialize(deserializedMessage);
+    MessageConverter converter = new MessageConverter();
+    org.jgroups.Message serialized = converter.toJGroupsMessage(deserializedMessage);
     
     assertTrue("Message failed to serialize", serialized != null);
-    assertEquals("Message serialized incorrectly", serializedMessage, serialized);
+    assertEquals("Message serialized incorrectly", serializedMessage, new String(serialized.getBuffer(), "UTF-8"));
+  }
+  
+  @Test
+  public void testSerializeNull() throws Exception {
+    MessageConverter converter = new MessageConverter();
+    org.jgroups.Message serialized = converter.toJGroupsMessage(deserializedNullBodyMessage);
+    
+    assertTrue("Message failed to serialize", serialized != null);
+    assertEquals("Message serialized incorrectly", serializedNullBodyMessage, new String(serialized.getBuffer(), "UTF-8"));
   }
   
   @Test
   public void testDeserialize() throws Exception {
-    Message deserialized = MessageConverter.deserialize(serializedMessage);
+    org.jgroups.Message serialized = new org.jgroups.Message();
+    serialized.setBuffer(serializedMessage.getBytes("UTF-8"));
+    
+    Message<ContentUpdateRequest> deserialized = converter.toCadmiumMessage(serialized);
     
     assertTrue("Failed to deserialize message", deserialized != null);
-    assertEquals("Wrong command", deserializedMessage.getCommand(), deserialized.getCommand());
-    assertEquals("Wrong requestTime", deserializedMessage.getRequestTime(), deserialized.getRequestTime());
-    assertTrue("Bad Parameters", deserialized.getProtocolParameters() != null && deserializedMessage.getProtocolParameters().equals(deserialized.getProtocolParameters()));
+    assertEquals("Wrong command", deserializedMessage.getHeader().getCommand(), deserialized.getHeader().getCommand());
+    assertEquals("Wrong requestTime", deserializedMessage.getHeader().getRequestTime(), deserialized.getHeader().getRequestTime());
+    assertNotNull("Deserialized body is null", deserialized.getBody());
+    assertEquals("Incorrect branch name.", deserializedMessage.getBody().getContentLocation().getBranch(), deserialized.getBody().getContentLocation().getBranch());
+  }
+  
+  @Test
+  public void testDeserializeNullBody() throws Exception {
+    org.jgroups.Message serialized = new org.jgroups.Message();
+    serialized.setBuffer(serializedNullBodyMessage.getBytes("UTF-8"));
+    
+    Message<ContentUpdateRequest> deserialized = converter.toCadmiumMessage(serialized);
+    
+    assertTrue("Failed to deserialize message", deserializedNullBodyMessage != null);
+    assertEquals("Wrong command", deserializedNullBodyMessage.getHeader().getCommand(), deserialized.getHeader().getCommand());
+    assertEquals("Wrong requestTime", deserializedNullBodyMessage.getHeader().getRequestTime(), deserialized.getHeader().getRequestTime());
+    assertNull("Deserialized body is null", deserialized.getBody());
   }
 }

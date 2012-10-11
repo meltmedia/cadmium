@@ -30,7 +30,7 @@ import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class UpdateCommandAction implements CommandAction {
+public class UpdateCommandAction implements CommandAction<ContentUpdateRequest> {
   private final Logger log = LoggerFactory.getLogger(getClass());
     
   @Inject
@@ -38,18 +38,19 @@ public class UpdateCommandAction implements CommandAction {
   
   @Inject
   @ContentWorker
-  protected CoordinatedWorker worker;
+  protected CoordinatedWorker<ContentUpdateRequest> worker;
   
   public String getName() { return ProtocolMessage.UPDATE; }
   
   public UpdateCommandAction(){}
 
   @Override
-  public boolean execute(CommandContext ctx) throws Exception {
+  public boolean execute(CommandContext<ContentUpdateRequest> ctx) throws Exception {
     if(lifecycleService.getCurrentState() == UpdateState.IDLE) {
+      ContentUpdateRequest body = ctx.getMessage().getBody();
       log.info("Beginning an update, started by {}", ctx.getSource());
-      lifecycleService.updateMyState(UpdateState.UPDATING, ctx.getMessage().getProtocolParameters().get("uuid"));
-      worker.beginPullUpdates(ctx.getMessage().getProtocolParameters());
+      lifecycleService.updateMyState(UpdateState.UPDATING, body.getUuid());
+      worker.beginPullUpdates(body);
       
     } else {
       log.info("Received UPDATE message with current state [{}] not IDLE from {}", lifecycleService.getCurrentState(), ctx.getSource());
@@ -58,7 +59,7 @@ public class UpdateCommandAction implements CommandAction {
   }
 
   @Override
-  public void handleFailure(CommandContext ctx, Exception e) {
+  public void handleFailure(CommandContext<ContentUpdateRequest> ctx, Exception e) {
 
   }
 }

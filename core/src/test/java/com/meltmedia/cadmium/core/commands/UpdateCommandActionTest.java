@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -35,8 +36,8 @@ public class UpdateCommandActionTest {
   
   @Test
   public void testCommand() throws Exception {
-    DummyCoordinatedWorker worker = new DummyCoordinatedWorker();
-    DummyMessageSender sender = new DummyMessageSender();
+    DummyCoordinatedWorker<ContentUpdateRequest> worker = new DummyCoordinatedWorker<ContentUpdateRequest>();
+    DummyMessageSender<StateUpdateRequest, Void> sender = new DummyMessageSender<StateUpdateRequest, Void>();
     
     LifecycleService service = new LifecycleService();
  
@@ -50,16 +51,15 @@ public class UpdateCommandActionTest {
     updateCmd.lifecycleService = service;
     updateCmd.worker = worker;
     
-    CommandContext ctx = new CommandContext(new IpAddress(1234), new Message());
-    ctx.getMessage().setCommand(ProtocolMessage.UPDATE);
+    ContentUpdateRequest request = new ContentUpdateRequest();
+    CommandContext<ContentUpdateRequest> ctx = new CommandContext<ContentUpdateRequest>(new IpAddress(1234), new Message<ContentUpdateRequest>(ProtocolMessage.UPDATE, request));
     
     assertTrue("Command returned false", updateCmd.execute(ctx));
     
     assertTrue("Worker not properly called", worker.updating && !worker.killed);
     assertTrue("State not updated", service.getCurrentState() == UpdateState.UPDATING);
     assertTrue("No state update message sent", sender.dest == null && sender.msg != null 
-        && sender.msg.getCommand() == ProtocolMessage.STATE_UPDATE);
-    assertTrue("Incorrect state sent in message", sender.msg.getProtocolParameters().containsKey("state") 
-        && sender.msg.getProtocolParameters().get("state").equals(UpdateState.UPDATING.name()));
+        && sender.msg.getHeader().getCommand() == ProtocolMessage.STATE_UPDATE);
+    assertEquals("Incorrect state sent in message", UpdateState.UPDATING.name(), sender.msg.getBody().getState());
   }
 }

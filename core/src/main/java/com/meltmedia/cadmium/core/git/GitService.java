@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
@@ -200,7 +201,14 @@ public class GitService
     
     try{
       if(historyManager != null && !hasExisting) {
-        historyManager.logEvent(EntryType.CONFIG, cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial config pull.", true, true);
+        historyManager.logEvent(EntryType.CONFIG,
+            // NOTE: We should integrate the git pointer into this class.
+            new GitLocation(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision()),
+            "AUTO",
+            renderedContentDir,
+            "", "Initial config pull.",
+            true,
+            true);
       }
     } finally {
       if(closeHistoryManager) {
@@ -268,7 +276,14 @@ public class GitService
     
     try{
       if(historyManager != null && !hasExisting) {
-        historyManager.logEvent(EntryType.CONTENT, cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision(), "AUTO", renderedContentDir, "", "Initial content pull.", true, true);
+        historyManager.logEvent(EntryType.CONTENT,
+            new GitLocation(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision()),
+            "AUTO",
+            renderedContentDir,
+            "",
+            "Initial content pull.",
+            true,
+            true);
       }
     } finally {
       if(closeHistoryManager) {

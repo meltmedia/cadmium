@@ -23,21 +23,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 
-public class CreateNewRenderedDirectoryTask implements Callable<Boolean> {
+public abstract class CreateNewRenderedDirectoryTask implements Callable<Boolean> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   private DelayedGitServiceInitializer service;
   private String lastDirectory;
-  private Map<String, String> properties;
   private Future<Boolean> previousTask;
+
+  private ContentUpdateRequest body;
   
-  public CreateNewRenderedDirectoryTask(DelayedGitServiceInitializer service, String lastDirectory, Map<String, String> properties, Future<Boolean> previousTask) {
+  public CreateNewRenderedDirectoryTask(DelayedGitServiceInitializer service, String lastDirectory, ContentUpdateRequest body, Future<Boolean> previousTask) {
     this.service = service;
     this.lastDirectory = lastDirectory;
-    this.properties = properties;
+    this.body = body;
     this.previousTask = previousTask;
   }
 
@@ -59,7 +61,7 @@ public class CreateNewRenderedDirectoryTask implements Callable<Boolean> {
           if(git != null) {
             git.close();
             FileSystemManager.deleteDeep(FileSystemManager.getChildDirectoryIfExists(nextDirectory, ".git"));
-            properties.put("nextDirectory", nextDirectory);
+            setNextDirectory(nextDirectory);
           } else {
             log.warn("Failed to clone repo to "+nextDirectory);
             return false;
@@ -77,5 +79,7 @@ public class CreateNewRenderedDirectoryTask implements Callable<Boolean> {
     }
     return true;
   }
+  
+  public abstract void setNextDirectory( String nextDirectory );
 
 }

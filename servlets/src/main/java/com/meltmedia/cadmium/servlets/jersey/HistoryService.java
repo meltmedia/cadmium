@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -36,6 +37,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
+import com.meltmedia.cadmium.core.commands.HistoryRequest;
+import com.meltmedia.cadmium.core.commands.HistoryResponse;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
@@ -64,38 +67,34 @@ public class HistoryService extends AuthorizationService {
 
   @GET
   @Produces("application/json")
-  public String getHistory(@QueryParam("limit") @DefaultValue("-1") int limit, @QueryParam("filter") @DefaultValue("false") boolean filter, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+  public List<HistoryEntry> getHistory(@QueryParam("limit") @DefaultValue("-1") int limit, @QueryParam("filter") @DefaultValue("false") boolean filter, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
     ChannelMember coordinator = membershipTracker.getCoordinator();
     if(coordinator.isMine()) {
       log.info("Responding with my own history");
-      List<HistoryEntry> history = historyManager.getHistory(limit, filter);
-      return new Gson().toJson(history, new TypeToken<List<HistoryEntry>>(){}.getType());
+      return historyManager.getHistory(limit, filter);
     } else {
       log.info("Getting coordinators history");
       response.reset(coordinator);
-      Message msg = new Message();
-      msg.setCommand(ProtocolMessage.HISTORY_REQUEST);
-      msg.getProtocolParameters().put("limit", limit+"");
-      msg.getProtocolParameters().put("filter", filter+"");
+      HistoryRequest request = new HistoryRequest();
+      request.setLimit(limit);
+      request.setFilter(filter);
+      Message<HistoryRequest> msg = new Message<HistoryRequest>(ProtocolMessage.HISTORY_REQUEST, request);
       
       sender.sendMessage(msg, coordinator);
       
       int timeout = 240;
       while(timeout-- > 0) {
         Thread.sleep(500l);
-        Message returnMsg = response.getResponse(coordinator);
-        if(returnMsg != null) {
-          if(returnMsg.getProtocolParameters().containsKey("history")) {
-            return returnMsg.getProtocolParameters().get("history");
-          }
-          break;
+        Message<?> returnMsg = response.getResponse(coordinator);
+        if(returnMsg != null && returnMsg.getBody() instanceof HistoryResponse) {
+          return ((HistoryResponse)returnMsg.getBody()).getHistory();
         }
       }
     }
-    return "[]";
+    return new ArrayList<HistoryEntry>();
   }
   
   @GET

@@ -15,11 +15,14 @@
  */
 package com.meltmedia.cadmium.core.messaging;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -28,6 +31,7 @@ import org.jgroups.stack.IpAddress;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.meltmedia.cadmium.core.commands.SyncRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.messaging.jgroups.DummyJChannel;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
@@ -62,6 +66,13 @@ public class MembershipTrackerTest {
     
     
     JGroupsMessageSender sender = new JGroupsMessageSender();
+    MessageConverter converter = new MessageConverter();
+    Map<String, Class<?>> commandToBodyMap = new HashMap<String, Class<?>>();
+    commandToBodyMap.put(ProtocolMessage.CURRENT_STATE, Void.class);
+    commandToBodyMap.put(ProtocolMessage.SYNC, SyncRequest.class);
+    converter.setCommandToBodyMapping(commandToBodyMap);
+    sender.setConverter(converter);
+    
     sender.setChannel(channel);
     
     new MembershipTracker(sender, channel, members, configManager, null, null);
@@ -70,32 +81,32 @@ public class MembershipTrackerTest {
     
     List<org.jgroups.Message> msgs = channel.getMessageList();
     
-    assertTrue("Member not added", members.size() == 3);
+    assertEquals("Member not added", 3, members.size());
     
-    assertTrue("Member1 address is wrong", members.get(0).getAddress().toString().equals(other2.toString()));
+    assertEquals("Member1 address is wrong", other2.toString(), members.get(0).getAddress().toString());
     assertTrue("Member1 not coordinator", members.get(0).isCoordinator());
     assertTrue("Member1 not me", !members.get(0).isMine());
     
-    assertTrue("Member2 address is wrong", members.get(1).getAddress().toString().equals(me.toString()));
+    assertEquals("Member2 address is wrong", me.toString(), members.get(1).getAddress().toString());
     assertTrue("Member2 not coordinator", !members.get(1).isCoordinator());
     assertTrue("Member2 not me", members.get(1).isMine());
 
-    assertTrue("Member3 address is wrong", members.get(2).getAddress().toString().equals(other3.toString()));
+    assertEquals("Member3 address is wrong", other3.toString(), members.get(2).getAddress().toString());
     assertTrue("Member3 not coordinator", !members.get(2).isCoordinator());
     assertTrue("Member3 not me", !members.get(2).isMine());
     
-    assertTrue("Wrong number of messages sent", msgs.size() == 4);
+    assertEquals("Wrong number of messages sent", 4, msgs.size());
     
-    assertTrue("Wrong msg1 dest address", msgs.get(0).getDest().toString().equals(other2.toString()));
-    assertTrue("Wrong msg1 msg", msgs.get(0).getObject().toString().contains(ProtocolMessage.CURRENT_STATE));
+    assertEquals("Wrong msg1 dest address", other2.toString(), msgs.get(0).getDest().toString());
+    assertTrue("Wrong msg1 msg", new String(msgs.get(0).getBuffer(), "UTF-8").contains(ProtocolMessage.CURRENT_STATE));
 
-    assertTrue("Wrong msg2 dest address", msgs.get(1).getDest().toString().equals(me.toString()));
-    assertTrue("Wrong msg2 msg", msgs.get(1).getObject().toString().contains(ProtocolMessage.CURRENT_STATE));
+    assertEquals("Wrong msg2 dest address", me.toString(), msgs.get(1).getDest().toString());
+    assertTrue("Wrong msg2 msg", new String(msgs.get(1).getBuffer(), "UTF-8").contains(ProtocolMessage.CURRENT_STATE));
 
-    assertTrue("Wrong msg2 dest address", msgs.get(2).getDest().toString().equals(other3.toString()));
-    assertTrue("Wrong msg2 msg", msgs.get(2).getObject().toString().contains(ProtocolMessage.CURRENT_STATE));
+    assertEquals("Wrong msg2 dest address", other3.toString(), msgs.get(2).getDest().toString());
+    assertTrue("Wrong msg2 msg", new String(msgs.get(2).getBuffer(), "UTF-8").contains(ProtocolMessage.CURRENT_STATE));
     
-    assertTrue("Wrong msg3 dest address", msgs.get(3).getDest().toString().equals(other2.toString()));
-    assertTrue("Wrong msg3 msg", msgs.get(3).getObject().toString().contains(ProtocolMessage.SYNC));
+    assertEquals("Wrong msg3 dest address", other2.toString(), msgs.get(3).getDest().toString());
+    assertTrue("Wrong msg3 msg", new String(msgs.get(3).getBuffer(), "UTF-8").contains(ProtocolMessage.SYNC));
   }
 }

@@ -23,8 +23,6 @@ import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
@@ -35,7 +33,7 @@ import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class HistoryRequestCommandAction implements CommandAction {
+public class HistoryRequestCommandAction implements CommandAction<HistoryRequest> {
   private final Logger log = LoggerFactory.getLogger(getClass());  
   
   @Inject
@@ -47,24 +45,20 @@ public class HistoryRequestCommandAction implements CommandAction {
   public String getName() { return ProtocolMessage.HISTORY_REQUEST; };
 
   @Override
-  public boolean execute(CommandContext ctx) throws Exception {
-    Message response = new Message();
-    response.setCommand(ProtocolMessage.HISTORY_RESPONSE);
-    int limit = -1;
-    if(ctx.getMessage().getProtocolParameters().containsKey("limit")) {
-      limit = Integer.parseInt(ctx.getMessage().getProtocolParameters().get("limit"));
-    }
-    boolean filter = Boolean.parseBoolean(ctx.getMessage().getProtocolParameters().get("filter"));
-    List<HistoryEntry> history = historyManager.getHistory(limit, filter);
+  public boolean execute(CommandContext<HistoryRequest> ctx) throws Exception {
+    HistoryRequest request = ctx.getMessage().getBody();
+    if( request.getLimit() == null ) request.setLimit(-1);
+    List<HistoryEntry> history = historyManager.getHistory(request.getLimit(), request.getFilter());
     log.info("Received history-request message responding with {} history items", history.size());
-    Gson gson = new Gson();
-    response.getProtocolParameters().put("history", gson.toJson(history, new TypeToken<List<HistoryEntry>>(){}.getType()));
+    
+    HistoryResponse responseBody = new HistoryResponse(history);
+    Message<HistoryResponse> response = new Message<HistoryResponse>(ProtocolMessage.HISTORY_RESPONSE, responseBody);
     sender.sendMessage(response, new ChannelMember(ctx.getSource()));
     return true;
   }
 
   @Override
-  public void handleFailure(CommandContext ctx, Exception e) {
+  public void handleFailure(CommandContext<HistoryRequest> ctx, Exception e) {
 
   }
 

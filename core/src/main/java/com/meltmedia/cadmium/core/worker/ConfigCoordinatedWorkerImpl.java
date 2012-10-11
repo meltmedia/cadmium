@@ -17,7 +17,6 @@ package com.meltmedia.cadmium.core.worker;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,12 +25,14 @@ import java.util.concurrent.Future;
 import javax.inject.Inject;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ConfigurationGitService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.history.HistoryManager;
@@ -41,8 +42,8 @@ import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
-public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker,
-    CoordinatedWorkerListener, Closeable {
+public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker<ContentUpdateRequest>,
+    CoordinatedWorkerListener<ContentUpdateRequest>, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   private ExecutorService pool;
@@ -64,9 +65,9 @@ public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker,
   protected HistoryManager historyManager;
     
   protected Future<Boolean> lastTask = null;
-  
+  protected volatile String nextDirectory = null;  
 
-  protected CoordinatedWorkerListener listener;
+  protected CoordinatedWorkerListener<ContentUpdateRequest> listener;
   protected Properties configProperties; 
   
   public ConfigCoordinatedWorkerImpl() {
@@ -75,7 +76,7 @@ public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker,
   }
 
   @Override
-  public void beginPullUpdates(final Map<String, String> properties) {
+  public void beginPullUpdates(final ContentUpdateRequest body) {
     synchronized(pool) {
       log.info("Beginning Config Update...");
       lastTask = null;
@@ -86,35 +87,50 @@ public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker,
         service.getGitService();
         service.releaseGitService();
         
-        if(properties.containsKey("repo") && properties.get("repo").trim().length() > 0) {
-          lastTask = pool.submit(new SwitchRepositoryTask(service, properties.get("repo"), lastTask));
+        if(body.getContentLocation() != null && !StringUtils.isEmptyOrNull(body.getContentLocation().getRepository())) {
+          lastTask = pool.submit(new SwitchRepositoryTask(service, body.getContentLocation().getRepository(), lastTask));
         }
         
-        if(properties.containsKey("sha")) {
-          configProperties.setProperty("updating.config.to.sha", properties.get("sha"));
+        if(body.getContentLocation() != null && !StringUtils.isEmptyOrNull(body.getContentLocation().getRevision())) {
+          configProperties.setProperty("updating.config.to.sha", body.getContentLocation().getRevision());
         }
-        if(properties.containsKey("branch")) {
-          configProperties.setProperty("updating.config.to.branch", properties.get("branch"));
-          lastTask = pool.submit(new SwitchBranchTask(service, properties.get("branch"), lastTask));
+        if(body.getContentLocation() != null && !StringUtils.isEmptyOrNull(body.getContentLocation().getBranch())) {
+          configProperties.setProperty("updating.config.to.branch", body.getContentLocation().getBranch());
+          lastTask = pool.submit(new SwitchBranchTask(service, body.getContentLocation().getBranch(), lastTask));
         }
         
         lastTask = pool.submit(new PullUpdateTask("config", service, configProperties, lastTask));
         
-        if(properties.containsKey("sha")) {
-          lastTask = pool.submit(new ResetToRevTask("config", service, properties.get("sha"), configProperties, lastTask));
+        if(body.getContentLocation() != null && !StringUtils.isEmptyOrNull(body.getContentLocation().getRevision())) {
+          lastTask = pool.submit(new ResetToRevTask("config", service, body.getContentLocation().getRevision(), configProperties, lastTask));
         }
         
         String contentDir = configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated");
         
-        lastTask = pool.submit(new CreateNewRenderedDirectoryTask(service, contentDir, properties, lastTask));
+        lastTask = pool.submit(new CreateNewRenderedDirectoryTask(service, contentDir, body, lastTask) {
+          @Override
+          public void setNextDirectory(String nextDirectory) {
+            ConfigCoordinatedWorkerImpl.this.nextDirectory = nextDirectory;
+          }
+        });
         
-        lastTask = pool.submit(new ParseConfigDirectoryTask(listener, configManager, properties, lastTask));
+        lastTask = pool.submit(new ParseConfigDirectoryTask(listener, configManager, body, lastTask) {
+          @Override
+          public String getNextDirectory() {
+            return ConfigCoordinatedWorkerImpl.this.nextDirectory;
+          }
+        });
         
-        lastTask = pool.submit(new UpdateConfigTask("config", service, properties, configManager, lastTask));
+        lastTask = pool.submit(new UpdateConfigTask("config", service, body, configManager, lastTask) {
+          @Override
+          public String getNextDirectory() {
+            return ConfigCoordinatedWorkerImpl.this.nextDirectory;
+          }
+        });
         
-        lastTask = pool.submit(new NotifyListenerTask(listener, properties, lastTask));
+        lastTask = pool.submit(new NotifyListenerTask(listener, body, lastTask));
         
-        lastTask = pool.submit(new CleanUpTask("com.meltmedia.cadmium.config.lastUpdated", listener, configProperties, properties, lastTask));
+        lastTask = pool.submit(new CleanUpTask("com.meltmedia.cadmium.config.lastUpdated", listener, configProperties, body, lastTask));
         
       } catch(Throwable t) {
         log.error("Failed to run config update.", t);
@@ -130,24 +146,20 @@ public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker,
   }
 
   @Override
-  public void setListener(CoordinatedWorkerListener listener) {
+  public void setListener(CoordinatedWorkerListener<ContentUpdateRequest> listener) {
     this.listener = listener;
   }
 
   @Override
-  public CoordinatedWorkerListener getListener() {
+  public CoordinatedWorkerListener<ContentUpdateRequest> getListener() {
     return listener;
   }
 
   @Override
-  public void workDone(Map<String, String> properties) {
+  public void workDone(ContentUpdateRequest message) {
     log.info("Config update work is done");
     lifecycleService.updateMyConfigState(UpdateState.WAITING, null, false);
-    Message doneMessage = new Message();
-    doneMessage.setCommand(ProtocolMessage.CONFIG_UPDATE_DONE);
-    if(properties != null) {
-      doneMessage.setProtocolParameters(properties);
-    }
+    Message<ContentUpdateRequest> doneMessage = new Message<ContentUpdateRequest>(ProtocolMessage.CONFIG_UPDATE_DONE, message);
     try { 
       sender.sendMessage(doneMessage, null);
     } catch (Exception e) {
@@ -156,25 +168,9 @@ public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker,
   }
 
   @Override
-  public void workFailed(String repo, String branch, String sha, String openId, String uuid) {
+  public void workFailed(ContentUpdateRequest message) {
     log.info("Config update work has failed");
-    Message doneMessage = new Message();
-    doneMessage.setCommand(ProtocolMessage.CONFIG_UPDATE_FAILED);
-    if(repo != null) {
-      doneMessage.getProtocolParameters().put("repo", repo);
-    }
-    if(branch != null) {
-      doneMessage.getProtocolParameters().put("branch", branch);
-    }
-    if(sha != null) {
-      doneMessage.getProtocolParameters().put("sha", sha);
-    }
-    if(openId != null) {
-      doneMessage.getProtocolParameters().put("openId", openId);
-    }
-    if(uuid != null) {
-      doneMessage.getProtocolParameters().put("uuid", uuid);
-    }
+    Message<ContentUpdateRequest> doneMessage = new Message<ContentUpdateRequest>(ProtocolMessage.CONFIG_UPDATE_FAILED, message);
     try {
       sender.sendMessage(doneMessage, null);
     } catch (Exception e) {
@@ -194,5 +190,4 @@ public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker,
       pool = null;
     }
   }
-
 }
