@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pmd version="4.3" timestamp="2012-09-17T17:13:25.407">
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/FileSystemManager.java">
+<pmd version="4.3" timestamp="2012-10-11T08:20:58.859">
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/FileSystemManager.java">
 <violation beginline="67" endline="67" begincolumn="11" endcolumn="31" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core" class="FileSystemManager" method="getFileContents" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
@@ -20,22 +20,25 @@ Avoid empty catch blocks
 Avoid empty catch blocks
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/commands/SyncCommandAction.java">
-<violation beginline="120" endline="120" begincolumn="37" endcolumn="80" rule="BooleanInstantiation" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.commands" class="SyncCommandAction" method="workDone" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#BooleanInstantiation" priority="2">
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/commands/UpdateDoneCommandAction.java">
+<violation beginline="66" endline="66" begincolumn="31" endcolumn="69" rule="BooleanInstantiation" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.commands" class="UpdateDoneCommandAction" method="execute" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#BooleanInstantiation" priority="2">
 Avoid instantiating Boolean objects; reference Boolean.TRUE or Boolean.FALSE or call Boolean.valueOf() instead.
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/commands/UpdateDoneCommandAction.java">
-<violation beginline="65" endline="65" begincolumn="31" endcolumn="69" rule="BooleanInstantiation" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.commands" class="UpdateDoneCommandAction" method="execute" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#BooleanInstantiation" priority="2">
-Avoid instantiating Boolean objects; reference Boolean.TRUE or Boolean.FALSE or call Boolean.valueOf() instead.
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/config/ConfigManager.java">
+<violation beginline="258" endline="270" begincolumn="11" endcolumn="11" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.config" class="ConfigManager" method="getListenerGenericTypes" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
+These nested if statements could be combined
 </violation>
-</file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/config/impl/PropertiesWriterImpl.java">
-<violation beginline="27" endline="46" begincolumn="7" endcolumn="7" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.config.impl" class="PropertiesWriterImpl" method="persistProperties" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
+<violation beginline="259" endline="269" begincolumn="13" endcolumn="13" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.config" class="ConfigManager" method="getListenerGenericTypes" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
 These nested if statements could be combined
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/github/ApiClient.java">
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/config/impl/PropertiesWriterImpl.java">
+<violation beginline="42" endline="61" begincolumn="7" endcolumn="7" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.config.impl" class="PropertiesWriterImpl" method="persistProperties" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
+These nested if statements could be combined
+</violation>
+</file>
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/github/ApiClient.java">
 <violation beginline="238" endline="241" begincolumn="9" endcolumn="9" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.github" class="ApiClient" method="getRateLimitRemain" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
 These nested if statements could be combined
 </violation>
@@ -43,31 +46,42 @@ These nested if statements could be combined
 These nested if statements could be combined
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/lifecycle/LifecycleService.java">
-<violation beginline="116" endline="118" begincolumn="7" endcolumn="7" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.lifecycle" class="LifecycleService" method="getState" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/lifecycle/LifecycleService.java">
+<violation beginline="168" endline="170" begincolumn="7" endcolumn="7" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.lifecycle" class="LifecycleService" method="getState" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
+These nested if statements could be combined
+</violation>
+<violation beginline="203" endline="205" begincolumn="7" endcolumn="7" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.lifecycle" class="LifecycleService" method="getConfigState" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
 These nested if statements could be combined
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/messaging/MembershipTracker.java">
-<violation beginline="113" endline="113" begincolumn="15" endcolumn="34" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.messaging" class="MembershipTracker" method="run" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/messaging/MembershipTracker.java">
+<violation beginline="117" endline="117" begincolumn="15" endcolumn="34" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.messaging" class="MembershipTracker" method="run" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+Avoid empty catch blocks
+</violation>
+<violation beginline="124" endline="124" begincolumn="15" endcolumn="34" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.messaging" class="MembershipTracker" method="run" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/meta/SiteConfigProcessor.java">
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/meta/SiteConfigProcessor.java">
 <violation beginline="36" endline="38" begincolumn="10" endcolumn="3" rule="UnusedFormalParameter" ruleset="Unused Code Rules" package="com.meltmedia.cadmium.core.meta" class="SiteConfigProcessor" externalInfoUrl="http://pmd.sourceforge.net/rules/unusedcode.html#UnusedFormalParameter" priority="3">
 Avoid unused constructor parameters such as 'contentDir'.
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/util/WarUtils.java">
-<violation beginline="147" endline="148" begincolumn="9" endcolumn="7" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.util" class="WarUtils" method="updateWar" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/util/WarUtils.java">
+<violation beginline="151" endline="152" begincolumn="9" endcolumn="7" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.util" class="WarUtils" method="updateWar" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
-<violation beginline="153" endline="154" begincolumn="9" endcolumn="7" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.util" class="WarUtils" method="updateWar" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<violation beginline="157" endline="158" begincolumn="9" endcolumn="7" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.util" class="WarUtils" method="updateWar" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/CheckInitializedTask.java">
-<violation beginline="86" endline="86" begincolumn="9" endcolumn="29" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.worker" class="CheckInitializedTask" method="call" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/CheckConfigInitializedTask.java">
+<violation beginline="81" endline="81" begincolumn="9" endcolumn="29" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.worker" class="CheckConfigInitializedTask" method="call" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+Avoid empty catch blocks
+</violation>
+</file>
+<file name="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/CheckInitializedTask.java">
+<violation beginline="87" endline="87" begincolumn="9" endcolumn="29" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.core.worker" class="CheckInitializedTask" method="call" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
 </file>

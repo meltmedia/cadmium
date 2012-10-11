@@ -1,8 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pmd-cpd>
-<duplication lines="40" tokens="147">
-<file line="45" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/messaging/ChannelMember.java"/>
-<file line="53" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/status/StatusMember.java"/>
+<duplication lines="37" tokens="189">
+<file line="162" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/ConfigCoordinatedWorkerImpl.java"/>
+<file line="175" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/CoordinatedWorkerImpl.java"/>
+<codefragment>
+<![CDATA[
+    doneMessage.setCommand(ProtocolMessage.CONFIG_UPDATE_FAILED);
+    if(repo != null) {
+      doneMessage.getProtocolParameters().put("repo", repo);
+    }
+    if(branch != null) {
+      doneMessage.getProtocolParameters().put("branch", branch);
+    }
+    if(sha != null) {
+      doneMessage.getProtocolParameters().put("sha", sha);
+    }
+    if(openId != null) {
+      doneMessage.getProtocolParameters().put("openId", openId);
+    }
+    if(uuid != null) {
+      doneMessage.getProtocolParameters().put("uuid", uuid);
+    }
+    try {
+      sender.sendMessage(doneMessage, null);
+    } catch (Exception e) {
+      log.warn("Failed to send fail message: {}", e.getMessage());
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      if(!pool.isShutdown() || !pool.isTerminated()) {
+        pool.shutdownNow();
+      }
+    } catch(Throwable t) {
+      throw new IOException(t);
+    } finally {
+      pool = null;
+    }
+  }
+
+}
+]]>
+</codefragment>
+</duplication>
+<duplication lines="19" tokens="174">
+<file line="57" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/commands/ConfigUpdateFailedCommandAction.java"/>
+<file line="57" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/commands/UpdateFailedCommandAction.java"/>
+<codefragment>
+<![CDATA[
+      lifecycleService.updateMyConfigState(UpdateState.IDLE);
+      if(historyManager != null) {
+        String repo = "";
+        if(ctx.getMessage().getProtocolParameters().containsKey("repo")) {
+          repo = ctx.getMessage().getProtocolParameters().get("repo");
+        }
+        String branch = "";
+        if(ctx.getMessage().getProtocolParameters().containsKey("branch")) {
+          branch = ctx.getMessage().getProtocolParameters().get("branch");
+        }
+        String sha = "";
+        if(ctx.getMessage().getProtocolParameters().containsKey("sha")) {
+          sha = ctx.getMessage().getProtocolParameters().get("sha");
+        }
+        String openId = "";
+        if(ctx.getMessage().getProtocolParameters().containsKey("openId")) {
+          openId = ctx.getMessage().getProtocolParameters().get("openId");
+        }
+        historyManager.logEvent(EntryType.CONFIG, repo, branch, sha, openId, "", ctx.getMessage().getProtocolParameters().get("uuid"), FAILED_LOG_MESSAGE, false, false, true, true);
+]]>
+</codefragment>
+</duplication>
+<duplication lines="48" tokens="170">
+<file line="47" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/messaging/ChannelMember.java"/>
+<file line="55" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/status/StatusMember.java"/>
 <codefragment>
 <![CDATA[
   public Address getAddress() {
@@ -29,6 +101,14 @@
     this.state = state;
   }
 
+  public UpdateState getConfigState() {
+    return configState;
+  }
+
+  public void setConfigState(UpdateState configState) {
+    this.configState = configState;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -48,9 +128,60 @@
 ]]>
 </codefragment>
 </duplication>
+<duplication lines="18" tokens="111">
+<file line="43" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/CleanUpTask.java"/>
+<file line="41" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/ParseConfigDirectoryTask.java"/>
+<codefragment>
+<![CDATA[
+  }
+
+  @Override
+  public Boolean call() throws Exception {
+    if(previousTask != null) {
+      try{
+        Boolean lastResponse = previousTask.get();
+        if(lastResponse != null && !lastResponse.booleanValue() ) {
+          throw new Exception("Previous task failed");
+        }
+      } catch(Exception e) {
+        log.warn("Work failed!", e);
+        listener.workFailed(properties.get("repo"), properties.get("branch"), properties.get("sha"), properties.get("openId"), properties.get("uuid"));
+        return false;
+      }
+    }
+    
+    log.info("Cleaning up directories");
+]]>
+</codefragment>
+</duplication>
+<duplication lines="17" tokens="107">
+<file line="56" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/CheckConfigInitializedTask.java"/>
+<file line="62" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/worker/CheckInitializedTask.java"/>
+<codefragment>
+<![CDATA[
+  public CheckConfigInitializedTask setExecutor(ExecutorService pool) {
+    this.pool = pool;
+    return this;
+  }
+
+  @Override
+  public Boolean call() throws Exception {
+    GitService git = null;
+    try {
+      if((git = futureTask.get()) == null) {
+        File gitCheckout = new File(new File(sharedContentRoot, warName), "git-checkout");
+        if(gitCheckout.exists() && gitCheckout.isDirectory()) {
+          try {
+            git = GitService.createGitService(gitCheckout.getAbsolutePath());
+            gitInit.setGitService(git);
+          } catch(Exception e){
+            logger.warn("Config Git Service did not initialize.", e);
+]]>
+</codefragment>
+</duplication>
 <duplication lines="21" tokens="103">
-<file line="74" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/git/GithubConfigSessionFactory.java"/>
-<file line="92" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/git/LocalConfigSessionFactory.java"/>
+<file line="74" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/git/GithubConfigSessionFactory.java"/>
+<file line="92" path="/Users/ossrelease/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/git/LocalConfigSessionFactory.java"/>
 <codefragment>
 <![CDATA[
 			}
@@ -74,25 +205,6 @@
 		  if(FileSystemManager.exists(privateKeyFile)) {
 		    jsch.addIdentity(privateKeyFile);
 		  }
-]]>
-</codefragment>
-</duplication>
-<duplication lines="11" tokens="100">
-<file line="80" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/config/ConfigManager.java"/>
-<file line="88" path="/Users/ctrimble/git/cadmium/core/src/main/java/com/meltmedia/cadmium/core/config/impl/PropertiesReaderImpl.java"/>
-<codefragment>
-<![CDATA[
-  }
-  
-  public void logProperties( Logger log, Properties properties, String name ) {
-    if( log.isDebugEnabled() ) {
-      StringBuilder sb = new StringBuilder().append(name).append(" properties:\n");
-      for(Object key : properties.keySet()) {
-        sb.append("  ").append(key.toString()).append(properties.getProperty(key.toString())).append("\n");
-      }
-      log.debug(sb.toString());
-    }
-  }  
 ]]>
 </codefragment>
 </duplication>
