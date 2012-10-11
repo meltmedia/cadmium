@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pmd version="4.3" timestamp="2012-09-17T17:16:44.744">
-<file name="/Users/ctrimble/git/cadmium/servlets/src/main/java/com/meltmedia/cadmium/servlets/BasicFileServlet.java">
+<pmd version="4.3" timestamp="2012-10-11T08:24:58.115">
+<file name="/Users/ossrelease/git/cadmium/servlets/src/main/java/com/meltmedia/cadmium/servlets/BasicFileServlet.java">
 <violation beginline="201" endline="201" begincolumn="99" endcolumn="107" rule="UnnecessaryConversionTemporary" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets" class="BasicFileServlet" method="processRequest" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#UnnecessaryConversionTemporary" priority="3">
 Avoid unnecessary temporaries when converting primitives to Strings
 </violation>
@@ -14,25 +14,25 @@ These nested if statements could be combined
 These nested if statements could be combined
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/servlets/src/main/java/com/meltmedia/cadmium/servlets/FileServlet.java">
+<file name="/Users/ossrelease/git/cadmium/servlets/src/main/java/com/meltmedia/cadmium/servlets/FileServlet.java">
 <violation beginline="54" endline="56" begincolumn="16" endcolumn="9" rule="UselessOverridingMethod" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets" class="FileServlet" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#UselessOverridingMethod" priority="3">
 Overriding method merely calls super
 </violation>
 </file>
-<file name="/Users/ctrimble/git/cadmium/servlets/src/main/java/com/meltmedia/cadmium/servlets/guice/CadmiumListener.java">
-<violation beginline="178" endline="178" begincolumn="15" endcolumn="34" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="contextDestroyed" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<file name="/Users/ossrelease/git/cadmium/servlets/src/main/java/com/meltmedia/cadmium/servlets/guice/CadmiumListener.java">
+<violation beginline="170" endline="170" begincolumn="15" endcolumn="34" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="contextDestroyed" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
-<violation beginline="180" endline="180" begincolumn="11" endcolumn="31" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="contextDestroyed" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<violation beginline="172" endline="172" begincolumn="11" endcolumn="31" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="contextDestroyed" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
-<violation beginline="194" endline="194" begincolumn="11" endcolumn="31" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="contextDestroyed" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<violation beginline="186" endline="186" begincolumn="11" endcolumn="31" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="contextDestroyed" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
-<violation beginline="499" endline="501" begincolumn="9" endcolumn="7" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="configureLogback" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
+<violation beginline="494" endline="496" begincolumn="9" endcolumn="7" rule="EmptyCatchBlock" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="configureLogback" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyCatchBlock" priority="3">
 Avoid empty catch blocks
 </violation>
-<violation beginline="516" endline="518" begincolumn="9" endcolumn="9" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="sharedContextRoot" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
+<violation beginline="511" endline="513" begincolumn="9" endcolumn="9" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="com.meltmedia.cadmium.servlets.guice" class="CadmiumListener" method="sharedContextRoot" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
 These nested if statements could be combined
 </violation>
 </file>
