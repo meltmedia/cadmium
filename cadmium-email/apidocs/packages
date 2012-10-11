@@ -1,3 +1,4 @@
+com.meltmedia.cadmium.email.config
 com.meltmedia.cadmium.email
 com.meltmedia.cadmium.email.guice
 com.meltmedia.cadmium.email.internal
