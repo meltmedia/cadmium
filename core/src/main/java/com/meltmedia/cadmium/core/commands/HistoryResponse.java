@@ -13,9 +13,26 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.messaging;
+package com.meltmedia.cadmium.core.commands;
 
-public interface MessageSender {
-  public <B> void sendMessage(Message<B> msg, ChannelMember dest) throws Exception;
-  public String getGroupName();
+import java.util.List;
+
+import com.meltmedia.cadmium.core.history.HistoryEntry;
+
+public class HistoryResponse extends AbstractMessageBean {
+
+  private List<HistoryEntry> history;
+
+  public HistoryResponse(List<HistoryEntry> history) {
+    this.history = history;
+  }
+
+  public List<HistoryEntry> getHistory() {
+    return history;
+  }
+
+  public void setHistory(List<HistoryEntry> history) {
+    this.history = history;
+  }
+
 }

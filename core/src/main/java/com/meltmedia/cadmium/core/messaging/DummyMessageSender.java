@@ -15,11 +15,19 @@
  */
 package com.meltmedia.cadmium.core.messaging;
 
-public class DummyMessageSender implements MessageSender {
+/**
+ * A message sender for testing.  This class should be replaced with Mockito.
+ * 
+ * @author John McEntire
+ *
+ * @param <B1>
+ * @param <B2>
+ */
+public class DummyMessageSender<B1, B2> implements MessageSender {
   
-  public Message msg;
+  public Message<B1> msg;
   public ChannelMember dest;
-  public Message msg2;
+  public Message<B2> msg2;
   public ChannelMember dest2;
 
   @Override

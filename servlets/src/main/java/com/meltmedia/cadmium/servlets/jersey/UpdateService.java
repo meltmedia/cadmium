@@ -24,6 +24,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.jgroups.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.core.api.BasicApiResponse;
 import com.meltmedia.cadmium.core.api.UpdateRequest;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -63,48 +66,37 @@ public class UpdateService extends AuthorizationService {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-    String repo = "";
-    String branch = "";
-    String sha = "";
-    String comment = req.getComment();
-    if(req.getRepo() != null) {
-      repo = req.getRepo();
-    }
-    if(req.getBranch() != null) {
-      branch = req.getBranch();
-    }
-    if(req.getSha() != null) {
-      sha = req.getSha();
-    }
+    
     BasicApiResponse resp = new BasicApiResponse();
     resp.setUuid(UUID.randomUUID().toString());
-    if(sender != null) {
-      if(comment != null && comment.trim().length() > 0) {
-        log.debug("Sending "+cmd+" message");
-        Message msg = new Message();
-        msg.setCommand(cmd);
-        if(repo != null && repo.trim().length() > 0) {
-          msg.getProtocolParameters().put("repo", repo);
-        }
-        if(branch != null && branch.trim().length() > 0) {
-          msg.getProtocolParameters().put("branch", branch);
-        }
-        if(sha != null && sha.trim().length() > 0) {
-          msg.getProtocolParameters().put("sha", sha);
-        }
-        msg.getProtocolParameters().put("comment", comment);
-        msg.getProtocolParameters().put("openId", openId);
-        msg.getProtocolParameters().put("uuid", resp.getUuid());
-        sender.sendMessage(msg, null);
-        resp.setMessage("ok");
-      } else {
-        resp.setMessage("invalid request");
-      }
-    } else {
+    
+    if( sender == null ) {
       resp.setMessage("Cadmium is not fully deployed. See logs for details.");
       log.error("Channel is not wired");
+      return resp;
     }
+    else if( StringUtils.isEmptyOrNull(req.getComment()) ) {
+      resp.setMessage("invalid request");
+      return resp;
+    }
+    
+    // NOTE: if the headers had the openId and UUID, then we could reuse the request from the client.
+    ContentUpdateRequest body = new ContentUpdateRequest();
+    body.setContentLocation(new GitLocation(emptyStringIfNull(req.getRepo()), emptyStringIfNull(req.getBranch()), emptyStringIfNull(req.getSha())));
+    body.setComment(req.getComment());
+    body.setOpenId(openId);
+    body.setUuid(resp.getUuid());
+    Message<ContentUpdateRequest> msg = new Message<ContentUpdateRequest>(cmd, body);
+    sender.sendMessage(msg, null);
+    resp.setMessage("ok");
+
     return resp;
-  } 
+  }
+  
+  private static String emptyStringIfNull( final String value ) {
+    if( value == null ) return "";
+    else return value;
+  }
+
   
 }

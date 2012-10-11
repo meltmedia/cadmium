@@ -15,7 +15,6 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
-import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -33,7 +32,7 @@ import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class ConfigUpdateDoneCommandAction implements CommandAction {
+public class ConfigUpdateDoneCommandAction implements CommandAction<ContentUpdateRequest> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
@@ -48,33 +47,32 @@ public class ConfigUpdateDoneCommandAction implements CommandAction {
   public String getName() { return ProtocolMessage.CONFIG_UPDATE_DONE; }
 
   @Override
-  public boolean execute(CommandContext ctx) throws Exception {
+  public boolean execute(CommandContext<ContentUpdateRequest> ctx) throws Exception {
     
     Properties configProperties = configManager.getDefaultProperties();
     
     log.info("Config update is done @ {}, my state {}", ctx.getSource(), lifecycleService.getCurrentConfigState());
     if(manager != null) {
       try {
-        Map<String, String> props = ctx.getMessage().getProtocolParameters();
-        String repo = props.get("repo");
-        String branch = props.get("BranchName");
-        String rev = props.get("CurrentRevision");
-        String openId = props.get("openId");
-        String lastUpdated = configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated");
-        String uuid = props.get("uuid");
-        String comment = props.get("comment");
-        boolean revertible = true;
-        manager.logEvent(EntryType.CONFIG, repo, branch, rev, openId, lastUpdated, uuid, comment, revertible, false);
+        ContentUpdateRequest body = ctx.getMessage().getBody();
+        manager.logEvent(EntryType.CONFIG,
+            body.getContentLocation(),
+            body.getOpenId(),
+            configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated"),
+            body.getUuid(),
+            body.getComment(),
+            true,
+            false);
       } catch(Exception e){
         log.warn("Failed to update log", e);
       }
     }
-    lifecycleService.sendConfigStateUpdate(null, ctx.getMessage().getProtocolParameters().get("uuid"));
+    lifecycleService.sendConfigStateUpdate(null, ctx.getMessage().getBody().getUuid());
     return true;
   }
 
   @Override
-  public void handleFailure(CommandContext ctx, Exception e) {
+  public void handleFailure(CommandContext<ContentUpdateRequest> ctx, Exception e) {
 
   }
 }

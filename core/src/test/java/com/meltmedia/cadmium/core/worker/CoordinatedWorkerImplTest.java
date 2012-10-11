@@ -30,6 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
@@ -85,9 +87,8 @@ public class CoordinatedWorkerImplTest {
     
     configProps.setProperty("com.meltmedia.cadmium.lastUpdated", new File(baseDir, "renderedContent_3").getAbsolutePath());
     
-    Map<String,String> properties = new HashMap<String, String>();
-    properties.put("branch", "cd-dev-testing");
-    properties.put("sha", "41fb29368e8649c1ee2ea74228414553dd1f2d45");
+    ContentUpdateRequest body = new ContentUpdateRequest();
+    body.setContentLocation(new GitLocation(null, "cd-dev-testing", "41fb29368e8649c1ee2ea74228414553dd1f2d45"));
     
     DummyMessageSender sender = new DummyMessageSender();
     
@@ -108,7 +109,7 @@ public class CoordinatedWorkerImplTest {
     worker.service = service;
     worker.lifecycleService = lifecycleService;
     
-    worker.beginPullUpdates(properties);
+    worker.beginPullUpdates(body);
     int timeout = 5000;
     Thread.sleep(500l);
     while(timeout > 0 && !worker.lastTask.isDone()) {

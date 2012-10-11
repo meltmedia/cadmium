@@ -27,23 +27,23 @@ import javax.inject.Singleton;
 import com.meltmedia.cadmium.core.CommandAction;
 
 @Singleton
-public class CommandMapProvider implements Provider<Map<String, CommandAction>> {
+public class CommandMapProvider implements Provider<Map<String, CommandAction<?>>> {
   
   @Inject
-  protected Set<CommandAction> commandSet;
+  protected Set<CommandAction<?>> commandSet;
   
-  private Map<String, CommandAction> actionMap =  new HashMap<String, CommandAction>();
+  private Map<String, CommandAction<?>> actionMap =  new HashMap<String, CommandAction<?>>();
   
   @Inject
-  public CommandMapProvider(Set<CommandAction> commandSet) {
-    for( CommandAction command : commandSet ) {
+  public CommandMapProvider(Set<CommandAction<?>> commandSet) {
+    for( CommandAction<?> command : commandSet ) {
       actionMap.put(command.getName(), command);
     }
     actionMap = Collections.unmodifiableMap(actionMap);
   }
 
   @Override
-  public Map<String, CommandAction> get() {
+  public Map<String, CommandAction<?>> get() {
     return actionMap;
   }
 

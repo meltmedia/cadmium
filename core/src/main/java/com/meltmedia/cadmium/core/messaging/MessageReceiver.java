@@ -36,26 +36,37 @@ public class MessageReceiver implements MessageListener {
   
   @Inject
   @Named("commandMap")
-  Map<String, CommandAction> commandMap; 
+  Map<String, CommandAction<?>> commandMap;
   
+  @Inject
+  MessageConverter converter;
+  
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   public void receive(org.jgroups.Message msg) {
-    Message message = MessageConverter.deserialize(msg.getObject().toString());
-    CommandContext ctx = new CommandContext(msg.getSrc(), message);
-    
-    if(commandMap.containsKey(message.getCommand())) {
-      CommandAction action = commandMap.get(message.getCommand());
-      if(action != null) {
-        try{
-          if(!action.execute(ctx)){
-            action.handleFailure(ctx, null);
-          }
-        } catch(Exception e) {
-          action.handleFailure(ctx, e);
-          log.error("Command [{}] failed: {}", message.getCommand(), e.getMessage());
-        }
-      }
+    Message<?> message = null;
+    try {
+      message = converter.toCadmiumMessage(msg);
     }
+    catch( Exception e ) {
+      log.error("Failed to parse message.", e);
+      return;
+    }
+    
+    CommandContext ctx = new CommandContext(msg.getSrc(), message);
+    String command = message.getHeader().getCommand();
+    CommandAction<?> action = commandMap.get(command);
+    if( action == null ) return;
+
+    try {
+      if (!action.execute(ctx)) {
+        action.handleFailure(ctx, null);
+      }
+    } catch (Exception e) {
+      action.handleFailure(ctx, e);
+      log.error("Command [{}] failed: {}", command, e.getMessage());
+    }
+
   }
 
   @Override

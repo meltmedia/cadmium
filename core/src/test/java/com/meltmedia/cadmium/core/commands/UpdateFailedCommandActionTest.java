@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -35,10 +36,10 @@ public class UpdateFailedCommandActionTest {
 
   @Test
   public void testCommand() throws Exception {
-    DummyCoordinatedWorker worker = new DummyCoordinatedWorker();
+    DummyCoordinatedWorker<ContentUpdateRequest> worker = new DummyCoordinatedWorker<ContentUpdateRequest>();
     worker.updating = true;
     
-    DummyMessageSender sender = new DummyMessageSender();
+    DummyMessageSender<StateUpdateRequest, Void> sender = new DummyMessageSender<StateUpdateRequest, Void>();
     
     LifecycleService service = new LifecycleService();
     
@@ -51,16 +52,15 @@ public class UpdateFailedCommandActionTest {
     cmd.lifecycleService = service;
     cmd.worker = worker;
     
-    CommandContext ctx = new CommandContext(new IpAddress(1234), new Message());
-    ctx.getMessage().setCommand(ProtocolMessage.UPDATE_FAILED);
+    ContentUpdateRequest request = new ContentUpdateRequest();
+    CommandContext<ContentUpdateRequest> ctx = new CommandContext<ContentUpdateRequest>(new IpAddress(1234), new Message<ContentUpdateRequest>(ProtocolMessage.UPDATE_FAILED, request));
     
     assertTrue("Command returned false", cmd.execute(ctx));
     
     assertTrue("Update not killed", worker.killed && worker.updating);
     assertTrue("State not updated", service.getCurrentState() == UpdateState.IDLE);
     assertTrue("No message sent", sender.dest == null && sender.msg != null);
-    assertTrue("No state_update msg sent", sender.msg.getCommand() == ProtocolMessage.STATE_UPDATE);
-    assertTrue("Incorrect state sent in message", sender.msg.getProtocolParameters().containsKey("state") 
-        && sender.msg.getProtocolParameters().get("state").equals(UpdateState.IDLE.name()));
+    assertTrue("No state_update msg sent", sender.msg.getHeader().getCommand() == ProtocolMessage.STATE_UPDATE);
+    assertEquals("Incorrect state sent in message", UpdateState.IDLE.name(), sender.msg.getBody().getState());
   }
 }

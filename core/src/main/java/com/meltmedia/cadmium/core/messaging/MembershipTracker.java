@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ConfigurationGitService;
 import com.meltmedia.cadmium.core.ContentGitService;
+import com.meltmedia.cadmium.core.commands.GitLocation;
+import com.meltmedia.cadmium.core.commands.SyncRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 
@@ -124,21 +126,22 @@ public class MembershipTracker implements MembershipListener {
             } catch(Throwable t){}
           }
           Properties configProperties = configManager.getDefaultProperties();
-          Message syncMessage = new Message();
-          syncMessage.setCommand(ProtocolMessage.SYNC);
-          log.info("Sending sync message to coordinator {}", coordinator.getAddress());
+          SyncRequest request = new SyncRequest();
           if(configProperties.containsKey("repo") && configProperties.containsKey("branch") && configProperties.containsKey("git.ref.sha")) {
-            syncMessage.getProtocolParameters().put("repo", configProperties.getProperty("repo"));
-            syncMessage.getProtocolParameters().put("branch", configProperties.getProperty("branch"));
-            syncMessage.getProtocolParameters().put("sha", configProperties.getProperty("git.ref.sha"));
+            request.setContentLocation(new GitLocation(
+              configProperties.getProperty("repo"),
+              configProperties.getProperty("branch"),
+              configProperties.getProperty("git.ref.sha")));
             log.info("I have repo:{}, branch:{}, and sha:{} for content", new Object[] { configProperties.getProperty("repo"), configProperties.getProperty("branch"), configProperties.getProperty("git.ref.sha")});
           }
           if(configProperties.containsKey("config.repo") && configProperties.containsKey("config.branch") && configProperties.containsKey("config.git.ref.sha")) {
-            syncMessage.getProtocolParameters().put("configRepo", configProperties.getProperty("config.repo"));
-            syncMessage.getProtocolParameters().put("configBranch", configProperties.getProperty("config.branch"));
-            syncMessage.getProtocolParameters().put("configSha", configProperties.getProperty("config.git.ref.sha"));
+            request.setConfigLocation(new GitLocation(
+              configProperties.getProperty("config.repo"),
+              configProperties.getProperty("config.branch"),
+              configProperties.getProperty("config.git.ref.sha")));
             log.info("I have repo:{}, branch:{}, and sha:{} for configuration", new Object[] { configProperties.getProperty("config.repo"), configProperties.getProperty("config.branch"), configProperties.getProperty("config.git.ref.sha")});
           }
+          Message<SyncRequest> syncMessage = new Message<SyncRequest>(ProtocolMessage.SYNC, request);
           try{
             sender.sendMessage(syncMessage, coordinator);
           } catch(Exception e) {
@@ -152,8 +155,7 @@ public class MembershipTracker implements MembershipListener {
   private void sendStateMessages(List<ChannelMember> newMembers) {
     if(newMembers != null) {
       for(ChannelMember cMember : newMembers) {
-        Message stateMsg = new Message();
-        stateMsg.setCommand(ProtocolMessage.CURRENT_STATE);
+        Message<Void> stateMsg = new Message<Void>(ProtocolMessage.CURRENT_STATE, null);
         try {
           sender.sendMessage(stateMsg, cMember);
         } catch (Exception e) {

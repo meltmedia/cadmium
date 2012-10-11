@@ -28,7 +28,7 @@ import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class CurrentStateCommandAction implements CommandAction {
+public class CurrentStateCommandAction implements CommandAction<Void> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
@@ -37,7 +37,7 @@ public class CurrentStateCommandAction implements CommandAction {
   public String getName() { return ProtocolMessage.CURRENT_STATE; };
 
   @Override
-  public boolean execute(CommandContext ctx) throws Exception {
+  public boolean execute(CommandContext<Void> ctx) throws Exception {
     log.info("Responding with current state {}", lifecycleService.getCurrentState());
     lifecycleService.sendStateUpdate(new ChannelMember(ctx.getSource()));
     log.info("Responding with current config state {}", lifecycleService.getCurrentConfigState());
@@ -46,7 +46,7 @@ public class CurrentStateCommandAction implements CommandAction {
   }
 
   @Override
-  public void handleFailure(CommandContext ctx, Exception e) {
+  public void handleFailure(CommandContext<Void> ctx, Exception e) {
 
   }
 

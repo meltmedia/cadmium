@@ -15,6 +15,8 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ public class CurrentStateCommandActionTest {
   
   @Test
   public void testCommand() throws Exception {
-    DummyMessageSender sender = new DummyMessageSender();
+    DummyMessageSender<StateUpdateRequest, StateUpdateRequest> sender = new DummyMessageSender<StateUpdateRequest, StateUpdateRequest>();
     
     LifecycleService service = new LifecycleService();
     
@@ -47,22 +49,24 @@ public class CurrentStateCommandActionTest {
     CurrentStateCommandAction cmd = new CurrentStateCommandAction();
     cmd.lifecycleService = service;
     
-    CommandContext ctx = new CommandContext(new IpAddress(1234), new Message());
+    CommandContext<Void> ctx = new CommandContext<Void>(new IpAddress(1234), new Message<Void>());
     
     assertTrue("Command returned false", cmd.execute(ctx));
     
     assertTrue("Message not sent", sender.msg != null);
     assertTrue("Destination not set correctly", sender.dest != null && sender.dest.getAddress() == ctx.getSource());
-    assertTrue("message not state_update", sender.msg.getCommand() == ProtocolMessage.STATE_UPDATE);
-    assertTrue("State not correct in message", sender.msg.getProtocolParameters().containsKey("state")
-        && sender.msg.getProtocolParameters().get("state").equals(UpdateState.UPDATING.name()));
+    assertTrue("message not state_update", sender.msg.getHeader().getCommand() == ProtocolMessage.STATE_UPDATE);
+    assertNotNull(sender.msg.getBody());
+    assertNotNull(sender.msg.getBody().getState());
+    assertEquals("State not correct in message", UpdateState.UPDATING.name(), sender.msg.getBody().getState());
 
     
     assertTrue("Second message not sent", sender.msg2 != null);
     assertTrue("Second destination not set correctly", sender.dest2 != null && sender.dest2.getAddress() == ctx.getSource());
-    assertTrue("Second message not state_update", sender.msg2.getCommand() == ProtocolMessage.STATE_UPDATE);
-    assertTrue("Second state not correct in message", sender.msg2.getProtocolParameters().containsKey("configState")
-        && sender.msg2.getProtocolParameters().get("configState").equals(UpdateState.WAITING.name()));
+    assertTrue("Second message not state_update", sender.msg2.getHeader().getCommand() == ProtocolMessage.STATE_UPDATE);
+    assertNotNull(sender.msg2.getBody());
+    assertNotNull(sender.msg2.getBody().getConfigState());
+    assertEquals("State not correct in message", UpdateState.WAITING.name(), sender.msg2.getBody().getConfigState());
     
   }
 

@@ -62,9 +62,11 @@ public class StateUpdateCommandActionTest {
     StateUpdateCommandAction cmd = new StateUpdateCommandAction();
     cmd.lifecycleService = service;
     
-    CommandContext ctx = new CommandContext(other3, new Message());
-    ctx.getMessage().setCommand(ProtocolMessage.STATE_UPDATE);
-    ctx.getMessage().getProtocolParameters().put("state", UpdateState.WAITING.name());
+    StateUpdateRequest request = new StateUpdateRequest();
+    request.setState(UpdateState.WAITING.name());
+    CommandContext<StateUpdateRequest> ctx = new CommandContext<StateUpdateRequest>(
+        other3, 
+        new Message<StateUpdateRequest>(ProtocolMessage.STATE_UPDATE, request));
     
     assertTrue("Command failed", cmd.execute(ctx));
     
@@ -103,9 +105,10 @@ public class StateUpdateCommandActionTest {
     cmd.maintFilter = sd;
     cmd.lifecycleService = service;
     
-    CommandContext ctx = new CommandContext(other3, new Message());
-    ctx.getMessage().setCommand(ProtocolMessage.STATE_UPDATE);
-    ctx.getMessage().getProtocolParameters().put("state", UpdateState.WAITING.name());
+    StateUpdateRequest request = new StateUpdateRequest();
+    request.setState(UpdateState.WAITING.name());
+
+    CommandContext<StateUpdateRequest> ctx = new CommandContext<StateUpdateRequest>(other3, new Message<StateUpdateRequest>(ProtocolMessage.STATE_UPDATE, request));
     
     assertTrue("Command failed", cmd.execute(ctx));
     

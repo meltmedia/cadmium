@@ -20,10 +20,10 @@ import static com.meltmedia.cadmium.core.util.WarUtils.updateWar;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.maven.ArtifactResolver;
 
-public class DeployCommandAction implements CommandAction {
+public class DeployCommandAction implements CommandAction<DeployRequest> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   public static String DEPLOY_ACTION = "DEPLOY";
 
@@ -42,35 +42,31 @@ public class DeployCommandAction implements CommandAction {
   protected ArtifactResolver artifactResolver;
 
   @Override
-  public boolean execute(CommandContext ctx) throws Exception {
+  public boolean execute(CommandContext<DeployRequest> ctx) throws Exception {
     log.info("Beginning Deploy Command, started by {}", ctx.getSource());
-    Map<String,String> params = ctx.getMessage().getProtocolParameters();
-    
-    String domain = params.get("domain").trim();
-    String branch = params.get("branch").trim();
-    String repo = params.get("repo").trim();
-    String configBranch = params.get("configBranch").trim();
-    String configRepo = params.get("configRepo").trim();
-    String context = params.get("context").trim();
-    String artifact = params.get("artifact").trim();
+    DeployRequest request = ctx.getMessage().getBody();
     
     // make sure our state is OK.  We need some proper validation.
-    if( domain.isEmpty() || branch.isEmpty() || repo.isEmpty() || configBranch.isEmpty() || context.isEmpty()) {
-      log.warn("Invalid deploy request: Empty field. branch: {}, repo {}, config branch: {}, config repo {}, domain {}, context {}", new String[]{branch, repo, configBranch, configRepo, domain, context});
+    if( StringUtils.isEmptyOrNull(request.getDomain()) || 
+        StringUtils.isEmptyOrNull(request.getBranch()) || 
+        StringUtils.isEmptyOrNull(request.getRepo()) || 
+        StringUtils.isEmptyOrNull(request.getConfigBranch()) || 
+        StringUtils.isEmptyOrNull(request.getContext())) {
+      log.warn("Invalid deploy request: Empty field. {}", request);
       throw new Exception("Invalid deploy message.");
     }
     
-    log.info("Beginning war creation. branch: {}, repo {}, config branch: {}, config repo {}, domain {}, context {}", new String[]{branch, repo, configBranch, configRepo, domain, context});
+    log.info("Beginning war creation. {}", request);
 
-    JBossUtil.addVirtualHost(domain, log);    
+    JBossUtil.addVirtualHost(request.getDomain(), log);    
     
     //setup war name and inset into list in initCommand
     List<String> newWarNames = new ArrayList<String>();
-    String tmpFileName = domain.replace("\\.", "_") + ".war";   
+    String tmpFileName = request.getDomain().replace("\\.", "_") + ".war";   
     File tmpZip = File.createTempFile(tmpFileName, null);
     tmpZip.deleteOnExit();
     newWarNames.add(tmpZip.getAbsolutePath());
-    boolean secure = new Boolean(params.get("secure"));
+    boolean secure = request.getSecure();
     
     // If the shiro config file can't be read lets not make this war secure.
     if(secure) {
@@ -81,9 +77,9 @@ public class DeployCommandAction implements CommandAction {
       }
     }
     
-    File artifactFile = artifactResolver.resolveMavenArtifact(artifact);
+    File artifactFile = artifactResolver.resolveMavenArtifact(request.getArtifact());
     
-    updateWar(null, artifactFile.getAbsolutePath(), newWarNames, repo, branch, configRepo, configBranch, domain, context, secure);
+    updateWar(null, artifactFile.getAbsolutePath(), newWarNames, request.getRepo(), request.getBranch(), request.getConfigRepo(), request.getConfigBranch(), request.getDomain(), request.getContext(), secure);
     
     String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
     
@@ -93,7 +89,7 @@ public class DeployCommandAction implements CommandAction {
   }
 
   @Override
-  public void handleFailure(CommandContext ctx, Exception e) {
+  public void handleFailure(CommandContext<DeployRequest> ctx, Exception e) {
     // TODO Auto-generated method stub
 
   }

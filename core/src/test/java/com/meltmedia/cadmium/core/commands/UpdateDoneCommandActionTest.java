@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -49,7 +50,7 @@ public class UpdateDoneCommandActionTest {
   
   @Test
   public void testCommand() throws Exception {
-    DummyMessageSender sender = new DummyMessageSender();
+    DummyMessageSender<StateUpdateRequest, Void> sender = new DummyMessageSender<StateUpdateRequest, Void>();
     
     LifecycleService service = new LifecycleService();
     
@@ -62,14 +63,13 @@ public class UpdateDoneCommandActionTest {
     cmd.configManager = configManager;
     cmd.lifecycleService = service;
     
-    CommandContext ctx = new CommandContext(new IpAddress(1234), new Message());
-    ctx.getMessage().setCommand(ProtocolMessage.UPDATE_DONE);
+    ContentUpdateRequest request = new ContentUpdateRequest();
+    CommandContext<ContentUpdateRequest> ctx = new CommandContext<ContentUpdateRequest>(new IpAddress(1234), new Message<ContentUpdateRequest>(ProtocolMessage.UPDATE_DONE, request));
     
     assertTrue("Command returned false", cmd.execute(ctx));
     
     assertTrue("no message sent", sender.dest == null && sender.msg != null);
-    assertTrue("No state update", sender.msg.getCommand() == ProtocolMessage.STATE_UPDATE);
-    assertTrue("Incorrect state in update", sender.msg.getProtocolParameters().containsKey("state") 
-        && sender.msg.getProtocolParameters().get("state").equals(UpdateState.UPDATING.name()));
+    assertTrue("No state update", sender.msg.getHeader().getCommand() == ProtocolMessage.STATE_UPDATE);
+    assertEquals("Incorrect state in update", UpdateState.UPDATING.name(), sender.msg.getBody().getState());
   }
 }

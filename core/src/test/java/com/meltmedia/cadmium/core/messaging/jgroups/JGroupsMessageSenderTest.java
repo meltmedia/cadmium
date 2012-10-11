@@ -18,26 +18,38 @@ package com.meltmedia.cadmium.core.messaging.jgroups;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import org.jgroups.Address;
 import org.jgroups.stack.IpAddress;
 import org.junit.Test;
 
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
+import com.meltmedia.cadmium.core.messaging.MessageConverter;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import com.meltmedia.cadmium.core.messaging.Header;
 
 public class JGroupsMessageSenderTest {
-  private static final String serializedMessage = "{\"command\":\"UPDATE\",\"protocolParameters\":{\"branch\":\"master\",\"rev\":\"HEAD\"},\"requestTime\":233434800}";
-  private static final Message deserializedMessage = new Message();
+  private static final String serializedMessage = "{\"header\":{\"command\":\"UPDATE\",\"requestTime\":233434800},\"body\":{\"contentLocation\":{\"branch\":\"master\",\"revision\":\"HEAD\"},\"revertable\":false}}";
+  private static final Message<ContentUpdateRequest> deserializedMessage = new Message<ContentUpdateRequest>();
+  private static final MessageConverter converter = new MessageConverter();
   static {
-    deserializedMessage.setCommand(ProtocolMessage.UPDATE);
-    deserializedMessage.setRequestTime(new Long(233434800));
-    deserializedMessage.setProtocolParameters(new LinkedHashMap<String, String>());
-    deserializedMessage.getProtocolParameters().put("branch", "master");
-    deserializedMessage.getProtocolParameters().put("rev", "HEAD");
+    Header header = new Header(ProtocolMessage.UPDATE);
+    header.setRequestTime(new Long(233434800));
+    ContentUpdateRequest body = new ContentUpdateRequest();
+    body.setContentLocation(new GitLocation(null, "master", "HEAD"));
+    deserializedMessage.setHeader(header);
+    deserializedMessage.setBody(body);
+    
+    Map<String, Class<?>> commandToBodyMap = new HashMap<String, Class<?>>();
+    commandToBodyMap.put(ProtocolMessage.UPDATE, ContentUpdateRequest.class);
+    commandToBodyMap.put(ProtocolMessage.CURRENT_STATE, Void.class);
+    converter.setCommandToBodyMapping(commandToBodyMap);
   }
 
   @Test
@@ -50,11 +62,12 @@ public class JGroupsMessageSenderTest {
     
     JGroupsMessageSender sender = new JGroupsMessageSender();
     sender.channel = channel;
+    sender.setConverter(converter);
     
     sender.sendMessage(deserializedMessage, new ChannelMember(me));
     
     assertTrue("Failed to send message", channel.getMessageList().size() == 1 && channel.getMessageList().get(0) != null);
     assertEquals("Incorrect Destination", me.toString(), channel.getMessageList().get(0).getDest().toString());
-    assertEquals("Incorrect Message sent", serializedMessage, channel.getMessageList().get(0).getObject().toString());
+    assertEquals("Incorrect Message sent", serializedMessage, new String(channel.getMessageList().get(0).getBuffer(), "UTF-8"));
   }
 }

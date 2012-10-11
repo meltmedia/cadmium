@@ -15,8 +15,8 @@
  */
 package com.meltmedia.cadmium.core;
 
-public interface CommandAction {
+public interface CommandAction<T> {
   public String getName();
-  public boolean execute(CommandContext ctx) throws Exception;
-  public void handleFailure(CommandContext ctx, Exception e);
+  public boolean execute(CommandContext<T> ctx) throws Exception;
+  public void handleFailure(CommandContext<T> ctx, Exception e);
 }

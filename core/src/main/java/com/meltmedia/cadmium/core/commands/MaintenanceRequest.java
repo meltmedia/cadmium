@@ -13,9 +13,36 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.messaging;
+package com.meltmedia.cadmium.core.commands;
 
-public interface MessageSender {
-  public <B> void sendMessage(Message<B> msg, ChannelMember dest) throws Exception;
-  public String getGroupName();
+public class MaintenanceRequest extends AbstractMessageBean {
+
+  protected String state;
+  protected String comment;
+  private String openId;
+
+  public String getState() {
+    return this.state;
+  }
+
+  public String getComment() {
+    return comment;
+  }
+
+  public void setComment(String comment) {
+    this.comment = comment;
+  }
+
+  public void setState(String state) {
+    this.state = state;
+  }
+
+  public String getOpenId() {
+    return this.openId;
+  }
+
+  public void setOpenId(String openId) {
+    this.openId = openId;
+  }
+
 }

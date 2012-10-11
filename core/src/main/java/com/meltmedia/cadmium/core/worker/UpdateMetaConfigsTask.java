@@ -22,19 +22,20 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
-public class UpdateMetaConfigsTask implements Callable<Boolean> {
+public abstract class UpdateMetaConfigsTask implements Callable<Boolean> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   private SiteConfigProcessor processor;
   private Future<Boolean> previousTask;
-  private Map<String, String> properties;
+  private ContentUpdateRequest body;
   
-  public UpdateMetaConfigsTask(SiteConfigProcessor processor, Map<String, String> properties, Future<Boolean> previousTask) {
+  public UpdateMetaConfigsTask(SiteConfigProcessor processor, ContentUpdateRequest body, Future<Boolean> previousTask) {
     this.processor = processor;
     this.previousTask = previousTask;
-    this.properties = properties;
+    this.body = body;
   }
 
   @Override
@@ -45,7 +46,7 @@ public class UpdateMetaConfigsTask implements Callable<Boolean> {
         throw new Exception("Previous task failed");
       }
     }
-    String nextDirectory = properties.get("nextDirectory");
+    String nextDirectory = getNextDirectory();
     log.info("Processing META-INF directory [{}] for configs if exists", nextDirectory);
     if(nextDirectory != null) {
       if(processor != null) {
@@ -59,5 +60,7 @@ public class UpdateMetaConfigsTask implements Callable<Boolean> {
     }
     return true;
   }
+  
+  public abstract String getNextDirectory();
 
 }

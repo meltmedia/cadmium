@@ -24,18 +24,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
+import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 
-public class ParseConfigDirectoryTask implements Callable<Boolean> {
+public abstract class ParseConfigDirectoryTask implements Callable<Boolean> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private Future<Boolean> previousTask;
   private CoordinatedWorkerListener listener;
-  private Map<String, String> properties;
   private ConfigManager configManager;
+  private ContentUpdateRequest body;
   
-  public ParseConfigDirectoryTask(CoordinatedWorkerListener listener, ConfigManager configManager, Map<String, String> properties, Future<Boolean> previousTask) {
+  public ParseConfigDirectoryTask(CoordinatedWorkerListener listener, ConfigManager configManager, ContentUpdateRequest body, Future<Boolean> previousTask) {
     this.previousTask = previousTask;
-    this.properties = properties;
+    this.body = body;
     this.listener = listener;
     this.configManager = configManager;
   }
@@ -50,15 +51,17 @@ public class ParseConfigDirectoryTask implements Callable<Boolean> {
         }
       } catch(Exception e) {
         log.warn("Work failed!", e);
-        listener.workFailed(properties.get("repo"), properties.get("branch"), properties.get("sha"), properties.get("openId"), properties.get("uuid"));
+        listener.workFailed(body);
         return false;
       }
     }
     
     log.info("Parsing config directory");
-    configManager.parseConfigurationDirectory(new File(properties.get("nextDirectory")));
+    configManager.parseConfigurationDirectory(new File(getNextDirectory()));
     
     return true;
   }
+  
+  public abstract String getNextDirectory();
 
 }

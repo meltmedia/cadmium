@@ -30,27 +30,27 @@ import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class HistoryResponseCommandAction implements CommandAction, CommandResponse {
+public class HistoryResponseCommandAction implements CommandAction<HistoryResponse>, CommandResponse {
   private final Logger log = LoggerFactory.getLogger(getClass()); 
   
-  protected Map<ChannelMember, Message> responses = new HashMap<ChannelMember, Message>();
+  protected Map<ChannelMember, Message<HistoryResponse>> responses = new HashMap<ChannelMember, Message<HistoryResponse>>();
 
   public String getName() { return ProtocolMessage.HISTORY_RESPONSE; };
 
   @Override
-  public boolean execute(CommandContext ctx) throws Exception {
+  public boolean execute(CommandContext<HistoryResponse> ctx) throws Exception {
     log.info("Recevied response for HISTORY_REQUEST from {}", ctx.getSource());
     responses.put(new ChannelMember(ctx.getSource()), ctx.getMessage());
     return true;
   }
 
   @Override
-  public void handleFailure(CommandContext ctx, Exception e) {
+  public void handleFailure(CommandContext<HistoryResponse> ctx, Exception e) {
 
   }
 
   @Override
-  public Message getResponse(ChannelMember member) {
+  public Message<HistoryResponse> getResponse(ChannelMember member) {
     if(responses.containsKey(member)) {
       return responses.get(member);
     }

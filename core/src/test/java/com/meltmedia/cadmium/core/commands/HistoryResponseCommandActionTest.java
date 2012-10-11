@@ -17,10 +17,13 @@ package com.meltmedia.cadmium.core.commands;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+
 import org.jgroups.stack.IpAddress;
 import org.junit.Test;
 
 import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.history.HistoryEntry;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -33,11 +36,10 @@ public class HistoryResponseCommandActionTest {
     
     ChannelMember mem = new ChannelMember(new IpAddress(5432));
     
-    Message msg = new Message();
-    msg.setCommand(ProtocolMessage.HISTORY_RESPONSE);
-    msg.getProtocolParameters().put("history", "history");
+    HistoryResponse response = new HistoryResponse(new ArrayList<HistoryEntry>());
+    Message<HistoryResponse> msg = new Message<HistoryResponse>(ProtocolMessage.HISTORY_RESPONSE, response);
     
-    CommandContext ctx = new CommandContext(mem.getAddress(), msg);
+    CommandContext<HistoryResponse> ctx = new CommandContext<HistoryResponse>(mem.getAddress(), msg);
     
     command.execute(ctx);
     

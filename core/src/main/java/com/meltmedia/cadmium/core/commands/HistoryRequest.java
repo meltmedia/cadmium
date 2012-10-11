@@ -13,9 +13,27 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.messaging;
+package com.meltmedia.cadmium.core.commands;
 
-public interface MessageSender {
-  public <B> void sendMessage(Message<B> msg, ChannelMember dest) throws Exception;
-  public String getGroupName();
+public class HistoryRequest extends AbstractMessageBean {
+
+  private Integer limit;
+  private boolean filter;
+
+  public Integer getLimit() {
+    return limit;
+  }
+
+  public boolean getFilter() {
+    return filter;
+  }
+
+  public void setLimit(Integer limit) {
+    this.limit = limit;
+  }
+
+  public void setFilter(boolean filter) {
+    this.filter = filter;
+  }
+
 }
