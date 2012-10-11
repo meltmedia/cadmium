@@ -220,62 +220,81 @@
 <a class="jxr_linenumber" name="210" href="#210">210</a> 	<strong class="jxr_keyword">public</strong> String getCommandName() {
 <a class="jxr_linenumber" name="211" href="#211">211</a> 		<strong class="jxr_keyword">return</strong> <span class="jxr_string">"update"</span>;
 <a class="jxr_linenumber" name="212" href="#212">212</a> 	}
-<a class="jxr_linenumber" name="213" href="#213">213</a>   
-<a class="jxr_linenumber" name="214" href="#214">214</a> 	<em class="jxr_javadoccomment">/**</em>
-<a class="jxr_linenumber" name="215" href="#215">215</a> <em class="jxr_javadoccomment">	 * Sends a update message to a Cadmium site. This method will block until the update is complete.</em>
-<a class="jxr_linenumber" name="216" href="#216">216</a> <em class="jxr_javadoccomment">	 * </em>
-<a class="jxr_linenumber" name="217" href="#217">217</a> <em class="jxr_javadoccomment">	 * @param site2 The uri to a Cadmium site.</em>
-<a class="jxr_linenumber" name="218" href="#218">218</a> <em class="jxr_javadoccomment">	 * @param repo The git repository to tell the site to change to.</em>
-<a class="jxr_linenumber" name="219" href="#219">219</a> <em class="jxr_javadoccomment">	 * @param branch The branch to switch to.</em>
-<a class="jxr_linenumber" name="220" href="#220">220</a> <em class="jxr_javadoccomment">	 * @param revision The revision to reset to.</em>
-<a class="jxr_linenumber" name="221" href="#221">221</a> <em class="jxr_javadoccomment">	 * @param comment The message to record with this event in the history on the Cadmium site.</em>
-<a class="jxr_linenumber" name="222" href="#222">222</a> <em class="jxr_javadoccomment">	 * @param token The Github API token to authenticate with.</em>
-<a class="jxr_linenumber" name="223" href="#223">223</a> <em class="jxr_javadoccomment">	 * @return true if successfull or false otherwise.</em>
-<a class="jxr_linenumber" name="224" href="#224">224</a> <em class="jxr_javadoccomment">	 * @throws Exception</em>
-<a class="jxr_linenumber" name="225" href="#225">225</a> <em class="jxr_javadoccomment">	 */</em>
-<a class="jxr_linenumber" name="226" href="#226">226</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token) <strong class="jxr_keyword">throws</strong> Exception {
-<a class="jxr_linenumber" name="227" href="#227">227</a>     HttpClient client = setTrustAllSSLCerts(<strong class="jxr_keyword">new</strong> DefaultHttpClient());
-<a class="jxr_linenumber" name="228" href="#228">228</a>     
-<a class="jxr_linenumber" name="229" href="#229">229</a>     HttpPost post = <strong class="jxr_keyword">new</strong> HttpPost(site2 + UPDATE_ENDPOINT);
-<a class="jxr_linenumber" name="230" href="#230">230</a>     addAuthHeader(token, post);
-<a class="jxr_linenumber" name="231" href="#231">231</a>     
-<a class="jxr_linenumber" name="232" href="#232">232</a>     post.addHeader(<span class="jxr_string">"Content-Type"</span>, MediaType.APPLICATION_JSON);
-<a class="jxr_linenumber" name="233" href="#233">233</a>     
-<a class="jxr_linenumber" name="234" href="#234">234</a>     <a href="../../../../com/meltmedia/cadmium/core/api/UpdateRequest.html">UpdateRequest</a> req = <strong class="jxr_keyword">new</strong> <a href="../../../../com/meltmedia/cadmium/core/api/UpdateRequest.html">UpdateRequest</a>();
-<a class="jxr_linenumber" name="235" href="#235">235</a>     
-<a class="jxr_linenumber" name="236" href="#236">236</a>     <strong class="jxr_keyword">if</strong>(repo != <strong class="jxr_keyword">null</strong>) {
-<a class="jxr_linenumber" name="237" href="#237">237</a>       req.setRepo(repo);
-<a class="jxr_linenumber" name="238" href="#238">238</a>     }
-<a class="jxr_linenumber" name="239" href="#239">239</a>     
-<a class="jxr_linenumber" name="240" href="#240">240</a>     <strong class="jxr_keyword">if</strong>(branch != <strong class="jxr_keyword">null</strong>) {
-<a class="jxr_linenumber" name="241" href="#241">241</a>       req.setBranch(branch);
-<a class="jxr_linenumber" name="242" href="#242">242</a>     }
-<a class="jxr_linenumber" name="243" href="#243">243</a>     
-<a class="jxr_linenumber" name="244" href="#244">244</a>     <strong class="jxr_keyword">if</strong>(revision != <strong class="jxr_keyword">null</strong>) {
-<a class="jxr_linenumber" name="245" href="#245">245</a>       req.setSha(revision);
-<a class="jxr_linenumber" name="246" href="#246">246</a>     }
+<a class="jxr_linenumber" name="213" href="#213">213</a> 	
+<a class="jxr_linenumber" name="214" href="#214">214</a> 
+<a class="jxr_linenumber" name="215" href="#215">215</a>   
+<a class="jxr_linenumber" name="216" href="#216">216</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="217" href="#217">217</a> <em class="jxr_javadoccomment">   * Sends a update message to a Cadmium site. This method will block until the update is complete.</em>
+<a class="jxr_linenumber" name="218" href="#218">218</a> <em class="jxr_javadoccomment">   * </em>
+<a class="jxr_linenumber" name="219" href="#219">219</a> <em class="jxr_javadoccomment">   * @param site2 The uri to a Cadmium site.</em>
+<a class="jxr_linenumber" name="220" href="#220">220</a> <em class="jxr_javadoccomment">   * @param repo The git repository to tell the site to change to.</em>
+<a class="jxr_linenumber" name="221" href="#221">221</a> <em class="jxr_javadoccomment">   * @param branch The branch to switch to.</em>
+<a class="jxr_linenumber" name="222" href="#222">222</a> <em class="jxr_javadoccomment">   * @param revision The revision to reset to.</em>
+<a class="jxr_linenumber" name="223" href="#223">223</a> <em class="jxr_javadoccomment">   * @param comment The message to record with this event in the history on the Cadmium site.</em>
+<a class="jxr_linenumber" name="224" href="#224">224</a> <em class="jxr_javadoccomment">   * @param token The Github API token to authenticate with.</em>
+<a class="jxr_linenumber" name="225" href="#225">225</a> <em class="jxr_javadoccomment">   * @return true if successfull or false otherwise.</em>
+<a class="jxr_linenumber" name="226" href="#226">226</a> <em class="jxr_javadoccomment">   * @throws Exception</em>
+<a class="jxr_linenumber" name="227" href="#227">227</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="228" href="#228">228</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token) <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="229" href="#229">229</a>     <strong class="jxr_keyword">return</strong> sendUpdateMessage(site2, repo, branch, revision, comment, token, UPDATE_ENDPOINT);
+<a class="jxr_linenumber" name="230" href="#230">230</a>   }
+<a class="jxr_linenumber" name="231" href="#231">231</a>   
+<a class="jxr_linenumber" name="232" href="#232">232</a> 	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="233" href="#233">233</a> <em class="jxr_javadoccomment">	 * Sends a update message to a Cadmium site. This method will block until the update is complete.</em>
+<a class="jxr_linenumber" name="234" href="#234">234</a> <em class="jxr_javadoccomment">	 * </em>
+<a class="jxr_linenumber" name="235" href="#235">235</a> <em class="jxr_javadoccomment">	 * @param site2 The uri to a Cadmium site.</em>
+<a class="jxr_linenumber" name="236" href="#236">236</a> <em class="jxr_javadoccomment">	 * @param repo The git repository to tell the site to change to.</em>
+<a class="jxr_linenumber" name="237" href="#237">237</a> <em class="jxr_javadoccomment">	 * @param branch The branch to switch to.</em>
+<a class="jxr_linenumber" name="238" href="#238">238</a> <em class="jxr_javadoccomment">	 * @param revision The revision to reset to.</em>
+<a class="jxr_linenumber" name="239" href="#239">239</a> <em class="jxr_javadoccomment">	 * @param comment The message to record with this event in the history on the Cadmium site.</em>
+<a class="jxr_linenumber" name="240" href="#240">240</a> <em class="jxr_javadoccomment">	 * @param token The Github API token to authenticate with.</em>
+<a class="jxr_linenumber" name="241" href="#241">241</a> <em class="jxr_javadoccomment">	 * @param endpoint The endpoint to send the update request to.</em>
+<a class="jxr_linenumber" name="242" href="#242">242</a> <em class="jxr_javadoccomment">	 * @return true if successfull or false otherwise.</em>
+<a class="jxr_linenumber" name="243" href="#243">243</a> <em class="jxr_javadoccomment">	 * @throws Exception</em>
+<a class="jxr_linenumber" name="244" href="#244">244</a> <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="245" href="#245">245</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token, String endpoint) <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="246" href="#246">246</a>     HttpClient client = setTrustAllSSLCerts(<strong class="jxr_keyword">new</strong> DefaultHttpClient());
 <a class="jxr_linenumber" name="247" href="#247">247</a>     
-<a class="jxr_linenumber" name="248" href="#248">248</a>     req.setComment(comment);
-<a class="jxr_linenumber" name="249" href="#249">249</a>     
-<a class="jxr_linenumber" name="250" href="#250">250</a>     post.setEntity(<strong class="jxr_keyword">new</strong> StringEntity(<strong class="jxr_keyword">new</strong> Gson().toJson(req), <span class="jxr_string">"UTF-8"</span>));
-<a class="jxr_linenumber" name="251" href="#251">251</a>     
-<a class="jxr_linenumber" name="252" href="#252">252</a>     HttpResponse response = client.execute(post);
-<a class="jxr_linenumber" name="253" href="#253">253</a>     
-<a class="jxr_linenumber" name="254" href="#254">254</a>     <strong class="jxr_keyword">if</strong>(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-<a class="jxr_linenumber" name="255" href="#255">255</a>       String responseString = EntityUtils.toString(response.getEntity());
-<a class="jxr_linenumber" name="256" href="#256">256</a>       <a href="../../../../com/meltmedia/cadmium/core/api/BasicApiResponse.html">BasicApiResponse</a> resp = <strong class="jxr_keyword">new</strong> Gson().fromJson(responseString, BasicApiResponse.<strong class="jxr_keyword">class</strong>);
-<a class="jxr_linenumber" name="257" href="#257">257</a>       <strong class="jxr_keyword">if</strong>(!<span class="jxr_string">"ok"</span>.equals(resp.getMessage())) {
-<a class="jxr_linenumber" name="258" href="#258">258</a>         System.err.println(<span class="jxr_string">"Update message to ["</span>+site2+<span class="jxr_string">"] failed. ["</span>+resp.getMessage()+<span class="jxr_string">"]"</span>);
-<a class="jxr_linenumber" name="259" href="#259">259</a>       } <strong class="jxr_keyword">else</strong> {
-<a class="jxr_linenumber" name="260" href="#260">260</a>         <strong class="jxr_keyword">if</strong>(resp.getUuid() != <strong class="jxr_keyword">null</strong>) {
-<a class="jxr_linenumber" name="261" href="#261">261</a>           HistoryCommand.waitForToken(site2, resp.getUuid(), resp.getTimestamp(), 600000l);
-<a class="jxr_linenumber" name="262" href="#262">262</a>         }
-<a class="jxr_linenumber" name="263" href="#263">263</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
-<a class="jxr_linenumber" name="264" href="#264">264</a>       }
+<a class="jxr_linenumber" name="248" href="#248">248</a>     HttpPost post = <strong class="jxr_keyword">new</strong> HttpPost(site2 + endpoint);
+<a class="jxr_linenumber" name="249" href="#249">249</a>     addAuthHeader(token, post);
+<a class="jxr_linenumber" name="250" href="#250">250</a>     
+<a class="jxr_linenumber" name="251" href="#251">251</a>     post.addHeader(<span class="jxr_string">"Content-Type"</span>, MediaType.APPLICATION_JSON);
+<a class="jxr_linenumber" name="252" href="#252">252</a>     
+<a class="jxr_linenumber" name="253" href="#253">253</a>     <a href="../../../../com/meltmedia/cadmium/core/api/UpdateRequest.html">UpdateRequest</a> req = <strong class="jxr_keyword">new</strong> <a href="../../../../com/meltmedia/cadmium/core/api/UpdateRequest.html">UpdateRequest</a>();
+<a class="jxr_linenumber" name="254" href="#254">254</a>     
+<a class="jxr_linenumber" name="255" href="#255">255</a>     <strong class="jxr_keyword">if</strong>(repo != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="256" href="#256">256</a>       req.setRepo(repo);
+<a class="jxr_linenumber" name="257" href="#257">257</a>     }
+<a class="jxr_linenumber" name="258" href="#258">258</a>     
+<a class="jxr_linenumber" name="259" href="#259">259</a>     <strong class="jxr_keyword">if</strong>(branch != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="260" href="#260">260</a>       req.setBranch(branch);
+<a class="jxr_linenumber" name="261" href="#261">261</a>     }
+<a class="jxr_linenumber" name="262" href="#262">262</a>     
+<a class="jxr_linenumber" name="263" href="#263">263</a>     <strong class="jxr_keyword">if</strong>(revision != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="264" href="#264">264</a>       req.setSha(revision);
 <a class="jxr_linenumber" name="265" href="#265">265</a>     }
-<a class="jxr_linenumber" name="266" href="#266">266</a>     <strong class="jxr_keyword">return</strong> false;
-<a class="jxr_linenumber" name="267" href="#267">267</a>   }
-<a class="jxr_linenumber" name="268" href="#268">268</a> }
+<a class="jxr_linenumber" name="266" href="#266">266</a>     
+<a class="jxr_linenumber" name="267" href="#267">267</a>     req.setComment(comment);
+<a class="jxr_linenumber" name="268" href="#268">268</a>     
+<a class="jxr_linenumber" name="269" href="#269">269</a>     post.setEntity(<strong class="jxr_keyword">new</strong> StringEntity(<strong class="jxr_keyword">new</strong> Gson().toJson(req), <span class="jxr_string">"UTF-8"</span>));
+<a class="jxr_linenumber" name="270" href="#270">270</a>     
+<a class="jxr_linenumber" name="271" href="#271">271</a>     HttpResponse response = client.execute(post);
+<a class="jxr_linenumber" name="272" href="#272">272</a>     
+<a class="jxr_linenumber" name="273" href="#273">273</a>     <strong class="jxr_keyword">if</strong>(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+<a class="jxr_linenumber" name="274" href="#274">274</a>       String responseString = EntityUtils.toString(response.getEntity());
+<a class="jxr_linenumber" name="275" href="#275">275</a>       <a href="../../../../com/meltmedia/cadmium/core/api/BasicApiResponse.html">BasicApiResponse</a> resp = <strong class="jxr_keyword">new</strong> Gson().fromJson(responseString, BasicApiResponse.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="276" href="#276">276</a>       <strong class="jxr_keyword">if</strong>(!<span class="jxr_string">"ok"</span>.equals(resp.getMessage())) {
+<a class="jxr_linenumber" name="277" href="#277">277</a>         System.err.println(<span class="jxr_string">"Update message to ["</span>+site2+<span class="jxr_string">"] failed. ["</span>+resp.getMessage()+<span class="jxr_string">"]"</span>);
+<a class="jxr_linenumber" name="278" href="#278">278</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="279" href="#279">279</a>         <strong class="jxr_keyword">if</strong>(resp.getUuid() != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="280" href="#280">280</a>           HistoryCommand.waitForToken(site2, resp.getUuid(), resp.getTimestamp(), 600000l);
+<a class="jxr_linenumber" name="281" href="#281">281</a>         }
+<a class="jxr_linenumber" name="282" href="#282">282</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="283" href="#283">283</a>       }
+<a class="jxr_linenumber" name="284" href="#284">284</a>     }
+<a class="jxr_linenumber" name="285" href="#285">285</a>     <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="286" href="#286">286</a>   }
+<a class="jxr_linenumber" name="287" href="#287">287</a> }
 </pre>
 <hr/><div id="footer">This page was automatically generated by <a href="http://maven.apache.org/">Maven</a></div></body>
 </html>

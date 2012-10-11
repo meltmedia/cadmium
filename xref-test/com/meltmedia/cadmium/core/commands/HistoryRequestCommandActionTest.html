@@ -35,39 +35,40 @@
 <a class="jxr_linenumber" name="25" href="#25">25</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.CommandContext;
 <a class="jxr_linenumber" name="26" href="#26">26</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.history.HistoryEntry;
 <a class="jxr_linenumber" name="27" href="#27">27</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.history.HistoryManager;
-<a class="jxr_linenumber" name="28" href="#28">28</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.messaging.DummyMessageSender;
-<a class="jxr_linenumber" name="29" href="#29">29</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.messaging.Message;
-<a class="jxr_linenumber" name="30" href="#30">30</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.messaging.ProtocolMessage;
-<a class="jxr_linenumber" name="31" href="#31">31</a>  
-<a class="jxr_linenumber" name="32" href="#32">32</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a href="../../../../../com/meltmedia/cadmium/core/commands/HistoryRequestCommandActionTest.html">HistoryRequestCommandActionTest</a> {
-<a class="jxr_linenumber" name="33" href="#33">33</a>    
-<a class="jxr_linenumber" name="34" href="#34">34</a>    @SuppressWarnings(<span class="jxr_string">"resource"</span>)
-<a class="jxr_linenumber" name="35" href="#35">35</a>    @Test
-<a class="jxr_linenumber" name="36" href="#36">36</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testCommand() <strong class="jxr_keyword">throws</strong> Exception {
-<a class="jxr_linenumber" name="37" href="#37">37</a>      DummyMessageSender sender = <strong class="jxr_keyword">new</strong> DummyMessageSender();
-<a class="jxr_linenumber" name="38" href="#38">38</a>      HistoryManager historyManager = <strong class="jxr_keyword">new</strong> HistoryManager(<strong class="jxr_keyword">null</strong>);
-<a class="jxr_linenumber" name="39" href="#39">39</a>      historyManager.getHistory().add(<strong class="jxr_keyword">new</strong> HistoryEntry(<strong class="jxr_keyword">new</strong> Date(), <span class="jxr_string">""</span>, <span class="jxr_string">"master"</span>, <span class="jxr_string">"sha"</span>, 3000l, <span class="jxr_string">"me"</span>, <span class="jxr_string">"dir"</span>, <strong class="jxr_keyword">true</strong>, <span class="jxr_string">"comment"</span>));
-<a class="jxr_linenumber" name="40" href="#40">40</a>      historyManager.getHistory().add(<strong class="jxr_keyword">new</strong> HistoryEntry(<strong class="jxr_keyword">new</strong> Date(), <span class="jxr_string">""</span>, <span class="jxr_string">"master"</span>, <span class="jxr_string">"sha1"</span>, 3000l, <span class="jxr_string">"me"</span>, <span class="jxr_string">"dir_1"</span>, <strong class="jxr_keyword">true</strong>, <span class="jxr_string">"comment1"</span>));
-<a class="jxr_linenumber" name="41" href="#41">41</a>      historyManager.getHistory().add(<strong class="jxr_keyword">new</strong> HistoryEntry(<strong class="jxr_keyword">new</strong> Date(), <span class="jxr_string">""</span>, <span class="jxr_string">"master"</span>, <span class="jxr_string">"sha2"</span>, 3000l, <span class="jxr_string">"me"</span>, <span class="jxr_string">"dir_2"</span>, false, <span class="jxr_string">"comment2"</span>));
-<a class="jxr_linenumber" name="42" href="#42">42</a>      historyManager.getHistory().add(<strong class="jxr_keyword">new</strong> HistoryEntry(<strong class="jxr_keyword">new</strong> Date(), <span class="jxr_string">""</span>, <span class="jxr_string">"master"</span>, <span class="jxr_string">"sha3"</span>, 3000l, <span class="jxr_string">"me"</span>, <span class="jxr_string">"dir_3"</span>, false, <span class="jxr_string">"comment3"</span>));
-<a class="jxr_linenumber" name="43" href="#43">43</a>      
-<a class="jxr_linenumber" name="44" href="#44">44</a>      HistoryRequestCommandAction command = <strong class="jxr_keyword">new</strong> HistoryRequestCommandAction();
-<a class="jxr_linenumber" name="45" href="#45">45</a>      command.sender = sender;
-<a class="jxr_linenumber" name="46" href="#46">46</a>      command.historyManager = historyManager;
-<a class="jxr_linenumber" name="47" href="#47">47</a>      
-<a class="jxr_linenumber" name="48" href="#48">48</a>      Message msg = <strong class="jxr_keyword">new</strong> Message();
-<a class="jxr_linenumber" name="49" href="#49">49</a>      msg.setCommand(ProtocolMessage.HISTORY_REQUEST);
-<a class="jxr_linenumber" name="50" href="#50">50</a>      msg.getProtocolParameters().put(<span class="jxr_string">"limit"</span>, <span class="jxr_string">"1"</span>);
-<a class="jxr_linenumber" name="51" href="#51">51</a>      msg.getProtocolParameters().put(<span class="jxr_string">"filter"</span>, <span class="jxr_string">"true"</span>);
-<a class="jxr_linenumber" name="52" href="#52">52</a>      
-<a class="jxr_linenumber" name="53" href="#53">53</a>      CommandContext ctx = <strong class="jxr_keyword">new</strong> CommandContext(<strong class="jxr_keyword">new</strong> IpAddress(5432), msg);
-<a class="jxr_linenumber" name="54" href="#54">54</a>      command.execute(ctx);
-<a class="jxr_linenumber" name="55" href="#55">55</a>      
-<a class="jxr_linenumber" name="56" href="#56">56</a>      assertTrue(<span class="jxr_string">"Response message was not sent"</span>, sender.msg != <strong class="jxr_keyword">null</strong> &amp;&amp; sender.dest != <strong class="jxr_keyword">null</strong>);
-<a class="jxr_linenumber" name="57" href="#57">57</a>      assertTrue(<span class="jxr_string">"Wrong type of message sent"</span>, sender.msg.getCommand() == ProtocolMessage.HISTORY_RESPONSE);
-<a class="jxr_linenumber" name="58" href="#58">58</a>      assertTrue(<span class="jxr_string">"No history in reply"</span>, sender.msg.getProtocolParameters().containsKey(<span class="jxr_string">"history"</span>));
-<a class="jxr_linenumber" name="59" href="#59">59</a>    }
-<a class="jxr_linenumber" name="60" href="#60">60</a>  }
+<a class="jxr_linenumber" name="28" href="#28">28</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
+<a class="jxr_linenumber" name="29" href="#29">29</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.messaging.DummyMessageSender;
+<a class="jxr_linenumber" name="30" href="#30">30</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.messaging.Message;
+<a class="jxr_linenumber" name="31" href="#31">31</a>  <strong class="jxr_keyword">import</strong> com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+<a class="jxr_linenumber" name="32" href="#32">32</a>  
+<a class="jxr_linenumber" name="33" href="#33">33</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a href="../../../../../com/meltmedia/cadmium/core/commands/HistoryRequestCommandActionTest.html">HistoryRequestCommandActionTest</a> {
+<a class="jxr_linenumber" name="34" href="#34">34</a>    
+<a class="jxr_linenumber" name="35" href="#35">35</a>    @SuppressWarnings(<span class="jxr_string">"resource"</span>)
+<a class="jxr_linenumber" name="36" href="#36">36</a>    @Test
+<a class="jxr_linenumber" name="37" href="#37">37</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testCommand() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="38" href="#38">38</a>      DummyMessageSender sender = <strong class="jxr_keyword">new</strong> DummyMessageSender();
+<a class="jxr_linenumber" name="39" href="#39">39</a>      HistoryManager historyManager = <strong class="jxr_keyword">new</strong> HistoryManager(<strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="40" href="#40">40</a>      historyManager.getHistory().add(<strong class="jxr_keyword">new</strong> HistoryEntry(EntryType.CONTENT, <strong class="jxr_keyword">new</strong> Date(), <span class="jxr_string">""</span>, <span class="jxr_string">"master"</span>, <span class="jxr_string">"sha"</span>, 3000l, <span class="jxr_string">"me"</span>, <span class="jxr_string">"dir"</span>, <strong class="jxr_keyword">true</strong>, <span class="jxr_string">"comment"</span>));
+<a class="jxr_linenumber" name="41" href="#41">41</a>      historyManager.getHistory().add(<strong class="jxr_keyword">new</strong> HistoryEntry(EntryType.CONTENT, <strong class="jxr_keyword">new</strong> Date(), <span class="jxr_string">""</span>, <span class="jxr_string">"master"</span>, <span class="jxr_string">"sha1"</span>, 3000l, <span class="jxr_string">"me"</span>, <span class="jxr_string">"dir_1"</span>, <strong class="jxr_keyword">true</strong>, <span class="jxr_string">"comment1"</span>));
+<a class="jxr_linenumber" name="42" href="#42">42</a>      historyManager.getHistory().add(<strong class="jxr_keyword">new</strong> HistoryEntry(EntryType.CONTENT, <strong class="jxr_keyword">new</strong> Date(), <span class="jxr_string">""</span>, <span class="jxr_string">"master"</span>, <span class="jxr_string">"sha2"</span>, 3000l, <span class="jxr_string">"me"</span>, <span class="jxr_string">"dir_2"</span>, false, <span class="jxr_string">"comment2"</span>));
+<a class="jxr_linenumber" name="43" href="#43">43</a>      historyManager.getHistory().add(<strong class="jxr_keyword">new</strong> HistoryEntry(EntryType.CONTENT, <strong class="jxr_keyword">new</strong> Date(), <span class="jxr_string">""</span>, <span class="jxr_string">"master"</span>, <span class="jxr_string">"sha3"</span>, 3000l, <span class="jxr_string">"me"</span>, <span class="jxr_string">"dir_3"</span>, false, <span class="jxr_string">"comment3"</span>));
+<a class="jxr_linenumber" name="44" href="#44">44</a>      
+<a class="jxr_linenumber" name="45" href="#45">45</a>      HistoryRequestCommandAction command = <strong class="jxr_keyword">new</strong> HistoryRequestCommandAction();
+<a class="jxr_linenumber" name="46" href="#46">46</a>      command.sender = sender;
+<a class="jxr_linenumber" name="47" href="#47">47</a>      command.historyManager = historyManager;
+<a class="jxr_linenumber" name="48" href="#48">48</a>      
+<a class="jxr_linenumber" name="49" href="#49">49</a>      Message msg = <strong class="jxr_keyword">new</strong> Message();
+<a class="jxr_linenumber" name="50" href="#50">50</a>      msg.setCommand(ProtocolMessage.HISTORY_REQUEST);
+<a class="jxr_linenumber" name="51" href="#51">51</a>      msg.getProtocolParameters().put(<span class="jxr_string">"limit"</span>, <span class="jxr_string">"1"</span>);
+<a class="jxr_linenumber" name="52" href="#52">52</a>      msg.getProtocolParameters().put(<span class="jxr_string">"filter"</span>, <span class="jxr_string">"true"</span>);
+<a class="jxr_linenumber" name="53" href="#53">53</a>      
+<a class="jxr_linenumber" name="54" href="#54">54</a>      CommandContext ctx = <strong class="jxr_keyword">new</strong> CommandContext(<strong class="jxr_keyword">new</strong> IpAddress(5432), msg);
+<a class="jxr_linenumber" name="55" href="#55">55</a>      command.execute(ctx);
+<a class="jxr_linenumber" name="56" href="#56">56</a>      
+<a class="jxr_linenumber" name="57" href="#57">57</a>      assertTrue(<span class="jxr_string">"Response message was not sent"</span>, sender.msg != <strong class="jxr_keyword">null</strong> &amp;&amp; sender.dest != <strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="58" href="#58">58</a>      assertTrue(<span class="jxr_string">"Wrong type of message sent"</span>, sender.msg.getCommand() == ProtocolMessage.HISTORY_RESPONSE);
+<a class="jxr_linenumber" name="59" href="#59">59</a>      assertTrue(<span class="jxr_string">"No history in reply"</span>, sender.msg.getProtocolParameters().containsKey(<span class="jxr_string">"history"</span>));
+<a class="jxr_linenumber" name="60" href="#60">60</a>    }
+<a class="jxr_linenumber" name="61" href="#61">61</a>  }
 </pre>
 <hr/><div id="footer">This page was automatically generated by <a href="http://maven.apache.org/">Maven</a></div></body>
 </html>

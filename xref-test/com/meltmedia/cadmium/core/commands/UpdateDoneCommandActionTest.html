@@ -65,7 +65,7 @@
 <a class="jxr_linenumber" name="55" href="#55">55</a>      
 <a class="jxr_linenumber" name="56" href="#56">56</a>      service.setSender(sender);
 <a class="jxr_linenumber" name="57" href="#57">57</a>      List&lt;ChannelMember&gt; members = <strong class="jxr_keyword">new</strong> ArrayList&lt;ChannelMember&gt;();
-<a class="jxr_linenumber" name="58" href="#58">58</a>      members.add(<strong class="jxr_keyword">new</strong> ChannelMember(<strong class="jxr_keyword">new</strong> IpAddress(1234), <strong class="jxr_keyword">true</strong>, <strong class="jxr_keyword">true</strong>, UpdateState.UPDATING));
+<a class="jxr_linenumber" name="58" href="#58">58</a>      members.add(<strong class="jxr_keyword">new</strong> ChannelMember(<strong class="jxr_keyword">new</strong> IpAddress(1234), <strong class="jxr_keyword">true</strong>, <strong class="jxr_keyword">true</strong>, UpdateState.UPDATING, UpdateState.IDLE));
 <a class="jxr_linenumber" name="59" href="#59">59</a>      service.setMembers(members);
 <a class="jxr_linenumber" name="60" href="#60">60</a>      
 <a class="jxr_linenumber" name="61" href="#61">61</a>      UpdateDoneCommandAction cmd = <strong class="jxr_keyword">new</strong> UpdateDoneCommandAction();

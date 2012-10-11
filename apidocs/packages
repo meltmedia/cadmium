@@ -19,6 +19,7 @@ com.meltmedia.cadmium.search
 com.meltmedia.cadmium.servlets
 com.meltmedia.cadmium.servlets.guice
 com.meltmedia.cadmium.servlets.jersey
+com.meltmedia.cadmium.email.config
 com.meltmedia.cadmium.email
 com.meltmedia.cadmium.email.guice
 com.meltmedia.cadmium.email.internal

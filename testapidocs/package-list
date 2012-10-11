@@ -1,6 +1,8 @@
 com.meltmedia.cadmium.cli
 com.meltmedia.cadmium.core
 com.meltmedia.cadmium.core.commands
+com.meltmedia.cadmium.core.config
+com.meltmedia.cadmium.core.config.impl
 com.meltmedia.cadmium.core.git
 com.meltmedia.cadmium.core.github
 com.meltmedia.cadmium.core.history
