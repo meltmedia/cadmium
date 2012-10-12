@@ -32,6 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -145,6 +150,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String vHostName;
   private String channelConfigUrl;
   private ConfigManager configManager;
+  private ScheduledThreadPoolExecutor executor;
   
   private String failOver;
   
@@ -191,6 +197,21 @@ public class CadmiumListener extends GuiceServletContextListener {
       log.warn("Failed to close down fully.", t);
     }
     closed.clear();
+    
+    if( executor != null ) {
+      try {
+        executor.shutdown();
+        if( !executor.awaitTermination(10, TimeUnit.SECONDS) ) {
+          log.warn("Thread pool executor did not terminate after 10 seconds, forcing shutdown.");
+          for( Runnable terminated : executor.shutdownNow() ) {
+            log.warn("Terminated task of type {}.", terminated.getClass().getName());
+          }
+        }
+      }
+      catch( Throwable t ) {
+        log.warn("Throwable thrown while terminating thread pool executor.", t);
+      }
+    }
     super.contextDestroyed(event);
   }
 
@@ -219,6 +240,11 @@ public class CadmiumListener extends GuiceServletContextListener {
     
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
     
+    executor = new ScheduledThreadPoolExecutor(1);
+    executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+    executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+    executor.setKeepAliveTime(5, TimeUnit.MINUTES);
+    executor.setMaximumPoolSize(Math.min(Runtime.getRuntime().availableProcessors(), 4));
     
     configProperties = configManager.appendProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
     
@@ -343,6 +369,10 @@ public class CadmiumListener extends GuiceServletContextListener {
         Properties configProperties = configManager.getDefaultProperties();
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
+        
+        bind(ScheduledExecutorService.class).toInstance(executor);
+        bind(ExecutorService.class).toInstance(executor);
+        bind(Executor.class).toInstance(executor);
 
         bind(FileServlet.class).in(Scopes.SINGLETON);
         bind(ContentService.class).to(FileServlet.class);
