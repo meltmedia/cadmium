@@ -20,6 +20,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.codehaus.jackson.JsonFactory;
@@ -35,6 +36,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
  * @author Christian Trimble
  * @author John McEntire
  */
+@Singleton
 public class MessageConverter {
   private static ObjectMapper mapper = new ObjectMapper();
   static {

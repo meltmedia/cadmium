@@ -103,6 +103,7 @@ import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
+import com.meltmedia.cadmium.core.messaging.MessageConverter;
 import com.meltmedia.cadmium.core.messaging.MessageReceiver;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
@@ -377,6 +378,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(FileServlet.class).in(Scopes.SINGLETON);
         bind(ContentService.class).to(FileServlet.class);
 
+        bind(MessageConverter.class);
         bind(MessageSender.class).to(JGroupsMessageSender.class);
 
         bind(DelayedGitServiceInitializer.class).annotatedWith(ContentGitService.class).toInstance(new DelayedGitServiceInitializer());
