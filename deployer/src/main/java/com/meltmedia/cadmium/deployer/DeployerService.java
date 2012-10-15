@@ -55,12 +55,9 @@ public class DeployerService extends AuthorizationService {
 	  String contextRoot = req.getContextRoot();
 	  String artifact = req.getArtifact();
 	  
-	  if( StringUtils.isEmptyOrNull(req.getBranch()) ||
-	      StringUtils.isEmptyOrNull(req.getConfigBranch()) ||
-	      StringUtils.isEmptyOrNull(req.getRepo()) ||
+	  if( StringUtils.isEmptyOrNull(req.getRepo()) ||
 	      StringUtils.isEmptyOrNull(req.getDomain()) ) {
-	    Response.serverError();
-	    return "error";
+	    return "Error: missing repo and/or domain.";
 	  }
 	  
 	  if( StringUtils.isEmptyOrNull(contextRoot) ) {
@@ -74,6 +71,14 @@ public class DeployerService extends AuthorizationService {
 	  if( StringUtils.isEmptyOrNull(req.getConfigRepo() ) ) {
 	    req.setConfigRepo(req.getRepo());
 	  }
+    
+    if( StringUtils.isEmptyOrNull(req.getConfigBranch() ) ) {
+      req.setConfigBranch("master");
+    }
+    
+    if( StringUtils.isEmptyOrNull(req.getBranch() ) ) {
+      req.setBranch("master");
+    }
 		
 	  com.meltmedia.cadmium.deployer.DeployRequest mRequest = new com.meltmedia.cadmium.deployer.DeployRequest();
 	  mRequest.setBranch(req.getBranch());
