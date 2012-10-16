@@ -20,6 +20,8 @@ import java.io.File;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.meltmedia.cadmium.core.CadmiumModule;
@@ -51,6 +53,7 @@ public class DeployerModule extends AbstractModule {
   @Override
   protected void configure() {
     try {
+      InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
       File appRoot = new File(System.getProperty(CadmiumListener.BASE_PATH_ENV), "maven");
       FileUtils.forceMkdir(appRoot);
       String remoteMavenRepo = System.getProperty(MAVEN_REPOSITORY);
