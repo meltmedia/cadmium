@@ -31,4 +31,6 @@ public final class ProtocolMessage {
   public static String HISTORY_REQUEST = "HISTORY_REQUEST";
   public static String HISTORY_RESPONSE = "HISTORY_RESPONSE";
   public static String MAINTENANCE = "MAINTENANCE";
+  
+  public static String API_ENDPOINT_ACCESS = "API_ENDPOINT_ACCESS";
 }

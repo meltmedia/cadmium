@@ -175,13 +175,10 @@ public class GitService
     String warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
     GitService cloned = initializeRepo(uri, branch, warDir, "git-config-checkout");
 
-    File configPropsFile = new File(warDir, "config.properties");
     Properties configProperties = configManager.getDefaultProperties();
     
     String renderedContentDir = initializeSnapshotDirectory(warDir,
         configProperties, "com.meltmedia.cadmium.config.lastUpdated", "git-config-checkout", "config"); 
-    
-    configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
     
     boolean hasExisting = configProperties.containsKey("com.meltmedia.cadmium.config.lastUpdated") && renderedContentDir != null && renderedContentDir.equals(configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated"));
     if(renderedContentDir != null) {
@@ -191,7 +188,7 @@ public class GitService
     configProperties.setProperty("config.git.ref.sha", cloned.getCurrentRevision());
     configProperties.setProperty("config.repo", uri);
     
-    configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties for configuration");
+    configManager.persistDefaultProperties();
 
     boolean closeHistoryManager = false;
     if(historyManager == null) {
@@ -235,14 +232,11 @@ public class GitService
     String warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
     GitService cloned = initializeRepo(uri, branch, warDir, "git-checkout");
 
-    File configPropsFile = new File(warDir, "config.properties");
     Properties configProperties = configManager.getDefaultProperties();
     
     String renderedContentDir = initializeSnapshotDirectory(warDir,
         configProperties, "com.meltmedia.cadmium.lastUpdated", "git-checkout", "renderedContent"); 
     
-    configPropsFile = new File(warDir, "config.properties").getAbsoluteFile();
-
     boolean hasExisting = configProperties.containsKey("com.meltmedia.cadmium.lastUpdated") && renderedContentDir != null && renderedContentDir.equals(configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
     if(renderedContentDir != null) {
       configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
@@ -266,7 +260,7 @@ public class GitService
       configProperties.setProperty("source", "{}");
     }
     
-    configManager.persistProperties(configProperties, configPropsFile, "initialized configuration properties");
+    configManager.persistDefaultProperties();
 
     boolean closeHistoryManager = false;
     if(historyManager == null) {
