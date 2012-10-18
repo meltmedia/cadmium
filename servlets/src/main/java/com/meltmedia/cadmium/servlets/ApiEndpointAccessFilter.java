@@ -122,7 +122,7 @@ public class ApiEndpointAccessFilter implements Filter {
       prefix = config.getInitParameter("jersey-prefix");
     }
     if(StringUtils.isEmptyOrNull(prefix)){
-      prefix = "/api";
+      prefix = "/api/";
     }
   }
 
@@ -131,7 +131,7 @@ public class ApiEndpointAccessFilter implements Filter {
       FilterChain chain) throws IOException, ServletException {
     String pathRequested = ((HttpServletRequest)request).getRequestURI();
     if(pathRequested.startsWith(prefix)) {
-      pathRequested = pathRequested.replaceFirst(Pattern.quote(prefix), "");
+      pathRequested = pathRequested.replaceFirst(Pattern.quote(prefix), "").replaceFirst("/$", "");
       for(String disabled : controller.getDisabled()) {
         if(disabled.equals(pathRequested)) {
           ((HttpServletResponse)response).sendError(HttpStatus.SC_NOT_FOUND);

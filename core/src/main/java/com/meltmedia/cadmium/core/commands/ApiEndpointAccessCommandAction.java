@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.core.commands;
 
 import javax.inject.Inject;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,17 +40,13 @@ public class ApiEndpointAccessCommandAction implements
   public boolean execute(CommandContext<ApiEndpointAccessRequest> ctx)
       throws Exception {
     ApiEndpointAccessRequest req = ctx.getMessage().getBody();
-    if(req != null && req.getEndpoints() != null) {
+    if(req != null && !StringUtils.isEmptyOrNull(req.getEndpoint())) {
       if(req.getOperation() == ApiEndpointAccessRequest.UpdateOpteration.DISABLE) {
-        for(String endpoint : req.getEndpoints()) {
-          log.info("Disabling endpoint /api"+endpoint);
-          controller.disable(endpoint);
-        }
+        log.info("Disabling endpoint /api/"+req.getEndpoint());
+        controller.disable(req.getEndpoint());
       } else if(req.getOperation() == ApiEndpointAccessRequest.UpdateOpteration.ENABLE) {
-        for(String endpoint : req.getEndpoints()) {
-          log.info("Enabling endpoint /api"+endpoint);
-          controller.enable(endpoint);
-        }
+        log.info("Enabling endpoint /api/"+req.getEndpoint());
+        controller.enable(req.getEndpoint());
       }
     }
     return true;

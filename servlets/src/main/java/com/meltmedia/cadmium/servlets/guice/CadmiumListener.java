@@ -339,7 +339,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         Map<String, String> maintParams = new HashMap<String, String>();
         maintParams.put("ignorePrefix", "/system");
         Map<String, String> aclParams = new HashMap<String, String>();
-        maintParams.put("jersey-prefix", "/api");
+        maintParams.put("jersey-prefix", "/api/");
 
         Map<String, String> fileParams = new HashMap<String, String>();
         fileParams.put("basePath", FileSystemManager.exists(contentDir) ? contentDir : failOver);

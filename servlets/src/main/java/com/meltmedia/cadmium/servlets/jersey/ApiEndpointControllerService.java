@@ -16,12 +16,13 @@
 package com.meltmedia.cadmium.servlets.jersey;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -43,7 +44,7 @@ import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
  *
  */
 @CadmiumSystemEndpoint
-@Path("/api")
+@Path("/disabled")
 public class ApiEndpointControllerService extends AuthorizationService {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
@@ -61,7 +62,6 @@ public class ApiEndpointControllerService extends AuthorizationService {
    * @throws Exception 
    */
   @GET
-  @Path("/disable/list")
   @Produces(MediaType.APPLICATION_JSON)
   public String[] get(@HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
     if(!this.isAuth(auth)) {
@@ -71,30 +71,28 @@ public class ApiEndpointControllerService extends AuthorizationService {
   }
   
   /**
-   * Disables the passed in endpoints. Must not include prefix "/api".
+   * Disables the passed in endpoint. Must not include prefix "/api/".
    * 
-   * @param paths
+   * @param path
    * @param auth
    * @throws Exception 
    */
-  @POST
-  @Path("/disable")
-  @Consumes(MediaType.APPLICATION_JSON)
-  public void disable(String paths[], @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
-    sendJGroupsMessage(UpdateOpteration.DISABLE, paths, auth);
+  @PUT
+  @Path("/{path: .*}")
+  public void disable(@PathParam("path") String path, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+    sendJGroupsMessage(UpdateOpteration.DISABLE, path, auth);
   }
   
   /**
-   * Reenables the passed in endpoints. Must not include prefix "/api"
+   * Reenables the passed in endpoint. Must not include prefix "/api/"
    * @param paths
    * @param auth
    * @throws Exception 
    */
-  @POST
-  @Path("/enable")
-  @Consumes(MediaType.APPLICATION_JSON)
-  public void enable(String paths[], @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
-    sendJGroupsMessage(UpdateOpteration.ENABLE, paths, auth);
+  @DELETE
+  @Path("/{path: .*}")
+  public void enable(@PathParam("path") String path, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+    sendJGroupsMessage(UpdateOpteration.ENABLE, path, auth);
   }
 
   /**
@@ -105,14 +103,14 @@ public class ApiEndpointControllerService extends AuthorizationService {
    * @param auth
    * @throws Exception
    */
-  private void sendJGroupsMessage(UpdateOpteration operation, String[] paths,
+  private void sendJGroupsMessage(UpdateOpteration operation, String path,
       String auth) throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-    
+    log.debug("Sending jGroups message with operation {} and path {}", operation, path);
     ApiEndpointAccessRequest messageBody = new ApiEndpointAccessRequest();
-    messageBody.setEndpoints(paths);
+    messageBody.setEndpoint(path);
     messageBody.setOperation(operation);
     Message<ApiEndpointAccessRequest> msg = new Message<ApiEndpointAccessRequest>(ProtocolMessage.API_ENDPOINT_ACCESS, messageBody);
     log.debug("Sending jgroups message: "+msg);
