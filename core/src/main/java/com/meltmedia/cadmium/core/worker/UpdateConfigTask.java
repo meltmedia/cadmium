@@ -15,8 +15,6 @@
  */
 package com.meltmedia.cadmium.core.worker;
 
-import java.io.File;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -28,7 +26,6 @@ import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
 import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.config.ConfigManager;
@@ -77,28 +74,20 @@ public abstract class UpdateConfigTask implements Callable<Boolean> {
         }
         log.info("Updating config.properties file");
         String lastUpdatedDir = getNextDirectory();
-        
-        String baseDirectory = FileSystemManager.getParent(service.getBaseDirectory());
-        
-        Properties updatedProperties = new Properties();
-        
+                        
         if(configProperties.containsKey("com.meltmedia.cadmium."+prefix+"lastUpdated")) {
-          updatedProperties.setProperty("com.meltmedia.cadmium."+prefix+"previous", configProperties.getProperty("com.meltmedia.cadmium."+prefix+"lastUpdated"));
+          configProperties.setProperty("com.meltmedia.cadmium."+prefix+"previous", configProperties.getProperty("com.meltmedia.cadmium."+prefix+"lastUpdated"));
         }
-        updatedProperties.setProperty("com.meltmedia.cadmium."+prefix+"lastUpdated", lastUpdatedDir);
         configProperties.setProperty("com.meltmedia.cadmium."+prefix+"lastUpdated", lastUpdatedDir);
         if(configProperties.containsKey(prefix + "branch")) {
-          updatedProperties.setProperty(prefix + "branch.last", configProperties.getProperty(prefix + "branch"));
+          configProperties.setProperty(prefix + "branch.last", configProperties.getProperty(prefix + "branch"));
         }
-        updatedProperties.setProperty(prefix + "branch", service.getBranchName());
         configProperties.setProperty(prefix + "branch", service.getBranchName());
         if(configProperties.containsKey(prefix + "git.ref.sha")) {
-          updatedProperties.setProperty(prefix + "git.ref.sha.last", configProperties.getProperty(prefix + "git.ref.sha"));
+          configProperties.setProperty(prefix + "git.ref.sha.last", configProperties.getProperty(prefix + "git.ref.sha"));
         }
-        updatedProperties.setProperty(prefix + "git.ref.sha", service.getCurrentRevision());
         configProperties.setProperty(prefix + "git.ref.sha", service.getCurrentRevision());
         
-        updatedProperties.setProperty(prefix + "repo", service.getRemoteRepository());
         configProperties.setProperty(prefix + "repo", service.getRemoteRepository());
         
         // NOTE: It is hard to tell if this condition will happen.  Just being defensive.
@@ -114,7 +103,7 @@ public abstract class UpdateConfigTask implements Callable<Boolean> {
         }
         
         try{
-          configManager.persistProperties(updatedProperties, new File(baseDirectory, "config.properties"), null);
+          configManager.persistDefaultProperties();
         } catch(Exception e) {
           log.warn("Failed to write out config file", e);
         }

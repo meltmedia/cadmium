@@ -59,6 +59,7 @@ public class ConfigManager implements Closeable {
   private ConfigurationParser liveConfigParser;
   private CountDownLatch latch;
   private Set<ConfigurationListener<?>> listeners = Collections.synchronizedSet(new HashSet<ConfigurationListener<?>>());
+  private File defaultPropertiesLocation;
 
   @Inject
   protected ConfigurationParserFactory configParserFactory;
@@ -145,7 +146,16 @@ public class ConfigManager implements Closeable {
 
     return reader.getProperties(stream, log);
   }   
-
+ 
+  /**
+   * Writes out default properties file to the preset location set from {@link ConfigManager#setDefaultPropertiesFile(File)}.
+   */
+  public synchronized void persistDefaultProperties() {
+    if(defaultProperties != null && defaultPropertiesLocation != null) {
+      persistProperties(defaultProperties, defaultPropertiesLocation, null);
+    }
+  }
+ 
 
   /**
    * Persist properties that are not system env or other system properties, in a thread synchronized manner
@@ -169,7 +179,6 @@ public class ConfigManager implements Closeable {
       }
     }
     writer.persistProperties(toWrite, propsFile, message, log);
-
   }
 
   public Properties getDefaultProperties() {
@@ -179,6 +188,10 @@ public class ConfigManager implements Closeable {
   public void setDefaultProperties(Properties defaultProperties) {
     this.defaultProperties = defaultProperties;
   } 
+  
+  public void setDefaultPropertiesFile(File defaultPropertiesLocation) {
+    this.defaultPropertiesLocation = defaultPropertiesLocation;
+  }
 
   public void parseConfigurationDirectory(File directory) {
 
