@@ -113,6 +113,7 @@ import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
+import com.meltmedia.cadmium.core.scheduler.SchedulerService;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
@@ -325,6 +326,8 @@ public class CadmiumListener extends GuiceServletContextListener {
     super.contextInitialized(servletContextEvent);
     File graphFile = new File(applicationContentRoot, "injector.dot");
     graphGood(graphFile, injector);
+    
+    injector.getInstance(SchedulerService.class).setupScheduler();
   }
 
   @Override
@@ -388,7 +391,6 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(new TypeLiteral<List<ChannelMember>>() {
         }).annotatedWith(Names.named("members")).toInstance(members);
         
-        @SuppressWarnings("rawtypes")
         Multibinder<CommandAction<?>> commandActionBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<CommandAction<?>>(){});
         
         @SuppressWarnings("rawtypes")
@@ -489,6 +491,9 @@ public class CadmiumListener extends GuiceServletContextListener {
           log.debug("Binding jersey endpoint class {}", jerseyService.getName());
           bind(jerseyService).asEagerSingleton();
         }
+        
+        SchedulerService.bindScheduled(binder(), reflections);
+        bind(SchedulerService.class);
         
       }
     };
