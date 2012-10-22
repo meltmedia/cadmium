@@ -37,6 +37,17 @@ import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 /**
  * Wraps a method call with a Runnable to execute in a Executor.
  * 
+ * In order to create a service to run in this scheduler annotate 
+ * a method or a Runnable class with {@link Scheduled}. If you wish 
+ * it to only run on the Coordinator then add a {@link CoordinatorOnly} 
+ * annotation as well. 
+ * 
+ * The rules to schedule processes are layed out in the Javadoc for 
+ * the annotation {@link Scheduled}.
+ * 
+ * All classes that are to be run with this must have been bound in Guice 
+ * and all parameters to the methods to be run must also be bound in Guice.
+ * 
  * @author John McEntire
  *
  */

@@ -388,6 +388,7 @@
             <phase>process-classes</phase>
             <configuration>
               <includeExclude>+com\.meltmedia\.cadmium\..*</includeExclude>
+              <scanners>TypeAnnotationsScanner,SubTypesScanner,MethodAnnotationsScanner</scanners>
             </configuration>
           </execution>
         </executions>
