@@ -55,6 +55,9 @@ import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
 import org.jgroups.Receiver;
 import org.reflections.Reflections;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.vfs.Vfs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -369,7 +372,10 @@ public class CadmiumListener extends GuiceServletContextListener {
       protected void configure() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
         
-        Reflections reflections = new Reflections("com.meltmedia.cadmium");
+        Reflections reflections = new Reflections("com.meltmedia.cadmium", 
+            new TypeAnnotationsScanner(), 
+            new SubTypesScanner(),
+            new MethodAnnotationsScanner());
         Properties configProperties = configManager.getDefaultProperties();
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);

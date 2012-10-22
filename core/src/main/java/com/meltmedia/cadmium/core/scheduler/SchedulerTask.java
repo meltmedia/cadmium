@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,9 +170,10 @@ public class SchedulerTask {
     public void run() {
       if(!isCoordinatorOnly() || membershipTracker.getCoordinator().isMine()) {
         try {
-          method.invoke(injector.getInstance(type), resolveParameters());
+          Object args[] = resolveParameters();
+          method.invoke(injector.getInstance(type), args);
         } catch (Throwable e) {
-          log.error("Failed to invoke @Scheduled service.", e);
+          log.error("Failed to invoke @Scheduled service. "+type+"#"+method, e);
         }
       }
     }
@@ -190,7 +192,7 @@ public class SchedulerTask {
           Object value = null;
           if(method.getParameterAnnotations()[i] != null && method.getParameterAnnotations()[i].length > 0) {
             for(Annotation annot : method.getParameterAnnotations()[i]) {
-              if(annot.getClass().isAnnotationPresent(BindingAnnotation.class)) {
+              if(annot.annotationType().isAnnotationPresent(BindingAnnotation.class) || annot.annotationType().equals(Named.class)) {
                 value = injector.getInstance(Key.get(paramType, annot));
                 if(value != null) {
                   break;

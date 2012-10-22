@@ -76,8 +76,8 @@ public class SchedulerService {
    * @param reflections
    */
   public static void bindScheduled(Binder binder, Reflections reflections) {
-    Set<Method> methods = reflections.getMethodsAnnotatedWith(Scheduled.class);
     Set<Class<?>> classes = reflections.getTypesAnnotatedWith(Scheduled.class, true);
+    Set<Method> methods = reflections.getMethodsAnnotatedWith(Scheduled.class);
     Set<SchedulerTask> tasks = new HashSet<SchedulerTask>();
     for(Class<?> clazz : classes) {
       if(Runnable.class.isAssignableFrom(clazz)){
@@ -87,7 +87,6 @@ public class SchedulerService {
     for(Method method : methods) {
       tasks.add(new SchedulerTask(method.getDeclaringClass(), method));
     }
-    
     for(SchedulerTask task : tasks) {
       binder.requestInjection(task);
     }
