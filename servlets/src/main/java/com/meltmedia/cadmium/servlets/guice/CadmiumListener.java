@@ -84,6 +84,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
+import com.meltmedia.cadmium.core.ApiEndpointAccessController;
 import com.meltmedia.cadmium.core.CadmiumModule;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.ConfigurationGitService;
@@ -119,6 +120,7 @@ import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.scheduler.SchedulerService;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
+import com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter;
 import com.meltmedia.cadmium.servlets.ErrorPageFilter;
 import com.meltmedia.cadmium.servlets.FileServlet;
 import com.meltmedia.cadmium.servlets.MaintenanceFilter;
@@ -156,13 +158,13 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String channelConfigUrl;
   private ConfigManager configManager;
   private ScheduledThreadPoolExecutor executor;
-  
+
   private String failOver;
-  
+
   private ServletContext context;
 
   private Injector injector = null;
-  
+
   @Override
   public void contextDestroyed(ServletContextEvent event) {
     Set<Closeable> closed = new HashSet<Closeable>();
@@ -171,7 +173,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       for (Key<?> key : injector.getBindings().keySet()) {
         try {
           Object instance = injector.getInstance(key);
-          
+
           if(instance instanceof Closeable) {
             try {
               Closeable toClose = (Closeable) instance;
@@ -202,7 +204,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       log.warn("Failed to close down fully.", t);
     }
     closed.clear();
-    
+
     if( executor != null ) {
       try {
         executor.shutdown();
@@ -222,51 +224,49 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
-    
+
     failOver = servletContextEvent.getServletContext().getRealPath("/");
     MaintenanceFilter.siteDown.start();
     context = servletContextEvent.getServletContext();
-    
+
     configManager = new ConfigManager();
-    
+
     Properties cadmiumProperties = configManager.getPropertiesByContext(context, "/WEB-INF/cadmium.properties");
-    
-    
+
+
     Properties configProperties = new Properties();
     configProperties = configManager.getSystemProperties();
     configProperties.putAll(cadmiumProperties);
-    
+
     sharedContentRoot = sharedContextRoot(configProperties, context, log);
 
     // compute the directory for this application, based on the war name.
     warName = getWarName(context);
-    
+
     vHostName = getVHostName(context);
-    
+
     applicationContentRoot = applicationContentRoot(sharedContentRoot, warName, log);
-    
+
     executor = new ScheduledThreadPoolExecutor(1);
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
     executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
     executor.setKeepAliveTime(5, TimeUnit.MINUTES);
     executor.setMaximumPoolSize(Math.min(Runtime.getRuntime().availableProcessors(), 4));
-    
+
     configProperties = configManager.appendProperties(configProperties, new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
-    
+
     configManager.setDefaultProperties(configProperties);
-    
+    configManager.setDefaultPropertiesFile(new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
+
     try {
       configureLogback(servletContextEvent.getServletContext(), applicationContentRoot);
     } catch(IOException e) {
       log.error("Failed to reconfigure logging", e);
     }
-    
 
     if ((sshDir = getSshDir(configProperties, sharedContentRoot )) != null) {
       GitService.setupSsh(sshDir.getAbsolutePath());
     }
-    
-
 
     String repoDir = servletContextEvent.getServletContext().getInitParameter("repoDir");
     if (repoDir != null && repoDir.trim().length() > 0) {
@@ -299,7 +299,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       log.warn("The content directory may not have been initialized yet.");
       this.contentDir = contentFile.getAbsoluteFile().getAbsolutePath();
     }
-    
+
     String channelCfgUrl = configProperties.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
     //String channelCfgUrl = System.getProperty(JGROUPS_CHANNEL_CONFIG_URL);
     if(channelCfgUrl != null) {
@@ -323,7 +323,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         this.channelConfigUrl = fileUrl.toString();
       }
     }
-    
+
 
     injector = Guice.createInjector(createServletModule(), createModule());
     super.contextInitialized(servletContextEvent);
@@ -344,13 +344,15 @@ public class CadmiumListener extends GuiceServletContextListener {
       protected void configureServlets() {
         Map<String, String> maintParams = new HashMap<String, String>();
         maintParams.put("ignorePrefix", "/system");
-        
+        Map<String, String> aclParams = new HashMap<String, String>();
+        maintParams.put("jersey-prefix", "/api/");
+
         Map<String, String> fileParams = new HashMap<String, String>();
         fileParams.put("basePath", FileSystemManager.exists(contentDir) ? contentDir : failOver);
-        
+
         // hook Jackson into Jersey as the POJO <-> JSON mapper
         bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
-        
+
         bind(SecureRedirectStrategy.class).to(XForwardedSecureRedirectStrategy.class).in(Scopes.SINGLETON);
 
         serve("/system/*").with(SystemGuiceContainer.class);
@@ -360,11 +362,12 @@ public class CadmiumListener extends GuiceServletContextListener {
         filter("/*").through(ErrorPageFilter.class, maintParams);
         filter("/*").through(RedirectFilter.class);
         filter("/*").through(SecureRedirectFilter.class);
-        
+        filter("/api/*").through(ApiEndpointAccessFilter.class, aclParams);
+
       }
     };
   }
-  
+
   private Module createModule() {
     return new AbstractModule() {
       @SuppressWarnings("unchecked")
@@ -379,7 +382,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         Properties configProperties = configManager.getDefaultProperties();
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
-        
+        bind(ApiEndpointAccessController.class).toInstance(ApiEndpointAccessFilter.controller);
+
         bind(ScheduledExecutorService.class).toInstance(executor);
         bind(ExecutorService.class).toInstance(executor);
         bind(Executor.class).toInstance(executor);
@@ -396,40 +400,39 @@ public class CadmiumListener extends GuiceServletContextListener {
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
         }).annotatedWith(Names.named("members")).toInstance(members);
-        
         Multibinder<CommandAction<?>> commandActionBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<CommandAction<?>>(){});
-        
+
         @SuppressWarnings("rawtypes")
         Set<Class<? extends CommandAction>> commandActionSet = 
-            reflections.getSubTypesOf(CommandAction.class);
+        reflections.getSubTypesOf(CommandAction.class);
         log.debug("Found {} CommandAction classes.", commandActionSet.size());
-        
+
         for( @SuppressWarnings("rawtypes") Class<? extends CommandAction> commandActionClass : commandActionSet ) {
           commandActionBinder.addBinding().to((Class<? extends CommandAction<?>>)commandActionClass);
         }
 
         bind(CommandResponse.class)
-            .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE))
-            .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
+        .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE))
+        .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
 
         bind(new TypeLiteral<Map<String, CommandAction<?>>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
         bind(new TypeLiteral<Map<String, Class<?>>>(){}).annotatedWith(Names.named("commandBodyMap")).toProvider(CommandBodyMapProvider.class);
-        
+
         bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
         bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
         bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
 
         String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "development");
-        
+
         // Bind channel name
         bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
-        
+
         bind(String.class).annotatedWith(Names.named("applicationContentRoot")).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
-        
+
         bind(HistoryManager.class);
-        
+
         //bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
-        
+
         bind(ConfigManager.class).toInstance(configManager);
 
         // Bind Config file URL
@@ -455,44 +458,43 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(LifecycleService.class);
         bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ContentWorker.class).to(CoordinatedWorkerImpl.class);
         bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
-        
+
         bind(SiteConfigProcessor.class);
-        
+
         Multibinder<ConfigProcessor> configProcessorBinder = Multibinder.newSetBinder(binder(), ConfigProcessor.class);
-        
+
         Set<Class<? extends ConfigProcessor>> configProcessorSet = 
             reflections.getSubTypesOf(ConfigProcessor.class);
-        
+
         log.debug("Found {} ConfigProcessor classes.", configProcessorSet.size());
-        
+
         for( Class<? extends ConfigProcessor> configProcessorClass : configProcessorSet ) {
           configProcessorBinder.addBinding().to(configProcessorClass);
           //bind(ConfigProcessor.class).to(configProcessorClass);
         }
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
-        
+
         Set<Class<?>> modules = reflections.getTypesAnnotatedWith(CadmiumModule.class);
         log.debug("Found {} Module classes.", modules.size());
         for(Class<?> module : modules) {
           if(Module.class.isAssignableFrom(module)) {	  	
-                  log.debug("Installing module {}", module.getName());
-       	  	try {
-       	  	  install(((Class<? extends Module>)module).newInstance());
-         	       } catch (InstantiationException e) {
-       	           log.warn("Failed to instantiate "+module.getName(), e);
-       	  	     } catch (IllegalAccessException e) {
-        	  	     log.debug("Modules ["+module.getName()+"] constructor is not accessible.", e);
-       	  	     }  	
-              }	  	
-            }
-        
+            log.debug("Installing module {}", module.getName());
+            try {
+              install(((Class<? extends Module>)module).newInstance());
+            } catch (InstantiationException e) {
+              log.warn("Failed to instantiate "+module.getName(), e);
+            } catch (IllegalAccessException e) {
+              log.debug("Modules ["+module.getName()+"] constructor is not accessible.", e);
+            }  	
+          }	  	
+        }
         // Bind Jersey Endpoints
         Set<Class<? extends Object>> jerseySet = 
             reflections.getTypesAnnotatedWith(Path.class);
-        
+
         log.debug("Found {} jersey services with the Path annotation.", jerseySet.size());
-        
+
         for( Class<? extends Object> jerseyService : jerseySet ) {
           log.debug("Binding jersey endpoint class {}", jerseyService.getName());
           bind(jerseyService).asEagerSingleton();
@@ -500,11 +502,10 @@ public class CadmiumListener extends GuiceServletContextListener {
         
         SchedulerService.bindScheduled(binder(), reflections);
         bind(SchedulerService.class);
-        
       }
     };
   }
-  
+
   /**
    * <p>Reconfigures the logging context.</p>
    * <p>The LoggerContext gets configured with "/WEB-INF/context-logback.xml". There is a <code>logDir</code> property set here which is expected to be the directory that the log file is written to.</p>
@@ -524,7 +525,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     log.debug("Reconfiguring Logback!");
     String systemLogDir = System.getProperty(JBOSS_LOG_DIR);
     if (systemLogDir != null) {
-    	systemLogDir += "/" + getVHostName(servletContext);
+      systemLogDir += "/" + getVHostName(servletContext);
     }
     File logDir = FileSystemManager.getWritableDirectoryWithFailovers(systemLogDir,servletContext.getInitParameter(LOG_DIR_INIT_PARAM), logDirFallback.getAbsolutePath());
     if(logDir != null) {
@@ -548,11 +549,11 @@ public class CadmiumListener extends GuiceServletContextListener {
       StatusPrinter.printInCaseOfErrorsOrWarnings(context);
     }
   }
-  
-  
+
+
   public static File sharedContextRoot( Properties configProperties, ServletContext context, Logger log ) {
     File sharedContentRoot = null;
-    
+
     if (configProperties.containsKey(BASE_PATH_ENV)) {
       sharedContentRoot = new File(configProperties.getProperty(BASE_PATH_ENV));
       if (!sharedContentRoot.exists() || !sharedContentRoot.canRead() || !sharedContentRoot.canWrite()) {
@@ -561,14 +562,14 @@ public class CadmiumListener extends GuiceServletContextListener {
         }
       }
     }
-    
+
     if (sharedContentRoot == null) {
       log.warn("Could not access cadmium content root.  Using the tempdir.");
       sharedContentRoot = (File) context.getAttribute("javax.servlet.context.tempdir");
     }
     return sharedContentRoot;
   }
-  
+
   public String getVHostName( ServletContext context ) {
     String jbossWebXml = context.getRealPath("/WEB-INF/jboss-web.xml");
     try {
@@ -576,29 +577,29 @@ public class CadmiumListener extends GuiceServletContextListener {
       factory.setNamespaceAware(true); // never forget this!
       DocumentBuilder builder = factory.newDocumentBuilder();
       Document doc = builder.parse(jbossWebXml);
-      
+
       XPathFactory xpFactory = XPathFactory.newInstance();
       XPath xpath = xpFactory.newXPath();
-      
+
       XPathExpression expr = xpath.compile("/jboss-web/virtual-host/text()");
-      
+
       NodeList result = (NodeList)expr.evaluate(doc, XPathConstants.NODESET);
-      
+
       if(result.getLength() > 0) {
         return result.item(0).getNodeValue();
       }
-      
+
     } catch(Exception e) {
       log.warn("Failed to read/parse file.", e);
     }
     return getWarName(context);
   }
-  
+
   public static String getWarName( ServletContext context ) {
     String[] pathSegments = context.getRealPath("/WEB-INF/web.xml").split("/");
     return pathSegments[pathSegments.length - 3];
   }
-  
+
   public static File applicationContentRoot(File sharedContentRoot, String warName, Logger log) {
     File applicationContentRoot = new File(sharedContentRoot, warName);
     if (!applicationContentRoot.exists())
@@ -608,7 +609,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     return applicationContentRoot;
 
   }
-  
+
   public static File getSshDir(Properties configProperties, File sharedContentRoot ) {
     File sshDir = null;
     if (configProperties.containsKey(SSH_PATH_ENV)) {
@@ -625,45 +626,45 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
     return sshDir;
   }
-  
+
   public final static Injector graphGood(File file, Injector inj) {
     try {
-       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-       PrintWriter out = new PrintWriter(baos);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      PrintWriter out = new PrintWriter(baos);
 
-       Injector injector =
+      Injector injector =
           Guice.createInjector(new GrapherModule(), new GraphvizModule());
-       GraphvizRenderer renderer = 
+      GraphvizRenderer renderer = 
           injector.getInstance(GraphvizRenderer.class);
-       renderer.setOut(out).setRankdir("TB");
+      renderer.setOut(out).setRankdir("TB");
 
-       injector.getInstance(InjectorGrapher.class).of(inj).graph();
+      injector.getInstance(InjectorGrapher.class).of(inj).graph();
 
-       out = new PrintWriter(file, "UTF-8");
-       String s = baos.toString("UTF-8");
-       s = fixGrapherBug(s);
-       s = hideClassPaths(s);
-       out.write(s);
-       out.close();
+      out = new PrintWriter(file, "UTF-8");
+      String s = baos.toString("UTF-8");
+      s = fixGrapherBug(s);
+      s = hideClassPaths(s);
+      out.write(s);
+      out.close();
 
     } catch (FileNotFoundException e) {
-       e.printStackTrace();
+      e.printStackTrace();
     } catch (UnsupportedEncodingException e) {
-       e.printStackTrace();
+      e.printStackTrace();
     } catch (IOException e) {
-       e.printStackTrace();
+      e.printStackTrace();
     }
     return inj;
- }
+  }
 
- public static String hideClassPaths(String s) {
+  public static String hideClassPaths(String s) {
     s = s.replaceAll("\\w[a-z\\d_\\.]+\\.([A-Z][A-Za-z\\d_]*)", "");
     s = s.replaceAll("value=[\\w-]+", "random");
     return s;
- }
+  }
 
- public static String fixGrapherBug(String s) {
+  public static String fixGrapherBug(String s) {
     s = s.replaceAll("style=invis", "style=solid");
     return s;
- }
+  }
 }
