@@ -55,6 +55,9 @@ import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
 import org.jgroups.Receiver;
 import org.reflections.Reflections;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.vfs.Vfs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,6 +117,7 @@ import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
+import com.meltmedia.cadmium.core.scheduler.SchedulerService;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter;
@@ -325,6 +329,8 @@ public class CadmiumListener extends GuiceServletContextListener {
     super.contextInitialized(servletContextEvent);
     File graphFile = new File(applicationContentRoot, "injector.dot");
     graphGood(graphFile, injector);
+    
+    injector.getInstance(SchedulerService.class).setupScheduler();
   }
 
   @Override
@@ -368,8 +374,11 @@ public class CadmiumListener extends GuiceServletContextListener {
       @Override
       protected void configure() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-
-        Reflections reflections = new Reflections("com.meltmedia.cadmium");
+        
+        Reflections reflections = new Reflections("com.meltmedia.cadmium", 
+            new TypeAnnotationsScanner(), 
+            new SubTypesScanner(),
+            new MethodAnnotationsScanner());
         Properties configProperties = configManager.getDefaultProperties();
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
@@ -391,7 +400,6 @@ public class CadmiumListener extends GuiceServletContextListener {
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
         }).annotatedWith(Names.named("members")).toInstance(members);
-
         Multibinder<CommandAction<?>> commandActionBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<CommandAction<?>>(){});
 
         @SuppressWarnings("rawtypes")
@@ -491,7 +499,9 @@ public class CadmiumListener extends GuiceServletContextListener {
           log.debug("Binding jersey endpoint class {}", jerseyService.getName());
           bind(jerseyService).asEagerSingleton();
         }
-
+        
+        SchedulerService.bindScheduled(binder(), reflections);
+        bind(SchedulerService.class);
       }
     };
   }
