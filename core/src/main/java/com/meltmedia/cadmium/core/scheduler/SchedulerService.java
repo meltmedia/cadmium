@@ -18,7 +18,7 @@ package com.meltmedia.cadmium.core.scheduler;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,7 +42,7 @@ public class SchedulerService {
    * The Executor that will run all {@link SchedulerTask} instances.
    */
   @Inject
-  protected ScheduledThreadPoolExecutor executor;
+  protected ScheduledExecutorService executor;
   
   /**
    * The tasks to schedule.
