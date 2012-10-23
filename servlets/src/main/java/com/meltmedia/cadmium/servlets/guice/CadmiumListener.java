@@ -218,7 +218,9 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
-    
+    //Force the use of slf4j logger in all JBoss log uses in this wars context!!!
+    System.setProperty("org.jboss.logging.provider", "slf4j");
+
     failOver = servletContextEvent.getServletContext().getRealPath("/");
     MaintenanceFilter.siteDown.start();
     context = servletContextEvent.getServletContext();

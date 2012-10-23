@@ -40,6 +40,7 @@ public class PersistenceConfigurationListener implements
     ConfigurationListener<PersistenceConfiguration>, Closeable {
   private static final Logger log = LoggerFactory.getLogger(PersistenceConfigurationListener.class);
   
+  @Inject
   @CadmiumJpaProperties
   protected Properties jpaOverrideProperties;
   
