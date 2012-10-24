@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -12,6 +13,14 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.slf4j.Logger;
+
+import com.google.inject.Binding;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Scope;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.spi.BindingScopingVisitor;
 
 /**
  * Utilities to facilitate the @PostConstruct and @PreDestroy annotations from jsr250.
@@ -34,6 +43,18 @@ public final class Jsr250Utils {
       safeInvokeMethod(obj, aMethod, log);
     }
   }
+  
+  /**
+   * Calls postConstruct with the same arguments, logging any exceptions that are thrown at the level warn.
+   */
+  public static void postConstructQuietly(Object obj, Logger log) {
+    try {
+      postConstruct(obj, log);
+    }
+    catch( Throwable t ) {
+      log.warn("Could not @PostConstruct object", t);
+    }
+  }
 
   /**
    * Calls all @PreDestroy methods on the object passed in called in order from child class to super class.
@@ -46,6 +67,21 @@ public final class Jsr250Utils {
     List<Method> methodsToRun = getAnnotatedMethodsFromChildToParent(obj.getClass(), PreDestroy.class, log);
     for(Method aMethod : methodsToRun) {
       safeInvokeMethod(obj, aMethod, log);
+    }
+  }
+  
+  /**
+   * Calls preDestroy with the same arguments, logging any exceptions that are thrown at the level warn.
+   * 
+   * @param obj
+   * @param log
+   */
+  public static void preDestroyQuietly(Object obj, Logger log) {
+    try {
+      preDestroy(obj, log);
+    }
+    catch( Throwable t ) {
+      log.warn("Could not @PreDestroy object", t);
     }
   }
 
@@ -125,5 +161,84 @@ public final class Jsr250Utils {
       }
     });
     return annotatedMethods;
+  }
+  
+  /**
+   * Finds all of the objects in the specified scopes.
+   * 
+   * <p>
+   * All objects returned by this method are sorted first by the scopes provided and then by the key objects they are bound to.
+   * </p>
+   * 
+   * @param injector the injector to search.
+   * @param scopeNames the scopes to search for.
+   * @return the objects bound in the injector.
+   */
+  public static List<Object> findAnnotatedObjects(Injector injector, Class<? extends Annotation>... scopeNames) {
+    List<Object> objects = new ArrayList<Object>();
+    for( Key<?> key : findAnnotatedKeys(injector, scopeNames) ) {
+      objects.add(injector.getInstance(key));
+    }
+    return objects;
+  }
+
+  /**
+   * Finds all of the keys in the injector for the specified scopes.
+   * 
+   * <p>
+   * All of the keys returned by this method are first sorted by the order of the scope names and then by
+   * the keys.
+   * </p>
+   * 
+   * @param injector the injector to search.
+   * @param scopeNames the scopes to search for.
+   * @return the keys for the specified scope names.
+   */
+  public static List<Key<?>> findAnnotatedKeys(Injector injector, Class<? extends Annotation>... scopeNames) {
+    List<Key<?>> keys = new ArrayList<Key<?>>();
+    Collection<Binding<?>> bindings = injector.getAllBindings().values();
+   
+    for( Class<? extends Annotation> scopeName : scopeNames ) {
+      Set<Key<?>> scopeKeys = new TreeSet<Key<?>>();
+      for( Binding<?> binding : bindings ) {
+        if( inScope(binding, scopeName) ) {
+          scopeKeys.add(binding.getKey());
+        }
+      }
+      keys.addAll(scopeKeys);
+    }
+    
+    return keys;
+  }
+  
+  /**
+   * Returns true if the binding is in the specified scope, false otherwise.
+   * @param binding the binding to inspect
+   * @param scope the scope to look for
+   * @return true if the binding is in the specified scope, false otherwise.
+   */
+  public static boolean inScope(Binding<?> binding, final Class<? extends Annotation> scope) {
+    return binding.acceptScopingVisitor(new BindingScopingVisitor<Boolean>() {
+
+      @Override
+      public Boolean visitEagerSingleton() {
+        return scope == Singleton.class || scope == javax.inject.Singleton.class;
+      }
+
+      @Override
+      public Boolean visitNoScoping() {
+        return false;
+      }
+
+      @Override
+      public Boolean visitScope(Scope guiceScope) {
+        return guiceScope == Scopes.SINGLETON && (scope == Singleton.class || scope == javax.inject.Singleton.class);
+      }
+
+      @Override
+      public Boolean visitScopeAnnotation(Class<? extends Annotation> scopeAnnotation) {
+        return scopeAnnotation == scope;
+      }
+    });
   }
 }

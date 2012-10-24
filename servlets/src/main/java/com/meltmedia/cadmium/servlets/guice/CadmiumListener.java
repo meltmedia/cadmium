@@ -75,6 +75,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.grapher.GrapherModule;
 import com.google.inject.grapher.InjectorGrapher;
@@ -118,6 +119,7 @@ import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.scheduler.SchedulerService;
+import com.meltmedia.cadmium.core.util.Jsr250Utils;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter;
@@ -160,6 +162,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String channelConfigUrl;
   private ConfigManager configManager;
   private ScheduledThreadPoolExecutor executor;
+  private List<Object> singletons = null;
 
   private String failOver;
 
@@ -171,6 +174,13 @@ public class CadmiumListener extends GuiceServletContextListener {
   public void contextDestroyed(ServletContextEvent event) {
     Set<Closeable> closed = new HashSet<Closeable>();
     Injector injector = this.injector;
+    if( singletons != null ) {
+      Collections.reverse(singletons);
+      for( Object toDestroy :singletons ) {
+        Jsr250Utils.preDestroyQuietly(toDestroy, log);
+      }
+      singletons = null;
+    }
     injector.getInstance(Jsr250Destroyer.class).preDestroy();
     while(injector != null) {
       for (Key<?> key : injector.getBindings().keySet()) {
@@ -330,7 +340,11 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
 
 
-    injector = Guice.createInjector(createServletModule(), createModule(), Jsr250.newJsr250Module());
+    injector = Guice.createInjector(createServletModule(), createModule());
+    singletons = Jsr250Utils.findAnnotatedObjects(injector, Singleton.class, javax.inject.Singleton.class);
+    for( Object postCreate : singletons ) {
+      Jsr250Utils.postConstructQuietly(postCreate, log);
+    }
     super.contextInitialized(servletContextEvent);
     File graphFile = new File(applicationContentRoot, "injector.dot");
     graphGood(graphFile, injector);
