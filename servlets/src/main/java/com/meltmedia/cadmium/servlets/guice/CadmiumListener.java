@@ -130,8 +130,6 @@ import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SecureRedirectFilter;
 import com.meltmedia.cadmium.servlets.SecureRedirectStrategy;
 import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
-import com.mycila.inject.jsr250.Jsr250;
-import com.mycila.inject.jsr250.Jsr250Destroyer;
 
 /**
  * Builds the context with the Guice framework. To see how this works, go to:
@@ -181,7 +179,6 @@ public class CadmiumListener extends GuiceServletContextListener {
       }
       singletons = null;
     }
-    injector.getInstance(Jsr250Destroyer.class).preDestroy();
     while(injector != null) {
       for (Key<?> key : injector.getBindings().keySet()) {
         try {
