@@ -73,6 +73,10 @@
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-web</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.mycila</groupId>
+      <artifactId>mycila-guice</artifactId>
+    </dependency>
     
     <!-- Testing -->
     <dependency>

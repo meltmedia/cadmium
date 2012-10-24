@@ -75,7 +75,7 @@ public class MembershipTrackerTest {
     
     sender.setChannel(channel);
     
-    new MembershipTracker(sender, channel, members, configManager, null, null);
+    new MembershipTracker(sender, channel, members, configManager, null, null).init();
     
     Thread.sleep(1000l);
     
