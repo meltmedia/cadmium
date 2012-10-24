@@ -71,9 +71,9 @@ public class MembershipTracker implements MembershipListener {
     log.info("Starting membership tracker.");
     if(this.channel != null) {
       viewAccepted(this.channel.getView());
-    }    
+    }
   }
-  
+
   @Override
   public void viewAccepted(View new_view) {
     if(this.members != null) {
