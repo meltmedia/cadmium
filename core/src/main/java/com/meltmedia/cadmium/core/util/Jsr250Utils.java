@@ -44,6 +44,18 @@ public final class Jsr250Utils {
       safeInvokeMethod(obj, aMethod);
     }
   }
+  
+  /**
+   * Calls postConstruct with the same arguments, logging any exceptions that are thrown at the level warn.
+   */
+  public static void postConstructQuietly(Object obj, Logger log) {
+    try {
+      postConstruct(obj, log);
+    }
+    catch( Throwable t ) {
+      log.warn("Could not @PostConstruct object", t);
+    }
+  }
 
   /**
    * Calls all @PreDestroy methods on the object passed in called in order from child class to super class.
@@ -56,6 +68,21 @@ public final class Jsr250Utils {
     List<Method> methodsToRun = getAnnotatedMethodsFromChildToParent(obj.getClass(), PreDestroy.class, log);
     for(Method aMethod : methodsToRun) {
       safeInvokeMethod(obj, aMethod);
+    }
+  }
+  
+  /**
+   * Calls preDestroy with the same arguments, logging any exceptions that are thrown at the level warn.
+   * 
+   * @param obj
+   * @param log
+   */
+  public static void preDestroyQuietly(Object obj, Logger log) {
+    try {
+      preDestroy(obj, log);
+    }
+    catch( Throwable t ) {
+      log.warn("Could not @PreDestroy object", t);
     }
   }
 
