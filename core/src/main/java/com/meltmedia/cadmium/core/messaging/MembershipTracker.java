@@ -24,6 +24,7 @@ import java.util.TimerTask;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.annotation.PostConstruct;
 
 import org.jgroups.Address;
 import org.jgroups.JChannel;
@@ -63,12 +64,16 @@ public class MembershipTracker implements MembershipListener {
     this.configManager = configManager;
     this.gitService = gitService;
     this.configGitService = configGitService;
-    
+  }
+  
+  @PostConstruct
+  public void init() {
+    log.info("Starting membership tracker.");
     if(this.channel != null) {
       viewAccepted(this.channel.getView());
-    }
+    }    
   }
-
+  
   @Override
   public void viewAccepted(View new_view) {
     if(this.members != null) {
