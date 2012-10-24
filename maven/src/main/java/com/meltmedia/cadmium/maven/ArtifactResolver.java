@@ -77,6 +77,11 @@ public class ArtifactResolver {
    * @throws ArtifactResolutionException 
    */
   public File resolveMavenArtifact(String artifact) throws ArtifactResolutionException {
+    // NOTE: This page on Aether (https://docs.sonatype.org/display/AETHER/Home) states that
+    // the plexus container uses the context class loader.
+    ClassLoader oldContext = Thread.currentThread().getContextClassLoader();
+    try {
+      Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
     RepositorySystem repoSystem = newRepositorySystem();
     
     RepositorySystemSession session = newSession( repoSystem );
@@ -97,6 +102,10 @@ public class ArtifactResolver {
     artifactObj = artifactResult.getArtifact();
     
     return artifactObj.getFile();
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(oldContext);
+    }
   }
   
   /**
@@ -117,6 +126,7 @@ public class ArtifactResolver {
 
       LocalRepository localRepo = new LocalRepository( localRepository );
       session.setLocalRepositoryManager( system.newLocalRepositoryManager( localRepo ) );
+      session.setConfigProperty("aether.connector.ahc.provider", "apache");
 
       return session;
   }
