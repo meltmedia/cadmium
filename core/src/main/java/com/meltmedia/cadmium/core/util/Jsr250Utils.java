@@ -7,8 +7,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -20,10 +25,21 @@ import org.slf4j.Logger;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Provider;
 import com.google.inject.Scope;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.spi.BindingScopingVisitor;
+import com.google.inject.spi.BindingTargetVisitor;
+import com.google.inject.spi.ConstructorBinding;
+import com.google.inject.spi.ConvertedConstantBinding;
+import com.google.inject.spi.ExposedBinding;
+import com.google.inject.spi.InstanceBinding;
+import com.google.inject.spi.LinkedKeyBinding;
+import com.google.inject.spi.ProviderBinding;
+import com.google.inject.spi.ProviderInstanceBinding;
+import com.google.inject.spi.ProviderKeyBinding;
+import com.google.inject.spi.UntargettedBinding;
 
 /**
  * Utilities to facilitate the @PostConstruct and @PreDestroy annotations from jsr250.
@@ -212,70 +228,138 @@ public final class Jsr250Utils {
     return annotatedMethods;
   }
   
+  public static Jsr250Executor createJsr250Executor(Injector injector, final Logger log, Scope... scopes ) {
+    final Set<Object> instances = findInstancesInScopes(injector, scopes);
+    final List<Object> reverseInstances = new ArrayList<Object>(instances);
+    Collections.reverse(reverseInstances);
+    return new Jsr250Executor() {
+
+      @Override
+      public Set<Object> getInstances() {
+        return instances;
+      }
+
+      @Override
+      public void postConstruct() {
+        for( Object instance : instances ) {
+          postConstructQuietly(instance, log);
+        }
+      }
+
+      @Override
+      public void preDestroy() {
+        for( Object instances : reverseInstances ) {
+          preDestroyQuietly(instances, log);
+        }
+      }
+      
+    };
+  }
+  
   /**
-   * Finds all of the objects in the specified scopes.
+   * Finds all of the instances in the specified scopes.
    * 
    * <p>
-   * All objects returned by this method are sorted first by the scopes provided and then by the key objects they are bound to.
+   * Returns a list of the objects from the specified scope, sorted by their class name.
    * </p>
    * 
    * @param injector the injector to search.
-   * @param scopeNames the scopes to search for.
+   * @param scopeAnnotations the scopes to search for.
    * @return the objects bound in the injector.
    */
-  public static List<Object> findAnnotatedObjects(Injector injector, Class<? extends Annotation>... scopeNames) {
-    List<Object> objects = new ArrayList<Object>();
-    for( Key<?> key : findAnnotatedKeys(injector, scopeNames) ) {
-      objects.add(injector.getInstance(key));
+  public static Set<Object> findInstancesInScopes(Injector injector, Class<? extends Annotation>... scopeAnnotations) {
+    Set<Object> objects = new TreeSet<Object>(new Comparator<Object>() {
+
+      @Override
+      public int compare(Object o0, Object o1) {
+        return o0.getClass().getName().compareTo(o1.getClass().getName());
+      }
+      
+    });
+    for( Map.Entry<Key<?>, Binding<?>> entry : findBindingsInScope(injector, scopeAnnotations).entrySet()) {
+      Object object = injector.getInstance(entry.getKey());
+      objects.add(object);
+    }
+    return objects;
+  }
+  
+  /**
+   * Finds all of the instances in the specified scopes.
+   * 
+   * <p>
+   * Returns a list of the objects from the specified scope, sorted by their class name.
+   * </p>
+   * 
+   * @param injector the injector to search.
+   * @param scopeAnnotations the scopes to search for.
+   * @return the objects bound in the injector.
+   */
+  public static Set<Object> findInstancesInScopes(Injector injector, Scope... scopes) {
+    Set<Object> objects = new TreeSet<Object>(new Comparator<Object>() {
+
+      @Override
+      public int compare(Object o0, Object o1) {
+        return o0.getClass().getName().compareTo(o1.getClass().getName());
+      }
+      
+    });
+    for( Map.Entry<Key<?>, Binding<?>> entry : findBindingsInScope(injector, scopes).entrySet()) {
+      Object object = injector.getInstance(entry.getKey());
+      objects.add(object);
     }
     return objects;
   }
 
   /**
-   * Finds all of the keys in the injector for the specified scopes.
+   * Finds all of the unique providers in the injector in the specified scopes.
    * 
    * <p>
-   * All of the keys returned by this method are first sorted by the order of the scope names and then by
-   * the keys.
    * </p>
    * 
    * @param injector the injector to search.
-   * @param scopeNames the scopes to search for.
+   * @param scopeAnnotations the scopes to search for.
    * @return the keys for the specified scope names.
    */
-  public static List<Key<?>> findAnnotatedKeys(Injector injector, Class<? extends Annotation>... scopeNames) {
-    List<Key<?>> keys = new ArrayList<Key<?>>();
-    Collection<Binding<?>> bindings = injector.getAllBindings().values();
-   
-    for( Class<? extends Annotation> scopeName : scopeNames ) {
-      Set<Key<?>> scopeKeys = new TreeSet<Key<?>>(new Comparator<Key<?>>() {
-
-        @Override
-        public int compare(Key<?> key0, Key<?> key1) {
-          int result = key0.toString().compareTo(key1.toString());
-          System.out.println("Comparing "+key0+" to "+key1+" result "+result);
-          return result;
-        }
-        
-      });
-      for( Binding<?> binding : bindings ) {
-        if( inScope(binding, scopeName) ) {
-          scopeKeys.add(binding.getKey());
+  public static Map<Key<?>, Binding<?>> findBindingsInScope(Injector injector, Class<? extends Annotation>... scopeAnnotations) {
+    Map<Key<?>,Binding<?>> bindings = new LinkedHashMap<Key<?>, Binding<?>>();
+    ALL_BINDINGS: for( Map.Entry<Key<?>, Binding<?>> entry : injector.getAllBindings().entrySet() ) {
+      for( Class<? extends Annotation> scopeAnnotation : scopeAnnotations ) {
+        if( inScope(injector, entry.getValue(), scopeAnnotation )) {
+          bindings.put(entry.getKey(), entry.getValue());
+          continue ALL_BINDINGS;
         }
       }
-      keys.addAll(scopeKeys);
     }
-    
-    return keys;
+    return bindings;
   }
   
+  /**
+   * Returns the bindings in the specified scope.
+   * 
+   * @param injector
+   * @param scopes
+   * @return
+   */
+  public static Map<Key<?>, Binding<?>> findBindingsInScope(Injector injector, Scope... scopes) {
+    Map<Key<?>,Binding<?>> bindings = new LinkedHashMap<Key<?>, Binding<?>>();
+    ALL_BINDINGS: for( Map.Entry<Key<?>, Binding<?>> entry : injector.getAllBindings().entrySet() ) {
+      for( Scope scope : scopes ) {
+        if( inScope(injector, entry.getValue(), scope )) {
+          bindings.put(entry.getKey(), entry.getValue());
+          continue ALL_BINDINGS;
+        }
+      }
+    }
+    return bindings;
+  }
+    
   /**
    * Returns true if the binding is in the specified scope, false otherwise.
    * @param binding the binding to inspect
    * @param scope the scope to look for
    * @return true if the binding is in the specified scope, false otherwise.
    */
-  public static boolean inScope(final Binding<?> binding, final Class<? extends Annotation> scope) {
+  public static boolean inScope(final Injector injector, final Binding<?> binding, final Class<? extends Annotation> scope) {
     return binding.acceptScopingVisitor(new BindingScopingVisitor<Boolean>() {
 
       @Override
@@ -290,7 +374,7 @@ public final class Jsr250Utils {
 
       @Override
       public Boolean visitScope(Scope guiceScope) {
-        return guiceScope == Scopes.SINGLETON && (scope == Singleton.class || scope == javax.inject.Singleton.class);
+        return injector.getScopeBindings().get(scope) == guiceScope;
       }
 
       @Override
@@ -298,5 +382,39 @@ public final class Jsr250Utils {
         return scopeAnnotation == scope;
       }
     });
+  }
+  
+  /**
+   * Returns true of the binding is in the scope.
+   * 
+   * @param injector
+   * @param binding
+   * @param scope
+   * @return
+   */
+  public static boolean inScope(final Injector injector, final Binding<?> binding, final Scope scope) {
+    return binding.acceptScopingVisitor(new BindingScopingVisitor<Boolean>() {
+
+      @Override
+      public Boolean visitEagerSingleton() {
+        return scope == Scopes.SINGLETON;
+      }
+
+      @Override
+      public Boolean visitNoScoping() {
+        return false;
+      }
+
+      @Override
+      public Boolean visitScope(Scope guiceScope) {
+        return guiceScope == scope;
+      }
+
+      @Override
+      public Boolean visitScopeAnnotation(Class<? extends Annotation> scopeAnnotation) {
+        return injector.getScopeBindings().get(scopeAnnotation) == scope;
+      }
+    });
+    
   }
 }
