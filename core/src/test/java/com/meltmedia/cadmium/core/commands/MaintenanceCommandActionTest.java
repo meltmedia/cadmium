@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import junit.framework.Assert;
 
@@ -51,7 +52,7 @@ public class MaintenanceCommandActionTest {
     
     MaintenanceCommandAction maintCmd = new MaintenanceCommandAction();
     maintCmd.siteDownService = siteDownService;
-    maintCmd.manager = new HistoryManager(null);
+    maintCmd.manager = new HistoryManager(null, Executors.newSingleThreadExecutor());
     MaintenanceRequest request = new MaintenanceRequest();
     request.setState("on");
     request.setComment("comment");
