@@ -119,6 +119,7 @@ import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.scheduler.SchedulerService;
+import com.meltmedia.cadmium.core.util.Jsr250Executor;
 import com.meltmedia.cadmium.core.util.Jsr250Utils;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
@@ -160,7 +161,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String channelConfigUrl;
   private ConfigManager configManager;
   private ScheduledThreadPoolExecutor executor;
-  private List<Object> singletons = null;
+  private Jsr250Executor jsr250Executor = null;
 
   private String failOver;
 
@@ -172,12 +173,9 @@ public class CadmiumListener extends GuiceServletContextListener {
   public void contextDestroyed(ServletContextEvent event) {
     Set<Closeable> closed = new HashSet<Closeable>();
     Injector injector = this.injector;
-    if( singletons != null ) {
-      Collections.reverse(singletons);
-      for( Object toDestroy :singletons ) {
-        Jsr250Utils.preDestroyQuietly(toDestroy, log);
-      }
-      singletons = null;
+    if( jsr250Executor != null ) {
+      jsr250Executor.preDestroy();
+      jsr250Executor = null;
     }
     while(injector != null) {
       for (Key<?> key : injector.getBindings().keySet()) {
@@ -338,10 +336,11 @@ public class CadmiumListener extends GuiceServletContextListener {
 
 
     injector = Guice.createInjector(createServletModule(), createModule());
-    singletons = Jsr250Utils.findAnnotatedObjects(injector, Singleton.class, javax.inject.Singleton.class);
-    for( Object postCreate : singletons ) {
-      Jsr250Utils.postConstructQuietly(postCreate, log);
-    }
+    
+    // run the postConstruct methods.
+    jsr250Executor = Jsr250Utils.createJsr250Executor(injector, log, Scopes.SINGLETON);
+    jsr250Executor.postConstruct();
+    
     super.contextInitialized(servletContextEvent);
     File graphFile = new File(applicationContentRoot, "injector.dot");
     graphGood(graphFile, injector);
