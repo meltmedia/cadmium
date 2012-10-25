@@ -16,8 +16,10 @@
 package com.meltmedia.cadmium.cli;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,6 +37,11 @@ import org.apache.http.util.EntityUtils;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 
@@ -208,8 +215,16 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
         HttpEntity entity = resp.getEntity();
         if(entity.getContentType().getValue().equals("application/json")) {
           String responseContent = EntityUtils.toString(entity);
-          
-          history = new Gson().fromJson(responseContent, new TypeToken<List<HistoryEntry>>() {}.getType());
+          Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new JsonDeserializer<Date>() {
+
+            @Override
+            public Date deserialize(JsonElement json, Type typeOfT,
+                JsonDeserializationContext ctx) throws JsonParseException {
+              return new Date(json.getAsLong());
+            }
+            
+          }).create();
+          history = gson.fromJson(responseContent, new TypeToken<List<HistoryEntry>>() {}.getType());
         } else {
           System.err.println("Invalid response content type ["+entity.getContentType().getValue()+"]");
           System.exit(1);

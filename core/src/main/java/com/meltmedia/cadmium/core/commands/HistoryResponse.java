@@ -22,6 +22,8 @@ import com.meltmedia.cadmium.core.history.HistoryEntry;
 public class HistoryResponse extends AbstractMessageBean {
 
   private List<HistoryEntry> history;
+  
+  public HistoryResponse(){}
 
   public HistoryResponse(List<HistoryEntry> history) {
     this.history = history;

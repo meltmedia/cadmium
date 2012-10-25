@@ -110,7 +110,7 @@ public class CadmiumCli {
 		catch( Exception e ) {
 			System.err.println("Error: " + e.getMessage());
 			logger.debug("Cli Failed", e);
-			//e.printStackTrace();
+			e.printStackTrace();
 			System.exit(1);
 		}
 

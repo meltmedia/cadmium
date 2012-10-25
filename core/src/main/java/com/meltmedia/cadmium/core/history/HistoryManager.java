@@ -15,16 +15,13 @@
  */
 package com.meltmedia.cadmium.core.history;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -40,11 +37,13 @@ import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.commands.GitLocation;
 
 @Singleton
-public class HistoryManager implements Closeable {
+public class HistoryManager {
   public static final String HISTORY_FILE_NAME = "history.json";
   private final Logger log = LoggerFactory.getLogger(getClass());
   private List<HistoryEntry> history = new ArrayList<HistoryEntry>();
   private String contentRoot;
+  
+  @Inject
   private ExecutorService pool;
   
   
@@ -53,8 +52,12 @@ public class HistoryManager implements Closeable {
     this.contentRoot = contentRoot;
     
     readHistoryFile();
-    
-    pool = Executors.newSingleThreadExecutor();
+  }
+  
+  public HistoryManager(String contentRoot, ExecutorService pool) throws Exception {
+    this.contentRoot = contentRoot;
+    this.pool = pool;
+    readHistoryFile();
   }
   
   public void logEvent(boolean maint, String openId, String comment) {
@@ -110,7 +113,7 @@ public class HistoryManager implements Closeable {
     
     history.add(0, newEntry);
     
-    pool.submit(historyWriter);
+    pool.execute(historyWriter);
   }
   
   public List<HistoryEntry> getHistory(Integer limit, boolean filter) {
@@ -137,6 +140,8 @@ public class HistoryManager implements Closeable {
     for(HistoryEntry entry : history) {
       if(!entry.isFinished() && entry.getUuid() != null && entry.getUuid().equals(uuid) && entry.isRevertible()) {
         entry.setFinished(true);
+        
+        pool.execute(historyWriter);
         break;
       }
     }
@@ -205,10 +210,5 @@ public class HistoryManager implements Closeable {
   
   public List<HistoryEntry> getHistory() {
     return this.history;
-  }
-
-  @Override
-  public void close() throws IOException {
-    pool.shutdown();
   }
 }

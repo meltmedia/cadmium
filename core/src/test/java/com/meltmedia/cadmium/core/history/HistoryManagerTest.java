@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
@@ -60,7 +61,7 @@ public class HistoryManagerTest {
       }
     }
     
-    manager = new HistoryManager(testDirectory);
+    manager = new HistoryManager(testDirectory, Executors.newSingleThreadExecutor());
   }
   
   @After
@@ -68,7 +69,6 @@ public class HistoryManagerTest {
     historyFile.delete();
   }
   
-  @SuppressWarnings("resource")
   @Test
   public void testNoLogConstructor() throws Exception {
     new HistoryManager("./target");
