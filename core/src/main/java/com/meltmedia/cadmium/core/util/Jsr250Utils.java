@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -199,7 +201,16 @@ public final class Jsr250Utils {
     Collection<Binding<?>> bindings = injector.getAllBindings().values();
    
     for( Class<? extends Annotation> scopeName : scopeNames ) {
-      Set<Key<?>> scopeKeys = new TreeSet<Key<?>>();
+      Set<Key<?>> scopeKeys = new TreeSet<Key<?>>(new Comparator<Key<?>>() {
+
+        @Override
+        public int compare(Key<?> key0, Key<?> key1) {
+          int result = key0.toString().compareTo(key1.toString());
+          System.out.println("Comparing "+key0+" to "+key1+" result "+result);
+          return result;
+        }
+        
+      });
       for( Binding<?> binding : bindings ) {
         if( inScope(binding, scopeName) ) {
           scopeKeys.add(binding.getKey());
@@ -217,7 +228,7 @@ public final class Jsr250Utils {
    * @param scope the scope to look for
    * @return true if the binding is in the specified scope, false otherwise.
    */
-  public static boolean inScope(Binding<?> binding, final Class<? extends Annotation> scope) {
+  public static boolean inScope(final Binding<?> binding, final Class<? extends Annotation> scope) {
     return binding.acceptScopingVisitor(new BindingScopingVisitor<Boolean>() {
 
       @Override
