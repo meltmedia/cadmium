@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -55,6 +56,7 @@ public class SchedulerService {
    * 
    * @param tasks
    */
+  @PostConstruct
   public void setupScheduler() {
     for(SchedulerTask task : tasks) {
       if(task.getDelay() > 0 && task.getInterval() > 0) {

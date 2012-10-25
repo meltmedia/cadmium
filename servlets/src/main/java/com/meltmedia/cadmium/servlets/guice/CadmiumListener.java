@@ -232,6 +232,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     super.contextDestroyed(event);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     //Force the use of slf4j logger in all JBoss log uses in this wars context!!!
@@ -345,8 +346,6 @@ public class CadmiumListener extends GuiceServletContextListener {
     super.contextInitialized(servletContextEvent);
     File graphFile = new File(applicationContentRoot, "injector.dot");
     graphGood(graphFile, injector);
-    
-    injector.getInstance(SchedulerService.class).setupScheduler();
   }
 
   @Override

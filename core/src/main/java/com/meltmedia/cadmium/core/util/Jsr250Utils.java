@@ -101,7 +101,6 @@ public final class Jsr250Utils {
     boolean accessible = aMethod.isAccessible();
     try {
       if(!accessible) {
-        log.debug("Setting method to accessible.");
         aMethod.setAccessible(true);
       }
       if(Modifier.isStatic(aMethod.getModifiers())) {
@@ -113,7 +112,6 @@ public final class Jsr250Utils {
       }
     } finally {
       if(!accessible) {
-        log.debug("Unsetting methods accessibility flag.");
         aMethod.setAccessible(accessible);
       }
     }
@@ -140,7 +138,9 @@ public final class Jsr250Utils {
         }
       }
       clazz = clazz.getSuperclass();
-      log.debug("Moving up to superclass {}", clazz);
+      if(clazz != null && clazz.equals(Object.class)) {
+        clazz = null;
+      }
     }
     return methodsToRun;
   }
@@ -194,12 +194,10 @@ public final class Jsr250Utils {
    */
   private static List<Method> getMethodsWithAnnotation(Class<?> clazz, Class<? extends Annotation> annotation, Logger log) {
     List<Method> annotatedMethods = new ArrayList<Method>();
-    log.debug("Getting all methods on class {} annotated with {}", clazz, annotation);
     Method classMethods[] = clazz.getDeclaredMethods();
     for(Method classMethod : classMethods) {
       if(classMethod.isAnnotationPresent(annotation) && classMethod.getParameterTypes().length == 0) {
         if(!containsMethod(classMethod, annotatedMethods)) {
-          log.debug("Adding method {}", classMethod.getName());
           annotatedMethods.add(classMethod);
         }
       }
