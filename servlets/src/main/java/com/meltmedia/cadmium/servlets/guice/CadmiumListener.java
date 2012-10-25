@@ -75,6 +75,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.grapher.GrapherModule;
 import com.google.inject.grapher.InjectorGrapher;
@@ -118,6 +119,8 @@ import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.scheduler.SchedulerService;
+import com.meltmedia.cadmium.core.util.Jsr250Executor;
+import com.meltmedia.cadmium.core.util.Jsr250Utils;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter;
@@ -128,8 +131,6 @@ import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SecureRedirectFilter;
 import com.meltmedia.cadmium.servlets.SecureRedirectStrategy;
 import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
-import com.mycila.inject.jsr250.Jsr250;
-import com.mycila.inject.jsr250.Jsr250Destroyer;
 
 /**
  * Builds the context with the Guice framework. To see how this works, go to:
@@ -160,6 +161,7 @@ public class CadmiumListener extends GuiceServletContextListener {
   private String channelConfigUrl;
   private ConfigManager configManager;
   private ScheduledThreadPoolExecutor executor;
+  private Jsr250Executor jsr250Executor = null;
 
   private String failOver;
 
@@ -171,7 +173,10 @@ public class CadmiumListener extends GuiceServletContextListener {
   public void contextDestroyed(ServletContextEvent event) {
     Set<Closeable> closed = new HashSet<Closeable>();
     Injector injector = this.injector;
-    injector.getInstance(Jsr250Destroyer.class).preDestroy();
+    if( jsr250Executor != null ) {
+      jsr250Executor.preDestroy();
+      jsr250Executor = null;
+    }
     while(injector != null) {
       for (Key<?> key : injector.getBindings().keySet()) {
         try {
@@ -225,6 +230,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     super.contextDestroyed(event);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     //Force the use of slf4j logger in all JBoss log uses in this wars context!!!
@@ -330,12 +336,15 @@ public class CadmiumListener extends GuiceServletContextListener {
     }
 
 
-    injector = Guice.createInjector(createServletModule(), createModule(), Jsr250.newJsr250Module());
+    injector = Guice.createInjector(createServletModule(), createModule());
+    
+    // run the postConstruct methods.
+    jsr250Executor = Jsr250Utils.createJsr250Executor(injector, log, Scopes.SINGLETON);
+    jsr250Executor.postConstruct();
+    
     super.contextInitialized(servletContextEvent);
     File graphFile = new File(applicationContentRoot, "injector.dot");
     graphGood(graphFile, injector);
-    
-    injector.getInstance(SchedulerService.class).setupScheduler();
   }
 
   @Override
