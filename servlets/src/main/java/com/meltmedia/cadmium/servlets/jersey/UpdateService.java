@@ -86,6 +86,7 @@ public class UpdateService extends AuthorizationService {
     body.setComment(req.getComment());
     body.setOpenId(openId);
     body.setUuid(resp.getUuid());
+    body.setRevertable(true);
     Message<ContentUpdateRequest> msg = new Message<ContentUpdateRequest>(cmd, body);
     sender.sendMessage(msg, null);
     resp.setMessage("ok");

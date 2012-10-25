@@ -106,6 +106,7 @@ public class HistoryManager {
     newEntry.setServedDirectory(directory);
     newEntry.setUuid(uuid);
     newEntry.setComment(comment);
+    newEntry.setMaintenance(maint);
     newEntry.setRevertible(revertible);
     newEntry.setFailed(failed);
     newEntry.setFinished(finished);
@@ -140,7 +141,7 @@ public class HistoryManager {
     for(HistoryEntry entry : history) {
       if(!entry.isFinished() && entry.getUuid() != null && entry.getUuid().equals(uuid) && entry.isRevertible()) {
         entry.setFinished(true);
-        
+        log.debug("Marked {} as finished.", entry);
         pool.execute(historyWriter);
         break;
       }
@@ -150,6 +151,7 @@ public class HistoryManager {
   public HistoryEntry getLatestHistoryEntryByUUID(String uuid, Date since) {
     for(HistoryEntry entry : history) {
       if((since == null || entry.getTimestamp().after(since)) && entry.getUuid() != null && entry.getUuid().equals(uuid)) {
+        log.debug("Got latest entry for {}, {}", uuid, entry);
         return entry;
       }
     }

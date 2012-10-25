@@ -49,7 +49,7 @@ public class MaintenanceService extends AuthorizationService {
 	  if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-	  log.info("Maintenance Request: state: {} comment: {}", request.getState(), request.getComment());
+	  log.debug("Maintenance Request: state: {} comment: {}", request.getState(), request.getComment());
 	  
 	  // TODO: This should be a status based response (204) or we should give information about the maintenance state.
 	  BasicApiResponse cmdResponse = new BasicApiResponse();

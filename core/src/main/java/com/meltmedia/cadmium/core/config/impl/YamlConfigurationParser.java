@@ -159,7 +159,7 @@ public class YamlConfigurationParser implements ConfigurationParser {
           
           if(key != null) {
             constructor.addTypeDescription(new TypeDescription(configClass, "!" + key));
-            logger.debug("Adding configuration tag {} for class {}", "!"+key, configClass);
+            logger.trace("Adding configuration tag {} for class {}", "!"+key, configClass);
           }
         }
       }

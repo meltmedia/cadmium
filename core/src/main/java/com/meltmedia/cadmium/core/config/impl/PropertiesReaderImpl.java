@@ -73,7 +73,7 @@ public class PropertiesReaderImpl implements PropertiesReader {
     Reader reader = null;
     try{
 
-      log.info("configFile path: {}", file.getPath());
+      log.trace("configFile path: {}", file.getPath());
       reader = new FileReader(file);
       properties.load(reader); 
     }

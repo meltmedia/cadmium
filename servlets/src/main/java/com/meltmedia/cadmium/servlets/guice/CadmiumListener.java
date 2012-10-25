@@ -75,7 +75,6 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.grapher.GrapherModule;
 import com.google.inject.grapher.InjectorGrapher;
@@ -230,7 +229,6 @@ public class CadmiumListener extends GuiceServletContextListener {
     super.contextDestroyed(event);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     //Force the use of slf4j logger in all JBoss log uses in this wars context!!!

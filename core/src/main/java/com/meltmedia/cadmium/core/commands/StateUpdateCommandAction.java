@@ -101,6 +101,7 @@ public class StateUpdateCommandAction implements CommandAction<StateUpdateReques
 
   private void setHistoryDone(CommandContext<StateUpdateRequest> ctx) {
     StateUpdateRequest request = ctx.getMessage().getBody();
+    log.debug("Setting history entry {} as done.", request);
     if(!StringUtils.isEmptyOrNull(request.getUuid())) {
       historyManager.markHistoryEntryAsFinished(request.getUuid());
     }

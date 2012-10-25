@@ -108,12 +108,12 @@ public class ApiEndpointControllerService extends AuthorizationService {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-    log.debug("Sending jGroups message with operation {} and path {}", operation, path);
+    log.trace("Sending jGroups message with operation {} and path {}", operation, path);
     ApiEndpointAccessRequest messageBody = new ApiEndpointAccessRequest();
     messageBody.setEndpoint(path);
     messageBody.setOperation(operation);
     Message<ApiEndpointAccessRequest> msg = new Message<ApiEndpointAccessRequest>(ProtocolMessage.API_ENDPOINT_ACCESS, messageBody);
-    log.debug("Sending jgroups message: "+msg);
+    log.trace("Sending jgroups message: "+msg);
     sender.sendMessage(msg, null);
   }
   

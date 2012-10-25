@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
@@ -188,7 +187,7 @@ public class GitService
     }
     configProperties.setProperty("config.branch", cloned.getBranchName());
     configProperties.setProperty("config.git.ref.sha", cloned.getCurrentRevision());
-    configProperties.setProperty("config.repo", uri);
+    configProperties.setProperty("config.repo", cloned.getRemoteRepository());
     
     configManager.persistDefaultProperties();
 
@@ -245,7 +244,7 @@ public class GitService
     }
     configProperties.setProperty("branch", cloned.getBranchName());
     configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
-    configProperties.setProperty("repo", uri);
+    configProperties.setProperty("repo", cloned.getRemoteRepository());
     
     if(renderedContentDir != null) {
       String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
@@ -555,7 +554,7 @@ public class GitService
     Map<String, Ref> allRefs = git.getRepository().getTags();
     for(String key : allRefs.keySet()) {
       Ref ref = allRefs.get(key);
-      log.debug("Checking tag key{}, ref{}", key, ref.getName());
+      log.trace("Checking tag key{}, ref{}", key, ref.getName());
       if(key.equals(tagname) && ref.getName().equals("refs/tags/" + tagname)) {
         return true;
       }
@@ -568,9 +567,9 @@ public class GitService
   }
   
   public boolean isBranch(String branchname) throws Exception {
-    log.debug("Checking if {} is a branch on {}", branchname, getRemoteRepository());
+    log.trace("Checking if {} is a branch on {}", branchname, getRemoteRepository());
     for(Ref ref : git.branchList().setListMode(ListMode.ALL).call()){
-      log.debug("Checking {}, {}", ref.getName(), branchname);
+      log.trace("Checking {}, {}", ref.getName(), branchname);
       if(ref.getName().equals("refs/heads/"+branchname) || ref.getName().equals("refs/remotes/origin/"+branchname)) {
         return true;
       }
@@ -583,7 +582,7 @@ public class GitService
     if(ObjectId.isId(repository.getFullBranch()) && repository.getFullBranch().equals(repository.resolve("HEAD").getName())) {
       RevWalk revs = null;
       try {
-        log.debug("Trying to resolve tagname: {}", repository.getFullBranch());
+        log.trace("Trying to resolve tagname: {}", repository.getFullBranch());
         ObjectId tagRef = ObjectId.fromString(repository.getFullBranch());
         revs = new RevWalk(repository);
         RevCommit commit = revs.parseCommit(tagRef);
@@ -591,7 +590,7 @@ public class GitService
         for(String key : allTags.keySet()) {
           Ref ref = allTags.get(key);
           RevTag tag = revs.parseTag(ref.getObjectId());
-          log.debug("Checking ref {}, {}", commit.getName(), tag.getObject());
+          log.trace("Checking ref {}, {}", commit.getName(), tag.getObject());
           if(tag.getObject().equals(commit)) {
             return key;
           }

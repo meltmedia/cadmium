@@ -99,7 +99,7 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
 			uri = uri.substring(contextPath.length());
 		}
 		if( !on || (ignorePath != null && uri.startsWith(ignorePath)) ) {
-      logger.debug("Serving request server:{}, uri:{}", httpReq.getServerName(), uri);
+      logger.trace("Serving request server:{}, uri:{}", httpReq.getServerName(), uri);
 			chain.doFilter(httpReq, httpRes);
 			return;
 		}

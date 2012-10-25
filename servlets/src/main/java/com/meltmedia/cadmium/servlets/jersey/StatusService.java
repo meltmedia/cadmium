@@ -203,9 +203,9 @@ public class StatusService extends AuthorizationService {
 		if(FileSystemManager.canRead(sourceFile)) {
 		  source = FileSystemManager.getFileContents(sourceFile);
 		} else {
-		  logger.debug("No source file [{}]", sourceFile);
+		  logger.trace("No source file [{}]", sourceFile);
 		}
-    logger.debug("Source [{}] is from [{}]", source, sourceFile);
+    logger.trace("Source [{}] is from [{}]", source, sourceFile);
 		
 		
 		

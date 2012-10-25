@@ -68,7 +68,7 @@ public class YamlLenientConstructor extends Constructor {
   @Override
   protected Construct getConstructor(Node node) {
     Construct construct = super.getConstructor(node);
-    logger.debug("getting constructor for node {} Tag {} = {}", new Object[] {node, node.getTag(), construct});
+    logger.trace("getting constructor for node {} Tag {} = {}", new Object[] {node, node.getTag(), construct});
     if(construct instanceof ConstructYamlObject && !tagsDefined.contains(node.getTag())) {
       try {
         node.getTag().getClassName();
@@ -88,7 +88,7 @@ public class YamlLenientConstructor extends Constructor {
       }
     }
     
-    logger.debug("returning constructor for node {} type {} Tag {} = {}", new Object[] {node, node.getType(), node.getTag(), construct});
+    logger.trace("returning constructor for node {} type {} Tag {} = {}", new Object[] {node, node.getType(), node.getTag(), construct});
     return construct;
   }
 

@@ -17,6 +17,8 @@ package com.meltmedia.cadmium.core.history;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class HistoryEntry {
   public static enum EntryType { CONTENT, CONFIG, MAINT }
   
@@ -169,5 +171,10 @@ public class HistoryEntry {
 
   public void setType(EntryType type) {
     this.type = type;
+  }
+
+  @Override
+  public String toString() {
+    return ToStringBuilder.reflectionToString(this);
   }
 }

@@ -100,16 +100,16 @@ public class MimeTypeConfigProcessor implements ConfigProcessor {
     // Synchronized to make sure that the logs happen in the correct order.
     // TODO: Find and fix whatever is causing multiple Update actions to occur.
     synchronized(stagedMimeTypes) {
-      log.info("Promoting {} staged mime types, replacing {} old live mime types", stagedMimeTypes.size(), mimeTypes.size());
+      log.debug("Promoting {} staged mime types, replacing {} old live mime types", stagedMimeTypes.size(), mimeTypes.size());
       this.mimeTypes = this.stagedMimeTypes;
-      log.debug("Now serving {} live mime types", mimeTypes.size());
+      log.trace("Now serving {} live mime types", mimeTypes.size());
     }
   }
   
   public String getContentType(String filename) {
     String[] parts = filename.split("\\.");
     String mimeType = mimeTypes.get(parts[parts.length-1]);
-    log.debug("Resolving mimetype for {} with extension {} to {}", new String[] {filename, parts[parts.length-1], mimeType});
+    log.trace("Resolving mimetype for {} with extension {} to {}", new String[] {filename, parts[parts.length-1], mimeType});
     return mimeType;
   }
 

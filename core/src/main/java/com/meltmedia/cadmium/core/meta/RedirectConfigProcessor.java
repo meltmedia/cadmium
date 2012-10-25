@@ -71,7 +71,7 @@ public class RedirectConfigProcessor implements ConfigProcessor {
   @Override
   public void makeLive() {
     synchronized(stagedRedirects) {
-      log.info("Promoting {} staged redirects, replacing {} old live redirects", stagedRedirects.size(), liveRedirects.size());
+      log.debug("Promoting {} staged redirects, replacing {} old live redirects", stagedRedirects.size(), liveRedirects.size());
       liveRedirects.clear();
       liveRedirects.addAll(stagedRedirects);
     }
@@ -79,7 +79,7 @@ public class RedirectConfigProcessor implements ConfigProcessor {
   
   public Redirect requestMatches(String pathInfo, String queryString) {
     Redirect matched = null;
-    log.debug("Checking pathInfo {}, and queryString {}", pathInfo, queryString);
+    log.trace("Checking pathInfo {}, and queryString {}", pathInfo, queryString);
     if(liveRedirects != null && !liveRedirects.isEmpty()) {
       if(queryString != null && queryString.length() > 0) {
         for(Redirect redir : liveRedirects) {

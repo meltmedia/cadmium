@@ -54,7 +54,7 @@ public class RedirectFilter implements Filter {
       HttpServletResponse response = (HttpServletResponse)resp;
       String path = request.getRequestURI();
       String queryString = request.getQueryString();
-      log.debug("Checking for existing redirect [{}?{}]", path, queryString);
+      log.trace("Checking for existing redirect [{}?{}]", path, queryString);
       Redirect redir = redirect.requestMatches(path, queryString);
       if(redir != null) {
         String redirectTo = redir.getUrlSubstituted();
@@ -63,7 +63,7 @@ public class RedirectFilter implements Filter {
         return;
       }
     } else {
-      log.info("Redirect and/or req and resp are not http");
+      log.trace("Redirect and/or req and resp are not http");
     }
     chain.doFilter(req, resp);
   }

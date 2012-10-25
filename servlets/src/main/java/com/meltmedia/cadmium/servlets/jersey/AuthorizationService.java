@@ -38,7 +38,7 @@ public class AuthorizationService {
     if(authString.toLowerCase().startsWith("token ")){
       authString = authString.substring(6).trim();
     }
-    log.info("Authenticating request through github api with token [{}]", authString);
+    log.trace("Authenticating request through github api with token [{}]", authString);
     
     Properties systemProperties = configManager.getSystemProperties();
     
@@ -50,7 +50,7 @@ public class AuthorizationService {
       String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties");
       Properties teamsProps = configManager.getProperties(new File(teamsFile));
       
-      log.info("teamsProps: {}", teamsProps);
+      log.trace("teamsProps: {}", teamsProps);
            
       String defaultId = teamsProps.getProperty("default");
       String teamIdString = teamsProps.getProperty(env);

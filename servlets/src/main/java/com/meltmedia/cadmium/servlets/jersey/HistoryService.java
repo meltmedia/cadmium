@@ -71,10 +71,10 @@ public class HistoryService extends AuthorizationService {
     }
     ChannelMember coordinator = membershipTracker.getCoordinator();
     if(coordinator.isMine()) {
-      log.info("Responding with my own history");
+      log.debug("Responding with my own history");
       return historyManager.getHistory(limit, filter);
     } else {
-      log.info("Getting coordinators history");
+      log.debug("Getting coordinators history");
       response.reset(coordinator);
       HistoryRequest request = new HistoryRequest();
       request.setLimit(limit);

@@ -70,7 +70,7 @@ public class DelayedGitServiceInitializer implements Closeable {
    * @throws Exception Thrown if the current thread has been interrupted while waiting for the GitService to initialize.
    */
   public GitService getGitService() throws Exception {
-    logger.debug("Getting git service.");
+    logger.trace("Getting git service.");
     latch.await();
     readLock.lock();
     return git;
@@ -87,7 +87,7 @@ public class DelayedGitServiceInitializer implements Closeable {
     if(git == null) {
       throw new IllegalStateException("The git service is not yet initialized.");
     }
-    logger.debug("Getting git service.");
+    logger.trace("Getting git service.");
     readLock.lock();
     return git;
   }
@@ -170,12 +170,12 @@ public class DelayedGitServiceInitializer implements Closeable {
     try {
       latch.notifyAll();
     } catch(Exception e) {
-      logger.debug("Failed to notifyAll");
+      logger.trace("Failed to notifyAll");
     }
     try {
       locker.notifyAll();
     } catch(Exception e) {
-      logger.debug("Failed to notifyAll");
+      logger.trace("Failed to notifyAll");
     }
   }
   

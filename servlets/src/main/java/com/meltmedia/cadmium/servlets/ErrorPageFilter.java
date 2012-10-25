@@ -131,7 +131,7 @@ public class ErrorPageFilter implements Filter {
         uri = uri.substring(contextPath.length());
       }
       if( uri.startsWith(ignorePath) ) {
-        log.debug("Not handling errors for request server:{}, uri:{}", httpReq.getServerName(), uri);
+        log.trace("Not handling errors for request server:{}, uri:{}", httpReq.getServerName(), uri);
         chain.doFilter(req, res);
         return;
       }
@@ -153,7 +153,7 @@ public class ErrorPageFilter implements Filter {
       chain.doFilter(httpReq, wrappedRes);
     }
     catch( Throwable e ) {
-      log.debug("Handling thrown Exception", e);
+      log.trace("Handling thrown Exception", e);
       sendError(500, null, httpReq, httpRes);
     }
   }

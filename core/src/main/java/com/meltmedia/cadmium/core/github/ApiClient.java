@@ -92,7 +92,7 @@ public class ApiClient {
         body.scopes = scopes.toArray(new String[] {});
       }
       String bodySt = new Gson().toJson(body, AuthBody.class);
-      log.debug("Loggin in with post body [{}]", bodySt);
+      log.trace("Loggin in with post body [{}]", bodySt);
       StringEntity postEntity = new StringEntity(bodySt);
       post.setEntity(postEntity);
       
@@ -236,7 +236,11 @@ public class ApiClient {
       RateLimitResponse responseObj = new Gson().fromJson(responseString, new TypeToken<RateLimitResponse>() {}.getType());
       if(responseObj.rate != null) {
         if(responseObj.rate.remaining != null) { 
-          log.info("The remaining rate limit is {}", responseObj.rate.remaining);
+          if(responseObj.rate.remaining < 100) {
+            log.warn("The remaining rate limit is {}", responseObj.rate.remaining);
+          } else {
+            log.trace("The remaining rate limit is {}", responseObj.rate.remaining);
+          }
           return responseObj.rate.remaining;
         }
       }
@@ -258,7 +262,7 @@ public class ApiClient {
     commentBody.body = comment;
     
     String commentJsonString = new Gson().toJson(commentBody, Comment.class);
-    log.info("Setting a new comment [{}]", commentJsonString);
+    log.trace("Setting a new comment [{}]", commentJsonString);
     post.setEntity(new StringEntity(commentJsonString));
     
     HttpResponse response = client.execute(post);

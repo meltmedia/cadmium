@@ -59,15 +59,15 @@ public class Redirect implements Cloneable {
     try {
       pathPattern = null;
       pathPattern = Pattern.compile(path);
-      log.debug("Parsed as pattern {}", path);
+      log.trace("Parsed as pattern {}", path);
     } catch(Throwable t) {
-      log.debug("This is not a REGEX pattern", t);
+      log.trace("This is not a REGEX pattern", t);
     }
   }
   
   public boolean matches(String pathInfo) {
     if(pathPattern != null) {
-      log.debug("Using pattern to match {}", pathPattern.pattern());
+      log.trace("Using pattern to match {}", pathPattern.pattern());
       matcher = pathPattern.matcher(pathInfo);
       boolean matched = matcher.matches();
       if(!matched) {
@@ -75,7 +75,7 @@ public class Redirect implements Cloneable {
       }
       return matched;
     } else if(pathInfo.equals(path)){
-      log.debug("Path equals pathinfo {}", pathInfo);
+      log.trace("Path equals pathinfo {}", pathInfo);
       return true;
     }
     return false;

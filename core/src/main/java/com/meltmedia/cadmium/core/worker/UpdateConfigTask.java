@@ -92,6 +92,7 @@ public abstract class UpdateConfigTask implements Callable<Boolean> {
         
         // NOTE: It is hard to tell if this condition will happen.  Just being defensive.
         if( body.getContentLocation() == null ) body.setContentLocation(new GitLocation());
+        body.getContentLocation().setRepository(service.getRemoteRepository());
         body.getContentLocation().setBranch(service.getBranchName());
         body.getContentLocation().setRevision(service.getCurrentRevision());
         
