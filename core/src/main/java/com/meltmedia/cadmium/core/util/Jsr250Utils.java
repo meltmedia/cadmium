@@ -45,6 +45,7 @@ import com.google.inject.spi.UntargettedBinding;
  * Utilities to facilitate the @PostConstruct and @PreDestroy annotations from jsr250.
  * 
  * @author John McEntire
+ * @author Christian Trimble
  *
  */
 public final class Jsr250Utils {
@@ -91,9 +92,6 @@ public final class Jsr250Utils {
   
   /**
    * Calls preDestroy with the same arguments, logging any exceptions that are thrown at the level warn.
-   * 
-   * @param obj
-   * @param log
    */
   public static void preDestroyQuietly(Object obj, Logger log) {
     try {
@@ -230,6 +228,14 @@ public final class Jsr250Utils {
     return annotatedMethods;
   }
   
+  /**
+   * Creates a Jsr250Executor for the specified scopes.
+   * 
+   * @param injector
+   * @param log
+   * @param scopes
+   * @return
+   */
   public static Jsr250Executor createJsr250Executor(Injector injector, final Logger log, Scope... scopes ) {
     final Set<Object> instances = findInstancesInScopes(injector, scopes);
     final List<Object> reverseInstances = new ArrayList<Object>(instances);
