@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -130,11 +131,57 @@ public final class Jsr250Utils {
       Logger log) {
     List<Method> methodsToRun = new ArrayList<Method>();
     while(clazz != null) {
-      methodsToRun.addAll(getMethodsWithAnnotation(clazz, annotation, log));
+      List<Method> newMethods = getMethodsWithAnnotation(clazz, annotation, log);
+      for(Method newMethod : newMethods) {
+        if(containsMethod(newMethod, methodsToRun)) {
+          removeMethodByName(newMethod, methodsToRun);
+        } else {
+          methodsToRun.add(newMethod);
+        }
+      }
       clazz = clazz.getSuperclass();
       log.debug("Moving up to superclass {}", clazz);
     }
     return methodsToRun;
+  }
+  
+  /**
+   * Checks if the passed in method already exists in the list of methods. Checks for equality by the name of the method.
+   * @param method
+   * @param methods
+   * @return
+   */
+  private static boolean containsMethod(Method method, List<Method> methods) {
+    if(methods != null) {
+      for(Method aMethod : methods){
+        if(method.getName().equals(aMethod.getName())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
+  /**
+   * Removes a method from the given list and adds it to the end of the list.
+   * @param method
+   * @param methods
+   */
+  private static void removeMethodByName(Method method, List<Method> methods) {
+    if(methods != null) {
+      Iterator<Method> itr = methods.iterator();
+      Method aMethod = null;
+      while(itr.hasNext()) {
+        aMethod = itr.next();
+        if(aMethod.getName().equals(method.getName())) {
+          itr.remove();
+          break;
+        }
+      }
+      if(aMethod != null) {
+        methods.add(aMethod);
+      }
+    }
   }
   
   /**
@@ -151,15 +198,17 @@ public final class Jsr250Utils {
     Method classMethods[] = clazz.getDeclaredMethods();
     for(Method classMethod : classMethods) {
       if(classMethod.isAnnotationPresent(annotation) && classMethod.getParameterTypes().length == 0) {
-        log.debug("Adding method {}", classMethod);
-        annotatedMethods.add(classMethod);
+        if(!containsMethod(classMethod, annotatedMethods)) {
+          log.debug("Adding method {}", classMethod.getName());
+          annotatedMethods.add(classMethod);
+        }
       }
     }
     Collections.sort(annotatedMethods, new Comparator<Method> () {
 
       @Override
       public int compare(Method method1, Method method2) {
-        return method1.toString().compareTo(method2.toString());
+        return method1.getName().compareTo(method2.getName());
       }
     });
     return annotatedMethods;

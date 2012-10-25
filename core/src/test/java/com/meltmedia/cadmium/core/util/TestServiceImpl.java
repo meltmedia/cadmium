@@ -16,4 +16,16 @@ public class TestServiceImpl extends AbstractTestService {
   void destroying() {
   }
 
+  @Override
+  @PostConstruct
+  public void doConstruct() {
+    super.doConstruct();
+  }
+
+  @Override
+  @PreDestroy
+  public void doDestroy() {
+    super.doDestroy();
+  }
+
 }
