@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -190,10 +192,10 @@ public class GitService
     
     configManager.persistDefaultProperties();
 
-    boolean closeHistoryManager = false;
+    ExecutorService pool = null;
     if(historyManager == null) {
-      closeHistoryManager = true;
-      historyManager = new HistoryManager(warDir);
+      pool = Executors.newSingleThreadExecutor();
+      historyManager = new HistoryManager(warDir, pool);
     }
     
     try{
@@ -208,8 +210,8 @@ public class GitService
             true);
       }
     } finally {
-      if(closeHistoryManager) {
-        IOUtils.closeQuietly(historyManager);
+      if(pool != null) {
+        pool.shutdownNow();
       }
     }
     
@@ -262,10 +264,10 @@ public class GitService
     
     configManager.persistDefaultProperties();
 
-    boolean closeHistoryManager = false;
+    ExecutorService pool = null;
     if(historyManager == null) {
-      closeHistoryManager = true;
-      historyManager = new HistoryManager(warDir);
+      pool = Executors.newSingleThreadExecutor();
+      historyManager = new HistoryManager(warDir, pool);
     }
     
     try{
@@ -280,8 +282,8 @@ public class GitService
             true);
       }
     } finally {
-      if(closeHistoryManager) {
-        IOUtils.closeQuietly(historyManager);
+      if(pool != null) {
+        pool.shutdownNow();
       }
     }
     

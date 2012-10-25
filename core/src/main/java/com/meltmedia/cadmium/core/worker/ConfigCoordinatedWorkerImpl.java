@@ -158,7 +158,7 @@ public class ConfigCoordinatedWorkerImpl implements CoordinatedWorker<ContentUpd
   @Override
   public void workDone(ContentUpdateRequest message) {
     log.info("Config update work is done");
-    lifecycleService.updateMyConfigState(UpdateState.WAITING, null, false);
+    lifecycleService.updateMyConfigState(UpdateState.WAITING, message.getUuid(), false);
     Message<ContentUpdateRequest> doneMessage = new Message<ContentUpdateRequest>(ProtocolMessage.CONFIG_UPDATE_DONE, message);
     try { 
       sender.sendMessage(doneMessage, null);

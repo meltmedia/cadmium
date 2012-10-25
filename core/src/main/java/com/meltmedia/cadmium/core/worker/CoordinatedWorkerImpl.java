@@ -171,7 +171,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker<ContentUpdateReq
   @Override
   public void workDone(ContentUpdateRequest body) {
     log.info("Work is done");
-    lifecycleService.updateMyState(UpdateState.WAITING, null, false);
+    lifecycleService.updateMyState(UpdateState.WAITING, body.getUuid(), false);
     Message<ContentUpdateRequest> doneMessage = new Message<ContentUpdateRequest>(ProtocolMessage.UPDATE_DONE, body);
     try { 
       sender.sendMessage(doneMessage, null);
