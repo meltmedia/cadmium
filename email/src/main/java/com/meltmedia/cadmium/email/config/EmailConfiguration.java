@@ -20,33 +20,43 @@ import com.meltmedia.cadmium.core.config.CadmiumConfig;
 @CadmiumConfig(EmailConfiguration.KEY)
 public class EmailConfiguration {
   public static final String KEY = "Email";
+  private String defaultFromAddress;
   private String jndiName;
-  private String sessionStrategy;
   private String messageTransformer;
+  private String sessionStrategy;
   
-  public EmailConfiguration(){}
 
-  public String getJndiName() {
+	public EmailConfiguration(){}
+	
+	public String getDefaultFromAddress() {
+		return defaultFromAddress;
+	}
+	
+	public String getJndiName() {
     return jndiName;
-  }
-
-  public void setJndiName(String jndiName) {
-    this.jndiName = jndiName;
-  }
-
-  public String getSessionStrategy() {
-    return sessionStrategy;
-  }
-
-  public void setSessionStrategy(String sessionStrategy) {
-    this.sessionStrategy = sessionStrategy;
   }
 
   public String getMessageTransformer() {
     return messageTransformer;
   }
 
+  public String getSessionStrategy() {
+    return sessionStrategy;
+  }
+
+  public void setDefaultFromAddress(String defaultFromAddress) {
+		this.defaultFromAddress = defaultFromAddress;
+	}
+
+  public void setJndiName(String jndiName) {
+    this.jndiName = jndiName;
+  }
+
   public void setMessageTransformer(String messageTransformer) {
     this.messageTransformer = messageTransformer;
+  }
+
+  public void setSessionStrategy(String sessionStrategy) {
+    this.sessionStrategy = sessionStrategy;
   }
 }

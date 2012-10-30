@@ -251,4 +251,8 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
     
     configurationUpdated(defaultConfiguration);
   }
+  
+  public String getFromAddress(String fromAddress) {
+  	return StringUtils.isEmptyOrNull(fromAddress) ? config.getDefaultFromAddress() : fromAddress;
+  }
 }

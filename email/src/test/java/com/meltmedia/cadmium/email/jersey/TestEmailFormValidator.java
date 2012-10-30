@@ -15,46 +15,60 @@
  */
 package com.meltmedia.cadmium.email.jersey;
 
+import java.util.HashSet;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.junit.Assert;
+import static org.mockito.Mockito.*;
 import org.junit.Test;
 
-import com.meltmedia.cadmium.email.model.EmailForm;
+import com.meltmedia.cadmium.core.ContentService;
+import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;
+import com.meltmedia.cadmium.email.config.EmailComponentConfiguration.Field;
 
 public class TestEmailFormValidator  extends EmailFormValidator {
-
+	
+	
+	
 	@Test
 	public void testEmailForm() {
-		EmailForm emailForm = new EmailForm();
-		emailForm.setFromAddress("test.haha@domain.com");
-		emailForm.setFromName("From");
-		emailForm.setMessage("Message");
-		emailForm.setPagePath("hcp/index.html");
-		emailForm.setToAddress("toAddress@domain.com");
-		emailForm.setToName("To");
-		emailForm.setSubject("subject");
+		ContentService service = mock(ContentService.class);
+		when(service.getContentRoot()).thenReturn("target/classes");
+		HttpServletRequest request = mock(HttpServletRequest.class);
+		when(request.getParameter("path")).thenReturn("index.html");
+		EmailComponentConfiguration emailConfig = new EmailComponentConfiguration();
+		emailConfig.setFromAddress("test.haha@domain.com");
+		emailConfig.setFromName("From");
+		emailConfig.setToAddress("toAddress@domain.com");
+		emailConfig.setToName("To");
+		emailConfig.setSubject("subject");
+		emailConfig.setFields(new HashSet<Field>());
 		
 		// Positive Test
 		try {
-			validate(emailForm);
+			validate(request,emailConfig,service);
 		} catch (ValidationException e) {
 			
 		}
 		
 		// Negative Tests
-		emailForm.setFromAddress("Invalid Address");
+		emailConfig.setFromAddress("Invalid Address");
 		try {
-			validate(emailForm);
+			validate(request,emailConfig,service);
 		} catch (ValidationException e) {
 			Assert.assertEquals("Expected Fail", 1, e.getErrors().length);
-			Assert.assertEquals("Message check", "Please Use a Valid From Email Address.", e.getErrors()[0].getMessage());
+			Assert.assertEquals("Message check", "fromAddress is an invalid email address.", e.getErrors()[0].getMessage());
 		}
-		emailForm.setToName("");
+		emailConfig.setToName("");
 		try {
-			validate(emailForm);
+			validate(request,emailConfig,service);
 		} catch (ValidationException e) {
 			Assert.assertEquals("Expected Fail", 2, e.getErrors().length);
 		}
 	
 	}
+	
+	
 	
 }
