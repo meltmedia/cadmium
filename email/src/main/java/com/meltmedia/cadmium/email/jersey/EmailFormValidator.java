@@ -24,6 +24,7 @@ import javassist.expr.NewArray;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -37,12 +38,12 @@ public class EmailFormValidator {
 	private static final String emailExpression = "^.+?@.+?[\\.]{1}.+?$";
   static Pattern pattern = Pattern.compile(emailExpression,Pattern.CASE_INSENSITIVE);
    
-  public static void validate(HttpServletRequest request, EmailComponentConfiguration config, ContentService contentService) throws ValidationException {
+  public static void validate(MultivaluedMap<String, String> formData, EmailComponentConfiguration config, ContentService contentService) throws ValidationException {
   	
   	List<ValidationError> errors = new ArrayList<ValidationError>();
   	
   	// Validate FromAddress
-  	String fromAddress = getRequiredFielValue(request,config.getFromAddress(),Constants.FROM_ADDRESS);
+  	String fromAddress = getRequiredFieldValue(formData,config.getFromAddress(),Constants.FROM_ADDRESS);
   	if(StringUtils.isBlank(fromAddress)) {
   		errors.add(new ValidationError(Constants.FROM_ADDRESS, Constants.FROM_ADDRESS + " is required."));
   	} else if(!isValidEmailAddress(fromAddress)) {
@@ -50,12 +51,12 @@ public class EmailFormValidator {
   	}
   	
   	// Validate From Name
-    if(StringUtils.isBlank(getRequiredFielValue(request, config.getFromName(), Constants.FROM_NAME))) {
+    if(StringUtils.isBlank(getRequiredFieldValue(formData, config.getFromName(), Constants.FROM_NAME))) {
   		errors.add(new ValidationError(Constants.FROM_NAME, Constants.FROM_NAME + " is required."));
   	}
     
     // Validate ToAddress
-    String toAddress = getRequiredFielValue(request, config.getToAddress(), Constants.TO_ADDRESS);
+    String toAddress = getRequiredFieldValue(formData, config.getToAddress(), Constants.TO_ADDRESS);
     if(StringUtils.isBlank(toAddress)) {
   		errors.add(new ValidationError(Constants.TO_ADDRESS, Constants.TO_ADDRESS + " is required."));
   	} else if(!isValidEmailAddress(toAddress)) {
@@ -63,16 +64,16 @@ public class EmailFormValidator {
   	}
     
     //  Validate To Name
-  	if(StringUtils.isBlank(getRequiredFielValue(request, config.getToName(), Constants.TO_NAME))) {
+  	if(StringUtils.isBlank(getRequiredFieldValue(formData, config.getToName(), Constants.TO_NAME))) {
   		errors.add(new ValidationError(Constants.TO_NAME, Constants.TO_NAME + " is required."));
   	}
   	
   	// Validate Subject
-  	if(StringUtils.isBlank(getRequiredFielValue(request, config.getSubject(), Constants.SUBJECT))) {
+  	if(StringUtils.isBlank(getRequiredFieldValue(formData, config.getSubject(), Constants.SUBJECT))) {
   		errors.add(new ValidationError(Constants.SUBJECT, Constants.SUBJECT + " is required."));
   	}
   	for(Field field : config.getFields()) {
-  		checkValidField(field, request, contentService, errors);
+  		checkValidField(field, formData, contentService, errors);
   	}
   	
 	  if (errors.size() > 0) {
@@ -81,8 +82,8 @@ public class EmailFormValidator {
   	
   }
   
-  protected static void checkValidField(Field field, HttpServletRequest request, ContentService contentService, List<ValidationError> errors) {
-  	String value = field.getRawValue(request);
+  protected static void checkValidField(Field field, MultivaluedMap<String, String> formData, ContentService contentService, List<ValidationError> errors) {
+  	String value = field.getRawValue(formData);
   	if(field.required && StringUtils.isBlank(value)) {
   		errors.add(new ValidationError(field.name, field.validationMessage));
   	}
@@ -113,11 +114,12 @@ public class EmailFormValidator {
 		return pagePathFile.exists();
 	}
 	
-	protected static String getRequiredFielValue(HttpServletRequest request, String defaultString, String requestKey) {
+	protected static String getRequiredFieldValue(MultivaluedMap<String, String> formData, String defaultString, String requestKey) {
+		
 		if(StringUtils.isNotBlank(defaultString)) {
 			return defaultString.trim();
-		} else if(StringUtils.isNotBlank(request.getParameter(requestKey))) {
-			return request.getParameter(requestKey);
+		} else if(formData.get(requestKey) != null && StringUtils.isNotBlank((String)formData.get(requestKey).get(0))) {
+			return formData.get(requestKey).get(0);
 		}		
 		return "";
 	}

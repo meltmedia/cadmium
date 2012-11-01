@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.email.config;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedMap;
 
 public class EmailComponentConfiguration {
 	
@@ -68,16 +69,20 @@ public class EmailComponentConfiguration {
 		public boolean email;
 		public boolean page;
 		
-		public String getValue(HttpServletRequest request) {
+		public String getValue(HttpServletRequest request, MultivaluedMap<String, String> formData) {
 			if(page) {
-				return "http://" + request.getServerName() + "/"  + getRawValue(request);
+				return "http://" + request.getServerName() + "/"  + getRawValue(formData);
 			} else {
-				return getRawValue(request);
+				return getRawValue(formData);
 			}
 		}
 		
-		public String getRawValue(HttpServletRequest request) {
-			return request.getParameter(name);
+		public String getRawValue(MultivaluedMap<String, String> formData) {
+			if(formData.get(name) != null) {
+			  return formData.get(name).get(0);
+			} else {
+				return "";
+			}
 		}
 	}
 }

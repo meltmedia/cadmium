@@ -15,9 +15,10 @@
  */
 package com.meltmedia.cadmium.email.jersey;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedMap;
 
 import org.junit.Assert;
 import static org.mockito.Mockito.*;
@@ -35,8 +36,10 @@ public class TestEmailFormValidator  extends EmailFormValidator {
 	public void testEmailForm() {
 		ContentService service = mock(ContentService.class);
 		when(service.getContentRoot()).thenReturn("target/classes");
-		HttpServletRequest request = mock(HttpServletRequest.class);
-		when(request.getParameter("path")).thenReturn("index.html");
+		@SuppressWarnings("unchecked")
+		MultivaluedMap<String, String> request = mock(MultivaluedMap.class);
+		when(request.get("path")).thenReturn(Arrays.asList("index.html"));
+		System.out.println(request.get("path").get(0));
 		EmailComponentConfiguration emailConfig = new EmailComponentConfiguration();
 		emailConfig.setFromAddress("test.haha@domain.com");
 		emailConfig.setFromName("From");
@@ -67,6 +70,29 @@ public class TestEmailFormValidator  extends EmailFormValidator {
 			Assert.assertEquals("Expected Fail", 2, e.getErrors().length);
 		}
 	
+	}
+	
+	@Test
+	public void testWithoutConfigValues() {
+		ContentService service = mock(ContentService.class);
+		when(service.getContentRoot()).thenReturn("target/classes");
+		@SuppressWarnings("unchecked")
+		MultivaluedMap<String, String> request = mock(MultivaluedMap.class);
+		EmailComponentConfiguration emailConfig = new EmailComponentConfiguration();
+		emailConfig.setFields(new HashSet<Field>());
+		when(request.get("dir")).thenReturn(Arrays.asList("email"));
+		when(request.get("toName")).thenReturn(Arrays.asList("chris"));
+		when(request.get("toAddress")).thenReturn(Arrays.asList("test.test@domain.com"));
+		when(request.get("fromName")).thenReturn(Arrays.asList("Bob"));
+		when(request.get("fromAddress")).thenReturn(Arrays.asList("test.test@domain.com"));
+		
+	// Positive Test
+			try {
+				validate(request,emailConfig,service);
+			} catch (ValidationException e) {
+				
+			}
+		
 	}
 	
 	

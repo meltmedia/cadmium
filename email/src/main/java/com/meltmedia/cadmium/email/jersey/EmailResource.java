@@ -21,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Enumeration;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.FileUtils;
@@ -65,84 +67,86 @@ public class EmailResource {
 	}
 
  	
+
 	@POST
-  @Consumes("application/x-www-form-urlencoded")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   @Produces(MediaType.APPLICATION_JSON)
 	public Response emailThisPage(@Context HttpServletRequest request,
-			                          @FormParam(Constants.DIR) String dir) {
+			                          @FormParam(Constants.DIR) String dir, MultivaluedMap<String, String> formData) {
 
   	log.info("Entering Email This Method");
   	VelocityHtmlTextEmail email = new VelocityHtmlTextEmail();
-  	  	
+  	Yaml yamlParser;
   	// Setting up template location/files
-  	File absoluteTemplateDir = new File(contentService.getContentRoot(),"META-INF");
-  	absoluteTemplateDir = new File(absoluteTemplateDir,dir);
-	  File textTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".txt");
-	  log.info("textTemplateFile: {}", textTemplateFile.getPath());
-  	File htmlTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".html");
-  	log.info("htmlTemplateFile: {}", htmlTemplateFile.getPath());
-  	File componentConfig = new File(absoluteTemplateDir,Constants.CONFIG_NAME);
+  	if (dir != null){
+  	  File absoluteTemplateDir = new File(contentService.getContentRoot(),"META-INF");
+	  	absoluteTemplateDir = new File(absoluteTemplateDir,dir);
+		  File textTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".txt");
+		  log.info("textTemplateFile: {}", textTemplateFile.getPath());
+	  	File htmlTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".html");
+	  	log.info("htmlTemplateFile: {}", htmlTemplateFile.getPath());
+	  	File componentConfig = new File(absoluteTemplateDir,Constants.CONFIG_NAME);
   	
   	
-  	if (textTemplateFile.exists() && htmlTemplateFile.exists()  && componentConfig.exists()) {
-  		//parse config
-  		Yaml yamlParser = new Yaml();
-  		
-
-	  	try { 
-	  		EmailComponentConfiguration config = yamlParser.loadAs(FileUtils.readFileToString(componentConfig), EmailComponentConfiguration.class);
-				EmailFormValidator.validate(request,config,contentService);
-		  	
-				email.addTo(getFieldValueWithOverride("toAddress", config.getToAddress(), request));
-		  	email.setFrom(emailService.getFromAddress(config.getFromAddress())); 
-		  	email.setSubject(getFieldValueWithOverride("subject", config.getSubject(), request));
-		  	// Set HTML Template
-		  	email.setHtml(readFromFile(htmlTemplateFile.getAbsolutePath()));
-		  	
-		  	// Set Text Template
-		  	email.setText(readFromFile(textTemplateFile.getAbsolutePath()));
-		  	
-		  	// Populate template properties
-		  	for(Field field : config.getFields()) {
-		  		if("replyTo".equals(field.name)) {
-		  			String value = field.getValue(request);
-		  			if(!StringUtils.isEmptyOrNull(value)) {
-		  				email.setReplyTo(value);
-		  			}
-		  		} else {
-		  			email.setProperty(field.name, field.getValue(request));
-		  		}
-		  	}
-		  	
-		  	// Set Properties
-		  	String toName = getFieldValueWithOverride("toName", config.getToName(), request);
-		  	String fromName = getFieldValueWithOverride("fromName", config.getFromName(), request);
-		  	if(toName != null) {
-		  		email.setProperty(Constants.TO_NAME, toName);
-		  	}
-		  	if(fromName != null) {
-		  		email.setProperty(Constants.FROM_NAME, fromName);
-		  	}
-							  	
-		  	// Send Email
-		  	log.debug("Before Sending Email");  		
-		  	emailService.send(email);
-		  	log.debug("After Sending Email");
-			} catch (EmailException e) {
-				log.info("EmailException Caught " + e.getMessage(), e);
-				return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-			} catch (ValidationException e) {
-				log.info("ValidationException Caught");
-				log.info("First Error {}",e.getErrors()[0].getMessage());
-				return Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
-			} catch (IOException e) {
-				return Response.status(Response.Status.BAD_REQUEST).entity("Unable to load Configuration").build();
-			} 	
-			return Response.ok().build();
-  	} else {
-  		log.info("Couldn't Find Email Templates");
-  		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Template Location").build();		  		
-  	}
+	  	if (textTemplateFile.exists() && htmlTemplateFile.exists()  && componentConfig.exists()) {
+	  		yamlParser = new Yaml();
+	  		
+		  	try { 
+		  		EmailComponentConfiguration config = yamlParser.loadAs(FileUtils.readFileToString(componentConfig), EmailComponentConfiguration.class);
+					EmailFormValidator.validate(formData,config,contentService);
+			  	
+					email.addTo(getFieldValueWithOverride("toAddress", config.getToAddress(), formData));
+			  	email.setFrom(emailService.getFromAddress(config.getFromAddress())); 
+			  	email.setSubject(getFieldValueWithOverride("subject", config.getSubject(), formData));
+			  	// Set HTML Template
+			  	email.setHtml(readFromFile(htmlTemplateFile.getAbsolutePath()));
+			  	
+			  	// Set Text Template
+			  	email.setText(readFromFile(textTemplateFile.getAbsolutePath()));
+			  	
+			  	// Populate template properties
+			  	for(Field field : config.getFields()) {
+			  		if("replyTo".equals(field.name)) {
+			  			String value = field.getValue(request,formData);
+			  			if(!StringUtils.isEmptyOrNull(value)) {
+			  				email.setReplyTo(value);
+			  			}
+			  		} else {
+			  			email.setProperty(field.name, field.getValue(request,formData));
+			  		}
+			  	}
+			  	
+			  	// Set Properties
+			  	String toName = getFieldValueWithOverride("toName", config.getToName(), formData);
+			  	String fromName = getFieldValueWithOverride("fromName", config.getFromName(), formData);
+			  	if(toName != null) {
+			  		email.setProperty(Constants.TO_NAME, toName);
+			  	}
+			  	if(fromName != null) {
+			  		email.setProperty(Constants.FROM_NAME, fromName);
+			  	}
+								  	
+			  	// Send Email
+			  	log.debug("Before Sending Email");  		
+			  	emailService.send(email);
+			  	log.debug("After Sending Email");
+				} catch (EmailException e) {
+					log.info("EmailException Caught " + e.getMessage(), e);
+					return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+				} catch (ValidationException e) {
+					log.info("ValidationException Caught");
+					log.info("First Error {}",e.getErrors()[0].getMessage());
+					return Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
+				} catch (IOException e) {
+					return Response.status(Response.Status.BAD_REQUEST).entity("Unable to load Configuration").build();
+				} 	
+				return Response.ok().build();
+	  	} else {
+	  		log.info("Couldn't Find Email Templates");
+	  		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Template Location").build();		  		
+	  	}
+  	} else
+  		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Template Location").build();
 	}
 
 	/*
@@ -174,8 +178,8 @@ public class EmailResource {
     return content;
   }
   
-  private String getFieldValueWithOverride(String name, String overrideValue, HttpServletRequest request) {
-  	return StringUtils.isEmptyOrNull(overrideValue) ? request.getParameter(name) : overrideValue;
+  private String getFieldValueWithOverride(String name, String overrideValue, MultivaluedMap<String, String> formData) {
+  	return StringUtils.isEmptyOrNull(overrideValue) ? formData.get(name).get(0) : overrideValue;
   }
   
 }
