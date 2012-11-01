@@ -58,9 +58,6 @@ public class SchedulerTask {
   @Inject
   protected Injector injector;
   
-  @Inject
-  protected MembershipTracker membershipTracker;
-  
   private Runnable task = new RunnableTask();
   private Method method;
   private Class<?> type;
@@ -179,7 +176,7 @@ public class SchedulerTask {
 
     @Override
     public void run() {
-      if(!isCoordinatorOnly() || membershipTracker.getCoordinator().isMine()) {
+      if(!isCoordinatorOnly() || injector.getInstance(MembershipTracker.class).getCoordinator().isMine()) {
         try {
           Object args[] = resolveParameters();
           method.invoke(injector.getInstance(type), args);
