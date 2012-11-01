@@ -126,7 +126,6 @@ public class ArtifactResolver {
 
       LocalRepository localRepo = new LocalRepository( localRepository );
       session.setLocalRepositoryManager( system.newLocalRepositoryManager( localRepo ) );
-      session.setConfigProperty("aether.connector.ahc.provider", "apache");
 
       return session;
   }
