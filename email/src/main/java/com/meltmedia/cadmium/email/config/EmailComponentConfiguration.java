@@ -4,7 +4,27 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.MultivaluedMap;
-
+/**
+ * @author John mcEntire
+ * @author chaley
+ * 
+ * example of Config
+ * 
+ * subject: 'Thought you would like this.'
+ * fields:
+ *  - name              : toName
+ *  - name              : replyToAddress
+ *    validationMessage : 'Please enter a from address'
+ *    email             : True
+ *  - name              : fromName
+ *  - name              : message
+ *  - name              : path
+ *    validationMessage : 'Unable to find page'
+ *    required          : True
+ *    page              : True
+ * fromAddress: first.last@domain.com
+ *
+ */
 public class EmailComponentConfiguration {
 	
 	private Set<Field> fields;
