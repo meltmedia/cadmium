@@ -43,7 +43,6 @@ import org.yaml.snakeyaml.Yaml;
 
 import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 import com.meltmedia.cadmium.core.ContentService;
-import com.meltmedia.cadmium.email.model.EmailForm;
 import com.meltmedia.cadmium.email.EmailException;
 import com.meltmedia.cadmium.email.VelocityHtmlTextEmail;
 import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;

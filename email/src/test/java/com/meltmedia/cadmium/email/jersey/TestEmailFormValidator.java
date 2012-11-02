@@ -56,18 +56,11 @@ public class TestEmailFormValidator  extends EmailFormValidator {
 		}
 		
 		// Negative Tests
-		emailConfig.setFromAddress("Invalid Address");
-		try {
-			validate(request,emailConfig,service);
-		} catch (ValidationException e) {
-			Assert.assertEquals("Expected Fail", 1, e.getErrors().length);
-			Assert.assertEquals("Message check", "fromAddress is an invalid email address.", e.getErrors()[0].getMessage());
-		}
 		emailConfig.setToName("");
 		try {
 			validate(request,emailConfig,service);
 		} catch (ValidationException e) {
-			Assert.assertEquals("Expected Fail", 2, e.getErrors().length);
+			Assert.assertEquals("Expected Fail", 1, e.getErrors().length);
 		}
 	
 	}
