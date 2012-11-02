@@ -21,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Enumeration;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -31,16 +32,22 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
 
 import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.email.model.EmailForm;
 import com.meltmedia.cadmium.email.EmailException;
 import com.meltmedia.cadmium.email.VelocityHtmlTextEmail;
+import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;
+import com.meltmedia.cadmium.email.config.EmailComponentConfiguration.Field;
 import com.meltmedia.cadmium.email.internal.EmailServiceImpl;
 
 @CadmiumApiEndpoint
@@ -60,55 +67,64 @@ public class EmailResource {
 	}
 
  	
+
 	@POST
-  @Consumes("application/x-www-form-urlencoded")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   @Produces(MediaType.APPLICATION_JSON)
-	public Response emailThisPage(@Context HttpServletRequest request,@FormParam(Constants.DIR) String dir,@FormParam(Constants.TO_NAME) String toName,
-			                          @FormParam(Constants.TO_ADDRESS) String toAddress,@FormParam(Constants.FROM_NAME) String fromName,
-			                          @FormParam(Constants.FROM_ADDRESS) String fromAddress,@FormParam(Constants.MESSAGE) String message,
-			                          @FormParam(Constants.PAGE_PATH) String pagePath,@FormParam(Constants.SUBJECT) String subject) {
+	public Response emailThisPage(@Context HttpServletRequest request,
+			                          @FormParam(Constants.DIR) String dir, MultivaluedMap<String, String> formData) {
 
   	log.info("Entering Email This Method");
   	VelocityHtmlTextEmail email = new VelocityHtmlTextEmail();
-  	
+  	Yaml yamlParser;
   	// Setting up template location/files
-  	File absoluteTemplateDir = new File(contentService.getContentRoot(),"META-INF");
-  	absoluteTemplateDir = new File(absoluteTemplateDir,dir);
-	  File textTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".txt");
-	  log.info("textTemplateFile: {}", textTemplateFile.getPath());
-  	File htmlTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".html");
-  	log.info("htmlTemplateFile: {}", htmlTemplateFile.getPath());
-  	if (textTemplateFile.exists() && htmlTemplateFile.exists()) {
-  		if (pageExists(pagePath)) {
+  	if (dir != null){
+  	  File absoluteTemplateDir = new File(contentService.getContentRoot(),"META-INF");
+	  	absoluteTemplateDir = new File(absoluteTemplateDir,dir);
+		  File textTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".txt");
+		  log.info("textTemplateFile: {}", textTemplateFile.getPath());
+	  	File htmlTemplateFile = new File(absoluteTemplateDir,Constants.TEMPLATE_NAME + ".html");
+	  	log.info("htmlTemplateFile: {}", htmlTemplateFile.getPath());
+	  	File componentConfig = new File(absoluteTemplateDir,Constants.CONFIG_NAME);
+  	
+  	
+	  	if (textTemplateFile.exists() && htmlTemplateFile.exists()  && componentConfig.exists()) {
+	  		yamlParser = new Yaml();
+	  		
 		  	try { 
-		  		EmailForm emailForm = new EmailForm(toName, toAddress, fromName, fromAddress, message, pagePath,subject);
-		  		log.info("Email Form: {}", emailForm.toString());
-					EmailFormValidator.validate(emailForm);
+		  		EmailComponentConfiguration config = yamlParser.loadAs(FileUtils.readFileToString(componentConfig), EmailComponentConfiguration.class);
+					EmailFormValidator.validate(formData,config,contentService);
 			  	
-			  	email.addTo(emailForm.getToAddress());
-			  	email.setReplyTo(emailForm.getFromAddress());
-			  	email.setFrom(emailForm.getFromAddress()); 
-			  	email.setSubject(emailForm.getSubject());
+					email.addTo(getFieldValueWithOverride("toAddress", config.getToAddress(), formData));
+			  	email.setFrom(emailService.getFromAddress(config.getFromAddress())); 
+			  	email.setSubject(getFieldValueWithOverride("subject", config.getSubject(), formData));
 			  	// Set HTML Template
 			  	email.setHtml(readFromFile(htmlTemplateFile.getAbsolutePath()));
 			  	
 			  	// Set Text Template
 			  	email.setText(readFromFile(textTemplateFile.getAbsolutePath()));
 			  	
+			  	// Populate template properties
+			  	for(Field field : config.getFields()) {
+			  		if("replyTo".equals(field.name)) {
+			  			String value = field.getValue(request,formData);
+			  			if(!StringUtils.isEmptyOrNull(value)) {
+			  				email.setReplyTo(value);
+			  			}
+			  		} else {
+			  			email.setProperty(field.name, field.getValue(request,formData));
+			  		}
+			  	}
+			  	
 			  	// Set Properties
-			  	email.setProperty(Constants.TO_NAME, emailForm.getToName());
-			  	email.setProperty(Constants.FROM_NAME, emailForm.getFromName());
-			  	
-			    // setting message to at least empty string to assure that ${message} gets replaced on the email form.
-			  	if (emailForm.getMessage() == null) { 
-			  		emailForm.setMessage("");
-	        }
-			  	email.setProperty(Constants.MESSAGE, emailForm.getMessage());
-			  	
-			  	// Set up link
-			  	String link = "http://" + request.getServerName() + "/"  + emailForm.getPagePath();
-			  	log.info("Email This Page Link: {}",link);
-			  	email.setProperty(Constants.PATH,link);
+			  	String toName = getFieldValueWithOverride("toName", config.getToName(), formData);
+			  	String fromName = getFieldValueWithOverride("fromName", config.getFromName(), formData);
+			  	if(toName != null) {
+			  		email.setProperty(Constants.TO_NAME, toName);
+			  	}
+			  	if(fromName != null) {
+			  		email.setProperty(Constants.FROM_NAME, fromName);
+			  	}
 								  	
 			  	// Send Email
 			  	log.debug("Before Sending Email");  		
@@ -121,24 +137,16 @@ public class EmailResource {
 					log.info("ValidationException Caught");
 					log.info("First Error {}",e.getErrors()[0].getMessage());
 					return Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
+				} catch (IOException e) {
+					return Response.status(Response.Status.BAD_REQUEST).entity("Unable to load Configuration").build();
 				} 	
 				return Response.ok().build();
-  		} else {
-    		log.info("Invalid Page");
-    		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Page").build();	
-  		}
-  	} else {
-  		log.info("Couldn't Find Email Templates");
-  		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Template Location").build();		  		
-  	}
-	}
-	
-	private boolean pageExists(String pagePath) {
-		if (pagePath.contains("-INF")) {
-			return false;
-		}
-		File pagePathFile = new File(contentService.getContentRoot(),pagePath);
-		return pagePathFile.exists();
+	  	} else {
+	  		log.info("Couldn't Find Email Templates");
+	  		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Template Location").build();		  		
+	  	}
+  	} else
+  		return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Template Location").build();
 	}
 
 	/*
@@ -168,6 +176,10 @@ public class EmailResource {
     	}
     }
     return content;
+  }
+  
+  private String getFieldValueWithOverride(String name, String overrideValue, MultivaluedMap<String, String> formData) {
+  	return StringUtils.isEmptyOrNull(overrideValue) ? formData.get(name).get(0) : overrideValue;
   }
   
 }
