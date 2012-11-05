@@ -97,6 +97,7 @@ public class EmailResource {
 					email.addTo(getFieldValueWithOverride("toAddress", config.getToAddress(), formData));
 			  	email.setFrom(emailService.getFromAddress(config.getFromAddress())); 
 			  	email.setSubject(getFieldValueWithOverride("subject", config.getSubject(), formData));
+					email.setProperty("subject", getFieldValueWithOverride("subject", config.getSubject(), formData));
 			  	// Set HTML Template
 			  	email.setHtml(readFromFile(htmlTemplateFile.getAbsolutePath()));
 			  	
@@ -110,9 +111,8 @@ public class EmailResource {
 			  			if(!StringUtils.isEmptyOrNull(value)) {
 			  				email.setReplyTo(value);
 			  			}
-			  		} else {
-			  			email.setProperty(field.name, field.getValue(request,formData));
-			  		}
+			  		} 
+			  		email.setProperty(field.name, field.getValue(request,formData));
 			  	}
 			  	
 			  	// Set Properties
