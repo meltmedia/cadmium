@@ -20,10 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javassist.expr.NewArray;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.commons.lang.StringUtils;
@@ -31,7 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;
 import com.meltmedia.cadmium.email.config.EmailComponentConfiguration.Field;
-import com.meltmedia.cadmium.email.model.EmailForm;
 
 public class EmailFormValidator {
 	
@@ -41,15 +37,7 @@ public class EmailFormValidator {
   public static void validate(MultivaluedMap<String, String> formData, EmailComponentConfiguration config, ContentService contentService) throws ValidationException {
   	
   	List<ValidationError> errors = new ArrayList<ValidationError>();
-  	
-  	// Validate FromAddress
-  	String fromAddress = getRequiredFieldValue(formData,config.getFromAddress(),Constants.FROM_ADDRESS);
-  	if(StringUtils.isBlank(fromAddress)) {
-  		errors.add(new ValidationError(Constants.FROM_ADDRESS, Constants.FROM_ADDRESS + " is required."));
-  	} else if(!isValidEmailAddress(fromAddress)) {
-  		errors.add(new ValidationError(Constants.FROM_ADDRESS, Constants.FROM_ADDRESS + " is an invalid email address."));
-  	}
-  	
+  	  	
   	// Validate From Name
     if(StringUtils.isBlank(getRequiredFieldValue(formData, config.getFromName(), Constants.FROM_NAME))) {
   		errors.add(new ValidationError(Constants.FROM_NAME, Constants.FROM_NAME + " is required."));
