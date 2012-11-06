@@ -20,11 +20,13 @@ import java.util.Hashtable;
 
 import javax.inject.Inject;
 import javax.mail.Session;
+import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.captcha.CaptchaValidator;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.config.ConfigurationListener;
 import com.meltmedia.cadmium.email.Email;
@@ -34,6 +36,7 @@ import com.meltmedia.cadmium.email.EmailException;
 import com.meltmedia.cadmium.email.EmailService;
 import com.meltmedia.cadmium.email.MessageTransformer;
 import com.meltmedia.cadmium.email.SessionStrategy;
+import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;
 import com.meltmedia.cadmium.email.config.EmailConfiguration;
 
 /**
@@ -59,6 +62,8 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
   
   protected EmailSetup setup = null;
   
+  protected CaptchaValidator captchaValidator = null;
+  
   public EmailServiceImpl() {
   	log.debug("Initialized EmailService...");
   	configurationNotFound();
@@ -74,6 +79,12 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
         log.info("Updating configuration for email.");
         this.config = config;
       
+        //Set the captcha validator up.
+        if(!StringUtils.isEmptyOrNull(config.getCaptchaPrivateKey())) {
+          captchaValidator = new CaptchaValidator(config.getCaptchaPrivateKey());
+        } else {
+          captchaValidator = null;
+        }
         // Need to get the Session Strategy and Transform class names out of the 
         // Dictionary, and then use reflection to use them
         Dictionary<String,Object> props = new Hashtable<String,Object>();
@@ -254,5 +265,12 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
   
   public String getFromAddress(String fromAddress) {
   	return StringUtils.isEmptyOrNull(fromAddress) ? config.getDefaultFromAddress() : fromAddress;
+  }
+  
+  public boolean validateCaptcha(HttpServletRequest request, EmailComponentConfiguration compConfig) {
+    if(captchaValidator != null && compConfig != null && request != null && compConfig.getUseCaptcha() != null && compConfig.getUseCaptcha()) {
+      return captchaValidator.isValid(request);
+    }
+    return true;
   }
 }

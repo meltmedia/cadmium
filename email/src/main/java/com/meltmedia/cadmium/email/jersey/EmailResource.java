@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Enumeration;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -43,7 +42,6 @@ import org.yaml.snakeyaml.Yaml;
 
 import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 import com.meltmedia.cadmium.core.ContentService;
-import com.meltmedia.cadmium.email.model.EmailForm;
 import com.meltmedia.cadmium.email.EmailException;
 import com.meltmedia.cadmium.email.VelocityHtmlTextEmail;
 import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;
@@ -93,6 +91,12 @@ public class EmailResource {
 	  		
 		  	try { 
 		  		EmailComponentConfiguration config = yamlParser.loadAs(FileUtils.readFileToString(componentConfig), EmailComponentConfiguration.class);
+		  		
+		  		//Check captcha if configured
+		  		if(!emailService.validateCaptcha(request, config)) {
+		  		  throw new ValidationException("Incorrect captcha response");
+		  		}
+		  		
 					EmailFormValidator.validate(formData,config,contentService);
 			  	
 					email.addTo(getFieldValueWithOverride("toAddress", config.getToAddress(), formData));

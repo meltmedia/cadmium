@@ -17,9 +17,14 @@
   
   <dependencies>
   
-  <dependency>
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>cadmium-core</artifactId>
+    </dependency>
+  
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>cadmium-captcha</artifactId>
     </dependency>
   
     <dependency>

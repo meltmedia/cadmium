@@ -24,6 +24,7 @@ public class EmailConfiguration {
   private String jndiName;
   private String messageTransformer;
   private String sessionStrategy;
+  private String captchaPrivateKey;
   
 
 	public EmailConfiguration(){}
@@ -58,5 +59,13 @@ public class EmailConfiguration {
 
   public void setSessionStrategy(String sessionStrategy) {
     this.sessionStrategy = sessionStrategy;
+  }
+
+  public String getCaptchaPrivateKey() {
+    return captchaPrivateKey;
+  }
+
+  public void setCaptchaPrivateKey(String captchaPrivateKey) {
+    this.captchaPrivateKey = captchaPrivateKey;
   }
 }
