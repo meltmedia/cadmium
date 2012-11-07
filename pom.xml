@@ -48,6 +48,11 @@
         <artifactId>cadmium-core</artifactId>
         <version>${project.version}</version>
       </dependency>
+       <dependency>
+        <groupId>com.meltmedia.cadmium</groupId>
+        <artifactId>cadmium-captcha</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.meltmedia.cadmium</groupId>
         <artifactId>cadmium-email</artifactId>
@@ -339,10 +344,16 @@
       </dependency>
       
       <dependency>
-      <groupId>com.mycila</groupId>
-      <artifactId>mycila-guice</artifactId>
-      <version>2.10.ga</version>
-    </dependency>
+        <groupId>com.mycila</groupId>
+        <artifactId>mycila-guice</artifactId>
+        <version>2.10.ga</version>
+      </dependency>
+
+      <dependency>
+        <groupId>net.tanesha.recaptcha4j</groupId>
+        <artifactId>recaptcha4j</artifactId>
+        <version>0.0.7</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -352,6 +363,7 @@
     <module>cli</module>
     <module>maven</module>
     <module>deployer</module>
+    <module>captcha</module>
     <module>email</module>
     <module>search</module>
     <module>persistence</module>
