@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Enumeration;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -92,6 +91,12 @@ public class EmailResource {
 	  		
 		  	try { 
 		  		EmailComponentConfiguration config = yamlParser.loadAs(FileUtils.readFileToString(componentConfig), EmailComponentConfiguration.class);
+		  		
+		  		//Check captcha if configured
+		  		if(!emailService.validateCaptcha(request, config)) {
+		  		  throw new ValidationException("Incorrect captcha response");
+		  		}
+		  		
 					EmailFormValidator.validate(formData,config,contentService);
 			  	
 					email.addTo(getFieldValueWithOverride("toAddress", config.getToAddress(), formData));
