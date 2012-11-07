@@ -50,7 +50,10 @@ public final class CaptchaValidator {
     String remoteAddr = request.getRemoteAddr();
     String challenge = request.getParameter(CHALLENGE_FIELD_NAME);
     String response = request.getParameter(RESPONSE_FIELD_NAME);
-    
-    return reCaptcha.checkAnswer(remoteAddr, challenge, response).isValid();
+    if(challenge != null && response != null && challenge.trim().length() > 0) {
+      return reCaptcha.checkAnswer(remoteAddr, challenge, response).isValid();
+    } else {
+      return false;
+    }
   }
 }
