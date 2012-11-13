@@ -47,14 +47,9 @@ public final class CaptchaValidator {
    * @return
    */
   public boolean isValid(HttpServletRequest request) {
-    String remoteAddr = request.getRemoteAddr();
     String challenge = request.getParameter(CHALLENGE_FIELD_NAME);
     String response = request.getParameter(RESPONSE_FIELD_NAME);
-    if(challenge != null && response != null && challenge.trim().length() > 0) {
-      return reCaptcha.checkAnswer(remoteAddr, challenge, response).isValid();
-    } else {
-      return false;
-    }
+    return isValid(request, challenge, response);
   }
   
   /**
@@ -65,9 +60,21 @@ public final class CaptchaValidator {
    * @return
    */
   public boolean isValid(HttpServletRequest request, CaptchaRequest captcha) {
-    String remoteAddr = request.getRemoteAddr();
     String challenge = captcha.getRecaptcha_challenge_field();
     String response = captcha.getRecaptcha_response_field();
+    return isValid(request, challenge, response);
+  }
+   
+  /**
+   * Validates the captcha response.
+   * 
+   * @param request
+   * @param challenge
+   * @param response
+   * @return
+   */
+  public boolean isValid(HttpServletRequest request, String challenge, String response) {
+    String remoteAddr = request.getRemoteAddr();
     if(challenge != null && response != null && challenge.trim().length() > 0) {
       return reCaptcha.checkAnswer(remoteAddr, challenge, response).isValid();
     } else {
