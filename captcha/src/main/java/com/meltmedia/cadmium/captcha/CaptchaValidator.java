@@ -56,4 +56,22 @@ public final class CaptchaValidator {
       return false;
     }
   }
+  
+  /**
+   * Validates the captcha response.
+   * 
+   * @param request
+   * @param captcha
+   * @return
+   */
+  public boolean isValid(HttpServletRequest request, CaptchaRequest captcha) {
+    String remoteAddr = request.getRemoteAddr();
+    String challenge = captcha.getRecaptcha_challenge_field();
+    String response = captcha.getRecaptcha_response_field();
+    if(challenge != null && response != null && challenge.trim().length() > 0) {
+      return reCaptcha.checkAnswer(remoteAddr, challenge, response).isValid();
+    } else {
+      return false;
+    }
+  }
 }
