@@ -67,7 +67,9 @@ public class JChannelProvider implements Provider<JChannel>, Closeable {
   @Override
   public void close() throws IOException {
     if(channel != null) {
+      channel.disconnect();
       channel.close();
+      channel = null;
     }
   }
 

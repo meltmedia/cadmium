@@ -19,14 +19,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,21 +36,10 @@ import org.slf4j.Logger;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Provider;
 import com.google.inject.Scope;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.spi.BindingScopingVisitor;
-import com.google.inject.spi.BindingTargetVisitor;
-import com.google.inject.spi.ConstructorBinding;
-import com.google.inject.spi.ConvertedConstantBinding;
-import com.google.inject.spi.ExposedBinding;
-import com.google.inject.spi.InstanceBinding;
-import com.google.inject.spi.LinkedKeyBinding;
-import com.google.inject.spi.ProviderBinding;
-import com.google.inject.spi.ProviderInstanceBinding;
-import com.google.inject.spi.ProviderKeyBinding;
-import com.google.inject.spi.UntargettedBinding;
 
 /**
  * Utilities to facilitate the @PostConstruct and @PreDestroy annotations from jsr250.
@@ -269,8 +254,8 @@ public final class Jsr250Utils {
 
       @Override
       public void preDestroy() {
-        for( Object instances : reverseInstances ) {
-          preDestroyQuietly(instances, log);
+        for( Object instance : reverseInstances ) {
+          preDestroyQuietly(instance, log);
         }
       }
       

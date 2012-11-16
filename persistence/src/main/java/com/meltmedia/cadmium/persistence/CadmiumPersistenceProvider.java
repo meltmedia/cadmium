@@ -15,6 +15,8 @@
  */
 package com.meltmedia.cadmium.persistence;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * @author John McEntire
  *
  */
-public class CadmiumPersistenceProvider implements PersistenceProvider {
+public class CadmiumPersistenceProvider implements PersistenceProvider, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   /**
@@ -58,6 +60,11 @@ public class CadmiumPersistenceProvider implements PersistenceProvider {
    * The list of entity classes that were dynamically found using Reflections.
    */
   protected List<String> entityClassNames = null;
+  
+  /**
+   * This holds a reference to all created entity manager factory instances in order to clean up.
+   */
+  protected List<EntityManagerFactory> entityManagerFactories = new ArrayList<EntityManagerFactory>();
   
   /**
    * Find all entity classes with Reflections.
@@ -96,7 +103,9 @@ public class CadmiumPersistenceProvider implements PersistenceProvider {
   @Override
   public EntityManagerFactory createContainerEntityManagerFactory(
       PersistenceUnitInfo info, Map properties) {
-    return wrappedPersistenceProvider.createContainerEntityManagerFactory(info, properties);
+    EntityManagerFactory factory = wrappedPersistenceProvider.createContainerEntityManagerFactory(info, properties);
+    entityManagerFactories.add(factory);
+    return factory;
   }
 
   /**
@@ -208,6 +217,16 @@ public class CadmiumPersistenceProvider implements PersistenceProvider {
       return ValidationMode.AUTO;
     }
     
+  }
+
+  @Override
+  public void close() throws IOException {
+    for(EntityManagerFactory factory : entityManagerFactories) {
+      try {
+        factory.close();
+      } catch(Throwable t){}
+    }
+    entityManagerFactories = null;
   }
 
 }

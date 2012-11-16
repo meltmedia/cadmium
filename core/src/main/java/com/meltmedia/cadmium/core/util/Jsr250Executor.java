@@ -17,8 +17,6 @@ package com.meltmedia.cadmium.core.util;
 
 import java.util.Set;
 
-import org.slf4j.Logger;
-
 /**
  * Executes PostConstruct and PreDestroy methods.
  * 

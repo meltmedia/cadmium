@@ -71,7 +71,9 @@ public class GitService
   }
   
   public static void setupSsh(String sshDir) {
-    SshSessionFactory.setInstance(new GithubConfigSessionFactory(sshDir));
+    if(SshSessionFactory.getInstance() == null || !SshSessionFactory.getInstance().getClass().getName().equals(GithubConfigSessionFactory.class.getName())) {
+      SshSessionFactory.setInstance(new GithubConfigSessionFactory(sshDir));
+    }
   }
   
   public static void setupLocalSsh(String sshDir) {
@@ -614,5 +616,6 @@ public class GitService
   
   public void close() throws IOException {
     git.getRepository().close();
+    git = null;
   }
 }
