@@ -228,7 +228,7 @@ public class LifecycleService {
     List<ChannelMember> peirMembers = new ArrayList<ChannelMember>();
     if(members != null) {
       for(ChannelMember member : members) {
-        peirMembers.add(new ChannelMember(member.getAddress(), member.isCoordinator(), member.isMine(), member.getState(), member.getConfigState()));
+        peirMembers.add(new ChannelMember(member.getExternalIp(), member.getAddress(), member.isCoordinator(), member.isMine(), member.getState(), member.getConfigState()));
       }
     }
     return peirMembers;

@@ -20,12 +20,14 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
@@ -35,10 +37,13 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.ConfigurationGitService;
 import com.meltmedia.cadmium.core.ContentGitService;
+import com.meltmedia.cadmium.core.Scheduled;
+import com.meltmedia.cadmium.core.commands.ExternalIpMessage;
 import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.commands.SyncRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
+import com.meltmedia.cadmium.core.util.PublicIpUtils;
 
 @Singleton
 public class MembershipTracker implements MembershipListener {
@@ -64,6 +69,23 @@ public class MembershipTracker implements MembershipListener {
     this.configManager = configManager;
     this.gitService = gitService;
     this.configGitService = configGitService;
+  }
+  
+  @PostConstruct
+  @Scheduled(delay=2l, interval=3600l, unit=TimeUnit.MINUTES)
+  public void attainExternalIp() {
+    try {
+      log.debug("Updating my external ip address.");
+      String ip = PublicIpUtils.lookup();
+      if(StringUtils.isNotBlank(ip)){
+        ExternalIpMessage updateReq = new ExternalIpMessage();
+        updateReq.setIp(ip);
+        Message<ExternalIpMessage> msg = new Message<ExternalIpMessage>(ProtocolMessage.EXTERNAL_IP_MESSAGE, updateReq);
+        sender.sendMessage(msg, null);
+      }
+    } catch(Throwable t) {
+      log.debug("Failed to lookup external ip address.", t);
+    }
   }
   
   @PostConstruct
@@ -225,6 +247,19 @@ public class MembershipTracker implements MembershipListener {
       }
     }
     return null;
+  }
+  
+  public void updateMembersIp(Address aMember, String ip) {
+    if(members != null) {
+      ChannelMember memberToCheck = new ChannelMember(aMember);
+      for(ChannelMember member : members) {
+        if(member.equals(memberToCheck)) {
+          log.debug("Updating members {} ip address to {}", member, ip);
+          member.setExternalIp(ip);
+          break;
+        }
+      }
+    }
   }
 
   @Override

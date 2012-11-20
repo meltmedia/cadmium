@@ -19,6 +19,7 @@ import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 
 public interface CommandResponse {
+  @SuppressWarnings("rawtypes")
   public Message getResponse(ChannelMember member);
   public void reset(ChannelMember member);
 }
