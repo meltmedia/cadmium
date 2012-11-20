@@ -83,6 +83,7 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
       System.out.println("-----------------------------------------------------");
       for(StatusMember member : members) {
       	System.out.println(
+      	    "   External IP     : [" + member.getExternalIp() +"]\n" +
       			"   Address         : [" + member.getAddress() + "]\n" +
       			"   Is Coordinator? : [" + member.isCoordinator() + "]\n" +
       			"   State           : [" + member.getState() + "]\n" +

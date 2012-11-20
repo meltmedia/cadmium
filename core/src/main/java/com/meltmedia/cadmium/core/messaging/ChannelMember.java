@@ -21,10 +21,20 @@ import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 
 public class ChannelMember {
   private Address address;
+  private String externalIp;
   private boolean coordinator = false;
   private boolean mine = false;
   private UpdateState state = UpdateState.IDLE;
   private UpdateState configState = UpdateState.IDLE;
+  
+  public ChannelMember(String externalIp, Address address, boolean coordinator, boolean mine, UpdateState state, UpdateState configState) {
+    this.externalIp = externalIp;
+    this.address = address;
+    this.coordinator = coordinator;
+    this.mine = mine;
+    this.state = state;
+    this.configState = configState;
+  }
   
   public ChannelMember(Address address, boolean coordinator, boolean mine, UpdateState state, UpdateState configState) {
     this.address = address;
@@ -74,6 +84,14 @@ public class ChannelMember {
 
   public void setConfigState(UpdateState configState) {
     this.configState = configState;
+  }
+
+  public String getExternalIp() {
+    return externalIp;
+  }
+
+  public void setExternalIp(String externalIp) {
+    this.externalIp = externalIp;
   }
 
   @Override

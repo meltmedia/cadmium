@@ -33,4 +33,6 @@ public final class ProtocolMessage {
   public static String MAINTENANCE = "MAINTENANCE";
   
   public static String API_ENDPOINT_ACCESS = "API_ENDPOINT_ACCESS";
+  
+  public static String EXTERNAL_IP_MESSAGE = "EXTERNAL_IP_MESSAGE";
 }

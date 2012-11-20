@@ -30,6 +30,7 @@ public class DummyMessageSender<B1, B2> implements MessageSender {
   public Message<B2> msg2;
   public ChannelMember dest2;
 
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   public void sendMessage(Message msg, ChannelMember dest) throws Exception {
     if(this.msg == null) {
