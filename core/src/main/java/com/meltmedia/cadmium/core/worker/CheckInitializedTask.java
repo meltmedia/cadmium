@@ -93,10 +93,6 @@ public class CheckInitializedTask implements Callable<Boolean> {
       }
       return true;
     }
-    if(metaProcessor != null) {
-      logger.info("Making meta config live `{}`", taskToCheck);
-      metaProcessor.makeLive();
-    }
     logger.info("Stopping Maintenance page `{}`", taskToCheck);
     service.stop();
     gitInit.setGitService(git);

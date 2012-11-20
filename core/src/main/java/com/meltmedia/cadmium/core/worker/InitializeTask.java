@@ -73,6 +73,10 @@ public class InitializeTask implements Callable<GitService> {
           logger.info("Processing META-INF dir in `{}`", warName);
           this.metaProcessor.processDir(contentDirectory);
         }
+        if(metaProcessor != null) {
+          logger.info("Making meta config live `{}`", warName);
+          metaProcessor.makeLive();
+        }
         if(servlet != null) {
           logger.info("Switching content root of {}", warName);
           this.servlet.switchContent(System.currentTimeMillis());
