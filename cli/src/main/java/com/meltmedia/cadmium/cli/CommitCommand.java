@@ -100,8 +100,9 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
       System.err.println("Failed to commit changes to ["+siteUrl+"]: "+e.getMessage());
     } finally {
       if(git != null) {
+        String dir = git.getBaseDirectory();
         git.close();
-        FileUtils.forceDelete(new File(git.getBaseDirectory()));
+        FileUtils.forceDelete(new File(dir));
       }
     }
     
