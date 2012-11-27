@@ -17,23 +17,29 @@ package com.meltmedia.cadmium.cli;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 /**
  * Creates branches in git.
  * 
- * @deprecated
  * 
  * @author John McEntire
  * @author Brian Barr
  *
  */
-@Parameters(commandDescription = "Sets up new dev and meltqa branches with a command given basename.", separators="=")
+@Parameters(commandDescription = "Sets up new branches with a command given basename.", separators="=")
 public class NewBranchCommand implements CliCommand {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   
-  @Parameter(names="--repo", description="Repository URI", required=true)
+  @Parameter(names={"--repo","-r"}, description="Repository URI", required=true)
   private String repo;
+  
+  @Parameter(names={"--empty","-e"}, description="Create empty branches.")
+  private boolean empty = false;
   
   @Parameter(description="<newBranchName>", required=true)
   private List<String> basename;
@@ -42,7 +48,7 @@ public class NewBranchCommand implements CliCommand {
     BranchCreator creator = new BranchCreator(repo);
     try {
       for(String name : basename) {
-        creator.createBranchForDevAndQa(name);
+        creator.createNewBranches(name, empty, log);
       }
     } finally {
       creator.closeAndRemoveLocal();
@@ -51,7 +57,7 @@ public class NewBranchCommand implements CliCommand {
 
   @Override
   public String getCommandName() {
-    return "new-branch";
+    return "branch";
   }
 
 }

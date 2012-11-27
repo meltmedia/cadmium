@@ -494,6 +494,44 @@ public class GitService
     return git.branchCreate().setName(branchName).call();
   }
   
+  public boolean newEmtpyRemoteBranch(String branchName) throws Exception {
+    try{
+      log.info("Purging branches that no longer have remotes.");
+      git.fetch().setRemoveDeletedRefs(true).call();
+    } catch(Exception e) {
+      log.warn("Tried to fetch from remote when there is no remote.");
+      return false;
+    }
+    boolean branchExists = checkForRemoteBranch(branchName);
+    if(!branchExists) {
+      Ref ref = newEmptyLocalBranch(branchName);
+      git.push().add(ref).call();
+      return true;
+    } else {
+      log.info(branchName + " already exists.");
+    }
+    return false;
+  }
+  
+  public Ref newEmptyLocalBranch(String branchName) throws Exception {
+    Iterable<RevCommit> revItr = git.log().all().call();
+    RevCommit oldestRev = null;
+    for(RevCommit rev : revItr) {
+      if(oldestRev == null || rev.getCommitTime() < oldestRev.getCommitTime()) {
+        oldestRev = rev;
+      }
+    }
+    Ref newBranch = null;
+    String currentBranch = getBranchName();
+    if(oldestRev != null) {
+      newBranch = git.checkout().setName(branchName).setCreateBranch(true).setStartPoint(oldestRev.getName()).call();
+    } else {
+      newBranch = git.checkout().setName(branchName).setCreateBranch(true).call();
+    }
+    switchBranch(currentBranch);
+    return newBranch;
+  }
+  
   public void deleteLocalBranch(String branchName) throws Exception {
     git.branchDelete().setForce(true).setBranchNames(branchName).call();
   }

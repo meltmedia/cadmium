@@ -117,6 +117,18 @@ public class EmailResource {
 			  				email.setReplyTo(value);
 			  			}
 			  		} 
+			  		if("cc".equals(field.name)) {
+			  			String value = field.getValue(request,formData);
+			  			if(!StringUtils.isEmptyOrNull(value)) {
+			  				email.addCC(value);
+			  			}
+			  		} 
+			  		if("bcc".equals(field.name)) {
+			  			String value = field.getValue(request,formData);
+			  			if(!StringUtils.isEmptyOrNull(value)) {
+			  				email.addBCC(value);
+			  			}
+			  		} 
 			  		email.setProperty(field.name, field.getValue(request,formData));
 			  	}
 			  	
