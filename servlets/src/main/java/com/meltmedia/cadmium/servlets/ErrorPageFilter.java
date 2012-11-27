@@ -188,8 +188,11 @@ public class ErrorPageFilter implements Filter {
         // get the default page.
         if (errorPageIn == null) {
           for (String fileName : fileNames) {
-            if ((errorPageIn = ErrorPageFilter.class.getResourceAsStream("./"+fileName)) != null)
+            if((errorPageIn = ErrorPageFilter.class.getResourceAsStream(fileName)) != null)
               break;
+            else
+              if ((errorPageIn = ErrorPageFilter.class.getResourceAsStream("./"+fileName)) != null)
+                break;
           }
         }
         

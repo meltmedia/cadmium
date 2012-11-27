@@ -68,7 +68,7 @@ public class BasicFileServlet
   
   public static final String RANGE_BOUNDARY = "RANGES_BOUNDARY_";
   
-  protected File contentDir;
+  protected File contentDir = null;
   protected Long lastUpdated = System.currentTimeMillis();
   
   protected List<String> gzipList = new ArrayList<String>();
@@ -82,9 +82,9 @@ public class BasicFileServlet
   @Override
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
-    
-    setBasePath(config.getInitParameter("basePath"));
-    
+    if(this.contentDir == null) {
+      setBasePath(config.getInitParameter("basePath"));
+    }
   }
   
   protected void setLastUpdated(long lastUpdated) {

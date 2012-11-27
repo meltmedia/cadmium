@@ -59,7 +59,7 @@ public class FileServlet extends BasicFileServlet implements ContentService {
 	public void switchContent(Long requestTime) {
     
     Properties configProperties = configManager.getDefaultProperties();
-		
+
 		try {
 		  if(configProperties.containsKey("com.meltmedia.cadmium.lastUpdated")) {
 		    log.info("Switching to new directory ["+configProperties.getProperty("com.meltmedia.cadmium.lastUpdated")+"]");

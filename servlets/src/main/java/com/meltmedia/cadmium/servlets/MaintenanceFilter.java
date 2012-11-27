@@ -108,7 +108,10 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
 		httpRes.setContentType(MediaType.TEXT_HTML);
 		InputStream in = null;
 		try {
-		  in = MaintenanceFilter.class.getResourceAsStream("./maintenance.html");
+		  in = MaintenanceFilter.class.getResourceAsStream("/maintenance.html");
+		  if(in == null) {
+		    in = MaintenanceFilter.class.getResourceAsStream("./maintenance.html");
+		  }
 		  InputStreamReader reader = new InputStreamReader(in, "UTF-8");
 		  IOUtils.copy(reader, httpRes.getWriter()); 
 		}
