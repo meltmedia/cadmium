@@ -17,6 +17,9 @@ package com.meltmedia.cadmium.cli;
 
 import java.io.File;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.git.GitService;
 
@@ -51,44 +54,65 @@ public class BranchCreator {
   }
   
   /**
-   * <p>Creates 2 branches with different prefixes and the given basename.</p>
-   * <p>The branch name prefixes used are <code>cd-dev-</code> and 
-   * <code>cd-qa-</code></p>
-   * 
-   * @param basename The common basename to use for the branches.
-   * @return true if both of the branches where created and pushed successfully onto the remote repository.
-   * @throws Exception 
-   * 
-   * @deprecated
-   */
-  public boolean createBranchForDevAndQa(String basename) throws Exception {
-    boolean branchCreated = clonedRemote.newRemoteBranch("cd-dev-"+basename);
-    System.out.println("Created branch \"cd-dev-"+basename+"\"");
-    branchCreated = branchCreated && clonedRemote.newRemoteBranch("cd-qa-"+basename);
-    System.out.println("Created branch \"cd-qa-"+basename+"\"");
-    return branchCreated;
-  }
-  
-  /**
-   * <p>Creates a branch with the prefix of <code>cd-gene-</code> and the given basename.</p>
-   * 
-   * @param basename The basename to user for the branch.
-   * @return true if the branch was created and pushed successfully onto the remote repository.
-   * @throws Exception
-   * 
-   * @deprecated
-   */
-  public boolean createBranchForGene(String basename) throws Exception {
-    boolean branchCreated = clonedRemote.newRemoteBranch("cd-gene-"+basename);
-    System.out.println("Created branch \"cd-gene-"+basename+"\"");
-    return branchCreated;
-  }
-  
-  /**
    * @return The wrapped GitService instance.
    */
   public GitService getGitService() {
     return this.clonedRemote;
+  }
+  
+  /**
+   * Creates required cadmium branches using the given basename. 
+   * This will also create the source branch. The branches created will be as follows:
+   * <ul>
+   *  <li><i>basename</i></li>
+   *  <li>cd-<i>basename</i></li>
+   *  <li>cfg-<i>basename</i></li>
+   * </ul>
+   * 
+   * @param basename The basename used for all branches that will be created.
+   * @param empty If true the branches will all be created with no content. If false the 
+   * branches will be created off of the associated <i>master</i> branch.
+   * @param log
+   * @throws Exception 
+   */
+  public void createNewBranches(String basename, boolean empty, Logger log) throws Exception {
+    createNewBranch(null, basename, empty, log);
+    createNewBranch("cd", basename, empty, log);
+    createNewBranch("cfg", basename, empty, log);
+  }
+  
+  /**
+   * Creates a new branch with the name formatted as <i>prefix</i>-<i>basename</i> 
+   * if prefix is null then just the basename is used. If empty is true then the 
+   * new branch will be empty otherwise it will created from a branch with the same 
+   * formatted name but a basename of master.
+   * 
+   * @param prefix
+   * @param basename
+   * @param empty
+   * @param log
+   * @throws Exception 
+   */
+  private void createNewBranch(String prefix, String basename, boolean empty, Logger log) throws Exception {
+    String currentBranch = clonedRemote.getBranchName();
+    String newBranchName = (StringUtils.isNotBlank(prefix)?prefix.trim()+"-":"")+basename.trim();
+    String oldBranchName = (StringUtils.isNotBlank(prefix)?prefix.trim()+"-":"")+currentBranch;
+    try {
+      if(!empty) {
+        log.info("Switching to {}", oldBranchName);
+        clonedRemote.switchBranch(oldBranchName);
+        log.info("Creating new branch {}", newBranchName);
+        clonedRemote.newRemoteBranch(newBranchName);
+      } else {
+        log.info("Creating new empty branch {}", newBranchName);
+        clonedRemote.newEmtpyRemoteBranch(newBranchName);
+      }
+    } finally {
+      if(!empty) {
+        log.info("Switching back to {}", currentBranch);
+        clonedRemote.switchBranch(currentBranch);
+      }
+    }
   }
   
   /**
