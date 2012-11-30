@@ -13,16 +13,30 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.commands;
+package com.meltmedia.cadmium.core;
 
-public class ExternalIpMessage extends AbstractMessageBean {
-  private String ip;
+import java.util.Map;
 
-  public String getIp() {
-    return ip;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+public class LoggerServiceResponse {
+  private Map<String, LoggerConfig[]> configs;
+  
+  public LoggerServiceResponse(){}
+  public LoggerServiceResponse(Map<String, LoggerConfig[]> configs) {
+    this.configs = configs;
   }
 
-  public void setIp(String ip) {
-    this.ip = ip;
+  public Map<String, LoggerConfig[]> getConfigs() {
+    return configs;
+  }
+
+  public void setConfigs(Map<String, LoggerConfig[]> configs) {
+    this.configs = configs;
+  }
+  
+  @Override
+  public String toString() {
+    return ToStringBuilder.reflectionToString(this);
   }
 }

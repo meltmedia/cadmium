@@ -64,11 +64,6 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.core.joran.spi.JoranException;
-import ch.qos.logback.core.util.StatusPrinter;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -99,7 +94,10 @@ import com.meltmedia.cadmium.core.commands.CommandBodyMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandMapProvider;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
 import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
+import com.meltmedia.cadmium.core.commands.HistoryResponse;
 import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
+import com.meltmedia.cadmium.core.commands.LoggerConfigResponse;
+import com.meltmedia.cadmium.core.commands.LoggerConfigResponseCommandAction;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
@@ -110,7 +108,6 @@ import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import com.meltmedia.cadmium.core.messaging.MessageConverter;
 import com.meltmedia.cadmium.core.messaging.MessageReceiver;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
-import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
@@ -120,6 +117,7 @@ import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.scheduler.SchedulerService;
 import com.meltmedia.cadmium.core.util.Jsr250Executor;
 import com.meltmedia.cadmium.core.util.Jsr250Utils;
+import com.meltmedia.cadmium.core.util.LogUtils;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter;
@@ -147,8 +145,6 @@ public class CadmiumListener extends GuiceServletContextListener {
   public static final String LAST_UPDATED_DIR = "com.meltmedia.cadmium.lastUpdated";
   public static final String JGROUPS_CHANNEL_CONFIG_URL = "com.meltmedia.cadmium.jgroups.channel.config";
   public static final String SSL_HEADER = "REQUEST_IS_SSL";
-  public static final String LOG_DIR_INIT_PARAM = "log-directory";
-  public static final String JBOSS_LOG_DIR = "jboss.server.log.dir";
   public File sharedContentRoot;
   public File applicationContentRoot;
   private String repoDir = "git-checkout";
@@ -268,7 +264,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     configManager.setDefaultPropertiesFile(new File(applicationContentRoot, CONFIG_PROPERTIES_FILE));
 
     try {
-      configureLogback(servletContextEvent.getServletContext(), applicationContentRoot);
+      LogUtils.configureLogback(servletContextEvent.getServletContext(), applicationContentRoot, getVHostName(servletContextEvent.getServletContext()), log);
     } catch(IOException e) {
       log.error("Failed to reconfigure logging", e);
     }
@@ -423,9 +419,8 @@ public class CadmiumListener extends GuiceServletContextListener {
           commandActionBinder.addBinding().to((Class<? extends CommandAction<?>>)commandActionClass);
         }
 
-        bind(CommandResponse.class)
-        .annotatedWith(Names.named(ProtocolMessage.HISTORY_RESPONSE))
-        .to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
+        bind(new TypeLiteral<CommandResponse<HistoryResponse>>(){}).to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
+        bind(new TypeLiteral<CommandResponse<LoggerConfigResponse>>(){}).to(LoggerConfigResponseCommandAction.class).in(Scopes.SINGLETON);
 
         bind(new TypeLiteral<Map<String, CommandAction<?>>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
         bind(new TypeLiteral<Map<String, Class<?>>>(){}).annotatedWith(Names.named("commandBodyMap")).toProvider(CommandBodyMapProvider.class);
@@ -516,50 +511,6 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(SchedulerService.class);
       }
     };
-  }
-
-  /**
-   * <p>Reconfigures the logging context.</p>
-   * <p>The LoggerContext gets configured with "/WEB-INF/context-logback.xml". There is a <code>logDir</code> property set here which is expected to be the directory that the log file is written to.</p>
-   * <p>The <code>logDir</code> property gets set on the LoggerContext with the following logic.</p>
-   * <ul>
-   *   <li>{@link LOG_DIR_INIT_PARAM} context parameter will be created and checked if it is writable.</li>
-   *   <li>The File object passed in is used as a fall-back if it can be created and written to.</li>
-   * </ul>    
-   * @see {@link LoggerContext}
-   * @param servletContext The current servlet context.
-   * @param logDirFallback The fall-back directory to log to.
-   * @throws FileNotFoundException Thrown if no logDir can be written to.
-   * @throws MalformedURLException 
-   * @throws IOException
-   */
-  public void configureLogback( ServletContext servletContext, File logDirFallback ) throws FileNotFoundException, MalformedURLException, IOException {
-    log.debug("Reconfiguring Logback!");
-    String systemLogDir = System.getProperty(JBOSS_LOG_DIR);
-    if (systemLogDir != null) {
-      systemLogDir += "/" + getVHostName(servletContext);
-    }
-    File logDir = FileSystemManager.getWritableDirectoryWithFailovers(systemLogDir,servletContext.getInitParameter(LOG_DIR_INIT_PARAM), logDirFallback.getAbsolutePath());
-    if(logDir != null) {
-      log.debug("Resetting logback context.");
-      URL configFile = servletContext.getResource("/WEB-INF/context-logback.xml");
-      log.debug("Configuring logback with file, {}", configFile);
-      LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-      try {
-        JoranConfigurator configurator = new JoranConfigurator();
-        configurator.setContext(context);
-        context.stop();
-        context.reset();  
-        context.putProperty("logDir", logDir.getCanonicalPath());
-        configurator.doConfigure(configFile);
-      } catch (JoranException je) {
-        // StatusPrinter will handle this
-      } finally {
-        context.start();
-        log.debug("Done resetting logback.");
-      }
-      StatusPrinter.printInCaseOfErrorsOrWarnings(context);
-    }
   }
 
 

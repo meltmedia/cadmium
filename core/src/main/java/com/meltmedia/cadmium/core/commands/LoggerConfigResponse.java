@@ -15,14 +15,16 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
-public class ExternalIpMessage extends AbstractMessageBean {
-  private String ip;
+import com.meltmedia.cadmium.core.LoggerConfig;
 
-  public String getIp() {
-    return ip;
+public class LoggerConfigResponse extends AbstractMessageBean {
+  private LoggerConfig loggers[];
+
+  public LoggerConfig[] getLoggers() {
+    return loggers;
   }
 
-  public void setIp(String ip) {
-    this.ip = ip;
+  public void setLoggers(LoggerConfig[] loggers) {
+    this.loggers = loggers;
   }
 }

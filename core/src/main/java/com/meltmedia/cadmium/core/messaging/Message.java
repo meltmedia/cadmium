@@ -15,6 +15,8 @@
  */
 package com.meltmedia.cadmium.core.messaging;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class Message<B> {
   private Header header;
   private B body;
@@ -46,6 +48,11 @@ public class Message<B> {
   
   public void setBody( B body ) {
     this.body = body;
+  }
+  
+  @Override
+  public String toString() {
+    return ToStringBuilder.reflectionToString(this);
   }
 }
 

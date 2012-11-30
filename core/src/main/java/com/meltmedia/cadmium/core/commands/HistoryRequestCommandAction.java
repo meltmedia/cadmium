@@ -20,6 +20,7 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +60,7 @@ public class HistoryRequestCommandAction implements CommandAction<HistoryRequest
 
   @Override
   public void handleFailure(CommandContext<HistoryRequest> ctx, Exception e) {
-
+    log.error("Command Failed "+ToStringBuilder.reflectionToString(ctx), e);
   }
 
 }
