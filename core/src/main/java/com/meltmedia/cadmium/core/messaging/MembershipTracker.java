@@ -77,14 +77,18 @@ public class MembershipTracker implements MembershipListener {
     try {
       log.debug("Updating my external ip address.");
       String ip = PublicIpUtils.lookup();
-      if(StringUtils.isNotBlank(ip)){
-        ExternalIpMessage updateReq = new ExternalIpMessage();
-        updateReq.setIp(ip);
-        Message<ExternalIpMessage> msg = new Message<ExternalIpMessage>(ProtocolMessage.EXTERNAL_IP_MESSAGE, updateReq);
-        sender.sendMessage(msg, null);
-      }
+      sendIp(ip, null);
     } catch(Throwable t) {
       log.debug("Failed to lookup external ip address.", t);
+    }
+  }
+
+  private void sendIp(String ip, ChannelMember mem) throws Exception {
+    if(StringUtils.isNotBlank(ip)){
+      ExternalIpMessage updateReq = new ExternalIpMessage();
+      updateReq.setIp(ip);
+      Message<ExternalIpMessage> msg = new Message<ExternalIpMessage>(ProtocolMessage.EXTERNAL_IP_MESSAGE, updateReq);
+      sender.sendMessage(msg, mem);
     }
   }
   
@@ -185,6 +189,7 @@ public class MembershipTracker implements MembershipListener {
         Message<Void> stateMsg = new Message<Void>(ProtocolMessage.CURRENT_STATE, null);
         try {
           sender.sendMessage(stateMsg, cMember);
+          sendMyIp(cMember);
         } catch (Exception e) {
           log.error("Failed to send message to check for peir's current state", e);
         }
@@ -256,6 +261,30 @@ public class MembershipTracker implements MembershipListener {
         if(member.equals(memberToCheck)) {
           log.debug("Updating members {} ip address to {}", member, ip);
           member.setExternalIp(ip);
+          break;
+        }
+      }
+    }
+  }
+  
+  public String getMembersIp(Address aMember) {
+    if(members != null) {
+      ChannelMember memberToCheck = new ChannelMember(aMember);
+      for(ChannelMember member : members) {
+        if(member.equals(memberToCheck)) {
+          log.debug("getting members {} ip", member);
+          return member.getExternalIp();
+        }
+      }
+    }
+    return null;
+  }
+  
+  public void sendMyIp(ChannelMember member) throws Exception {
+    if(members != null) {
+      for(ChannelMember mem : members) {
+        if(mem.isMine() && StringUtils.isNotBlank(mem.getExternalIp())) {
+          sendIp(mem.getExternalIp(), member);
           break;
         }
       }

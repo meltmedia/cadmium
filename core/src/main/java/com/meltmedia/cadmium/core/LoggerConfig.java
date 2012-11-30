@@ -13,36 +13,42 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.messaging;
+package com.meltmedia.cadmium.core;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Header {
 
-  private String command;
-  private Long requestTime;
+/**
+ * Holds the name a current logging level for a configured Logger.
+ * 
+ * @author John McEntire
+ *
+ */
+public class LoggerConfig {
+  private String name;
+  private String level;
   
-  public Header() {
-    this.command = null;
-    this.requestTime = System.currentTimeMillis();
+  public LoggerConfig(String name, String level) {
+    this.name = name;
+    this.level = level;
   }
   
-  public Header( String command ) {
-    this.command = command;
-    this.requestTime = System.currentTimeMillis();
+  public LoggerConfig(){}
+
+  public String getName() {
+    return name;
   }
-  
-  public String getCommand() {
-    return command;
+
+  public void setName(String name) {
+    this.name = name;
   }
-  public void setCommand(String command) {
-    this.command = command;
+
+  public String getLevel() {
+    return level;
   }
-  public Long getRequestTime() {
-    return requestTime;
-  }
-  public void setRequestTime(Long requestTime) {
-    this.requestTime = requestTime;
+
+  public void setLevel(String level) {
+    this.level = level;
   }
   
   @Override

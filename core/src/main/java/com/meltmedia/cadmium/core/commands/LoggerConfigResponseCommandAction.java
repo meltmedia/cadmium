@@ -27,20 +27,25 @@ import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class HistoryResponseCommandAction extends AbstractCommandResponse<HistoryResponse> implements CommandAction<HistoryResponse> {
-  private final Logger log = LoggerFactory.getLogger(getClass()); 
-
-  public String getName() { return ProtocolMessage.HISTORY_RESPONSE; };
+public class LoggerConfigResponseCommandAction extends AbstractCommandResponse<LoggerConfigResponse> implements
+    CommandAction<LoggerConfigResponse> {
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   @Override
-  public boolean execute(CommandContext<HistoryResponse> ctx) throws Exception {
-    log.info("Recevied response for HISTORY_REQUEST from {}", ctx.getSource());
-    responses.put(new ChannelMember(ctx.getSource()), ctx.getMessage());
+  public String getName() {return ProtocolMessage.LOGGER_CONFIG_RESPONSE;}
+
+  @Override
+  public boolean execute(CommandContext<LoggerConfigResponse> ctx)
+      throws Exception {
+    log.trace("Received Logger config response: {}", ctx);
+    if(ctx.getMessage().getBody() != null && ctx.getMessage().getBody().getLoggers() != null) {
+      this.responses.put(new ChannelMember(ctx.getSource()), ctx.getMessage());
+    }
     return true;
   }
 
   @Override
-  public void handleFailure(CommandContext<HistoryResponse> ctx, Exception e) {
+  public void handleFailure(CommandContext<LoggerConfigResponse> ctx, Exception e) {
     log.error("Command Failed "+ToStringBuilder.reflectionToString(ctx), e);
   }
 

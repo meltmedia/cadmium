@@ -35,4 +35,7 @@ public final class ProtocolMessage {
   public static String API_ENDPOINT_ACCESS = "API_ENDPOINT_ACCESS";
   
   public static String EXTERNAL_IP_MESSAGE = "EXTERNAL_IP_MESSAGE";
+  
+  public static String LOGGER_CONFIG_REQUEST = "LOGGER_CONFIG_REQUEST";
+  public static String LOGGER_CONFIG_RESPONSE = "LOGGER_CONFIG_RESPONSE";
 }
