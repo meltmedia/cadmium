@@ -15,6 +15,8 @@
  */
 package com.meltmedia.cadmium.core.messaging;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class Header {
 
   private String command;
@@ -41,5 +43,10 @@ public class Header {
   }
   public void setRequestTime(Long requestTime) {
     this.requestTime = requestTime;
+  }
+  
+  @Override
+  public String toString() {
+    return ToStringBuilder.reflectionToString(this);
   }
 }

@@ -20,7 +20,6 @@ import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -54,8 +53,7 @@ public class HistoryService extends AuthorizationService {
   private MessageSender sender;
   
   @Inject
-  @Named("HISTORY_RESPONSE")
-  private CommandResponse response;
+  private CommandResponse<HistoryResponse> response;
   
   @Inject
   private HistoryManager historyManager;
@@ -86,9 +84,9 @@ public class HistoryService extends AuthorizationService {
       int timeout = 240;
       while(timeout-- > 0) {
         Thread.sleep(500l);
-        Message<?> returnMsg = response.getResponse(coordinator);
-        if(returnMsg != null && returnMsg.getBody() instanceof HistoryResponse) {
-          return ((HistoryResponse)returnMsg.getBody()).getHistory();
+        Message<HistoryResponse> returnMsg = response.getResponse(coordinator);
+        if(returnMsg != null) {
+          return returnMsg.getBody().getHistory();
         }
       }
     }

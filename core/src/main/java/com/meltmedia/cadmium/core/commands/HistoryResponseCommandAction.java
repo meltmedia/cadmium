@@ -15,25 +15,20 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
-import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 
 @Singleton
-public class HistoryResponseCommandAction implements CommandAction<HistoryResponse>, CommandResponse {
+public class HistoryResponseCommandAction extends AbstractCommandResponse<HistoryResponse> implements CommandAction<HistoryResponse> {
   private final Logger log = LoggerFactory.getLogger(getClass()); 
-  
-  protected Map<ChannelMember, Message<HistoryResponse>> responses = new HashMap<ChannelMember, Message<HistoryResponse>>();
 
   public String getName() { return ProtocolMessage.HISTORY_RESPONSE; };
 
@@ -46,22 +41,7 @@ public class HistoryResponseCommandAction implements CommandAction<HistoryRespon
 
   @Override
   public void handleFailure(CommandContext<HistoryResponse> ctx, Exception e) {
-
-  }
-
-  @Override
-  public Message<HistoryResponse> getResponse(ChannelMember member) {
-    if(responses.containsKey(member)) {
-      return responses.get(member);
-    }
-    return null;
-  }
-
-  @Override
-  public void reset(ChannelMember member) {
-    if(responses.containsKey(member)) {
-      responses.remove(member);
-    }
+    log.error("Command Failed "+ToStringBuilder.reflectionToString(ctx), e);
   }
 
 }
