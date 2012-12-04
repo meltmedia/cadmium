@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.history.HistoryEntry;
 
 /**
@@ -76,15 +77,17 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
         System.out.println("Switching content on ["+siteUrl+"]");
       }
       String endpoint = UpdateCommand.UPDATE_ENDPOINT;
+      String prefix = UpdateRequest.CONTENT_BRANCH_PREFIX;
       if(selectedEntry.getType() == HistoryEntry.EntryType.CONFIG) {
         endpoint = UpdateConfigCommand.UPDATE_CONFIG_ENDPOINT;
+        prefix = UpdateRequest.CONFIG_BRANCH_PREFIX;
       } else if(selectedEntry.getType() == HistoryEntry.EntryType.MAINT) {
         log.error("Invalid history entry type: {}", selectedEntry.getType());
         System.err.println("Invalid history entry type: "+selectedEntry.getType());
         System.exit(1);
       }
       log.debug("Reverting {} to repo {}, branch {}, revision {}, comment [{}]", new Object [] {endpoint, selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), selectedEntry.getComment()});
-      UpdateCommand.sendUpdateMessage(siteUrl, selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token, endpoint);
+      UpdateCommand.sendUpdateMessage(siteUrl, selectedEntry.getRepoUrl(), selectedEntry.getBranch(), selectedEntry.getRevision(), comment, token, endpoint, prefix);
     } else {
       System.exit(1);
     }

@@ -24,7 +24,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.eclipse.jgit.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jgroups.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +50,7 @@ public class UpdateService extends AuthorizationService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public BasicApiResponse update(UpdateRequest req, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
-    return sendJgroupsMessage(req, auth, ProtocolMessage.UPDATE);
+    return sendJgroupsMessage(req, auth, ProtocolMessage.UPDATE, UpdateRequest.CONTENT_BRANCH_PREFIX);
   }
   
   @POST
@@ -58,10 +58,10 @@ public class UpdateService extends AuthorizationService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public BasicApiResponse updateConfig(UpdateRequest req, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
-    return sendJgroupsMessage(req, auth, ProtocolMessage.CONFIG_UPDATE);
+    return sendJgroupsMessage(req, auth, ProtocolMessage.CONFIG_UPDATE, UpdateRequest.CONFIG_BRANCH_PREFIX);
   }
 
-  private BasicApiResponse sendJgroupsMessage(UpdateRequest req, String auth, String cmd)
+  private BasicApiResponse sendJgroupsMessage(UpdateRequest req, String auth, String cmd, String prefix)
       throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
@@ -75,8 +75,12 @@ public class UpdateService extends AuthorizationService {
       log.error("Channel is not wired");
       return resp;
     }
-    else if( StringUtils.isEmptyOrNull(req.getComment()) ) {
+    else if( StringUtils.isBlank(req.getComment()) ) {
       resp.setMessage("invalid request");
+      return resp;
+    }
+    else if( StringUtils.isNotBlank(req.getBranch()) && !StringUtils.startsWithIgnoreCase(req.getBranch(), prefix)) {
+      resp.setMessage("Branch must begin with prefix \""+prefix+"-\"");
       return resp;
     }
     

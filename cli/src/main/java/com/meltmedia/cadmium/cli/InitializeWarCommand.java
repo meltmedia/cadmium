@@ -17,11 +17,13 @@ package com.meltmedia.cadmium.cli;
 
 import java.util.List;
 
-import org.eclipse.jgit.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
+
 import static com.meltmedia.cadmium.core.util.WarUtils.updateWar;
 
 /**
@@ -81,8 +83,19 @@ public class InitializeWarCommand implements CliCommand {
 			    newWarNames.add(warName);
 			  }
 			}
-			
-	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, StringUtils.isEmptyOrNull(configRepoUri) || configRepoUri.equals(repoUri) ? repoUri : configRepoUri, configBranch, domain, context, secure);
+			boolean validRequest = true;
+	    if( StringUtils.isNotBlank(branch) && !StringUtils.startsWithIgnoreCase(branch, UpdateRequest.CONTENT_BRANCH_PREFIX + "-" )) {
+	      validRequest = false;
+	      System.err.println("Content branch must start with \""+UpdateRequest.CONTENT_BRANCH_PREFIX+"-\"");
+	    }
+	    if( StringUtils.isNotBlank(configBranch) &&  !StringUtils.startsWithIgnoreCase(configBranch, UpdateRequest.CONFIG_BRANCH_PREFIX + "-" )) {
+	      validRequest = false;
+	      System.err.println("Configuration branch must start with \""+UpdateRequest.CONFIG_BRANCH_PREFIX+"-\"");
+	    }
+	    if(!validRequest) {
+	      System.exit(1);
+	    }
+	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, StringUtils.isBlank(configRepoUri) || configRepoUri.equals(repoUri) ? repoUri : configRepoUri, configBranch, domain, context, secure);
 		} else {
 			System.err.println("ERROR: \""+war+"\" does not exist or cannot be read.");
 			System.exit(1);
