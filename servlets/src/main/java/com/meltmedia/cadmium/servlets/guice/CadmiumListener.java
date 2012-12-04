@@ -22,9 +22,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,11 +72,13 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.Stage;
 import com.google.inject.TypeLiteral;
 import com.google.inject.grapher.GrapherModule;
 import com.google.inject.grapher.InjectorGrapher;
 import com.google.inject.grapher.graphviz.GraphvizModule;
 import com.google.inject.grapher.graphviz.GraphvizRenderer;
+import com.google.inject.internal.InternalInjectorCreator;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
@@ -328,17 +332,36 @@ public class CadmiumListener extends GuiceServletContextListener {
         this.channelConfigUrl = fileUrl.toString();
       }
     }
-
-
-    injector = Guice.createInjector(createServletModule(), createModule());
     
-    // run the postConstruct methods.
-    jsr250Executor = Jsr250Utils.createJsr250Executor(injector, log, Scopes.SINGLETON);
-    jsr250Executor.postConstruct();
-    
-    super.contextInitialized(servletContextEvent);
-    File graphFile = new File(applicationContentRoot, "injector.dot");
-    graphGood(graphFile, injector);
+    Module modules[] = new Module[] {createServletModule(), createModule()};
+    InternalInjectorCreator guiceCreator = new InternalInjectorCreator()
+      .stage(Stage.DEVELOPMENT)
+      .addModules(Arrays.asList(modules));
+    try {
+      injector = guiceCreator.build();
+      
+      //injector = Guice.createInjector(createServletModule(), createModule());
+      
+      // run the postConstruct methods.
+      jsr250Executor = Jsr250Utils.createJsr250Executor(injector, log, Scopes.SINGLETON);
+      jsr250Executor.postConstruct();
+      
+      super.contextInitialized(servletContextEvent);
+      File graphFile = new File(applicationContentRoot, "injector.dot");
+      graphGood(graphFile, injector);
+    } catch(Throwable t) {
+      try {
+        Method primaryInjector = InternalInjectorCreator.class.getDeclaredMethod("primaryInjector");
+        primaryInjector.setAccessible(true);
+        injector = (Injector) primaryInjector.invoke(guiceCreator);
+        if(injector == null) {
+          log.error("Injector must not have been created.");
+        }
+      } catch (Throwable e) {
+        log.error("Failed to retrieve injector that failed to initialize.", e);
+      }
+      super.contextInitialized(servletContextEvent);
+    }
   }
 
   @Override

@@ -16,6 +16,8 @@
 package com.meltmedia.cadmium.core.api;
 
 public class UpdateRequest {
+  public static final String CONTENT_BRANCH_PREFIX = "cd";
+  public static final String CONFIG_BRANCH_PREFIX = "cfg";
   private String repo;
   private String branch;
   private String sha;

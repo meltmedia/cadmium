@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
@@ -62,10 +63,15 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
 
     String siteUrl = getSecureBaseUrl(site.get(0));
 
-    System.out.println("Getting status of ["+ siteUrl +"]");
     GitService gitValidation = null;
     try {
 
+      if(!UpdateCommand.isValidBranchName(branch, UpdateRequest.CONFIG_BRANCH_PREFIX)) {
+        System.exit(1);
+      }
+      
+      System.out.println("Getting status of ["+ siteUrl +"]");
+      
       Status siteStatus = StatusCommand.getSiteStatus(siteUrl, token);
 
       boolean repoSame = false;
@@ -76,7 +82,6 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
       String currentConfigRepo = siteStatus.getConfigRepo();
       String currentConfigRevision = siteStatus.getConfigRevision();
       String currentConfigBranch = siteStatus.getConfigBranch();
-
 
       log.debug("config repo = {}, and currentConfigRepo = {}", repo, currentConfigRepo);
 
@@ -113,6 +118,9 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
         }
         if(repo == null) {
           repo = siteStatus.getRepo();
+          siteStatus.setRepo(siteStatus.getConfigRepo());
+          siteStatus.setBranch(siteStatus.getConfigBranch());
+          siteStatus.setRevision(siteStatus.getConfigRevision());
         }
         gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
         String newBranch = null;
@@ -142,7 +150,7 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
           }
         } 
 
-        if(UpdateCommand.sendUpdateMessage(siteUrl, repo, newBranch, rev, message, token, UPDATE_CONFIG_ENDPOINT)){
+        if(UpdateCommand.sendUpdateMessage(siteUrl, repo, newBranch, rev, message, token, UPDATE_CONFIG_ENDPOINT, UpdateRequest.CONFIG_BRANCH_PREFIX)){
           System.out.println("Update successful");
         }
 

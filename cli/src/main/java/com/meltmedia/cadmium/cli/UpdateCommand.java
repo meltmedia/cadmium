@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
@@ -79,11 +80,14 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	public void execute() throws ClientProtocolException, IOException {
 	  
 		String siteUrl = getSecureBaseUrl(site.get(0));
-
-		System.out.println("Getting status of ["+ siteUrl +"]");
     GitService gitValidation = null;
 		try {
 
+      if(!isValidBranchName(branch, UpdateRequest.CONTENT_BRANCH_PREFIX)) {
+        System.exit(1);
+      }
+
+      System.out.println("Getting status of ["+ siteUrl +"]");
 			Status siteStatus = StatusCommand.getSiteStatus(siteUrl, token);
 
 			boolean repoSame = false;
@@ -108,7 +112,6 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 			String currentRepo = siteStatus.getRepo();
 			String currentRevision = siteStatus.getRevision();
 			String currentBranch = siteStatus.getBranch();
-
 
       log.debug("repo = {}, and currentRepo = {}", repo, currentRepo);
       
@@ -229,6 +232,23 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
     return sendUpdateMessage(site2, repo, branch, revision, comment, token, UPDATE_ENDPOINT);
   }
   
+  /**
+   * Sends a update message to a Cadmium site. This method will block until the update is complete.
+   * 
+   * @param site2 The uri to a Cadmium site.
+   * @param repo The git repository to tell the site to change to.
+   * @param branch The branch to switch to.
+   * @param revision The revision to reset to.
+   * @param comment The message to record with this event in the history on the Cadmium site.
+   * @param token The Github API token to authenticate with.
+   * @param endpoint The endpoint to send the update request to.
+   * @return true if successfull or false otherwise.
+   * @throws Exception
+   */
+  public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token, String endpoint) throws Exception {
+    return sendUpdateMessage(site2, repo, branch, revision, comment, token, endpoint, UpdateRequest.CONTENT_BRANCH_PREFIX);
+  }
+  
 	/**
 	 * Sends a update message to a Cadmium site. This method will block until the update is complete.
 	 * 
@@ -239,10 +259,11 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	 * @param comment The message to record with this event in the history on the Cadmium site.
 	 * @param token The Github API token to authenticate with.
 	 * @param endpoint The endpoint to send the update request to.
+	 * @param branchPrefix The branch prefix for the given update command.
 	 * @return true if successfull or false otherwise.
 	 * @throws Exception
 	 */
-  public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token, String endpoint) throws Exception {
+  public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token, String endpoint, String branchPrefix) throws Exception {
     HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpPost post = new HttpPost(site2 + endpoint);
@@ -256,8 +277,10 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
       req.setRepo(repo);
     }
     
-    if(branch != null) {
+    if(branch != null && isValidBranchName(branch, branchPrefix)) {
       req.setBranch(branch);
+    } else if(branch != null) {
+      throw new Exception("Branch name must be prefixed with "+branchPrefix+".");
     }
     
     if(revision != null) {
@@ -281,6 +304,26 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
         }
         return true;
       }
+    }
+    return false;
+  }
+
+  /**
+   * Validates the branch name that will be sent to the given prefix.
+   * 
+   * @param branch 
+   * @param prefix
+   * @return
+   */
+  public static boolean isValidBranchName(String branch, String prefix) throws Exception {
+    if(StringUtils.isNotBlank(prefix) && StringUtils.isNotBlank(branch)) {
+      if(StringUtils.startsWithIgnoreCase(branch, prefix + "-")) {
+        return true;
+      } else {
+        System.err.println("Branch name must start with prefix \""+prefix+"-\".");
+      }
+    } else {
+      return true;
     }
     return false;
   }
