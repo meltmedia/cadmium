@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
@@ -86,6 +87,10 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
       
       String revision = status.getRevision();
       String branch = status.getBranch();
+      
+      if(!UpdateCommand.isValidBranchName(branch, UpdateRequest.CONTENT_BRANCH_PREFIX)) {
+        throw new Exception("Cannot commit to a branch without the prefix of "+UpdateRequest.CONTENT_BRANCH_PREFIX+".");
+      }
       
       if(git.isTag(branch)) {
         throw new Exception("Cannot commit to a tag!");

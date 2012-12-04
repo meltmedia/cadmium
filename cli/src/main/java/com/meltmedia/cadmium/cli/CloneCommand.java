@@ -22,6 +22,7 @@ import org.eclipse.jgit.util.StringUtils;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
 
@@ -126,7 +127,7 @@ public class CloneCommand extends AbstractAuthorizedOnly implements CliCommand {
       if(!StringUtils.isEmptyOrNull(repo) && !StringUtils.isEmptyOrNull(revision) && !StringUtils.isEmptyOrNull(branch)) {
         if(!repo.equals(site2Status.getConfigRepo()) || !revision.equals(site2Status.getConfigRevision()) || ! branch.equals(site2Status.getConfigBranch())) {
           System.out.println("Sending update/config message to ["+site2+"]");
-          UpdateCommand.sendUpdateMessage(site2, repo, branch, revision, "Cloned config from ["+site1+"]: " + comment, token, UpdateConfigCommand.UPDATE_CONFIG_ENDPOINT);
+          UpdateCommand.sendUpdateMessage(site2, repo, branch, revision, "Cloned config from ["+site1+"]: " + comment, token, UpdateConfigCommand.UPDATE_CONFIG_ENDPOINT, UpdateRequest.CONFIG_BRANCH_PREFIX);
         } else {
           System.out.println("Source [" + site1 + "] is on the same configuration repo, branch, and revision as the target [" + site2 + "].");
         }
