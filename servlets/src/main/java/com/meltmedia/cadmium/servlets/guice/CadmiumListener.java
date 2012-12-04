@@ -351,16 +351,19 @@ public class CadmiumListener extends GuiceServletContextListener {
       graphGood(graphFile, injector);
     } catch(Throwable t) {
       try {
+        log.error("Failed to initialize...", t);
         Method primaryInjector = InternalInjectorCreator.class.getDeclaredMethod("primaryInjector");
         primaryInjector.setAccessible(true);
         injector = (Injector) primaryInjector.invoke(guiceCreator);
         if(injector == null) {
           log.error("Injector must not have been created.");
+        } else {
+          log.error("Found injector {}", injector);
         }
       } catch (Throwable e) {
         log.error("Failed to retrieve injector that failed to initialize.", e);
       }
-      super.contextInitialized(servletContextEvent);
+      throw new RuntimeException("Failed to Initialize", t);
     }
   }
 
