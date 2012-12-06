@@ -113,6 +113,7 @@ import com.meltmedia.cadmium.core.messaging.MessageConverter;
 import com.meltmedia.cadmium.core.messaging.MessageReceiver;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
+import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMembershipTracker;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
@@ -485,7 +486,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         // Bind JChannel provider
         bind(JChannel.class).toProvider(JChannelProvider.class).in(Scopes.SINGLETON);
 
-        bind(MembershipListener.class).to(MembershipTracker.class);
+        bind(MembershipListener.class).to(JGroupsMembershipTracker.class);
+        bind(MembershipTracker.class).to(JGroupsMembershipTracker.class);
         bind(MessageListener.class).to(MessageReceiver.class);
 
         bind(LifecycleService.class);

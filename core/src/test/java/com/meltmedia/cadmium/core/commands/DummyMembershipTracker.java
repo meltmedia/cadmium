@@ -19,9 +19,9 @@ import java.util.List;
 
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
-import com.meltmedia.cadmium.core.messaging.MembershipTracker;
+import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMembershipTracker;
 
-public class DummyMembershipTracker extends MembershipTracker {
+public class DummyMembershipTracker extends JGroupsMembershipTracker {
   public DummyMembershipTracker(){
     super(null,null,null,null,null,null);
   }

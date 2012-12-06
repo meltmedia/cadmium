@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
@@ -176,10 +177,12 @@ public class GitService
   public static GitService initializeConfigDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager, ConfigManager configManager) throws Exception {
     initializeBaseDirectoryStructure(root, warName);
     String warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
-    GitService cloned = initializeRepo(uri, branch, warDir, "git-config-checkout");
-
+    
     Properties configProperties = configManager.getDefaultProperties();
     
+    GitLocation gitLocation = new GitLocation(uri, branch, configProperties.getProperty("config.git.ref.sha"));
+    GitService cloned = initializeRepo(gitLocation, warDir, "git-config-checkout");
+        
     String renderedContentDir = initializeSnapshotDirectory(warDir,
         configProperties, "com.meltmedia.cadmium.config.lastUpdated", "git-config-checkout", "config"); 
     
@@ -233,9 +236,11 @@ public class GitService
   public static GitService initializeContentDirectory(String uri, String branch, String root, String warName, HistoryManager historyManager, ConfigManager configManager) throws Exception {
     initializeBaseDirectoryStructure(root, warName);
     String warDir = FileSystemManager.getChildDirectoryIfExists(root, warName);
-    GitService cloned = initializeRepo(uri, branch, warDir, "git-checkout");
 
     Properties configProperties = configManager.getDefaultProperties();
+    
+    GitLocation gitLocation = new GitLocation(uri, branch, configProperties.getProperty("git.ref.sha"));
+    GitService cloned = initializeRepo(gitLocation, warDir, "git-checkout");
     
     String renderedContentDir = initializeSnapshotDirectory(warDir,
         configProperties, "com.meltmedia.cadmium.lastUpdated", "git-checkout", "renderedContent"); 
@@ -321,26 +326,39 @@ public class GitService
     return renderedContentDir;
   }
 
-  private static GitService initializeRepo(String uri, String branch,
+  private static GitService initializeRepo(GitLocation gitLocation,
       String warDir, String checkoutDir) throws Exception, RefNotFoundException {
     GitService cloned = null;
-    if(FileSystemManager.getChildDirectoryIfExists(warDir, checkoutDir) == null) {
-      log.info("Cloning remote git repository to " + checkoutDir);
-      cloned = cloneRepo(uri, new File(warDir, checkoutDir).getAbsolutePath());
-      
-      if(!cloned.checkForRemoteBranch(branch)) {
-        String envString = System.getProperty("com.meltmedia.cadmium.environment", "development");
-        branch = "cd-"+envString+"-"+branch;
+    String gitDir = FileSystemManager.getChildDirectoryIfExists(warDir, checkoutDir);
+    if(gitDir != null) {
+      try {
+        cloned = createGitService(gitDir);
+        cloned.getCurrentRevision();
+      } catch(Throwable t) {
+        if(cloned != null) {
+          cloned.close();
+          cloned = null;
+          FileSystemManager.deleteDeep(gitDir);
+          gitDir = null;
+        }
       }
-      log.info("Switching to branch {}", branch);
-      cloned.switchBranch(branch);
+    }
+    if(gitDir == null) {
+      log.info("Cloning remote git repository to " + checkoutDir);
+      cloned = cloneRepo(gitLocation.getRepository(), new File(warDir, checkoutDir).getAbsolutePath());
       
-    } else {
-      cloned = createGitService(FileSystemManager.getChildDirectoryIfExists(warDir, checkoutDir));
+      log.info("Switching to branch {}", gitLocation.getBranch());
+      cloned.switchBranch(gitLocation.getBranch());
+      
+      if(StringUtils.isNotBlank(gitLocation.getRevision())) {
+        cloned.resetToRev(gitLocation.getRevision());
+      }
+    } else if(cloned == null){
+      cloned = createGitService(gitDir);
     }
 
     if(cloned == null) {
-      throw new Exception("Failed to clone remote github repo from "+uri);
+      throw new Exception("Failed to clone remote github repo from "+gitLocation.getRepository());
     }
     return cloned;
   }

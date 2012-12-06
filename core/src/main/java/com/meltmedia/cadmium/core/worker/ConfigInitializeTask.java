@@ -74,7 +74,7 @@ public class ConfigInitializeTask implements Callable<GitService> {
         logger.warn("Branch `"+branch+"` does not exist.", e);
         return null;
       } catch(Throwable t1) {
-        logger.error("Failed to initialize config git repo `"+warName+"`", t);
+        logger.error("Failed to initialize config git repo `"+warName+"`", t1);
         t = t1;
       }
       if(t != null) {

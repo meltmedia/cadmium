@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.messaging;
+package com.meltmedia.cadmium.core.messaging.jgroups;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -33,10 +33,12 @@ import org.junit.Test;
 
 import com.meltmedia.cadmium.core.commands.SyncRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
-import com.meltmedia.cadmium.core.messaging.jgroups.DummyJChannel;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.MessageConverter;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
 
-public class MembershipTrackerTest {
+public class JGroupsMembershipTrackerTest {
 
   ConfigManager configManager;
   
@@ -75,7 +77,7 @@ public class MembershipTrackerTest {
     
     sender.setChannel(channel);
     
-    new MembershipTracker(sender, channel, members, configManager, null, null).init();
+    new JGroupsMembershipTracker(sender, channel, members, configManager, null, null).init();
     
     Thread.sleep(1000l);
     
