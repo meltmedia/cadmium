@@ -89,6 +89,10 @@
       <version>1.6.1</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.meltmedia.cadmium</groupId>
+      <artifactId>cadmium-pdf-concatenate</artifactId>
+    </dependency>
 
   </dependencies>
 </project>
