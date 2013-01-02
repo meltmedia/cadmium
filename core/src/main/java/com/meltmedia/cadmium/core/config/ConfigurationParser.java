@@ -66,6 +66,12 @@ public interface ConfigurationParser {
   public void parseDirectory(File configurationDirectory) throws Exception;
   
   /**
+   * 
+   * @return This configurations backing directory.
+   */
+  public File getConfigurationDirectory();
+  
+  /**
    * This method will be used to fetch a configuration from the freshly parsed configurations.
    * 
    * @param key The key that references the configuration wanted.

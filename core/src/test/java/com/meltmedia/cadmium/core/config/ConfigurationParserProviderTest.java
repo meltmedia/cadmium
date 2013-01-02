@@ -92,6 +92,11 @@ public class ConfigurationParserProviderTest {
         throws ConfigurationNotFoundException {
       return null;
     }
+
+    @Override
+    public File getConfigurationDirectory() {
+      return null;
+    }
     
   }
 

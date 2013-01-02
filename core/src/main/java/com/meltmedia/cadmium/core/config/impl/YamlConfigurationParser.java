@@ -75,6 +75,7 @@ public class YamlConfigurationParser implements ConfigurationParser {
   protected List<Class> configurationClasses = new ArrayList<Class>();
   protected Map<String, Map<String, ?>> configuration = new HashMap<String, Map<String, ?>>();
   protected String environment;
+  protected File configurationDirectory;
   
   public YamlConfigurationParser() {}
 
@@ -83,6 +84,7 @@ public class YamlConfigurationParser implements ConfigurationParser {
    */
   @Override
   public void parseDirectory(File configurationDirectory) throws Exception {
+    this.configurationDirectory = configurationDirectory;
     if(configurationDirectory != null && configurationDirectory.isDirectory() && configurationDirectory.canRead()) {
       Collection<File> configFiles = FileUtils.listFiles(configurationDirectory, new String[] {"yml", "yaml"}, true);
       List<File> files = new ArrayList<File>(configFiles);
@@ -217,6 +219,11 @@ public class YamlConfigurationParser implements ConfigurationParser {
   @Override
   public void setEnvironment(String environment) {
     this.environment = environment;
+  }
+
+  @Override
+  public File getConfigurationDirectory() {
+    return this.configurationDirectory;
   }
 
 }

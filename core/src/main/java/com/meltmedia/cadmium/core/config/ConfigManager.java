@@ -229,6 +229,11 @@ public class ConfigManager implements Closeable {
   protected static void notifyListeners(Set<ConfigurationListener<?>> listeners, ConfigurationParser configParser, Logger log) {
     if(!listeners.isEmpty()) {
       for(ConfigurationListener<?> listener : listeners) {
+        if(listener instanceof ConfigurationLocationAware) {
+          log.debug("Telling listener {} which directory the configuration is in {}", listener, configParser.getConfigurationDirectory());
+          ConfigurationLocationAware locationAware = (ConfigurationLocationAware) listener;
+          locationAware.setConfigurationDirectory(configParser.getConfigurationDirectory());
+        }
         log.debug("Trying to notify listener {}", listener);
         Class<?> configClasses[] = getListenerGenericTypes(listener.getClass(), log);
         if(configClasses != null) {
