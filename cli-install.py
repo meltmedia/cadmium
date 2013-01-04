@@ -18,7 +18,7 @@
 import os, os.path, sys, stat, shutil, string, urllib, xml.etree.ElementTree, subprocess
 from termios import tcflush, TCIOFLUSH
 
-cadmium_version = '0.0.1-SNAPSHOT'
+cadmium_version = '0.6.0-SNAPSHOT'
 
 cadmium_sh = """#! /bin/sh
 newest_jar=~/.cadmium/cadmium-cli.jar
@@ -69,7 +69,7 @@ try:
   if os.path.exists('out'):
     shutil.move('out', 'out-old')
 
-  subprocess.call(['./node_modules/.bin/docpad', 'generate'])
+  subprocess.call(['./node_modules/.bin/docpad', 'generate', '--env=production'])
 
   if not os.path.exists('out/META-INF'):
     os.mkdir('out/META-INF')
@@ -187,8 +187,8 @@ if versioningNode != None:
     if latestNode != None:
       cadmium_version = latestNode.text
 
-if os.path.exists(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cadmium-cli')):
-  shutil.rmtree(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cadmium-cli'), True)
+#if os.path.exists(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cadmium-cli')):
+#  shutil.rmtree(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cadmium-cli'), True)
 
 print 'Downloading latest version of cadmium...'
 subprocess.call(['mvn', '-q', '-U', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:' + cadmium_version + ':jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
