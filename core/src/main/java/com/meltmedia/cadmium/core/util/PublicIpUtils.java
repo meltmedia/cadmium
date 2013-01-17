@@ -15,6 +15,8 @@
  */
 package com.meltmedia.cadmium.core.util;
 
+import jodd.lagarto.dom.jerry.Jerry;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
@@ -46,7 +48,7 @@ public final class PublicIpUtils {
     client.getParams().setParameter(
         CoreProtocolPNames.USER_AGENT, 
         "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0");
-    HttpGet get = new HttpGet("http://automation.whatismyip.com/n09230945.asp");
+    HttpGet get = new HttpGet("http://www.whatismyip.com/");
     
     HttpResponse response = null;
     String ipAddress = null;
@@ -54,6 +56,17 @@ public final class PublicIpUtils {
       response = client.execute(get);
       if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
         ipAddress = EntityUtils.toString(response.getEntity());
+        try {
+          Jerry html = Jerry.jerry(ipAddress);
+          Jerry ipNode = html.$("#greenip");
+          if(ipNode.length() == 1) {
+            ipAddress = ipNode.text();
+          } else {
+            ipAddress = null;
+          }
+        } catch(Throwable t) {
+          ipAddress = null;
+        }
       } else {
         EntityUtils.consume(response.getEntity());
       }
