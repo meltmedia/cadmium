@@ -23,6 +23,7 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import static com.meltmedia.cadmium.blackbox.test.CadmiumAssertions.assertContentDeployed;
 import static org.junit.Assert.assertEquals;
@@ -33,6 +34,7 @@ import static org.junit.Assert.assertEquals;
  * @author John McEntire
  *
  */
+@Ignore
 public class CliCommitCloneTest {
   
   /**
