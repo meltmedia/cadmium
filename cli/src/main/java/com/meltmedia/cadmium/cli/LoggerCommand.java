@@ -86,14 +86,15 @@ public class LoggerCommand extends AbstractAuthorizedOnly implements CliCommand 
       System.err.println("A site is required!");
       System.exit(1);
     }
-    DefaultHttpClient client = new DefaultHttpClient();
+    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     HttpMessage method = null;
+    site = this.getSecureBaseUrl(site);
     if(level != null) {
-      String uri = this.getSecureBaseUrl(site)+"/system/logger/"+(StringUtils.isNotBlank(logger)?logger+"/":ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME+"/")+(StringUtils.isNotBlank(level)?level:"DEBUG");
+      String uri = site+"/system/logger/"+(StringUtils.isNotBlank(logger)?logger+"/":ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME+"/")+(StringUtils.isNotBlank(level)?level:"DEBUG");
       System.out.println("Updating logger ["+(StringUtils.isNotBlank(logger)?logger:"ROOT") + "] to level ["+level+"] for site " + site);
       method = new HttpPost(uri);
     } else {
-      String uri = this.getSecureBaseUrl(site)+"/system/logger/"+(StringUtils.isNotBlank(logger)?logger+"/":"");
+      String uri = site+"/system/logger/"+(StringUtils.isNotBlank(logger)?logger+"/":"");
       System.out.println("Getting levels for "+(StringUtils.isNotBlank(logger)?logger:"all") + " logger[s] on site " + site);
       method = new HttpGet(uri);
     }
