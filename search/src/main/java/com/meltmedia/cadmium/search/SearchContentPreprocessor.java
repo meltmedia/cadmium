@@ -41,6 +41,8 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jodd.lagarto.dom.Node;
 import jodd.lagarto.dom.jerry.Jerry;
@@ -49,6 +51,7 @@ import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 
 @Singleton
 public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider, Closeable {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   
   public static FileFilter HTML_FILE_FILTER = new FileFilter() {
     @Override
@@ -168,19 +171,23 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     new ContentScanTemplate(HTML_FILE_FILTER) {
       @Override
       public void handleFile(File file) throws Exception {
-        Jerry jerry = Jerry.jerry(FileUtils.readFileToString(file, "UTF-8"));
-        
-        // if we should not index this file, move on.
-        if(!shouldIndex(jerry)) return;
-        
-        String title = jerry.$("html > head > title").text();
-        String textContent = jerry.$("html > body").text();
-
-	      Document doc = new Document();
-	      doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
-	      doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
-	      doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.NOT_ANALYZED));
-	      indexWriter.addDocument(doc);
+        try {
+          Jerry jerry = Jerry.jerry(FileUtils.readFileToString(file, "UTF-8"));
+          
+          // if we should not index this file, move on.
+          if(!shouldIndex(jerry)) return;
+          
+          String title = jerry.$("html > head > title").text();
+          String textContent = jerry.$("html > body").text();
+  
+  	      Document doc = new Document();
+  	      doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
+  	      doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
+  	      doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.NOT_ANALYZED));
+  	      indexWriter.addDocument(doc);
+        } catch(Throwable t) {
+          log.warn("Failed to index page ["+file+"]", t);
+        }
 
       }
     }.scan(contentDir); 
