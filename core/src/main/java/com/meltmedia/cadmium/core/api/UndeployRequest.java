@@ -16,24 +16,15 @@
 package com.meltmedia.cadmium.core.api;
 
 public class UndeployRequest {
-  private String domain;
-  private String contextRoot;
+  private String warName;
   
   public UndeployRequest() {}
 
-  public String getDomain() {
-    return domain;
+  public String getWarName() {
+    return warName;
   }
 
-  public void setDomain(String domain) {
-    this.domain = domain;
-  }
-
-  public String getContextRoot() {
-    return contextRoot;
-  }
-
-  public void setContextRoot(String contextRoot) {
-    this.contextRoot = contextRoot;
+  public void setWarName(String warName) {
+    this.warName = warName;
   }
 }

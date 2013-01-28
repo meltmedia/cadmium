@@ -19,23 +19,14 @@ import com.meltmedia.cadmium.core.commands.AbstractMessageBean;
 
 public class UndeployRequest extends AbstractMessageBean {
 
-  private String domain;
-  private String context;
+  private String warName;
 
-  public String getDomain() {
-    return domain;
+  public String getWarName() {
+    return warName;
   }
 
-  public String getContext() {
-    return context;
-  }
-
-  public void setDomain(String domain) {
-    this.domain = domain;
-  }
-
-  public void setContext(String context) {
-    this.context = context;
+  public void setWarName(String warName) {
+    this.warName = warName;
   }
 
 }

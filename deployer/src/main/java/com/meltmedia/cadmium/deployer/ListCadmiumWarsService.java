@@ -28,8 +28,10 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
 import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 
+@CadmiumSystemEndpoint
 @Path("/deployment/list")
 public class ListCadmiumWarsService extends AuthorizationService {
   private final Logger logger = LoggerFactory.getLogger(getClass());

@@ -92,16 +92,9 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
     
     System.out.println("Undeploying "+undeploy+" from "+site);
     
-    String domain = null;
-    String context = null;
-    if(undeploy.contains("/")) {
-      domain = undeploy.substring(0, undeploy.indexOf('/'));
-      if(undeploy.length() > undeploy.indexOf('/')) {
-        context = undeploy.substring(undeploy.indexOf('/') + 1);
-      } else {
-        context = "";
-      }
-      undeploy(site, domain, context, token);
+    
+    if(!undeploy.isEmpty()) {
+      undeploy(site, undeploy, token);
       
     } else {
       System.err.println("Invalid app name: "+undeploy);
@@ -147,12 +140,11 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
    * Sends the undeploy command to a Cadmium-Deployer war.
    * 
    * @param url The uri to a Cadmium-Deployer war.
-   * @param domain The domain to undeploy.
-   * @param context The context to undeploy.
+   * @param warName The war to undeploy.
    * @param token The Github API token used for authentication.
    * @throws Exception
    */
-  public static void undeploy(String url, String domain, String context, String token) throws Exception {
+  public static void undeploy(String url, String warName, String token) throws Exception {
     DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
     
     HttpPost del = new HttpPost(url + "/system/undeploy");
@@ -160,8 +152,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
     del.addHeader("Content-Type", MediaType.APPLICATION_JSON);
     
     UndeployRequest req = new UndeployRequest();
-    req.setDomain(domain);
-    req.setContextRoot(context);
+    req.setWarName(warName);
     
     del.setEntity(new StringEntity(new Gson().toJson(req), "UTF-8"));
     
@@ -170,9 +161,9 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
     if(resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
       String respStr = EntityUtils.toString(resp.getEntity());
       if(!respStr.equals("ok")) {
-        throw new Exception("Failed to undeploy "+domain+"/"+context);
+        throw new Exception("Failed to undeploy "+warName);
       } else {
-        System.out.println("Undeployment of "+domain+"/"+context+" successful");
+        System.out.println("Undeployment of "+warName+" successful");
       }
     }
   }
