@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.meltmedia.cadmium.core.config.impl.PropertiesReaderImpl;
 import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
+import com.meltmedia.cadmium.core.util.WarUtils;
 
 /**
  * This centralizes and manages how other classes read and write to properties files. 
@@ -60,12 +61,18 @@ public class ConfigManager implements Closeable {
   private CountDownLatch latch;
   private Set<ConfigurationListener<?>> listeners = Collections.synchronizedSet(new HashSet<ConfigurationListener<?>>());
   private File defaultPropertiesLocation;
+  private String warFileName;
 
   @Inject
   protected ConfigurationParserFactory configParserFactory;
 
   public ConfigManager() {
 
+    latch = new CountDownLatch(1);
+  }
+
+  public ConfigManager(ServletContext ctx) {
+    warFileName = WarUtils.getWarName(ctx);
     latch = new CountDownLatch(1);
   }
   
@@ -324,6 +331,14 @@ public class ConfigManager implements Closeable {
   public void close() throws IOException {
 
     latch.countDown();    
+  }
+
+  public String getWarFileName() {
+    return warFileName;
+  }
+
+  public void setWarFileName(String warFileName) {
+    this.warFileName = warFileName;
   }  
 
 }

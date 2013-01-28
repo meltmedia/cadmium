@@ -33,6 +33,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import javax.servlet.ServletContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -629,5 +630,15 @@ public class WarUtils {
         zippedWar.close();
       }
     }
+  }
+  
+  /**
+   * Gets the currently deployed war file name from the ServletContext.
+   * @param context
+   * @return
+   */
+  public static String getWarName( ServletContext context ) {
+    String[] pathSegments = context.getRealPath("/WEB-INF/web.xml").split("/");
+    return pathSegments[pathSegments.length - 3];
   }
 }

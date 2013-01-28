@@ -97,7 +97,7 @@ public class JGroupsMembershipTrackerTest {
     assertTrue("Member3 not coordinator", !members.get(2).isCoordinator());
     assertTrue("Member3 not me", !members.get(2).isMine());
     
-    assertEquals("Wrong number of messages sent", 4, msgs.size());
+    assertEquals("Wrong number of messages sent", 7, msgs.size());
     
     assertEquals("Wrong msg1 dest address", other2.toString(), msgs.get(0).getDest().toString());
     assertTrue("Wrong msg1 msg", new String(msgs.get(0).getBuffer(), "UTF-8").contains(ProtocolMessage.CURRENT_STATE));
@@ -109,6 +109,15 @@ public class JGroupsMembershipTrackerTest {
     assertTrue("Wrong msg2 msg", new String(msgs.get(2).getBuffer(), "UTF-8").contains(ProtocolMessage.CURRENT_STATE));
     
     assertEquals("Wrong msg3 dest address", other2.toString(), msgs.get(3).getDest().toString());
-    assertTrue("Wrong msg3 msg", new String(msgs.get(3).getBuffer(), "UTF-8").contains(ProtocolMessage.SYNC));
+    assertTrue("Wrong msg3 msg", new String(msgs.get(3).getBuffer(), "UTF-8").contains(ProtocolMessage.WAR_INFO));
+    
+    assertEquals("Wrong msg4 dest address", other2.toString(), msgs.get(3).getDest().toString());
+    assertTrue("Wrong msg4 msg", new String(msgs.get(4).getBuffer(), "UTF-8").contains(ProtocolMessage.WAR_INFO));
+    
+    assertEquals("Wrong msg5 dest address", other2.toString(), msgs.get(3).getDest().toString());
+    assertTrue("Wrong msg5 msg", new String(msgs.get(5).getBuffer(), "UTF-8").contains(ProtocolMessage.WAR_INFO));
+    
+    assertEquals("Wrong msg6 dest address", other2.toString(), msgs.get(3).getDest().toString());
+    assertTrue("Wrong msg6 msg", new String(msgs.get(6).getBuffer(), "UTF-8").contains(ProtocolMessage.SYNC));
   }
 }

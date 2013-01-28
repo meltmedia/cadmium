@@ -225,6 +225,7 @@ public class StatusService extends AuthorizationService {
 				peer.setConfigState(member.getConfigState());
 				peer.setMine(member.isMine());
 				peer.setExternalIp(member.getExternalIp());
+				peer.setWarInfo(member.getWarInfo());
 				peers.add(peer);			
 				
 			}

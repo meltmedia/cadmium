@@ -29,6 +29,8 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Converts message between JGroups and cadmium commands.
@@ -38,6 +40,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
  */
 @Singleton
 public class MessageConverter {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   private static ObjectMapper mapper = new ObjectMapper();
   static {
     // this drops null fields from the messages.  Inclusion.NON_DEFAULT may be better.
@@ -102,7 +105,15 @@ public class MessageConverter {
     }
     else {
       parser.nextToken(); // parse the start token for body.
-      body = parser.readValueAs(bodyClass);
+      try {
+        body = parser.readValueAs(bodyClass);
+      } catch(JsonProcessingException e) {
+        log.error("Failed to parse body class as "+bodyClass+" for message "+header,e);
+        throw e;
+      } catch(IOException e) {
+        log.error("Failed to parse body class as "+bodyClass+" for message "+header,e);
+        throw e;
+      }
       parser.nextToken(); // the end token for body.
     }
     parser.nextToken(); // the end token for the document.

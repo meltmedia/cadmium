@@ -123,6 +123,7 @@ import com.meltmedia.cadmium.core.scheduler.SchedulerService;
 import com.meltmedia.cadmium.core.util.Jsr250Executor;
 import com.meltmedia.cadmium.core.util.Jsr250Utils;
 import com.meltmedia.cadmium.core.util.LogUtils;
+import com.meltmedia.cadmium.core.util.WarUtils;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter;
@@ -239,7 +240,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     MaintenanceFilter.siteDown.start();
     context = servletContextEvent.getServletContext();
 
-    configManager = new ConfigManager();
+    configManager = new ConfigManager(context);
 
     Properties cadmiumProperties = configManager.getPropertiesByContext(context, "/WEB-INF/cadmium.properties");
 
@@ -251,7 +252,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     sharedContentRoot = sharedContextRoot(configProperties, context, log);
 
     // compute the directory for this application, based on the war name.
-    warName = getWarName(context);
+    warName = WarUtils.getWarName(context);
 
     vHostName = getVHostName(context);
 
@@ -583,12 +584,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     } catch(Exception e) {
       log.warn("Failed to read/parse file.", e);
     }
-    return getWarName(context);
-  }
-
-  public static String getWarName( ServletContext context ) {
-    String[] pathSegments = context.getRealPath("/WEB-INF/web.xml").split("/");
-    return pathSegments[pathSegments.length - 3];
+    return WarUtils.getWarName(context);
   }
 
   public static File applicationContentRoot(File sharedContentRoot, String warName, Logger log) {
