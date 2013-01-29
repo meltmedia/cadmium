@@ -18,8 +18,6 @@
 import os, os.path, sys, stat, shutil, string, urllib, xml.etree.ElementTree, subprocess
 from termios import tcflush, TCIOFLUSH
 
-cadmium_version = '0.6.0-SNAPSHOT'
-
 cadmium_sh = """#! /bin/sh
 newest_jar=~/.cadmium/cadmium-cli.jar
 if [ -d ~/.m2/repository/com/meltmedia/cadmium/cadmium-cli ]; then
@@ -44,7 +42,7 @@ java -jar $newest_jar "$@"
 """
 
 cadmium_commit = """#! /usr/bin/env python
-import os, os.path, sys, subprocess, shutil
+import os, os.path, sys, subprocess, shutil, re
 
 if not os.path.exists(os.path.expanduser('~/.cadmium/bin/cadmium')):
   print "Please run `cli-install.py` before running `cake deploy`"
@@ -53,6 +51,26 @@ if not os.path.exists(os.path.expanduser('~/.cadmium/bin/cadmium')):
 if len(sys.argv) != 3:
   print "Please specify a \\"commit message\\" and a site url to deploy to.\\nUSAGE cadmium-deploy <message> <url>"
   sys.exit(1)
+
+subprocess.call(['git','fetch'])
+git_status = subprocess.check_output(['git','status','--short','--branch'])
+status_lines = re.split('\\n',git_status)
+num_lines = len(status_lines) - 1
+if num_lines > 0 and re.search(\"^##\", status_lines[0]):
+  num_lines = num_lines - 1
+
+pattern = re.compile(r\"^##.*\[((?:ahead)|(?:behind) \d+)\]$\")
+if pattern.search(status_lines[0]):
+  print \"Your local is out of sync with origin: [\" + pattern.match(status_lines[0]).group(1) + \"]\"
+  sys.exit(1)
+
+if num_lines > 0:
+  print \"Please commit and push your changes.\"
+  sys.exit(1)
+
+print \"Attempting to update cadmium dependencies. If an update is available this may take a while.\"
+
+subprocess.call(['mvn', '-q', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:LATEST:jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
 
 message = sys.argv[1]
 url = sys.argv[2]
@@ -175,23 +193,8 @@ if not has_path:
     finally:
       fd.close()
 
-metaData = urllib.urlopen('http://nexus.meltdev.com/service/local/repo_groups/public/content/com/meltmedia/cadmium/cadmium-cli/maven-metadata.xml')
-tree = xml.etree.ElementTree.fromstring( metaData.read() )
-versioningNode = tree.find('versioning')
-if versioningNode != None:
-  releaseNode = versioningNode.find('release')
-  if releaseNode != None:
-    cadmium_version = releaseNode.text
-  else:
-    latestNode = versioningNode.find('latest')
-    if latestNode != None:
-      cadmium_version = latestNode.text
-
-#if os.path.exists(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cadmium-cli')):
-#  shutil.rmtree(os.path.expanduser('~/.m2/repository/com/meltmedia/cadmium/cadmium-cli'), True)
-
 print 'Downloading latest version of cadmium...'
-subprocess.call(['mvn', '-q', '-U', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:' + cadmium_version + ':jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
+subprocess.call(['mvn', '-q', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:LATEST:jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
 
 exitCode = 1;
 tries = 2;
