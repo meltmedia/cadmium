@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.core.messaging.jgroups;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -41,9 +42,11 @@ import com.meltmedia.cadmium.core.Scheduled;
 import com.meltmedia.cadmium.core.commands.ExternalIpMessage;
 import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.commands.SyncRequest;
+import com.meltmedia.cadmium.core.commands.WarInfoRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.util.PublicIpUtils;
+import com.meltmedia.cadmium.core.util.WarUtils;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import com.meltmedia.cadmium.core.messaging.Message;
@@ -119,6 +122,8 @@ public class JGroupsMembershipTracker implements MembershipTracker, MembershipLi
       
       sendStateMessages(newMembers);
       
+      sendWarInfoMessages(newMembers);
+      
       handleSyncRequest(new_view);
       log.info("Processed new view now there are ["+new_view.size()+"] members");
     } else {
@@ -192,6 +197,31 @@ public class JGroupsMembershipTracker implements MembershipTracker, MembershipLi
     if(newMembers != null) {
       for(ChannelMember cMember : newMembers) {
         Message<Void> stateMsg = new Message<Void>(ProtocolMessage.CURRENT_STATE, null);
+        try {
+          sender.sendMessage(stateMsg, cMember);
+          sendMyIp(cMember);
+        } catch (Exception e) {
+          log.error("Failed to send message to check for peir's current state", e);
+        }
+      }
+    }
+  }
+  
+  private void sendWarInfoMessages(List<ChannelMember> newMembers) {
+    try {
+      Message<WarInfoRequest> stateMsg = new Message<WarInfoRequest>(ProtocolMessage.WAR_INFO, new WarInfoRequest());
+      stateMsg.getBody().setWarInfo(WarUtils.getWarInfo(new File(System.getProperty("jboss.server.home.dir")+"/deploy", configManager.getWarFileName())));
+      try {
+        sender.sendMessage(stateMsg, null);
+      } catch (Exception e) {
+        log.error("Failed to send message to check for peir's WAR_INFO", e);
+      }
+    } catch(Exception e) {
+      log.error("Failed to retrieve war information.", e);
+    }
+    if(newMembers != null) {
+      for(ChannelMember cMember : newMembers) {
+        Message<WarInfoRequest> stateMsg = new Message<WarInfoRequest>(ProtocolMessage.WAR_INFO, new WarInfoRequest());
         try {
           sender.sendMessage(stateMsg, cMember);
           sendMyIp(cMember);

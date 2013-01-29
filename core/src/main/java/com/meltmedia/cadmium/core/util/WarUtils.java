@@ -15,18 +15,25 @@
  */
 package com.meltmedia.cadmium.core.util;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import javax.servlet.ServletContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -38,6 +45,10 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import jodd.lagarto.dom.jerry.Jerry;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -45,6 +56,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.MavenVector;
+import com.meltmedia.cadmium.core.WarInfo;
 
 /**
  * <p>Utility class for war manipulation.</p>
@@ -453,5 +466,179 @@ public class WarUtils {
       cadmiumProps.setProperty("com.meltmedia.cadmium.config.branch", configBranch);
     }
     return cadmiumProps;
+  }
+  
+  /**
+   * Reads a Cadmium war file or war directory and returns a {@link WarInfo} 
+   * Instance with all of the details about the war.
+   * @param war The compressed war file or exploded war directory to get the info about.
+   * @return A {@link WarInfo} Instance with the gathered information.
+   * @throws Exception
+   */
+  public static WarInfo getWarInfo(File war) throws Exception {
+    WarInfo info = new WarInfo();
+    info.setWarName(war.getName());
+    CadmiumWar warHelper = null;
+    try {
+      warHelper = new CadmiumWar(war);
+      getDeploymentInfo(info, warHelper);
+      getCadmiumInfo(info, warHelper);
+      getArtifactInfo(info, warHelper);
+    } finally {
+      IOUtils.closeQuietly(warHelper);
+    }
+    return info;
+  }
+
+  private static void getArtifactInfo(WarInfo info, CadmiumWar warHelper)
+      throws Exception {
+    List<String> artifactProps = warHelper.listFilesWithName("META-INF/maven", "pom.properties");
+    
+    for(String artifactProp : artifactProps) {
+      String artProps = warHelper.fileToString(artifactProp);
+      Properties props = new Properties();
+      props.load(new StringReader(artProps));
+      MavenVector mvn = new MavenVector();
+      mvn.setGroupId(props.getProperty("groupId"));
+      mvn.setArtifactId(props.getProperty("artifactId"));
+      mvn.setVersion(props.getProperty("version"));
+      info.getArtifacts().add(mvn);
+    }
+  }
+
+  private static void getCadmiumInfo(WarInfo info, CadmiumWar warHelper)
+      throws Exception {
+    if(warHelper.fileExists("WEB-INF/cadmium.properties")) {
+      String cadmiumProps = warHelper.fileToString("WEB-INF/cadmium.properties");
+      Properties props = new Properties();
+      props.load(new StringReader(cadmiumProps));
+      info.setRepo(props.getProperty("com.meltmedia.cadmium.git.uri"));
+      info.setConfigRepo(props.getProperty("com.meltmedia.cadmium.config.git.uri", info.getRepo()));
+      info.setContentBranch(props.getProperty("com.meltmedia.cadmium.branch"));
+      info.setConfigBranch(props.getProperty("com.meltmedia.cadmium.config.branch"));
+    }
+  }
+
+  private static void getDeploymentInfo(WarInfo info, CadmiumWar warHelper)
+      throws Exception {
+    if(warHelper.fileExists("WEB-INF/jboss-web.xml")) {
+      String jbossWeb = warHelper.fileToString("WEB-INF/jboss-web.xml");
+      Jerry jbossWebJerry = Jerry.jerry(jbossWeb);
+      info.setDomain(jbossWebJerry.$("jboss-web > virtual-host").text());
+      info.setContext(jbossWebJerry.$("jboss-web > context-root").text());
+    }
+  }
+  
+  /**
+   * A class used to read the contents of a zipped or exploded war.
+   * 
+   * @author John McEntire
+   *
+   */
+  public static class CadmiumWar implements Closeable {
+    private File warFile;
+    private ZipFile zippedWar = null;
+    
+    /**
+     * Creates an instance if the given warFile exists and is a directory or a zip file.
+     * @param warFile
+     * @throws Exception
+     */
+    public CadmiumWar(File warFile) throws Exception {
+      this.warFile = warFile;
+      if(warFile.exists() && !warFile.isDirectory()) {
+        zippedWar = new ZipFile(warFile);
+      } else if(!warFile.isDirectory()) {
+        throw new Exception(warFile + " does not exist.");
+      }
+    }
+    
+    /**
+     * Tests if the war file that backs this helper class contains a file.
+     * 
+     * @param fileName
+     * @return
+     */
+    public boolean fileExists(String fileName) {
+      if(zippedWar != null) {
+        ZipEntry fileEntry = zippedWar.getEntry(fileName);
+        return fileEntry != null;
+      }
+      return new File(warFile, fileName).exists();
+    }
+    
+    /**
+     * Lists all files with the given fileName under a parent directory within 
+     * the war that backs this instance.  Files will be listed recursively.
+     * @param parent
+     * @param fileName
+     * @return
+     */
+    public List<String> listFilesWithName(String parent, String fileName) {
+      List<String> files = new ArrayList<String>();
+      if(zippedWar != null) {
+        Enumeration<?> entries = zippedWar.entries();
+        while(entries.hasMoreElements()) {
+          ZipEntry entry = (ZipEntry) entries.nextElement();
+          if(parent == null || entry.getName().startsWith(parent)) {
+            files.add(entry.getName());
+          }
+        }
+      } else if((parent == null ? warFile : new File(warFile, parent)).exists()){
+        Collection<File> filesUnderParent = FileUtils.listFiles(parent == null ? warFile : new File(warFile, parent), null, true);
+        for(File file : filesUnderParent) {
+          files.add(file.getAbsoluteFile().getAbsolutePath().replaceFirst(Pattern.quote(warFile.getAbsoluteFile().getAbsolutePath()), ""));
+        }
+      }
+      Iterator<String> itr = files.iterator();
+      while(itr.hasNext()) {
+        String theFileName = new File(itr.next()).getName();
+        if(!theFileName.equals(fileName)) {
+          itr.remove();
+        }
+      }
+      return files;
+    }
+    
+    /**
+     * Returns the string contents of a files contained within the war that backs this instance.
+     * @param file
+     * @return
+     * @throws Exception
+     */
+    public String fileToString(String file) throws Exception {
+      if(zippedWar != null) {
+        ZipEntry entry = zippedWar.getEntry(file);
+        if(entry != null) {
+          InputStream in = null;
+          try {
+            in = zippedWar.getInputStream(entry);
+            return IOUtils.toString(in);
+          } finally {
+            IOUtils.closeQuietly(in);
+          }
+        }
+      } else {
+        return FileUtils.readFileToString(new File(warFile, file));
+      }
+      return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+      if(zippedWar != null) {
+        zippedWar.close();
+      }
+    }
+  }
+  
+  /**
+   * Gets the currently deployed war file name from the ServletContext.
+   * @param context
+   * @return
+   */
+  public static String getWarName( ServletContext context ) {
+    String[] pathSegments = context.getRealPath("/WEB-INF/web.xml").split("/");
+    return pathSegments[pathSegments.length - 3];
   }
 }

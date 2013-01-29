@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.status;
 
+import com.meltmedia.cadmium.core.WarInfo;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 
 public class StatusMember {
@@ -24,6 +25,7 @@ public class StatusMember {
   private boolean mine = false;
   private UpdateState state = UpdateState.IDLE;
   private UpdateState configState = UpdateState.IDLE;
+  private WarInfo warInfo;
   
   public StatusMember(){}
   
@@ -91,6 +93,14 @@ public class StatusMember {
 
   public void setExternalIp(String externalIp) {
     this.externalIp = externalIp;
+  }
+
+  public WarInfo getWarInfo() {
+    return warInfo;
+  }
+
+  public void setWarInfo(WarInfo warInfo) {
+    this.warInfo = warInfo;
   }
 
   @Override
