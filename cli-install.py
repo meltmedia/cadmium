@@ -59,7 +59,11 @@ num_lines = len(status_lines) - 1
 if num_lines > 0 and re.search(\"^##\", status_lines[0]):
   num_lines = num_lines - 1
 
-pattern = re.compile(r\"^##.*\[((?:ahead)|(?:behind) \d+)\]$\")
+for x in status_lines[:]:
+  if re.search(r\"^\\?\", x) or re.search(r\"^\\!\", x):
+    num_lines = num_lines - 1
+
+pattern = re.compile(r\"^##.*\[((?:(?:ahead)|(?:behind)) \d+)\]$\")
 if pattern.search(status_lines[0]):
   print \"Your local is out of sync with origin: [\" + pattern.match(status_lines[0]).group(1) + \"]\"
   sys.exit(1)
