@@ -13,18 +13,19 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.api;
+package com.meltmedia.cadmium.core.commands;
 
-public class UndeployRequest {
-  private String warName;
-  
-  public UndeployRequest() {}
+import com.meltmedia.cadmium.core.WarInfo;
 
-  public String getWarName() {
-    return warName;
+public class WarInfoRequest extends AbstractMessageBean {
+  private WarInfo warInfo;
+
+  public WarInfo getWarInfo() {
+    return warInfo;
   }
 
-  public void setWarName(String warName) {
-    this.warName = warName;
+  public void setWarInfo(WarInfo warInfo) {
+    this.warInfo = warInfo;
   }
+
 }

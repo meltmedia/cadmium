@@ -38,4 +38,6 @@ public final class ProtocolMessage {
   
   public static String LOGGER_CONFIG_REQUEST = "LOGGER_CONFIG_REQUEST";
   public static String LOGGER_CONFIG_RESPONSE = "LOGGER_CONFIG_RESPONSE";
+  
+  public static String WAR_INFO = "WAR_INFO";
 }

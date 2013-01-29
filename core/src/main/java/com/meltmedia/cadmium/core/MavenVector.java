@@ -13,18 +13,36 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.api;
+package com.meltmedia.cadmium.core;
 
-public class UndeployRequest {
-  private String warName;
+public class MavenVector {
+  private String groupId;
+  private String artifactId;
+  private String version;
   
-  public UndeployRequest() {}
+  public MavenVector() {}
 
-  public String getWarName() {
-    return warName;
+  public String getGroupId() {
+    return groupId;
   }
 
-  public void setWarName(String warName) {
-    this.warName = warName;
+  public void setGroupId(String groupId) {
+    this.groupId = groupId;
+  }
+
+  public String getArtifactId() {
+    return artifactId;
+  }
+
+  public void setArtifactId(String artifactId) {
+    this.artifactId = artifactId;
+  }
+
+  public String getVersion() {
+    return version;
+  }
+
+  public void setVersion(String version) {
+    this.version = version;
   }
 }

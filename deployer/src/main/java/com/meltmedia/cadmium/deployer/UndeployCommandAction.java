@@ -15,6 +15,8 @@
  */
 package com.meltmedia.cadmium.deployer;
 
+import java.io.File;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,15 +35,14 @@ public class UndeployCommandAction implements CommandAction<UndeployRequest> {
     log.info("Beginning Undeploy Command, started by {}", ctx.getSource());
     UndeployRequest request = ctx.getMessage().getBody();
     
-    String domain = request.getDomain();
-    String contextRoot = request.getContext();
-    log.debug("Undeploying domain {}, context {}", domain, contextRoot);
-    if(domain.isEmpty() && contextRoot.isEmpty()) {
+    String warName = request.getWarName();
+    log.debug("Undeploying war {}", warName);
+    if(warName.isEmpty() && !JBossUtil.isCadmiumWar(new File(System.getProperty(JBossUtil.JBOSS_SERVER_HOME_PROP), warName), log)) {
       log.info("Invalid undeployment request!");
       return false;
     }
     
-    JBossUtil.undeploy(domain + "/" + contextRoot, log);
+    JBossUtil.undeploy(warName, log);
     
     return true;
   }

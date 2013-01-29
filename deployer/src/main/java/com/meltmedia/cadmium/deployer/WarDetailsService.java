@@ -15,13 +15,13 @@
  */
 package com.meltmedia.cadmium.deployer;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.File;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -29,21 +29,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
+import com.meltmedia.cadmium.core.WarInfo;
+import com.meltmedia.cadmium.core.util.WarUtils;
 import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 
 @CadmiumSystemEndpoint
-@Path("/deployment/list")
-public class ListCadmiumWarsService extends AuthorizationService {
-  private final Logger logger = LoggerFactory.getLogger(getClass());
+@Path("/deployment/details")
+public class WarDetailsService extends AuthorizationService {
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   @GET
+  @Path("{war}")
   @Produces(MediaType.APPLICATION_JSON)
-  public List<String> list(@HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+  public WarInfo getWarInfo(@PathParam("war") String war, @HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-    List<String> deployedWars = JBossUtil.listDeployedWars(logger);
-    logger.debug("Jboss deployed cadmium wars: {}", Arrays.toString(deployedWars.toArray()));
-    return deployedWars;
+    
+    File warFile = new File(JBossUtil.getDeployDirectory(log), war);
+    
+    return WarUtils.getWarInfo(warFile);
   }
 }

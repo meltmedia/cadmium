@@ -22,9 +22,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meltmedia.cadmium.core.WarInfo;
 import com.meltmedia.cadmium.core.commands.StateUpdateRequest;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
@@ -55,6 +57,14 @@ public class LifecycleService {
       log.info("Updating config state of {} to {}", member.getAddress().toString(), state);
       member = members.get(members.indexOf(member));
       member.setConfigState(state);
+    }
+  }
+  
+  public void updateWarInfo(ChannelMember member, WarInfo warInfo) {
+    if(members != null && members.contains(member)) {
+      log.info("Updating artifact info of {} to {}", member.getAddress().toString(), ToStringBuilder.reflectionToString(warInfo));
+      member = members.get(members.indexOf(member));
+      member.setWarInfo(warInfo);
     }
   }
   
@@ -228,7 +238,8 @@ public class LifecycleService {
     List<ChannelMember> peirMembers = new ArrayList<ChannelMember>();
     if(members != null) {
       for(ChannelMember member : members) {
-        peirMembers.add(new ChannelMember(member.getExternalIp(), member.getAddress(), member.isCoordinator(), member.isMine(), member.getState(), member.getConfigState()));
+        peirMembers.add(new ChannelMember(member.getExternalIp(), member.getAddress(), member.isCoordinator(), member.isMine(), member.getState(), member.getConfigState(), member.getWarInfo()));
+        
       }
     }
     return peirMembers;

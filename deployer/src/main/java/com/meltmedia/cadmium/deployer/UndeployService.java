@@ -47,23 +47,13 @@ public class UndeployService extends AuthorizationService {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-    String domain = req.getDomain();
-    String contextRoot = req.getContextRoot();
-    if(StringUtils.isEmptyOrNull(domain) && StringUtils.isEmptyOrNull(contextRoot)) {
+    String warName = req.getWarName();
+    if(StringUtils.isEmptyOrNull(warName)) {
       return "Invalid request";
     }
-    
-    if(StringUtils.isEmptyOrNull(contextRoot)) {
-      contextRoot = "";
-    }
-    
-    if(StringUtils.isEmptyOrNull(domain) || domain.equals("localhost")) {
-      domain = "";
-    }
-    logger.debug("Sending undeploy message with domain [{}] context [{}]", domain, contextRoot);
+    logger.debug("Sending undeploy message with war [{}]", warName);
     com.meltmedia.cadmium.deployer.UndeployRequest mRequest = new com.meltmedia.cadmium.deployer.UndeployRequest();
-    mRequest.setDomain(domain);
-    mRequest.setContext(contextRoot);
+    mRequest.setWarName(warName);
     Message<com.meltmedia.cadmium.deployer.UndeployRequest> msg = new Message<com.meltmedia.cadmium.deployer.UndeployRequest>(UndeployCommandAction.UNDEPLOY_ACTION, mRequest);
 
     sender.sendMessage(msg, null);

@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.core.messaging;
 
 import org.jgroups.Address;
 
+import com.meltmedia.cadmium.core.WarInfo;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 
 public class ChannelMember {
@@ -26,6 +27,17 @@ public class ChannelMember {
   private boolean mine = false;
   private UpdateState state = UpdateState.IDLE;
   private UpdateState configState = UpdateState.IDLE;
+  private WarInfo warInfo;
+
+  public ChannelMember(String externalIp, Address address, boolean coordinator, boolean mine, UpdateState state, UpdateState configState, WarInfo warInfo) {
+    this.externalIp = externalIp;
+    this.address = address;
+    this.coordinator = coordinator;
+    this.mine = mine;
+    this.state = state;
+    this.configState = configState;
+    this.warInfo = warInfo;
+  }
   
   public ChannelMember(String externalIp, Address address, boolean coordinator, boolean mine, UpdateState state, UpdateState configState) {
     this.externalIp = externalIp;
@@ -92,6 +104,14 @@ public class ChannelMember {
 
   public void setExternalIp(String externalIp) {
     this.externalIp = externalIp;
+  }
+
+  public WarInfo getWarInfo() {
+    return warInfo;
+  }
+
+  public void setWarInfo(WarInfo warInfo) {
+    this.warInfo = warInfo;
   }
 
   @Override
