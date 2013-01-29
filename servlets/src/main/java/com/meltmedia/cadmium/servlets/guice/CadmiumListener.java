@@ -275,7 +275,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       log.error("Failed to reconfigure logging", e);
     }
 
-    if ((sshDir = getSshDir(configProperties, sharedContentRoot )) != null) {
+    if ((sshDir = getSshDir(configProperties, sharedContentRoot, log )) != null) {
       GitService.setupSsh(sshDir.getAbsolutePath());
     }
 
@@ -558,6 +558,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     if (sharedContentRoot == null) {
       log.warn("Could not access cadmium content root.  Using the tempdir.");
       sharedContentRoot = (File) context.getAttribute("javax.servlet.context.tempdir");
+      configProperties.setProperty(BASE_PATH_ENV, sharedContentRoot.getAbsoluteFile().getAbsolutePath());
     }
     return sharedContentRoot;
   }
@@ -597,7 +598,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   }
 
-  public static File getSshDir(Properties configProperties, File sharedContentRoot ) {
+  public static File getSshDir(Properties configProperties, File sharedContentRoot, Logger log ) {
     File sshDir = null;
     if (configProperties.containsKey(SSH_PATH_ENV)) {
       sshDir = new File(configProperties.getProperty(SSH_PATH_ENV));
@@ -611,6 +612,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         sshDir = null;
       }
     }
+    log.debug("Using ssh dir {}", sshDir);
     return sshDir;
   }
 

@@ -73,6 +73,7 @@ public class GitService
   
   public static void setupSsh(String sshDir) {
     if(SshSessionFactory.getInstance() == null || !SshSessionFactory.getInstance().getClass().getName().equals(GithubConfigSessionFactory.class.getName())) {
+      log.debug("Setting SSH session factory for ssh dir path {}", sshDir);
       SshSessionFactory.setInstance(new GithubConfigSessionFactory(sshDir));
     }
   }
