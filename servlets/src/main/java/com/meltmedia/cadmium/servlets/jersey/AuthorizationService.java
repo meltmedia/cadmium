@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.github.ApiClient;
+import com.meltmedia.cadmium.servlets.guice.CadmiumListener;
 
 public class AuthorizationService {
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -47,7 +48,7 @@ public class AuthorizationService {
           
       String env = systemProperties.getProperty("com.meltmedia.cadmium.environment", "development");
            
-      String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties");
+      String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties", new File(configManager.getSystemProperties().getProperty(CadmiumListener.BASE_PATH_ENV), "team.properties").getAbsoluteFile().getAbsolutePath());
       Properties teamsProps = configManager.getProperties(new File(teamsFile));
       
       log.trace("teamsProps: {}", teamsProps);
