@@ -51,6 +51,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.shiro.web.env.EnvironmentLoader;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
@@ -134,6 +135,8 @@ import com.meltmedia.cadmium.servlets.RedirectFilter;
 import com.meltmedia.cadmium.servlets.SecureRedirectFilter;
 import com.meltmedia.cadmium.servlets.SecureRedirectStrategy;
 import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
+import com.meltmedia.cadmium.servlets.shiro.PersistablePropertiesRealm;
+import com.meltmedia.cadmium.servlets.shiro.WebEnvironment;
 
 /**
  * Builds the context with the Guice framework. To see how this works, go to:
@@ -416,6 +419,16 @@ public class CadmiumListener extends GuiceServletContextListener {
             new SubTypesScanner(),
             new MethodAnnotationsScanner());
         Properties configProperties = configManager.getDefaultProperties();
+        
+        org.apache.shiro.web.env.WebEnvironment shiroEnv = (org.apache.shiro.web.env.WebEnvironment) context.getAttribute(EnvironmentLoader.ENVIRONMENT_ATTRIBUTE_KEY);
+        if(shiroEnv != null && shiroEnv instanceof WebEnvironment) {
+          WebEnvironment cadmiumShiroEnv = (WebEnvironment) shiroEnv;
+          if(cadmiumShiroEnv.getPersistablePropertiesRealm() != null) {
+            log.debug("Binding shiro configurable realm: ", PersistablePropertiesRealm.class);
+            bind(PersistablePropertiesRealm.class).toInstance(cadmiumShiroEnv.getPersistablePropertiesRealm());
+            cadmiumShiroEnv.getPersistablePropertiesRealm().loadProperties(applicationContentRoot.getAbsoluteFile());
+          }
+        }
 
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
         bind(ApiEndpointAccessController.class).toInstance(ApiEndpointAccessFilter.controller);
