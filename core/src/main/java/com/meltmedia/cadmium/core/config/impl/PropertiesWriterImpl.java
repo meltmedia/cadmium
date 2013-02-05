@@ -39,26 +39,24 @@ public class PropertiesWriterImpl implements PropertiesWriter {
     
     if(propsFile.canWrite() || !propsFile.exists()) {
 
-      if(!properties.isEmpty()) {
+      
+      FileOutputStream out = null;
 
-        
-        FileOutputStream out = null;
+      try {
 
-        try {
+        ensureDirExists(propsFile.getParent());
+        out = new FileOutputStream(propsFile);
+        properties.store(out, message);
+        out.flush();
+      } 
+      catch(Exception e) {
 
-          ensureDirExists(propsFile.getParent());
-          out = new FileOutputStream(propsFile);
-          properties.store(out, message);
-          out.flush();
-        } 
-        catch(Exception e) {
-
-          log.warn("Failed to persist vault properties file.", e);
-        } 
-        finally {
-          IOUtils.closeQuietly(out);
-        }
+        log.warn("Failed to persist vault properties file.", e);
+      } 
+      finally {
+        IOUtils.closeQuietly(out);
       }
+    
     }
 
   }
