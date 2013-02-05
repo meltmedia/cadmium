@@ -119,6 +119,11 @@
     </dependency>
     
     <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-core</artifactId>
+    </dependency>
+    
+    <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
       <scope>runtime</scope>

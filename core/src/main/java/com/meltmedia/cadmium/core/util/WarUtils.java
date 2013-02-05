@@ -193,6 +193,8 @@ public class WarUtils {
 
     addContextParam(doc, root);
 
+    addEnvContextParam(doc, root);
+
     addFilter(doc, root);
 
     addFilterMapping(doc, root);
@@ -274,6 +276,23 @@ public class WarUtils {
     paramValue.appendChild(doc.createTextNode("file:" + new File(System
         .getProperty("com.meltmedia.cadmium.contentRoot"), "shiro.ini")
         .getAbsoluteFile().getAbsolutePath()));
+    ctxParam.appendChild(paramValue);
+
+    addRelativeTo(root, ctxParam, "listener", false);
+  }
+
+  /**
+   * Adds a context parameter to a web.xml file to override where the shiro environment class. 
+   * @param doc The xml DOM document to create the new xml elements with.
+   * @param root The xml Element node to add the context param to.
+   */
+  public static void addEnvContextParam(Document doc, Element root) {
+    Element ctxParam = doc.createElement("context-param");
+    Element paramName = doc.createElement("param-name");
+    paramName.appendChild(doc.createTextNode("shiroEnvironmentClass"));
+    ctxParam.appendChild(paramName);
+    Element paramValue = doc.createElement("param-value");
+    paramValue.appendChild(doc.createTextNode("com.meltmedia.cadmium.servlets.shiro.WebEnvironment"));
     ctxParam.appendChild(paramValue);
 
     addRelativeTo(root, ctxParam, "listener", false);
