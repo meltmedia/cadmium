@@ -91,7 +91,9 @@ try:
   if os.path.exists('out'):
     shutil.move('out', 'out-old')
 
-  subprocess.call(['./node_modules/.bin/docpad', 'generate', '--env=production'])
+  status = subprocess.call(['./node_modules/.bin/docpad', 'generate', '--env=production'])
+  if status != 0:
+    sys.exit(1)
 
   if not os.path.exists('out/META-INF'):
     os.mkdir('out/META-INF')
