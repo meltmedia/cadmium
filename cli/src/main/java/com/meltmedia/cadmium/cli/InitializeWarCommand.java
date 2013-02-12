@@ -95,7 +95,7 @@ public class InitializeWarCommand implements CliCommand {
 	    if(!validRequest) {
 	      System.exit(1);
 	    }
-	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, StringUtils.isBlank(configRepoUri) || configRepoUri.equals(repoUri) ? repoUri : configRepoUri, configBranch, domain, context, secure);
+	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, StringUtils.isBlank(configRepoUri) || configRepoUri.equals(repoUri) ? repoUri : configRepoUri, configBranch, domain, context, secure, null);
 		} else {
 			System.err.println("ERROR: \""+war+"\" does not exist or cannot be read.");
 			System.exit(1);

@@ -50,6 +50,7 @@ import jodd.lagarto.dom.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.util.StringUtils;
+import org.slf4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -85,7 +86,7 @@ public class WarUtils {
   public static void updateWar(String templateWar, String war,
       List<String> newWarNames, String repoUri, String branch,
       String configRepoUri, String configBranch, String domain,
-      String context, boolean secure) throws Exception {
+      String context, boolean secure, Logger log) throws Exception {
     ZipFile inZip = null;
     ZipOutputStream outZip = null;
     InputStream in = null;
@@ -148,14 +149,18 @@ public class WarUtils {
           inZip.close();
         }
       } catch (Exception e) {
-        System.err.println("ERROR: Failed to close " + war);
+        if(log != null) {
+          log.error("Failed to close " + war);
+        }
       }
       try {
         if (outZip != null) {
           outZip.close();
         }
       } catch (Exception e) {
-        System.err.println("ERROR: Failed to close " + newWarNames.get(0));
+        if(log != null) {
+          log.error("Failed to close " + newWarNames.get(0));
+        }
       }
       try {
         if (out != null) {

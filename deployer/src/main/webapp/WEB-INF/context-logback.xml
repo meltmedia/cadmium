@@ -18,17 +18,24 @@
 -->
 <configuration>
 
-  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${logDir}/cadmium.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover -->
+      <fileNamePattern>cadmium.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+      <!-- keep 30 days' worth of history -->
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
       <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
     </encoder>
   </appender>
-  
-  <root level="WARN">
-    <appender-ref ref="CONSOLE" />
+
+  <logger name="com.meltmedia.cadmium.deployer" level="DEBUG"/>
+  <logger name="com.meltmedia.cadmium.maven" level="DEBUG"/>
+
+  <root level="ERROR">
+    <appender-ref ref="FILE" />
   </root>
-  
-  <logger name="com.meltmedia.cadmium" level="ERROR"/>
-  <logger name="jodd" level="ERROR" />
-  
 </configuration>

@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,28 +71,40 @@ public class DeployCommandAction implements CommandAction<DeployRequest> {
     
     // If the shiro config file can't be read lets not make this war secure.
     if(secure) {
+      log.info("Requested to deploy secure app!");
       File shiroIniFile = new File(System.getProperty("com.meltmedia.cadmium.contentRoot"), "shiro.ini");
       if(!shiroIniFile.canRead()) {
         log.warn("Not adding security to war! The shiro config file \"{}\": either doesn't exist or cannot be read.", shiroIniFile.getAbsoluteFile());
         secure = false;
+      } else {
+          log.info("Found 'shiro' configuration making app secure.");
       }
     }
     
     File artifactFile = artifactResolver.resolveMavenArtifact(request.getArtifact());
+
+    log.info("Artifact downloaded...  configuring war for deployment.");
     
-    updateWar(null, artifactFile.getAbsolutePath(), newWarNames, request.getRepo(), request.getBranch(), request.getConfigRepo(), request.getConfigBranch(), request.getDomain(), request.getContext(), secure);
+    updateWar(null, artifactFile.getAbsolutePath(), newWarNames, request.getRepo(), request.getBranch(), request.getConfigRepo(), request.getConfigBranch(), request.getDomain(), request.getContext(), secure, log);
     
     String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
-    
-    tmpZip.renameTo(new File(deployPath, tmpFileName));
+
+    log.info("Moving war {} into deployment directory {}", tmpFileName, deployPath);
+
+    File newWar = new File(deployPath, tmpFileName);
+
+    FileUtils.copyFile(tmpZip, newWar);
+
+    FileUtils.deleteQuietly(tmpZip);
+
+    log.info("Waiting for jBoss to pick up new deployment.");
     
     return true;
   }
 
   @Override
   public void handleFailure(CommandContext<DeployRequest> ctx, Exception e) {
-    // TODO Auto-generated method stub
-
+    log.error("Failed to deploy "+ctx.getMessage(), e);
   }
 
 }
