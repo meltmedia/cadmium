@@ -108,9 +108,13 @@ try:
   finally:
     fd.close()
 
-  subprocess.call(['cadmium', 'validate', 'out'])
+  status = subprocess.call(['cadmium', 'validate', 'out'])
+  if status != 0:
+    sys.exit(1)
 
-  subprocess.call(['cadmium', 'commit', '--quiet-auth', '-m', '"'+message+'"', 'out', url])
+  status = subprocess.call(['cadmium', 'commit', '--quiet-auth', '-m', '"'+message+'"', 'out', url])
+  if status != 0:
+    sys.exit(1)
 
 except subprocess.CalledProcessError:
   print "Please run this command from within a git repository."
