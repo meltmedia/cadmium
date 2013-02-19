@@ -1,0 +1,4 @@
+#! /bin/sh
+newest_jar=~/.cadmium/cadmium-cli.jar
+java -jar $newest_jar "$@"
+exit $?
