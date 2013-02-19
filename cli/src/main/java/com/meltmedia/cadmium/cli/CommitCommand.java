@@ -15,102 +15,102 @@
  */
 package com.meltmedia.cadmium.cli;
 
-import java.io.File;
-import java.util.List;
-
-import org.apache.commons.io.FileUtils;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.api.UpdateRequest;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.status.Status;
+import org.apache.commons.io.FileUtils;
+
+import java.io.File;
+import java.util.List;
 
 /**
  * Replaces the content in a git repository branch with the contents of a given directory and tells a Cadmium site to update to it.
- * 
+ *
  * @author John McEntire
  * @author Christian Trimble
  * @author Brian Barr
- *
  */
-@Parameters(commandDescription="Commits content from a specific directory into a repo:branch that a site is serving from then updates the site to serve the new content.", separators="=")
+@Parameters(commandDescription = "Commits content from a specific directory into a repo:branch that a site is serving from then updates the site to serve the new content.", separators = "=")
 public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand {
-  
-  @Parameter(description="<dir> <site>", required=true)
+
+  @Parameter(description = "<dir> <site>", required = true)
   private List<String> params;
-  
-  @Parameter(names="--repo", description="Overrides the repository url from the server.", required=false)
+
+  @Parameter(names = "--repo", description = "Overrides the repository url from the server.", required = false)
   private String repo;
-  
-  @Parameter(names={"--message", "-m"}, description="comment", required=true)  
+
+  @Parameter(names = {"--message", "-m"}, description = "comment", required = true)
   private String comment;
-  
-  @Parameter(names="--quiet-auth", description="Option to skip updating/prompting for new credentials.", required=false)
+
+  @Parameter(names = "--quiet-auth", description = "Option to skip updating/prompting for new credentials.", required = false)
   private Boolean skipAuth = false;
-  
+
   /**
    * Does the work for this command.
-   * 
+   *
    * @throws Exception
    */
   public void execute() throws Exception {
-      String content = null;
-      String siteUrl = null;
-      
-      if( params.size() == 2 ) {
-        content = params.get(0);
-        siteUrl = getSecureBaseUrl(params.get(1));
-      }
-      else if( params.size() == 0 ) {
-        System.err.println("The content directory and site must be specifed.");
-        System.exit(1);
-      }
-      else {
-        System.err.println("Too many parameters were specified.");
-        System.exit(1);
-      }
-	  
+    String content = null;
+    String siteUrl = null;
+
+    if (params.size() == 2) {
+      content = params.get(0);
+      siteUrl = getSecureBaseUrl(params.get(1));
+    } else if (params.size() == 0) {
+      System.err.println("The content directory and site must be specifed.");
+      System.exit(1);
+    } else {
+      System.err.println("Too many parameters were specified.");
+      System.exit(1);
+    }
+
     GitService git = null;
     try {
-      System.out.println("Getting status of ["+siteUrl+"]");
+      System.out.println("Getting status of [" + siteUrl + "]");
       Status status = StatusCommand.getSiteStatus(siteUrl, token);
-  
-      if(repo != null) {
+
+      if (repo != null) {
         status.setRepo(repo);
       }
-      
+
       status.setRevision(null);
-      
-      System.out.println("Cloning repository that ["+siteUrl+"] is serving");
+
+      System.out.println("Cloning repository that [" + siteUrl + "] is serving");
       git = CloneCommand.cloneSiteRepo(status);
-      
+
       String revision = status.getRevision();
       String branch = status.getBranch();
-      
-      if(!UpdateCommand.isValidBranchName(branch, UpdateRequest.CONTENT_BRANCH_PREFIX)) {
-        throw new Exception("Cannot commit to a branch without the prefix of "+UpdateRequest.CONTENT_BRANCH_PREFIX+".");
+
+      if (!UpdateCommand.isValidBranchName(branch, UpdateRequest.CONTENT_BRANCH_PREFIX)) {
+        throw new Exception("Cannot commit to a branch without the prefix of " + UpdateRequest.CONTENT_BRANCH_PREFIX + ".");
       }
-      
-      if(git.isTag(branch)) {
+
+      if (git.isTag(branch)) {
         throw new Exception("Cannot commit to a tag!");
       }
-      System.out.println("Cloning content from ["+content+"] to ["+siteUrl+":"+branch+"]");
+      System.out.println("Cloning content from [" + content + "] to [" + siteUrl + ":" + branch + "]");
       revision = CloneCommand.cloneContent(content, git, comment);
-      
-      System.out.println("Switching content on ["+siteUrl+"]");
-      UpdateCommand.sendUpdateMessage(siteUrl, null, branch, revision, comment, token);
-      
-    } catch(Exception e) {
-      System.err.println("Failed to commit changes to ["+siteUrl+"]: "+e.getMessage());
+
+      System.out.println("Switching content on [" + siteUrl + "]");
+      if (!UpdateCommand.sendUpdateMessage(siteUrl, null, branch, revision, comment, token)) {
+        System.err.println("Failed to update [" + siteUrl + "]");
+        System.exit(1);
+      }
+
+    } catch (Exception e) {
+      System.err.println("Failed to commit changes to [" + siteUrl + "]: " + e.getMessage());
+      System.exit(1);
     } finally {
-      if(git != null) {
+      if (git != null) {
         String dir = git.getBaseDirectory();
         git.close();
         FileUtils.forceDelete(new File(dir));
       }
     }
-    
+
   }
 
   /**
