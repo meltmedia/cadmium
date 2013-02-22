@@ -176,13 +176,24 @@ public class ErrorPageFilter implements Filter {
         "/"+Integer.toString(sc)+".html",
         "/"+Integer.toString(sc).subSequence(0, 2)+"x.html",
         "/"+Integer.toString(sc).subSequence(0, 1)+"xx.html" };
-      
+            
       InputStream errorPageIn = null;
       Reader errorPageReader = null;
       try {
-        for (String fileName : fileNames) {
-          if ((errorPageIn = contentService.getResourceAsStream(fileName)) != null)
-            break;
+        String path = request.getRequestURI();
+        while(path != null && errorPageIn == null) {
+          if(path.endsWith("/")) {
+          	path = path.substring(0, path.length() - 1);
+          }
+	        for (String fileName : fileNames) {
+	          if ((errorPageIn = contentService.getResourceAsStream(path + fileName)) != null)
+	            break;
+	        }
+	        if(path.length() > 0) {
+	        	path = path.substring(0, path.lastIndexOf("/"));
+	        } else {
+	        	path = null;
+	        }
         }
 
         // get the default page.

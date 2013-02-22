@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.mockito.Mockito;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CharSequenceInputStream;
 
@@ -58,14 +59,14 @@ public class ErrorPageFilterSelectionTest {
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
-        { sendErrorFilterChain(404), "404" },
-        { sendErrorFilterChain(407), "40x" },
-        { sendErrorFilterChain(412), "4xx" },
-        { sendErrorFilterChain(501), "501" },
-        { sendErrorFilterChain(502), "50x" },
-        { sendErrorFilterChain(510), "5xx" },
-        { throwExceptionFilterChain(new Exception("Oops!")), "50x"},
-        { successFilterChain("Success"), "Success"} });
+        { sendErrorFilterChain(404), "patient/404", "/patient/blah" },
+        { sendErrorFilterChain(407), "40x", "/hcp/ehh" },
+        { sendErrorFilterChain(412), "patient/4xx", "/patient/blah/ehh"},
+        { sendErrorFilterChain(501), "501", "/" },
+        { sendErrorFilterChain(502), "50x", "/" },
+        { sendErrorFilterChain(510), "5xx", "/" },
+        { throwExceptionFilterChain(new Exception("Oops!")), "50x", "/"},
+        { successFilterChain("Success"), "Success", "/"} });
   }
   
   /**
@@ -143,14 +144,21 @@ public class ErrorPageFilterSelectionTest {
   private ErrorPageFilter filter;
   
   /**
+   * The path info for the simulated request.
+   */
+  private String pathInfo;
+  
+  /**
    * Creates a new test object from the parameters.
    * 
    * @param chain the chain that will be called in the filter.
    * @param expectedContent the expected content on the response writer.
+   * @param pathInfo The path info for a simulated request.
    */
-  public ErrorPageFilterSelectionTest( FilterChain chain, String expectedContent ) {
+  public ErrorPageFilterSelectionTest( FilterChain chain, String expectedContent, String pathInfo ) {
     this.chain = chain;
     this.expectedContent = expectedContent;
+    this.pathInfo = pathInfo;
   }
   
   /**
@@ -162,7 +170,11 @@ public class ErrorPageFilterSelectionTest {
   @Before
   public void beforeTest() throws IOException, ServletException {
     ContentService contentService = mock(ContentService.class);
+    when(contentService.getResourceAsStream(startsWith("/hcp"))).thenReturn(null);
+    when(contentService.getResourceAsStream(startsWith("/patient/blah"))).thenReturn(null);
     when(contentService.getResourceAsStream("/404.html")).thenReturn(new CharSequenceInputStream("404", "UTF-8"));
+    when(contentService.getResourceAsStream("/patient/404.html")).thenReturn(new CharSequenceInputStream("patient/404", "UTF-8"));
+    when(contentService.getResourceAsStream("/patient/4xx.html")).thenReturn(new CharSequenceInputStream("patient/4xx", "UTF-8"));
     when(contentService.getResourceAsStream("/407.html")).thenReturn(null);
     when(contentService.getResourceAsStream("/412.html")).thenReturn(null);
     when(contentService.getResourceAsStream("/40x.html")).thenReturn(new CharSequenceInputStream("40x", "UTF-8"));
@@ -203,9 +215,10 @@ public class ErrorPageFilterSelectionTest {
     // Return the result writer for output.
     HttpServletResponse response = mock(HttpServletResponse.class);
     when(response.getWriter()).thenReturn(new PrintWriter(resultWriter));
-    
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getRequestURI()).thenReturn(pathInfo);
     // act
-    filter.doFilter(mock(HttpServletRequest.class), response, chain);
+    filter.doFilter(request, response, chain);
     
     // assert
     assertEquals("The wrong error content was returned.", expectedContent, resultWriter.toString());
