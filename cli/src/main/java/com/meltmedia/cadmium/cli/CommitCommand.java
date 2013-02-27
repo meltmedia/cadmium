@@ -68,7 +68,7 @@ public class CommitCommand extends AbstractAuthorizedOnly implements CliCommand 
     }
 
     GitService git = null;
-    try {
+      try {
       System.out.println("Getting status of [" + siteUrl + "]");
       Status status = StatusCommand.getSiteStatus(siteUrl, token);
 

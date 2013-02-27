@@ -16,29 +16,21 @@
 package com.meltmedia.cadmium.servlets;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import com.meltmedia.cadmium.core.ContentService;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import javax.ws.rs.core.MediaType;
-
-import org.apache.commons.io.IOUtils;
-
-import com.meltmedia.cadmium.core.ContentService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 
 /**
  * <p>Serves error content for calls to HttpServletResponse.sendError() methods and exceptions that are thrown during
@@ -123,7 +115,7 @@ public class ErrorPageFilter implements Filter {
       throws IOException, ServletException {
     final HttpServletRequest  httpReq = (HttpServletRequest)req;
     final HttpServletResponse httpRes = (HttpServletResponse)res;
-    
+
     if( ignorePath != null ) {
       String contextPath = httpReq.getContextPath();
       String uri = httpReq.getRequestURI();
@@ -186,28 +178,37 @@ public class ErrorPageFilter implements Filter {
           	path = path.substring(0, path.length() - 1);
           }
 	        for (String fileName : fileNames) {
-	          if ((errorPageIn = contentService.getResourceAsStream(path + fileName)) != null)
+	          if ((errorPageIn = contentService.getResourceAsStream(path + fileName)) != null) {
+              log.debug("Found error page for path {} at {}", path, path + fileName);
 	            break;
+            }
 	        }
-	        if(path.length() > 0) {
-	        	path = path.substring(0, path.lastIndexOf("/"));
-	        } else {
-	        	path = null;
-	        }
+          if(errorPageIn == null) {
+            if(path.length() > 0) {
+              path = path.substring(0, path.lastIndexOf("/"));
+            } else {
+              path = null;
+            }
+          }
         }
 
         // get the default page.
         if (errorPageIn == null) {
           for (String fileName : fileNames) {
-            if((errorPageIn = ErrorPageFilter.class.getResourceAsStream(fileName)) != null)
+            if((errorPageIn = ErrorPageFilter.class.getResourceAsStream(fileName)) != null) {
+              log.debug("Found error page at {}", fileName);
               break;
+            }
             else
-              if ((errorPageIn = ErrorPageFilter.class.getResourceAsStream("./"+fileName)) != null)
+              if ((errorPageIn = ErrorPageFilter.class.getResourceAsStream("./"+fileName)) != null) {
+                log.debug("Found error page at {}", "./"+fileName);
                 break;
+              }
           }
         }
         
         if( errorPageIn == null ) {
+          log.debug("No error page found.");
           if( message == null ) response.sendError(sc);
           else response.sendError(sc, message);
           return;
@@ -221,15 +222,16 @@ public class ErrorPageFilter implements Filter {
 
         // create a UTF-8 reader for the error page content.
         response.setContentType(MediaType.TEXT_HTML);
-        errorPageReader = new InputStreamReader(errorPageIn, "UTF-8");
-        IOUtils.copy(errorPageReader, response.getWriter());
+        log.trace("Sending error page content to response:{}", response.getClass().getName());
+        IOUtils.copy(errorPageIn, response.getOutputStream());
+        log.trace("Done sending error page. {}", sc);
       } finally {
-        IOUtils.closeQuietly(errorPageReader);
         IOUtils.closeQuietly(errorPageIn);
-        IOUtils.closeQuietly(response.getWriter());
+        IOUtils.closeQuietly(response.getOutputStream());
       }
     }
     else {
+      if( response.isCommitted() ) log.trace("Response is committed!");
       if( message == null ) response.sendError(sc);
       else response.sendError(sc, message);
     }

@@ -15,37 +15,24 @@
  */
 package com.meltmedia.cadmium.servlets;
 
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collection;
-
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.meltmedia.cadmium.core.ContentService;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.CharSequenceInputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.mockito.Mockito;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CharSequenceInputStream;
 
-import com.meltmedia.cadmium.core.ContentService;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.util.Arrays;
+import java.util.Collection;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 /**
@@ -113,11 +100,11 @@ public class ErrorPageFilterSelectionTest {
           throws IOException, ServletException {
         HttpServletResponse httpRes = (HttpServletResponse)res;
         httpRes.setStatus(200);
-        Writer out = null;
-        Reader in = null;
+        OutputStream out = null;
+        InputStream in = null;
         try {
-          out = res.getWriter();
-          in = new StringReader(content);
+          out = res.getOutputStream();
+          in = new ByteArrayInputStream(content.getBytes());
           IOUtils.copy(in, out);
         }
         finally {
@@ -210,11 +197,16 @@ public class ErrorPageFilterSelectionTest {
    */
   @Test
   public void testFilterChainError() throws IOException, ServletException {
-    StringWriter resultWriter = new StringWriter();
+    final ByteArrayOutputStream resultWriter = new ByteArrayOutputStream();
     
     // Return the result writer for output.
     HttpServletResponse response = mock(HttpServletResponse.class);
-    when(response.getWriter()).thenReturn(new PrintWriter(resultWriter));
+    when(response.getOutputStream()).thenReturn(new ServletOutputStream() {
+      @Override
+      public void write(int i) throws IOException {
+        resultWriter.write(i);
+      }
+    });
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getRequestURI()).thenReturn(pathInfo);
     // act
