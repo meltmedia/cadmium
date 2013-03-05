@@ -177,6 +177,14 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
           // if we should not index this file, move on.
           if(!shouldIndex(jerry)) return;
           
+          Jerry removals = jerry.$("[cadmium=\"no-index\"]");
+          if(removals.size() > 0) {
+          	log.info("Removing {} element[s]", removals.length());
+          	removals.remove();
+          } else {
+            log.info("No elements to remove");
+          }
+          
           String title = jerry.$("html > head > title").text();
           String textContent = jerry.$("html > body").text();
   
