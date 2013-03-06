@@ -15,13 +15,11 @@
  */
 package com.meltmedia.cadmium.core.scheduler;
 
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Named;
-
 import com.meltmedia.cadmium.core.CoordinatorOnly;
 import com.meltmedia.cadmium.core.Scheduled;
+
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class to test scheduler.
@@ -44,7 +42,7 @@ public class TestTask implements Runnable {
   }
   
   @Scheduled(delay=100l, unit=TimeUnit.MILLISECONDS)
-  public void testingArguments(@Named("str") String str, Properties props) {
+  public void testingArguments(@TestString String str, Properties props) {
     
   }
   

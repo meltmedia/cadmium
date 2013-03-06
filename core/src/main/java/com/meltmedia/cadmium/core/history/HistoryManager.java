@@ -15,6 +15,17 @@
  */
 package com.meltmedia.cadmium.core.history;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.meltmedia.cadmium.core.ApplicationContentRoot;
+import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.commands.GitLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -22,19 +33,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.meltmedia.cadmium.core.FileSystemManager;
-import com.meltmedia.cadmium.core.commands.GitLocation;
 
 @Singleton
 public class HistoryManager {
@@ -48,7 +46,7 @@ public class HistoryManager {
   
   
   @Inject
-  public HistoryManager(@Named("applicationContentRoot") String contentRoot) throws Exception {
+  public HistoryManager(@ApplicationContentRoot String contentRoot) throws Exception {
     this.contentRoot = contentRoot;
     
     readHistoryFile();

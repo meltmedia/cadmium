@@ -15,18 +15,18 @@
  */
 package com.meltmedia.cadmium.core.messaging.jgroups;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.URL;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-
+import com.meltmedia.cadmium.core.messaging.MessagingChannelName;
+import com.meltmedia.cadmium.core.messaging.MessagingConfigurationUrl;
 import org.jgroups.JChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.URL;
 
 /**
  * A provider for the JGroups channel for this cluster.
@@ -36,9 +36,6 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class JChannelProvider implements Provider<JChannel>, Closeable {
   
-  public static final String CHANNEL_NAME = "JGroupsName";
-  public static final String CONFIG_NAME = "JGroupsConfigName";
-  
   private final Logger log = LoggerFactory.getLogger(getClass());
 
   private String channelName;
@@ -46,7 +43,7 @@ public class JChannelProvider implements Provider<JChannel>, Closeable {
   private JChannel channel;
   
   @Inject
-  public JChannelProvider(@Named(CHANNEL_NAME) String channelName, @Named(CONFIG_NAME) URL configFile) {
+  public JChannelProvider(@MessagingChannelName String channelName, @MessagingConfigurationUrl URL configFile) {
     this.channelName = channelName;
     this.configFile = configFile;
   }

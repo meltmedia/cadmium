@@ -15,30 +15,28 @@
  */
 package com.meltmedia.cadmium.core.lifecycle;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.meltmedia.cadmium.core.ClusterMembers;
 import com.meltmedia.cadmium.core.WarInfo;
 import com.meltmedia.cadmium.core.commands.StateUpdateRequest;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Singleton
 public class LifecycleService {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
-  @Named("members")
+  @ClusterMembers
   List<ChannelMember> members;
   
   @Inject

@@ -15,19 +15,17 @@
  */
 package com.meltmedia.cadmium.servlets.shiro;
 
-import java.io.File;
-
-import javax.inject.Named;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.inject.Inject;
+import com.meltmedia.cadmium.core.ApplicationContentRoot;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.servlets.shiro.AuthenticationManagerRequest.RequestType;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
 
 /**
  * Handles updating configurable shiro realm for this site only.
@@ -47,7 +45,7 @@ public class AuthenticationManagerCommandAction implements
   protected ConfigManager configManager;
   
   @Inject
-  @Named("applicationContentRoot")
+  @ApplicationContentRoot
   protected String applicationContentDir;
 
   @Override

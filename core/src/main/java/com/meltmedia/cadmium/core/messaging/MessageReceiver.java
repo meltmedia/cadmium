@@ -15,27 +15,25 @@
  */
 package com.meltmedia.cadmium.core.messaging;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Map;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
+import com.meltmedia.cadmium.core.CommandAction;
+import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.CommandMap;
 import org.jgroups.MessageListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.CommandAction;
-import com.meltmedia.cadmium.core.CommandContext;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
 
 @Singleton
 public class MessageReceiver implements MessageListener {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
-  @Named("commandMap")
+  @CommandMap
   Map<String, CommandAction<?>> commandMap;
   
   @Inject
