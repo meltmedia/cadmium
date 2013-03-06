@@ -15,27 +15,25 @@
  */
 package com.meltmedia.cadmium.core.scheduler;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mockito;
-
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*; 
 import org.reflections.ReflectionUtils;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.name.Names;
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
-import com.meltmedia.cadmium.core.messaging.MembershipTracker;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
 /**
  * JUnit test case to test the SchedulerTask Runnable wrapper and annotation processing.
@@ -104,8 +102,8 @@ public class SchedulerTaskTest {
 
       @Override
       protected void configure() {
-        bind(String.class).annotatedWith(Names.named("str")).toInstance(test);
-        bind(String.class).annotatedWith(Names.named("str2")).toInstance(notUsed);
+        bind(String.class).annotatedWith(TestString.class).toInstance(test);
+        bind(String.class).annotatedWith(UsedTestString.class).toInstance(notUsed);
         bind(Properties.class).toInstance(props);
         bind(TestTask.class).toInstance(task);
         bind(MembershipTracker.class).toInstance(membershipTracker);

@@ -15,13 +15,7 @@
  */
 package com.meltmedia.cadmium.core.messaging;
 
-import java.io.IOException;
-import java.util.Map;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
+import com.meltmedia.cadmium.core.CommandBodyMap;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -31,6 +25,11 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Converts message between JGroups and cadmium commands.
@@ -49,7 +48,7 @@ public class MessageConverter {
   private static JsonFactory factory = mapper.getJsonFactory();
   
   @Inject
-  @Named("commandBodyMap")
+  @CommandBodyMap
   protected Map<String, Class<?>> commandToBodyMapping;
   
   public Map<String, Class<?>> getCommandToBodyMapping() {

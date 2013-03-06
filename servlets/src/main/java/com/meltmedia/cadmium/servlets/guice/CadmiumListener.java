@@ -15,41 +15,40 @@
  */
 package com.meltmedia.cadmium.servlets.guice;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.ws.rs.Path;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
-
+import com.google.inject.*;
+import com.google.inject.grapher.GrapherModule;
+import com.google.inject.grapher.InjectorGrapher;
+import com.google.inject.grapher.graphviz.GraphvizModule;
+import com.google.inject.grapher.graphviz.GraphvizRenderer;
+import com.google.inject.internal.InternalInjectorCreator;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.servlet.GuiceServletContextListener;
+import com.google.inject.servlet.ServletModule;
+import com.meltmedia.cadmium.core.*;
+import com.meltmedia.cadmium.core.commands.*;
+import com.meltmedia.cadmium.core.config.ConfigManager;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
+import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
+import com.meltmedia.cadmium.core.messaging.*;
+import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
+import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMembershipTracker;
+import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
+import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
+import com.meltmedia.cadmium.core.meta.ConfigProcessor;
+import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
+import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
+import com.meltmedia.cadmium.core.scheduler.SchedulerService;
+import com.meltmedia.cadmium.core.util.Jsr250Executor;
+import com.meltmedia.cadmium.core.util.Jsr250Utils;
+import com.meltmedia.cadmium.core.util.LogUtils;
+import com.meltmedia.cadmium.core.util.WarUtils;
+import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
+import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
+import com.meltmedia.cadmium.servlets.*;
+import com.meltmedia.cadmium.servlets.shiro.PersistablePropertiesRealm;
+import com.meltmedia.cadmium.servlets.shiro.WebEnvironment;
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.web.env.EnvironmentLoader;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
@@ -67,76 +66,21 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.Module;
-import com.google.inject.Scopes;
-import com.google.inject.Stage;
-import com.google.inject.TypeLiteral;
-import com.google.inject.grapher.GrapherModule;
-import com.google.inject.grapher.InjectorGrapher;
-import com.google.inject.grapher.graphviz.GraphvizModule;
-import com.google.inject.grapher.graphviz.GraphvizRenderer;
-import com.google.inject.internal.InternalInjectorCreator;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
-import com.google.inject.servlet.GuiceServletContextListener;
-import com.google.inject.servlet.ServletModule;
-import com.meltmedia.cadmium.core.ApiEndpointAccessController;
-import com.meltmedia.cadmium.core.CadmiumModule;
-import com.meltmedia.cadmium.core.CommandAction;
-import com.meltmedia.cadmium.core.ConfigurationGitService;
-import com.meltmedia.cadmium.core.ConfigurationWorker;
-import com.meltmedia.cadmium.core.ContentGitService;
-import com.meltmedia.cadmium.core.ContentService;
-import com.meltmedia.cadmium.core.ContentWorker;
-import com.meltmedia.cadmium.core.CoordinatedWorker;
-import com.meltmedia.cadmium.core.FileSystemManager;
-import com.meltmedia.cadmium.core.SiteDownService;
-import com.meltmedia.cadmium.core.commands.CommandBodyMapProvider;
-import com.meltmedia.cadmium.core.commands.CommandMapProvider;
-import com.meltmedia.cadmium.core.commands.CommandResponse;
-import com.meltmedia.cadmium.core.commands.ContentUpdateRequest;
-import com.meltmedia.cadmium.core.commands.HistoryResponse;
-import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
-import com.meltmedia.cadmium.core.commands.LoggerConfigResponse;
-import com.meltmedia.cadmium.core.commands.LoggerConfigResponseCommandAction;
-import com.meltmedia.cadmium.core.config.ConfigManager;
-import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
-import com.meltmedia.cadmium.core.git.GitService;
-import com.meltmedia.cadmium.core.history.HistoryManager;
-import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
-import com.meltmedia.cadmium.core.messaging.MembershipTracker;
-import com.meltmedia.cadmium.core.messaging.MessageConverter;
-import com.meltmedia.cadmium.core.messaging.MessageReceiver;
-import com.meltmedia.cadmium.core.messaging.MessageSender;
-import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
-import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMembershipTracker;
-import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
-import com.meltmedia.cadmium.core.messaging.jgroups.MultiClassReceiver;
-import com.meltmedia.cadmium.core.meta.ConfigProcessor;
-import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
-import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
-import com.meltmedia.cadmium.core.scheduler.SchedulerService;
-import com.meltmedia.cadmium.core.util.Jsr250Executor;
-import com.meltmedia.cadmium.core.util.Jsr250Utils;
-import com.meltmedia.cadmium.core.util.LogUtils;
-import com.meltmedia.cadmium.core.util.WarUtils;
-import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
-import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
-import com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter;
-import com.meltmedia.cadmium.servlets.ErrorPageFilter;
-import com.meltmedia.cadmium.servlets.FileServlet;
-import com.meltmedia.cadmium.servlets.MaintenanceFilter;
-import com.meltmedia.cadmium.servlets.RedirectFilter;
-import com.meltmedia.cadmium.servlets.SecureRedirectFilter;
-import com.meltmedia.cadmium.servlets.SecureRedirectStrategy;
-import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
-import com.meltmedia.cadmium.servlets.shiro.PersistablePropertiesRealm;
-import com.meltmedia.cadmium.servlets.shiro.WebEnvironment;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.ws.rs.Path;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
+import java.io.*;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * Builds the context with the Guice framework. To see how this works, go to:
@@ -448,7 +392,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
-        }).annotatedWith(Names.named("members")).toInstance(members);
+        }).annotatedWith(ClusterMembers.class).toInstance(members);
         Multibinder<CommandAction<?>> commandActionBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<CommandAction<?>>(){});
 
         @SuppressWarnings("rawtypes")
@@ -463,23 +407,21 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(new TypeLiteral<CommandResponse<HistoryResponse>>(){}).to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
         bind(new TypeLiteral<CommandResponse<LoggerConfigResponse>>(){}).to(LoggerConfigResponseCommandAction.class).in(Scopes.SINGLETON);
 
-        bind(new TypeLiteral<Map<String, CommandAction<?>>>() {}).annotatedWith(Names.named("commandMap")).toProvider(CommandMapProvider.class);
-        bind(new TypeLiteral<Map<String, Class<?>>>(){}).annotatedWith(Names.named("commandBodyMap")).toProvider(CommandBodyMapProvider.class);
+        bind(new TypeLiteral<Map<String, CommandAction<?>>>() {}).annotatedWith(CommandMap.class).toProvider(CommandMapProvider.class);
+        bind(new TypeLiteral<Map<String, Class<?>>>(){}).annotatedWith(CommandBodyMap.class).toProvider(CommandBodyMapProvider.class);
 
-        bind(String.class).annotatedWith(Names.named("contentDir")).toInstance(contentDir);
-        bind(String.class).annotatedWith(Names.named("sharedContentRoot")).toInstance(sharedContentRoot.getAbsolutePath());
-        bind(String.class).annotatedWith(Names.named("warName")).toInstance(warName);
+        bind(String.class).annotatedWith(ContentDirectory.class).toInstance(contentDir);
+        bind(String.class).annotatedWith(SharedContentRoot.class).toInstance(sharedContentRoot.getAbsolutePath());
+        bind(String.class).annotatedWith(CurrentWarName.class).toInstance(warName);
 
         String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "development");
 
         // Bind channel name
-        bind(String.class).annotatedWith(Names.named(JChannelProvider.CHANNEL_NAME)).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
+        bind(String.class).annotatedWith(MessagingChannelName.class).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
 
-        bind(String.class).annotatedWith(Names.named("applicationContentRoot")).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
+        bind(String.class).annotatedWith(ApplicationContentRoot.class).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
 
         bind(HistoryManager.class);
-
-        //bind(Properties.class).annotatedWith(Names.named(CONFIG_PROPERTIES_FILE)).toInstance(configProperties);
 
         bind(ConfigManager.class).toInstance(configManager);
 
@@ -487,11 +429,11 @@ public class CadmiumListener extends GuiceServletContextListener {
         if(channelConfigUrl == null) {
           log.info("Using internal tcp.xml configuration file for JGroups.");
           URL propsUrl = JChannelProvider.class.getClassLoader().getResource("tcp.xml");
-          bind(URL.class).annotatedWith(Names.named(JChannelProvider.CONFIG_NAME)).toInstance(propsUrl);
+          bind(URL.class).annotatedWith(MessagingConfigurationUrl.class).toInstance(propsUrl);
         } else {
           try {
             log.info("Using {} configuration file for JGroups.", channelConfigUrl);
-            bind(URL.class).annotatedWith(Names.named(JChannelProvider.CONFIG_NAME)).toInstance(new URL(channelConfigUrl));
+            bind(URL.class).annotatedWith(MessagingConfigurationUrl.class).toInstance(new URL(channelConfigUrl));
           } catch (MalformedURLException e) {
             log.error("Failed to setup jgroups with the file specified ["+channelConfigUrl+"]. Failing back to built in configuration!", e);
           }

@@ -15,20 +15,19 @@
  */
 package com.meltmedia.cadmium.core.worker;
 
-import java.io.File;
-import java.util.Properties;
-import java.util.concurrent.Callable;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
+import com.meltmedia.cadmium.core.CurrentWarName;
+import com.meltmedia.cadmium.core.SharedContentRoot;
+import com.meltmedia.cadmium.core.config.ConfigManager;
+import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.config.ConfigManager;
-import com.meltmedia.cadmium.core.git.GitService;
-import com.meltmedia.cadmium.core.history.HistoryManager;
+import javax.inject.Inject;
+import java.io.File;
+import java.util.Properties;
+import java.util.concurrent.Callable;
 
 public class ConfigInitializeTask implements Callable<GitService> {
   private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -39,7 +38,7 @@ public class ConfigInitializeTask implements Callable<GitService> {
   private HistoryManager historyManager = null;
 
   @Inject
-  public ConfigInitializeTask(ConfigManager configManager, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName, HistoryManager historyManager) {
+  public ConfigInitializeTask(ConfigManager configManager, @SharedContentRoot String contentRoot, @CurrentWarName String warName, HistoryManager historyManager) {
     
     this.contentRoot = contentRoot;
     this.warName = warName;

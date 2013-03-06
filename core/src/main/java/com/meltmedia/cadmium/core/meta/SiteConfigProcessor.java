@@ -15,16 +15,15 @@
  */
 package com.meltmedia.cadmium.core.meta;
 
+import com.meltmedia.cadmium.core.ContentDirectory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Singleton
 public class SiteConfigProcessor {
@@ -33,7 +32,7 @@ public class SiteConfigProcessor {
   private Set<ConfigProcessor> processors;
   
   @Inject
-  public SiteConfigProcessor(Set<ConfigProcessor> processors, @Named("contentDir") String contentDir) throws Exception {
+  public SiteConfigProcessor(Set<ConfigProcessor> processors, @ContentDirectory String contentDir) throws Exception {
     this.processors = processors;
   }
   

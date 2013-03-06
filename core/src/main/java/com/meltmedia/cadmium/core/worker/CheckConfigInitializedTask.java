@@ -15,21 +15,20 @@
  */
 package com.meltmedia.cadmium.core.worker;
 
+import com.meltmedia.cadmium.core.ConfigurationGitService;
+import com.meltmedia.cadmium.core.CurrentWarName;
+import com.meltmedia.cadmium.core.SharedContentRoot;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
+import com.meltmedia.cadmium.core.git.GitService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
 import java.io.File;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.meltmedia.cadmium.core.ConfigurationGitService;
-import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
-import com.meltmedia.cadmium.core.git.GitService;
 
 public class CheckConfigInitializedTask implements Callable<Boolean> {
   private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -41,7 +40,7 @@ public class CheckConfigInitializedTask implements Callable<Boolean> {
   private String warName = null;
   
   @Inject
-  public CheckConfigInitializedTask(ConfigInitializeTask taskToCheck, @ConfigurationGitService DelayedGitServiceInitializer gitInit, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName) {
+  public CheckConfigInitializedTask(ConfigInitializeTask taskToCheck, @ConfigurationGitService DelayedGitServiceInitializer gitInit, @SharedContentRoot String contentRoot, @CurrentWarName String warName) {
     this.taskToCheck = taskToCheck;
     this.gitInit = gitInit;
     this.sharedContentRoot = contentRoot;
