@@ -15,22 +15,7 @@
  */
 package com.meltmedia.cadmium.core.worker;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.apache.commons.io.IOUtils;
-import org.eclipse.jgit.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.meltmedia.cadmium.core.ContentDirectory;
 import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.CoordinatedWorker;
 import com.meltmedia.cadmium.core.CoordinatedWorkerListener;
@@ -44,6 +29,19 @@ import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Singleton
 public class CoordinatedWorkerImpl implements CoordinatedWorker<ContentUpdateRequest>, CoordinatedWorkerListener<ContentUpdateRequest>, Closeable {
@@ -59,7 +57,7 @@ public class CoordinatedWorkerImpl implements CoordinatedWorker<ContentUpdateReq
   protected ConfigManager configManager;
   
   @Inject
-  @Named("contentDir")
+  @ContentDirectory
   protected String contentDir;
   
   @Inject

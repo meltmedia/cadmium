@@ -15,27 +15,7 @@
  */
 package com.meltmedia.cadmium.core.messaging.jgroups;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import javax.annotation.PostConstruct;
-
-import org.apache.commons.lang3.StringUtils;
-import org.jgroups.Address;
-import org.jgroups.JChannel;
-import org.jgroups.MembershipListener;
-import org.jgroups.View;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.meltmedia.cadmium.core.ClusterMembers;
 import com.meltmedia.cadmium.core.ConfigurationGitService;
 import com.meltmedia.cadmium.core.ContentGitService;
 import com.meltmedia.cadmium.core.Scheduled;
@@ -45,13 +25,23 @@ import com.meltmedia.cadmium.core.commands.SyncRequest;
 import com.meltmedia.cadmium.core.commands.WarInfoRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
+import com.meltmedia.cadmium.core.messaging.*;
 import com.meltmedia.cadmium.core.util.PublicIpUtils;
 import com.meltmedia.cadmium.core.util.WarUtils;
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
-import com.meltmedia.cadmium.core.messaging.MembershipTracker;
-import com.meltmedia.cadmium.core.messaging.Message;
-import com.meltmedia.cadmium.core.messaging.MessageSender;
-import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import org.apache.commons.lang3.StringUtils;
+import org.jgroups.Address;
+import org.jgroups.JChannel;
+import org.jgroups.MembershipListener;
+import org.jgroups.View;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.File;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class JGroupsMembershipTracker implements MembershipTracker, MembershipListener {
@@ -70,7 +60,7 @@ public class JGroupsMembershipTracker implements MembershipTracker, MembershipLi
   private Timer timer = new Timer();
   
   @Inject
-  public JGroupsMembershipTracker(MessageSender sender, JChannel channel, @Named("members") List<ChannelMember> members, ConfigManager configManager, @ContentGitService DelayedGitServiceInitializer gitService, @ConfigurationGitService DelayedGitServiceInitializer configGitService) {
+  public JGroupsMembershipTracker(MessageSender sender, JChannel channel, @ClusterMembers List<ChannelMember> members, ConfigManager configManager, @ContentGitService DelayedGitServiceInitializer gitService, @ConfigurationGitService DelayedGitServiceInitializer configGitService) {
     this.sender = sender;
     this.channel = channel;
     this.members = members;

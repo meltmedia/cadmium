@@ -15,23 +15,22 @@
  */
 package com.meltmedia.cadmium.core.worker;
 
+import com.meltmedia.cadmium.core.ContentGitService;
+import com.meltmedia.cadmium.core.CurrentWarName;
+import com.meltmedia.cadmium.core.SharedContentRoot;
+import com.meltmedia.cadmium.core.SiteDownService;
+import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
+import com.meltmedia.cadmium.core.git.GitService;
+import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
 import java.io.File;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.meltmedia.cadmium.core.ContentGitService;
-import com.meltmedia.cadmium.core.SiteDownService;
-import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
-import com.meltmedia.cadmium.core.git.GitService;
-import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 
 public class CheckInitializedTask implements Callable<Boolean> {
   private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -45,7 +44,7 @@ public class CheckInitializedTask implements Callable<Boolean> {
   private String warName = null;
   
   @Inject
-  public CheckInitializedTask(InitializeTask taskToCheck, SiteConfigProcessor metaProcessor, SiteDownService service, @ContentGitService DelayedGitServiceInitializer gitInit, @Named("sharedContentRoot") String contentRoot, @Named("warName") String warName) {
+  public CheckInitializedTask(InitializeTask taskToCheck, SiteConfigProcessor metaProcessor, SiteDownService service, @ContentGitService DelayedGitServiceInitializer gitInit, @SharedContentRoot String contentRoot, @CurrentWarName String warName) {
     this.taskToCheck = taskToCheck;
     this.metaProcessor = metaProcessor;
     this.service = service;

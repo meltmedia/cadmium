@@ -15,25 +15,8 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
+import com.meltmedia.cadmium.core.ClusterMembers;
 import com.meltmedia.cadmium.core.LoggerConfig;
 import com.meltmedia.cadmium.core.LoggerServiceResponse;
 import com.meltmedia.cadmium.core.commands.CommandResponse;
@@ -43,6 +26,15 @@ import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @CadmiumSystemEndpoint
 @Path("/logger")
@@ -56,7 +48,7 @@ public class LoggerService extends AuthorizationService {
   private CommandResponse<LoggerConfigResponse> response;
   
   @Inject
-  @Named("members") 
+  @ClusterMembers
   protected List<ChannelMember> members;
   
   @GET
