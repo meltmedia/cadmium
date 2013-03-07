@@ -15,19 +15,17 @@
  */
 package com.meltmedia.cadmium.core.meta;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.meltmedia.cadmium.core.FileSystemManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Singleton;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import javax.inject.Singleton;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.meltmedia.cadmium.core.FileSystemManager;
 
 @Singleton
 public class RedirectConfigProcessor implements ConfigProcessor {
@@ -83,21 +81,17 @@ public class RedirectConfigProcessor implements ConfigProcessor {
     if(liveRedirects != null && !liveRedirects.isEmpty()) {
       if(queryString != null && queryString.length() > 0) {
         for(Redirect redir : liveRedirects) {
-          synchronized(redir) {
-            if(redir.matches(pathInfo+"?"+queryString)) {
-              matched = (Redirect)redir.clone();
-              break;
-            }
+          if(redir.matches(pathInfo+"?"+queryString)) {
+            matched = (Redirect)redir.clone();
+            break;
           }
         }
       }
       if(matched == null) {
         for(Redirect redir : liveRedirects) {
-          synchronized(redir) {
-            if(redir.matches(pathInfo)) {
-              matched = (Redirect)redir.clone();
-              break;
-            }
+          if(redir.matches(pathInfo)) {
+            matched = (Redirect)redir.clone();
+            break;
           }
         }
       }
