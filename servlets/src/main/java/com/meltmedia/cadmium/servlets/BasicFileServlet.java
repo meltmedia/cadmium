@@ -93,7 +93,7 @@ public class BasicFileServlet
 
   protected void setBasePath(String basePath) throws ServletException {
     if(basePath == null) {
-      throw new ServletException("Please set the base path in init paramater \"basePath\".");
+      throw new ServletException("Please set the base path in init parameter \"basePath\".");
     } else {
       File contentDir = new File(basePath);
       if(!contentDir.exists()) {
