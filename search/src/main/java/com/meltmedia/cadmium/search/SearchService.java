@@ -15,31 +15,35 @@
  */
 package com.meltmedia.cadmium.search;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-
+import com.google.inject.Inject;
+import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleHTMLEncoder;
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.Inject;
-import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @CadmiumApiEndpoint
 @Path("/search")
@@ -64,14 +68,36 @@ public class SearchService
         List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
         resultMap.put("results", resultList);
         if (index != null && parser != null) {
-          TopDocs results = index.search(parser.parse(query), null, 100000);
+          Query query1 = parser.parse(query);
+          TopDocs results = index.search(query1, null, 100000);
+          QueryScorer scorer = new QueryScorer(query1);
+          Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), new SimpleHTMLEncoder(), scorer);
           logger.info("", results.totalHits);
           resultMap.put("number-hits", results.totalHits);
           for (ScoreDoc doc : results.scoreDocs) {
             Document document = index.doc(doc.doc);
+            String content = document.get("content");
+            String title = document.get("title");
+
             Map<String, Object> result = new LinkedHashMap<String, Object>();
+            String excerpt = "";
+            try {
+              excerpt = highlighter.getBestFragments(parser.getAnalyzer().tokenStream(null, new StringReader(content)), content, 3, "...");
+              excerpt = fixExcerpt(excerpt);
+              result.put("excerpt", excerpt);
+            } catch(Exception e) {
+              logger.debug("Failed to get search excerpt from content.", e);
+              try {
+                excerpt = highlighter.getBestFragments(parser.getAnalyzer().tokenStream(null, new StringReader(title)), title, 1, "...");
+                excerpt = fixExcerpt(excerpt);
+                result.put("excerpt", excerpt);
+              } catch(Exception e1) {
+                logger.debug("Failed to get search excerpt from title.", e1);
+                result.put("excerpt", "");
+              }
+            }
             result.put("score", doc.score);
-            result.put("title", document.get("title"));
+            result.put("title", title);
             result.put("path", document.get("path"));
             resultList.add(result);
           }
@@ -81,6 +107,18 @@ public class SearchService
     }.search();
 
     return resultMap;
+  }
+
+  private static String fixExcerpt(String excerpt) {
+    if(excerpt != null) {
+      excerpt = excerpt.replace("\n", "");
+      String newExcerpt = excerpt.replace("  ", " ");
+      while(!excerpt.equals(newExcerpt)) {
+        excerpt = newExcerpt;
+        newExcerpt = excerpt.replace("  ", " ");
+      }
+    }
+    return excerpt;
   }
   
   QueryParser createParser( Analyzer analyzer ) {
