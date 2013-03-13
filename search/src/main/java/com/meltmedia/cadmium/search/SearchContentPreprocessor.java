@@ -15,19 +15,9 @@
  */
 package com.meltmedia.cadmium.search;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
-
-import javax.inject.Singleton;
-
+import com.meltmedia.cadmium.core.meta.ConfigProcessor;
+import jodd.lagarto.dom.Node;
+import jodd.lagarto.dom.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -44,10 +34,17 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jodd.lagarto.dom.Node;
-import jodd.lagarto.dom.jerry.Jerry;
-
-import com.meltmedia.cadmium.core.meta.ConfigProcessor;
+import javax.inject.Singleton;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 @Singleton
 public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider, Closeable {
@@ -172,11 +169,15 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
       @Override
       public void handleFile(File file) throws Exception {
         try {
-          Jerry jerry = Jerry.jerry(FileUtils.readFileToString(file, "UTF-8"));
+          String htmlContent = FileUtils.readFileToString(file, "UTF-8");
+          Jerry jerry = Jerry.jerry(htmlContent);
           
           // if we should not index this file, move on.
           if(!shouldIndex(jerry)) return;
-          
+          Jerry removeScripts = jerry.$("script");
+          if(removeScripts.size() > 0) {
+            removeScripts.remove();
+          }
           Jerry removals = jerry.$("[cadmium=\"no-index\"]");
           if(removals.size() > 0) {
           	log.info("Removing {} element[s]", removals.length());
@@ -186,8 +187,13 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
           }
           
           String title = jerry.$("html > head > title").text();
-          String textContent = jerry.$("html > body").text();
-  
+
+          removals = jerry.$("title,head");
+          if (removals.size() > 0) {
+            removals.remove();
+          }
+          String textContent = jerry.$("body").text();
+
   	      Document doc = new Document();
   	      doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
   	      doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
