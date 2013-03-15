@@ -28,7 +28,7 @@
   <logger name="com.meltmedia" level="DEBUG"/>
 
 
-  <root level="debug">
+  <root level="WARN">
     <appender-ref ref="FILE" />
   </root>
 </configuration>

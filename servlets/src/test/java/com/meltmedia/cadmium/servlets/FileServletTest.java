@@ -15,26 +15,7 @@
  */
 package com.meltmedia.cadmium.servlets;
 
-import static org.mockito.Mockito.*;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.BeforeClass;
@@ -45,10 +26,19 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+
+import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
-public class FileServeltTest {
+public class FileServletTest {
   
   public static final Long CURRENT_LAST_MODIFIED = new Long(327758400);
   public static final Long PAST_LAST_MODIFIED = new Long(233409600);
@@ -158,7 +148,7 @@ public class FileServeltTest {
   public HttpServletRequest request;
   public ResponseVerifier verifier;
   
-  public FileServeltTest(HttpServletRequest request, ResponseVerifier verifier) {
+  public FileServletTest(HttpServletRequest request, ResponseVerifier verifier) {
     this.request = request;
     this.verifier = verifier;
   }
