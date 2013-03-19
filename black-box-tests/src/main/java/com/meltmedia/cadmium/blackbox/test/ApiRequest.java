@@ -53,6 +53,7 @@ public class ApiRequest {
   }
 
   public HttpResponse makeRequest() throws Exception {
+    System.out.println("Making "+httpMethod+" request to "+url);
     DefaultHttpClient client = new DefaultHttpClient();
 
     HttpUriRequest message = null;
@@ -124,6 +125,7 @@ public class ApiRequest {
         postContent = new Gson().toJson(postBody);
       }
       if(postContent != null && request instanceof HttpEntityEnclosingRequestBase) {
+        System.out.println("Posting body: " + postContent);
         HttpEntityEnclosingRequestBase entityBasedRequest = (HttpEntityEnclosingRequestBase)request;
         StringEntity entity = new StringEntity(postContent);
         entityBasedRequest.setEntity(entity);
@@ -148,5 +150,45 @@ public class ApiRequest {
 
   private HttpPost setupPostRequest() {
     return new HttpPost(url);
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public void setUrl(String url) {
+    this.url = url;
+  }
+
+  public Method getHttpMethod() {
+    return httpMethod;
+  }
+
+  public void setHttpMethod(Method httpMethod) {
+    this.httpMethod = httpMethod;
+  }
+
+  public Map<String, String> getHeaders() {
+    return headers;
+  }
+
+  public void setHeaders(Map<String, String> headers) {
+    this.headers = headers;
+  }
+
+  public Object getPostBody() {
+    return postBody;
+  }
+
+  public void setPostBody(Object postBody) {
+    this.postBody = postBody;
+  }
+
+  public String getPostContentType() {
+    return postContentType;
+  }
+
+  public void setPostContentType(String postContentType) {
+    this.postContentType = postContentType;
   }
 }

@@ -32,7 +32,17 @@ public abstract class AbstractBodyApiResponseValidator extends ContentTypeApiRes
 
   @Override
   public void validate(HttpResponse response) {
-    super.validate(response);
+    try {
+      super.validate(response);
+    } catch(AssertionError e) {
+      String responseBody = null;
+      try {
+        responseBody = EntityUtils.toString(response.getEntity());
+      } catch(Exception e1) {
+        fail(e.getMessage()+": Failed to dump response body.");
+      }
+      fail(e.getMessage()+": "+responseBody);
+    }
     try {
       validateBody(response, EntityUtils.toString(response.getEntity()));
     } catch(Exception e) {

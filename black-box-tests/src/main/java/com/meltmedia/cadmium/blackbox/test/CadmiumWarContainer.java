@@ -32,9 +32,6 @@ public class CadmiumWarContainer {
   public CadmiumWarContainer(String warPath, int port) throws Exception {
     embeddedServer = new Server(port);
     WebAppContext warContext = new WebAppContext(warPath, "/");
-    File aFile = new File(warPath).getAbsoluteFile();
-    File webappFile = new File(aFile.getParent(), "webapp");
-    Runtime.getRuntime().exec(new String[]{"ln", "-s", aFile.getAbsolutePath(), webappFile.getAbsolutePath()}).waitFor();
     embeddedServer.setHandler(warContext);
   }
 

@@ -1,0 +1,10 @@
+[
+  {
+    "extension":"foo",
+    "contentType":"text/html"
+  },
+  {
+    "extension":"bar",
+    "contentType":"text/html"
+  }
+]

@@ -17,14 +17,18 @@ package com.meltmedia.cadmium.blackbox.test.rest;
 
 import com.meltmedia.cadmium.blackbox.test.ApiResponseValidator;
 import com.meltmedia.cadmium.blackbox.test.CadmiumWarContainer;
+import com.meltmedia.cadmium.blackbox.test.GitBareRepoInitializer;
 import com.meltmedia.cadmium.blackbox.test.endpoints.*;
 import com.meltmedia.cadmium.core.api.MaintenanceRequest;
+import com.meltmedia.cadmium.core.util.WarUtils;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Arrays;
@@ -39,9 +43,14 @@ import static org.junit.Assert.fail;
  */
 @RunWith(Parameterized.class)
 public class RestApiTest {
-
+  private static final Logger logger = LoggerFactory.getLogger(RestApiTest.class);
   private static CadmiumWarContainer warContainer;
   private static String token;
+  private static GitBareRepoInitializer gitInit;
+
+  static {
+      gitInit = new GitBareRepoInitializer();
+  }
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
@@ -56,17 +65,36 @@ public class RestApiTest {
       fail("No token exists at path: "+tokenFile.getAbsolutePath());
     }
     return Arrays.asList(new Object[][]{
-      {new StatusPingEndpointTest()},
-      {new StatusHealthEndpointTest()},
-      {new StatusEndpointTest(token)},
-      {new MaintenanceEndpointTest(token, MaintenanceRequest.State.ON)},
-      {new MaintenanceEndpointTest(token, MaintenanceRequest.State.OFF)}
+        // System api endpoints
+  /*[0] */ {new StatusPingEndpointTest()},
+  /*[1] */ {new StatusHealthEndpointTest()},
+  /*[2] */ {new StatusEndpointTest(token)},
+  /*[3] */ {new LoggerGetEndpointTest(token)},
+  /*[4] */ {new LoggerPostEndpointTest(token)},
+  /*[5] */ {new LoggerNamePostEndpointTest(token)},
+  /*[6] */ {new LoggerNameGetEndpointTest(token)},
+  /*[7] */ {new MaintenanceEndpointTest(token, MaintenanceRequest.State.ON)},
+  /*[8] */ {new MaintenanceEndpointTest(token, MaintenanceRequest.State.OFF)},
+  /*[9] */ {new HistoryEndpointTest(token)},
+  /*[10]*/ {new HistoryLimitEndpointTest(token)},
+  /*[11]*/ {new HistoryFilterEndpointTest(token)},
+  /*[12]*/ {new HistoryLimitFilterEndpointTest(token)},
+  /*[13]*/ {new UpdateEndpointTest(token, gitInit)},
+  /*[14]*/ {new UpdateConfigEndpointTest(token, gitInit)}
     });
   }
 
   @BeforeClass
   public static void deployWar() throws Exception {
-    warContainer = new CadmiumWarContainer("target/deploy/cadmium-war.war", 8901);
+    gitInit.init(new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath()
+        , new File("./target/filtered-resources/test-content").getAbsoluteFile().getAbsolutePath()
+        , new File("./target/filtered-resources/test-config").getAbsoluteFile().getAbsolutePath());
+    WarUtils.updateWar(null, "target/deploy/cadmium-war.war"
+        , Arrays.asList(new String[]{"target/deploy/webapp"})
+        , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cd-master"
+        , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cfg-master"
+        , "localhost", "/", false, logger);
+    warContainer = new CadmiumWarContainer("target/deploy/webapp", 8901);
     warContainer.setupCadmiumEnvironment("target", "testing");
     warContainer.startServer();
     while(!warContainer.isStarted()) {
@@ -79,6 +107,7 @@ public class RestApiTest {
     if(warContainer != null) {
       warContainer.stopServer();
     }
+    gitInit.close();
   }
 
   private EndpointTest test;
@@ -89,6 +118,7 @@ public class RestApiTest {
 
   @Test
   public void test() throws Exception {
+    System.out.println("Running test: "+test);
     test.preTest();
     test.getValidator().validate(test.getRequest().makeRequest());
     test.postTest();

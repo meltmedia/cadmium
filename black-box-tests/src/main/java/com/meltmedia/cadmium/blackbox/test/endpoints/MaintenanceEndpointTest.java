@@ -73,4 +73,9 @@ public class MaintenanceEndpointTest extends AbstractEnpointTest {
       }
     };
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + ": " + this.maintenanceState;
+  }
 }

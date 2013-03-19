@@ -59,4 +59,9 @@ public abstract class AbstractEnpointTest implements EndpointTest {
 
   @Override
   public void postTest() throws Exception {}
+
+  @Override
+  public String toString() {
+    return getClass().getName();
+  }
 }
