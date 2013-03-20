@@ -82,7 +82,9 @@ public class RestApiTest {
   /*[13]*/ {new UpdateEndpointTest(token, gitInit)},
   /*[14]*/ {new UpdateConfigEndpointTest(token, gitInit)},
   /*[15]*/ {new ApiACLEndpointTest(token)},
-  /*[16]*/ {new AuthenticationManagerEndpointTest(token)}
+  /*[16]*/ {new AuthenticationManagerEndpointTest(token)},
+        // Client api endpoints
+  /*[17]*/ {new SearchEndpointTest()}
     });
   }
 
