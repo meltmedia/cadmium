@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.blackbox.test.endpoints;
 
 import com.meltmedia.cadmium.blackbox.test.ApiRequest;
 import com.meltmedia.cadmium.blackbox.test.ApiResponseValidator;
+import sun.misc.BASE64Encoder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,5 +64,13 @@ public abstract class AbstractEnpointTest implements EndpointTest {
   @Override
   public String toString() {
     return getClass().getName();
+  }
+
+  protected Map<String, String> getBasicAuthHeader(String username, String password, Map<String, String> addToMap) {
+    if(addToMap == null) {
+      addToMap = new HashMap<String, String>();
+    }
+    addToMap.put("Authorization", "Basic " + new String(new BASE64Encoder().encode((username + ":" + password).getBytes())));
+    return addToMap;
   }
 }

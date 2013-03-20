@@ -55,7 +55,7 @@ public class UpdateEndpointTest extends AbstractEnpointTest {
   @Override
   public void preTest() throws Exception {
     try {
-      assertContentDeployed("Initial content isn't as expected.", new File(TEST_CONTENT_LOCATION), DEPLOY_URL);
+      assertContentDeployed("Initial content isn't as expected.", new File(TEST_CONTENT_LOCATION), DEPLOY_URL, "tester", "tester");
       String revision = git.setupContentUpdate(TEST_UPDATED_CONTENT_LOCATION);
       updateRequest.setComment("Updating for test.");
       updateRequest.setBranch("cd-master");
@@ -77,7 +77,7 @@ public class UpdateEndpointTest extends AbstractEnpointTest {
   public void postTest() throws Exception {
     try {
       waitForDeployment();
-      assertContentDeployed("Failed to update content.", new File(TEST_UPDATED_CONTENT_LOCATION), DEPLOY_URL);
+      assertContentDeployed("Failed to update content.", new File(TEST_UPDATED_CONTENT_LOCATION), DEPLOY_URL, "tester", "tester");
       System.out.println("Passed post test...");
     } catch (AssertionError e) {
       fail("Post test failed: " + e.getMessage());

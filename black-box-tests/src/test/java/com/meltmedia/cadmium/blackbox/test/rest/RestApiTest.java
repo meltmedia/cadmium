@@ -80,7 +80,9 @@ public class RestApiTest {
   /*[11]*/ {new HistoryFilterEndpointTest(token)},
   /*[12]*/ {new HistoryLimitFilterEndpointTest(token)},
   /*[13]*/ {new UpdateEndpointTest(token, gitInit)},
-  /*[14]*/ {new UpdateConfigEndpointTest(token, gitInit)}
+  /*[14]*/ {new UpdateConfigEndpointTest(token, gitInit)},
+  /*[15]*/ {new ApiACLEndpointTest(token)},
+  /*[16]*/ {new AuthenticationManagerEndpointTest(token)}
     });
   }
 
@@ -89,11 +91,12 @@ public class RestApiTest {
     gitInit.init(new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath()
         , new File("./target/filtered-resources/test-content").getAbsoluteFile().getAbsolutePath()
         , new File("./target/filtered-resources/test-config").getAbsoluteFile().getAbsolutePath());
+    System.setProperty("com.meltmedia.cadmium.contentRoot", new File("target/filtered-resources").getAbsoluteFile().getAbsolutePath());
     WarUtils.updateWar(null, "target/deploy/cadmium-war.war"
-        , Arrays.asList(new String[]{"target/deploy/webapp"})
+        , Arrays.asList("target/deploy/webapp")
         , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cd-master"
         , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cfg-master"
-        , "localhost", "/", false, logger);
+        , "localhost", "/", true, logger);
     warContainer = new CadmiumWarContainer("target/deploy/webapp", 8901);
     warContainer.setupCadmiumEnvironment("target", "testing");
     warContainer.startServer();

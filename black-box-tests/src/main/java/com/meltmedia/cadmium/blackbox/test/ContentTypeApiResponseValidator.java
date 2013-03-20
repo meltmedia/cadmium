@@ -16,6 +16,7 @@
 package com.meltmedia.cadmium.blackbox.test;
 
 import org.apache.http.HttpResponse;
+import org.eclipse.jgit.util.StringUtils;
 
 import static org.junit.Assert.assertEquals;
 
@@ -37,7 +38,9 @@ public class ContentTypeApiResponseValidator extends BasicStatusApiResponseValid
     if(expectedStatusCode != -1) {
       super.validate(response);
     }
-    String contentType = response.getFirstHeader("Content-Type").getValue();
-    assertEquals("Content-Type {"+contentType+"} does not match the expected Content-Type: "+this.expectedContentType, this.expectedContentType, contentType);
+    if(!StringUtils.isEmptyOrNull(expectedContentType)) {
+      String contentType = response.getFirstHeader("Content-Type").getValue();
+      assertEquals("Content-Type {"+contentType+"} does not match the expected Content-Type: "+this.expectedContentType, this.expectedContentType, contentType);
+    }
   }
 }

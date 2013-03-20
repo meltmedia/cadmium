@@ -24,6 +24,9 @@ import com.meltmedia.cadmium.core.api.MaintenanceRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -35,10 +38,13 @@ import static org.junit.Assert.assertNotNull;
 public class MaintenanceEndpointTest extends AbstractEnpointTest {
 
   protected MaintenanceRequest.State maintenanceState;
+  protected Map<String, String> headers;
 
   public MaintenanceEndpointTest(String token, MaintenanceRequest.State maintenanceState) {
     super(token);
     this.maintenanceState = maintenanceState;
+    headers = new HashMap<String, String>();
+    headers = getBasicAuthHeader("tester", "tester", headers);
     setupTest();
   }
 
@@ -46,14 +52,14 @@ public class MaintenanceEndpointTest extends AbstractEnpointTest {
   public void preTest() throws Exception {
     int expectedStatus = (this.maintenanceState == MaintenanceRequest.State.ON ? HttpStatus.SC_OK : HttpStatus.SC_SERVICE_UNAVAILABLE);
     new BasicStatusApiResponseValidator(expectedStatus)
-        .validate(new ApiRequest("http://localhost:8901/index.html", ApiRequest.Method.GET).makeRequest());
+        .validate(new ApiRequest("http://localhost:8901/index.html", ApiRequest.Method.GET, headers).makeRequest());
   }
 
   @Override
   public void postTest() throws Exception {
     int expectedStatus = (this.maintenanceState == MaintenanceRequest.State.ON ? HttpStatus.SC_SERVICE_UNAVAILABLE : HttpStatus.SC_OK);
     new BasicStatusApiResponseValidator(expectedStatus)
-        .validate(new ApiRequest("http://localhost:8901/index.html", ApiRequest.Method.GET).makeRequest());
+        .validate(new ApiRequest("http://localhost:8901/index.html", ApiRequest.Method.GET, headers).makeRequest());
   }
 
   @Override
