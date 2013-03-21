@@ -15,27 +15,17 @@
  */
 package com.meltmedia.cadmium.core.git;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.commands.GitLocation;
+import com.meltmedia.cadmium.core.config.ConfigManager;
+import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.api.AddCommand;
-import org.eclipse.jgit.api.CheckoutCommand;
-import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.CreateBranchCommand;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
-import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
-import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -49,11 +39,14 @@ import org.eclipse.jgit.transport.TagOpt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.FileSystemManager;
-import com.meltmedia.cadmium.core.commands.GitLocation;
-import com.meltmedia.cadmium.core.config.ConfigManager;
-import com.meltmedia.cadmium.core.history.HistoryManager;
-import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class GitService
   implements Closeable
@@ -76,6 +69,10 @@ public class GitService
       log.debug("Setting SSH session factory for ssh dir path {}", sshDir);
       SshSessionFactory.setInstance(new GithubConfigSessionFactory(sshDir));
     }
+  }
+
+  public Git getGit() {
+    return git;
   }
   
   public static void setupLocalSsh(String sshDir) {
@@ -563,14 +560,18 @@ public class GitService
    * @throws Exception
    */
   public String checkinNewContent(String sourceDirectory, String message) throws Exception {
-    log.info("Removing old content.");
     RmCommand remove = git.rm();
+    boolean hasFiles = false;
     for(String filename : new File(getBaseDirectory()).list()) {
       if(!filename.equals(".git")) {
         remove.addFilepattern(filename);
+        hasFiles = true;
       }
     }
-    remove.call();
+    if(hasFiles) {
+      log.info("Removing old content.");
+      remove.call();
+    }
     log.info("Copying in new content.");
     FileSystemManager.copyAllContent(sourceDirectory, getBaseDirectory(), true);
     log.info("Adding new content.");

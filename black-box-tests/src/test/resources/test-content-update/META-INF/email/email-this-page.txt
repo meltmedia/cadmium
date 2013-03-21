@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-
+====
        Copyright 2012 meltmedia
 
        Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +12,5 @@
        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
        See the License for the specific language governing permissions and
        limitations under the License.
+====
 
--->
-<configuration>
-
-  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>target/cadmium.log</file>
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
-    </encoder>
-  </appender>
-
-  <logger name="com.meltmedia" level="DEBUG"/>
-
-
-  <root level="WARN">
-    <appender-ref ref="FILE" />
-  </root>
-</configuration>

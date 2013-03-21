@@ -1,0 +1,86 @@
+<!--
+
+       Copyright 2012 meltmedia
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+           http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta name="viewport" content="initial-scale=1.0; maximum-scale=1.0; minimum-scale=1.0; user-scalable=0;">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta charset="utf-8">
+
+<title>Demo Content :: Home</title>
+
+<link rel="stylesheet" href="./assets/css/global.css">
+
+</head>
+
+<body>
+
+<div id="container">
+  <header>
+    <a href="/" title="meltmedia" id="logo">meltmedia</a>
+  </header>
+  <nav>
+    <a href="./index.html" title="Layout">Layout</a>
+    <a href="./error-pages.html" title="Error Pages">Error Pages</a>
+    <a href="./search.html" title="Search">Search</a>
+    <a href="./email.html" title="Email">Email</a>
+    <a href="./content-type.foo" title="Content Types">Content Types</a>
+    <a href="./redirects.html" title="Redirects">Redirects</a>
+    <a href="./vault.html" title="Vault">Vault</a>
+  </nav>
+  <div id="content" class="clearfix">
+    <section id="main">
+      <h1>Cadmium Layout - Updated</h1>
+      <p>This part of the demonstration will go over the structure of a cadmium application and the features that are provided to Cadmium content.</p>
+      <h2>Content File Structure</h2>
+      <p>This is an example of the file structure for a Cadmium application.  Select any of the files to see information about what it is configuring.</p>
+      <div class="snippet">
+        > find . -type f<br>
+        <a href="error-pages.html">./404.html</a><br>
+        <a href="error-pages.html">./4xx.html</a><br>
+        <a href="error-pages.html">./5xx.html</a><br>
+        ./index.html<br>
+        <a href="email.html">./META-INF/email/email-this-page.html</a><br>
+        <a href="email.html">./META-INF/email/email-this-page.txt</a><br>
+        <a href="content-type.html">./META-INF/mime.json</a><br>
+        <a href="redirect.html">./META-INF/redirect.json</a><br>
+        ./META-INF/secure.json<br>
+      </div>
+      <h2>Application URL Structure</h2>
+      <p>The URLs of a cadmium application are divided into 3 main groups:</p>
+      <ul>
+        <li>http://domain/system - REST apis for managing the site.</li>
+        <li>http://domain/api - REST apis for the content (search, email, etc.).</li>
+        <li>http://domain/ - the deployed content.</li>
+      </ul>
+    </section>
+    <section id="sidebar">
+      <h3>In This Demo...</h3>
+      <p>In this demonstration, we will be looking at the structure of Cadmium content and the functionality proved to by Cadmium to the content being served.</p>
+      <h3>What's Next...</h3>
+      <p>In the next demonstration, we will look at more advanced commands for production.</p>
+      <p>${timestamp}</p>
+    </section>
+  </div>
+</div>
+
+</body>
+
+</html>

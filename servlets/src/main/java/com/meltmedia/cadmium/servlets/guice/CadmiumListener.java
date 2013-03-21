@@ -368,7 +368,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         if(shiroEnv != null && shiroEnv instanceof WebEnvironment) {
           WebEnvironment cadmiumShiroEnv = (WebEnvironment) shiroEnv;
           if(cadmiumShiroEnv.getPersistablePropertiesRealm() != null) {
-            log.debug("Binding shiro configurable realm: ", PersistablePropertiesRealm.class);
+            log.debug("Binding shiro configurable realm: "+ PersistablePropertiesRealm.class);
             bind(PersistablePropertiesRealm.class).toInstance(cadmiumShiroEnv.getPersistablePropertiesRealm());
             cadmiumShiroEnv.getPersistablePropertiesRealm().loadProperties(applicationContentRoot.getAbsoluteFile());
           }
