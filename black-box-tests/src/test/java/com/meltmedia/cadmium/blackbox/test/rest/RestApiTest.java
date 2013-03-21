@@ -22,6 +22,7 @@ import com.meltmedia.cadmium.blackbox.test.endpoints.*;
 import com.meltmedia.cadmium.core.api.MaintenanceRequest;
 import com.meltmedia.cadmium.core.util.WarUtils;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.util.StringUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,7 +35,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Test for rest api.
@@ -45,7 +46,7 @@ import static org.junit.Assert.fail;
 public class RestApiTest {
   private static final Logger logger = LoggerFactory.getLogger(RestApiTest.class);
   private static CadmiumWarContainer warContainer;
-  private static String token;
+  private static String token = System.getProperty("github.token");
   private static GitBareRepoInitializer gitInit;
 
   static {
@@ -54,16 +55,19 @@ public class RestApiTest {
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    File tokenFile = new File(System.getProperty("user.home"), ".cadmium/github.token");
-    if(tokenFile.exists()) {
-      try {
-        token = FileUtils.readFileToString(tokenFile);
-      } catch(Exception e) {
-        fail("Failed to attain github rest api token.");
+    if(StringUtils.isEmptyOrNull(token)) {
+      File tokenFile = new File(System.getProperty("user.home"), ".cadmium/github.token");
+      if(tokenFile.exists()) {
+        try {
+          token = FileUtils.readFileToString(tokenFile);
+        } catch(Exception e) {
+          System.err.println("Failed to attain github rest api token.");
+        }
+      } else {
+        System.err.println("No token exists at path: " + tokenFile.getAbsolutePath());
       }
-    } else {
-      fail("No token exists at path: "+tokenFile.getAbsolutePath());
     }
+    assumeTrue(!StringUtils.isEmptyOrNull(token));
     return Arrays.asList(new Object[][]{
         // System api endpoints
   /*[0] */ {new StatusPingEndpointTest()},
