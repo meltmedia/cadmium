@@ -35,8 +35,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.junit.Assume.assumeTrue;
-
 /**
  * Test for rest api.
  *
@@ -67,8 +65,8 @@ public class RestApiTest {
         System.err.println("No token exists at path: " + tokenFile.getAbsolutePath());
       }
     }
-    assumeTrue(!StringUtils.isEmptyOrNull(token));
-    return Arrays.asList(new Object[][]{
+    if(!StringUtils.isEmptyOrNull(token)){
+      return Arrays.asList(new Object[][]{
         // System api endpoints
   /*[0] */ {new StatusPingEndpointTest()},
   /*[1] */ {new StatusHealthEndpointTest()},
@@ -90,24 +88,31 @@ public class RestApiTest {
         // Client api endpoints
   /*[17]*/ {new SearchEndpointTest()}
     });
+    } else {
+      return Arrays.asList(new Object[][]{});
+    }
   }
 
   @BeforeClass
   public static void deployWar() throws Exception {
-    gitInit.init(new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath()
-        , new File("./target/filtered-resources/test-content").getAbsoluteFile().getAbsolutePath()
-        , new File("./target/filtered-resources/test-config").getAbsoluteFile().getAbsolutePath());
-    System.setProperty("com.meltmedia.cadmium.contentRoot", new File("target/filtered-resources").getAbsoluteFile().getAbsolutePath());
-    WarUtils.updateWar(null, "target/deploy/cadmium-war.war"
-        , Arrays.asList("target/deploy/webapp")
-        , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cd-master"
-        , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cfg-master"
-        , "localhost", "/", true, logger);
-    warContainer = new CadmiumWarContainer("target/deploy/webapp", 8901);
-    warContainer.setupCadmiumEnvironment("target", "testing");
-    warContainer.startServer();
-    while(!warContainer.isStarted()) {
-      Thread.sleep(500l);
+    if(!StringUtils.isEmptyOrNull(token)) {
+      gitInit.init(new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath()
+          , new File("./target/filtered-resources/test-content").getAbsoluteFile().getAbsolutePath()
+          , new File("./target/filtered-resources/test-config").getAbsoluteFile().getAbsolutePath());
+      System.setProperty("com.meltmedia.cadmium.contentRoot", new File("target/filtered-resources").getAbsoluteFile().getAbsolutePath());
+      WarUtils.updateWar(null, "target/deploy/cadmium-war.war"
+          , Arrays.asList("target/deploy/webapp")
+          , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cd-master"
+          , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cfg-master"
+          , "localhost", "/", true, logger);
+      warContainer = new CadmiumWarContainer("target/deploy/webapp", 8901);
+      warContainer.setupCadmiumEnvironment("target", "testing");
+      warContainer.startServer();
+      while(!warContainer.isStarted()) {
+        Thread.sleep(500l);
+      }
+    } else {
+      gitInit = null;
     }
   }
 
@@ -116,7 +121,9 @@ public class RestApiTest {
     if(warContainer != null) {
       warContainer.stopServer();
     }
-    gitInit.close();
+    if(gitInit != null) {
+      gitInit.close();
+    }
   }
 
   private EndpointTest test;
