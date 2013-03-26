@@ -22,7 +22,9 @@ import com.meltmedia.cadmium.status.Status;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Endpoint test for the System status rest endpoint.
@@ -48,6 +50,11 @@ public class StatusEndpointTest extends AbstractEnpointTest {
         assertNotNull("Status (Repo) not parsed correctly.", statusResponse.getRepo());
         assertNotNull("Status (Branch) not parsed correctly.", statusResponse.getBranch());
         assertNotNull("Status (Revision) not parsed correctly.", statusResponse.getRevision());
+        assertNotNull("Status members not present.", statusResponse.getMembers());
+        assertTrue("Status members not present.", statusResponse.getMembers().size() == 1);
+        assertNotNull("Status warInfo not present.", statusResponse.getMembers().get(0).getWarInfo());
+        assertEquals("Configuration branch not setup as expected.", statusResponse.getMembers().get(0).getWarInfo().getConfigBranch(), "cfg-master");
+        assertEquals("Content branch not setup as expected.", statusResponse.getMembers().get(0).getWarInfo().getContentBranch(), "cd-master");
       }
     };
   }

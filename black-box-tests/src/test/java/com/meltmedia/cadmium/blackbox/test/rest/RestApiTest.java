@@ -101,11 +101,11 @@ public class RestApiTest {
           , new File("./target/filtered-resources/test-config").getAbsoluteFile().getAbsolutePath());
       System.setProperty("com.meltmedia.cadmium.contentRoot", new File("target/filtered-resources").getAbsoluteFile().getAbsolutePath());
       WarUtils.updateWar(null, "target/deploy/cadmium-war.war"
-          , Arrays.asList("target/deploy/webapp")
+          , Arrays.asList("target/deploy/cadmium.war")
           , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cd-master"
           , new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath(), "cfg-master"
           , "localhost", "/", true, logger);
-      warContainer = new CadmiumWarContainer("target/deploy/webapp", 8901);
+      warContainer = new CadmiumWarContainer("target/deploy/cadmium.war", 8901);
       warContainer.setupCadmiumEnvironment("target", "testing");
       warContainer.startServer();
       while(!warContainer.isStarted()) {

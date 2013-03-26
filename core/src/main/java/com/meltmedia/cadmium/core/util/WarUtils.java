@@ -15,38 +15,10 @@
  */
 package com.meltmedia.cadmium.core.util;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
-
-import javax.servlet.ServletContext;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.MavenVector;
+import com.meltmedia.cadmium.core.WarInfo;
 import jodd.lagarto.dom.jerry.Jerry;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.util.StringUtils;
@@ -56,9 +28,21 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.meltmedia.cadmium.core.FileSystemManager;
-import com.meltmedia.cadmium.core.MavenVector;
-import com.meltmedia.cadmium.core.WarInfo;
+import javax.servlet.ServletContext;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 /**
  * <p>Utility class for war manipulation.</p>
@@ -504,7 +488,11 @@ public class WarUtils {
     info.setWarName(war.getName());
     CadmiumWar warHelper = null;
     try {
-      warHelper = new CadmiumWar(war);
+      if(war != null && war.exists()) {
+        warHelper = new FileBasedCadmiumWar(war);
+      } else {
+        warHelper = new ClasspathCadmiumWar();
+      }
       getDeploymentInfo(info, warHelper);
       getCadmiumInfo(info, warHelper);
       getArtifactInfo(info, warHelper);
@@ -552,6 +540,74 @@ public class WarUtils {
       info.setContext(jbossWebJerry.$("jboss-web > context-root").text());
     }
   }
+
+  public static interface CadmiumWar extends Closeable {
+    /**
+     * Tests if the war file that backs this helper class contains a file.
+     *
+     * @param fileName
+     * @return
+     */
+    public boolean fileExists(String fileName);
+
+    /**
+     * Lists all files with the given fileName under a parent directory within
+     * the war that backs this instance.  Files will be listed recursively.
+     *
+     * @param parent
+     * @param fileName
+     * @return
+     */
+    public List<String> listFilesWithName(String parent, String fileName);
+
+    /**
+     * Returns the string contents of a files contained within the war that backs this instance.
+     *
+     * @param file
+     * @return
+     * @throws Exception
+     */
+    public String fileToString(String file) throws Exception;
+
+  }
+
+  /**
+   * A class used to obtain the cadmium war information from within the running war itself.
+   *
+   * @author John McEntire
+   */
+  public static class ClasspathCadmiumWar extends FileBasedCadmiumWar {
+
+    public ClasspathCadmiumWar() throws Exception {
+      super();
+      URL webXml = WarUtils.class.getClassLoader().getResource("/cadmium-version.properties");
+      if(webXml != null) {
+        String urlString = webXml.toString().substring(0, webXml.toString().length() - "/WEB-INF/classes/cadmium-version.properties".length());
+        if(webXml.getProtocol().equalsIgnoreCase("file")) {
+          warFile = new File(urlString.substring(5));
+        } else if (webXml.getProtocol().equalsIgnoreCase("jar")) {
+          URLConnection jarConnection = webXml.openConnection();
+          if(jarConnection instanceof JarURLConnection) {
+            zippedWar = ((JarURLConnection) jarConnection).getJarFile();
+          }
+        } else if (webXml.getProtocol().equalsIgnoreCase("vfszip")) {
+          warFile = new File(urlString.substring(7));
+          if(warFile.exists() && !warFile.isDirectory()) {
+            zippedWar = new ZipFile(warFile);
+          }
+        } else if (webXml.getProtocol().equalsIgnoreCase("vfsfile")) {
+          warFile = new File(urlString.substring(8));
+          if (warFile.exists() && !warFile.isDirectory()) {
+            zippedWar = new ZipFile(warFile);
+          }
+        } else {
+          throw new Exception("Unrecognized url protocol: "+webXml.toString());
+        }
+      } else {
+        throw new Exception("Failed to load cadmium war from class path.");
+      }
+    }
+  }
   
   /**
    * A class used to read the contents of a zipped or exploded war.
@@ -559,16 +615,18 @@ public class WarUtils {
    * @author John McEntire
    *
    */
-  public static class CadmiumWar implements Closeable {
-    private File warFile;
-    private ZipFile zippedWar = null;
+  public static class FileBasedCadmiumWar implements CadmiumWar {
+    protected File warFile;
+    protected ZipFile zippedWar = null;
+
+    protected FileBasedCadmiumWar(){}
     
     /**
      * Creates an instance if the given warFile exists and is a directory or a zip file.
      * @param warFile
      * @throws Exception
      */
-    public CadmiumWar(File warFile) throws Exception {
+    public FileBasedCadmiumWar(File warFile) throws Exception {
       this.warFile = warFile;
       if(warFile.exists() && !warFile.isDirectory()) {
         zippedWar = new ZipFile(warFile);
@@ -583,6 +641,7 @@ public class WarUtils {
      * @param fileName
      * @return
      */
+    @Override
     public boolean fileExists(String fileName) {
       if(zippedWar != null) {
         ZipEntry fileEntry = zippedWar.getEntry(fileName);
@@ -598,6 +657,7 @@ public class WarUtils {
      * @param fileName
      * @return
      */
+    @Override
     public List<String> listFilesWithName(String parent, String fileName) {
       List<String> files = new ArrayList<String>();
       if(zippedWar != null) {
@@ -630,6 +690,7 @@ public class WarUtils {
      * @return
      * @throws Exception
      */
+    @Override
     public String fileToString(String file) throws Exception {
       if(zippedWar != null) {
         ZipEntry entry = zippedWar.getEntry(file);
