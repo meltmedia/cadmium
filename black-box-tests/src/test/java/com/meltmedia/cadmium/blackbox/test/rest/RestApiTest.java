@@ -46,14 +46,20 @@ public class RestApiTest {
   private static CadmiumWarContainer warContainer;
   private static String token = System.getProperty("github.token");
   private static GitBareRepoInitializer gitInit;
+  private static boolean skip = true;
 
   static {
-      gitInit = new GitBareRepoInitializer();
+    gitInit = new GitBareRepoInitializer();
+    if(System.getProperty("api-test") != null) {
+      skip = false;
+    } else {
+      System.out.println("Please add \"-Dapi-test=\" if you wish to run rest api tests.");
+    }
   }
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    if(StringUtils.isEmptyOrNull(token)) {
+    if(!skip && StringUtils.isEmptyOrNull(token)) {
       File tokenFile = new File(System.getProperty("user.home"), ".cadmium/github.token");
       if(tokenFile.exists()) {
         try {
@@ -65,7 +71,7 @@ public class RestApiTest {
         System.err.println("No token exists at path: " + tokenFile.getAbsolutePath());
       }
     }
-    if(!StringUtils.isEmptyOrNull(token)){
+    if(!skip && !StringUtils.isEmptyOrNull(token)){
       return Arrays.asList(new Object[][]{
         // System api endpoints
   /*[0] */ {new StatusPingEndpointTest()},
@@ -95,7 +101,7 @@ public class RestApiTest {
 
   @BeforeClass
   public static void deployWar() throws Exception {
-    if(!StringUtils.isEmptyOrNull(token)) {
+    if(!skip && !StringUtils.isEmptyOrNull(token)) {
       gitInit.init(new File("./target/test-content-repo").getAbsoluteFile().getAbsolutePath()
           , new File("./target/filtered-resources/test-content").getAbsoluteFile().getAbsolutePath()
           , new File("./target/filtered-resources/test-config").getAbsoluteFile().getAbsolutePath());
