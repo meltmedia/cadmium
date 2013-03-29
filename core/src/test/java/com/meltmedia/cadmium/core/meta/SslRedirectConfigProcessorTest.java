@@ -15,19 +15,19 @@
  */
 package com.meltmedia.cadmium.core.meta;
 
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 import java.util.regex.Pattern;
 
-import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 
 public class SslRedirectConfigProcessorTest {
 
   @Test
   public void shouldBeSslTest() throws Exception {
     SslRedirectConfigProcessor proc = new SslRedirectConfigProcessor();
-    proc.liveSslPaths.add("path1");
-    proc.liveSslPatterns.add(Pattern.compile("path2"));
+    proc.liveConfiguration.sslPaths.add("path1");
+    proc.liveConfiguration.sslPatterns.add(Pattern.compile("path2"));
     
     assertTrue("Should have matched", proc.shouldBeSsl("path1") && proc.shouldBeSsl("path2"));
     assertTrue("Should not have matched", !proc.shouldBeSsl("path2/not") && !proc.shouldBeSsl("path"));
@@ -36,22 +36,22 @@ public class SslRedirectConfigProcessorTest {
   @Test
   public void makeLiveTest() throws Exception {
     SslRedirectConfigProcessor proc = new SslRedirectConfigProcessor();
-    proc.stagedSslPaths.add("path1");
-    proc.stagedSslPatterns.add(Pattern.compile("path2"));
+    proc.stagedConfiguration.sslPaths.add("path1");
+    proc.stagedConfiguration.sslPatterns.add(Pattern.compile("path2"));
     proc.makeLive();
     
-    assertTrue("Paths not promoted", proc.liveSslPaths.size() == 1);
-    assertTrue("Patterns not promoted", proc.liveSslPatterns.size() == 1);
+    assertTrue("Paths not promoted", proc.liveConfiguration.sslPaths.size() == 1);
+    assertTrue("Patterns not promoted", proc.liveConfiguration.sslPatterns.size() == 1);
 
-    assertTrue("Paths not promoted correctly", proc.liveSslPaths.get(0).equals("path1"));
-    assertTrue("Patterns not promoted correctly", proc.liveSslPatterns.get(0).pattern().equals("path2"));
+    assertTrue("Paths not promoted correctly", proc.liveConfiguration.sslPaths.get(0).equals("path1"));
+    assertTrue("Patterns not promoted correctly", proc.liveConfiguration.sslPatterns.get(0).pattern().equals("path2"));
     
-    proc.stagedSslPaths.clear();
+    proc.stagedConfiguration.sslPaths.clear();
     proc.makeLive();
 
-    assertTrue("Paths not promoted 2", proc.liveSslPaths.size() == 0);
-    assertTrue("Patterns not promoted 2", proc.liveSslPatterns.size() == 1);
-    assertTrue("Patterns not promoted correctly 2", proc.liveSslPatterns.get(0).pattern().equals("path2"));
+    assertTrue("Paths not promoted 2", proc.liveConfiguration.sslPaths.size() == 0);
+    assertTrue("Patterns not promoted 2", proc.liveConfiguration.sslPatterns.size() == 1);
+    assertTrue("Patterns not promoted correctly 2", proc.liveConfiguration.sslPatterns.get(0).pattern().equals("path2"));
   }
   
   @Test
@@ -59,12 +59,12 @@ public class SslRedirectConfigProcessorTest {
     SslRedirectConfigProcessor proc = new SslRedirectConfigProcessor();
     proc.processFromDirectory("./src/test/resources");
     
-    assertTrue("No paths were read in.", !proc.stagedSslPaths.isEmpty() || !proc.stagedSslPatterns.isEmpty());
-    for(String path : proc.stagedSslPaths) {
+    assertTrue("No paths were read in.", !proc.stagedConfiguration.sslPaths.isEmpty() || !proc.stagedConfiguration.sslPatterns.isEmpty());
+    for(String path : proc.stagedConfiguration.sslPaths) {
       System.out.println("Path ["+path+"]");
       assertTrue("Path is empty", path.length() > 0);
     }
-    for(Pattern pattern : proc.stagedSslPatterns) {
+    for(Pattern pattern : proc.stagedConfiguration.sslPatterns) {
       System.out.println("Pattern ["+pattern.pattern()+"]");
       assertTrue("Pattern is empty", pattern.pattern().length() > 0);
     }

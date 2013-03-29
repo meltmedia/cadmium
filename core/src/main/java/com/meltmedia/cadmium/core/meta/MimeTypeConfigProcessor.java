@@ -15,6 +15,15 @@
  */
 package com.meltmedia.cadmium.core.meta;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.meltmedia.cadmium.core.FileSystemManager;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.LineIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Singleton;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,17 +31,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.inject.Singleton;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.meltmedia.cadmium.core.FileSystemManager;
 
 @Singleton
 public class MimeTypeConfigProcessor implements ConfigProcessor {
@@ -50,9 +48,7 @@ public class MimeTypeConfigProcessor implements ConfigProcessor {
     if( mimeTypeFile != null ) {
       addAppMimeTypes(newMimeTypes, mimeTypeFile);
     }
-    synchronized(stagedMimeTypes) {
-      this.stagedMimeTypes = newMimeTypes;
-    }
+    this.stagedMimeTypes = newMimeTypes;
   }
   
   static void addDefaultMimeTypes( Map<String, String> mimeTypeMap ) throws IllegalArgumentException, UnsupportedEncodingException {
@@ -97,13 +93,8 @@ public class MimeTypeConfigProcessor implements ConfigProcessor {
 
   @Override
   public void makeLive() {
-    // Synchronized to make sure that the logs happen in the correct order.
-    // TODO: Find and fix whatever is causing multiple Update actions to occur.
-    synchronized(stagedMimeTypes) {
-      log.debug("Promoting {} staged mime types, replacing {} old live mime types", stagedMimeTypes.size(), mimeTypes.size());
-      this.mimeTypes = this.stagedMimeTypes;
-      log.trace("Now serving {} live mime types", mimeTypes.size());
-    }
+    log.trace("Promoting {} staged mime types, replacing {} old live mime types", stagedMimeTypes.size(), mimeTypes.size());
+    this.mimeTypes = this.stagedMimeTypes;
   }
   
   public String getContentType(String filename) {
