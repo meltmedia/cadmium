@@ -180,44 +180,48 @@ public class GitService
     
     GitLocation gitLocation = new GitLocation(uri, branch, configProperties.getProperty("config.git.ref.sha"));
     GitService cloned = initializeRepo(gitLocation, warDir, "git-config-checkout");
-        
-    String renderedContentDir = initializeSnapshotDirectory(warDir,
-        configProperties, "com.meltmedia.cadmium.config.lastUpdated", "git-config-checkout", "config"); 
-    
-    boolean hasExisting = configProperties.containsKey("com.meltmedia.cadmium.config.lastUpdated") && renderedContentDir != null && renderedContentDir.equals(configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated"));
-    if(renderedContentDir != null) {
-      configProperties.setProperty("com.meltmedia.cadmium.config.lastUpdated", renderedContentDir);
-    }
-    configProperties.setProperty("config.branch", cloned.getBranchName());
-    configProperties.setProperty("config.git.ref.sha", cloned.getCurrentRevision());
-    configProperties.setProperty("config.repo", cloned.getRemoteRepository());
-    
-    configManager.persistDefaultProperties();
 
-    ExecutorService pool = null;
-    if(historyManager == null) {
-      pool = Executors.newSingleThreadExecutor();
-      historyManager = new HistoryManager(warDir, pool);
-    }
-    
-    try{
-      if(historyManager != null && !hasExisting) {
-        historyManager.logEvent(EntryType.CONFIG,
-            // NOTE: We should integrate the git pointer into this class.
-            new GitLocation(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision()),
-            "AUTO",
-            renderedContentDir,
-            "", "Initial config pull.",
-            true,
-            true);
+    try {
+      String renderedContentDir = initializeSnapshotDirectory(warDir,
+          configProperties, "com.meltmedia.cadmium.config.lastUpdated", "git-config-checkout", "config");
+
+      boolean hasExisting = configProperties.containsKey("com.meltmedia.cadmium.config.lastUpdated") && renderedContentDir != null && renderedContentDir.equals(configProperties.getProperty("com.meltmedia.cadmium.config.lastUpdated"));
+      if(renderedContentDir != null) {
+        configProperties.setProperty("com.meltmedia.cadmium.config.lastUpdated", renderedContentDir);
       }
-    } finally {
-      if(pool != null) {
-        pool.shutdownNow();
+      configProperties.setProperty("config.branch", cloned.getBranchName());
+      configProperties.setProperty("config.git.ref.sha", cloned.getCurrentRevision());
+      configProperties.setProperty("config.repo", cloned.getRemoteRepository());
+
+      configManager.persistDefaultProperties();
+
+      ExecutorService pool = null;
+      if(historyManager == null) {
+        pool = Executors.newSingleThreadExecutor();
+        historyManager = new HistoryManager(warDir, pool);
       }
+
+      try{
+        if(historyManager != null && !hasExisting) {
+          historyManager.logEvent(EntryType.CONFIG,
+              // NOTE: We should integrate the git pointer into this class.
+              new GitLocation(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision()),
+              "AUTO",
+              renderedContentDir,
+              "", "Initial config pull.",
+              true,
+              true);
+        }
+      } finally {
+        if(pool != null) {
+          pool.shutdownNow();
+        }
+      }
+      return cloned;
+    } catch (Throwable e){
+      cloned.close();
+      throw new Exception(e);
     }
-    
-    return cloned;
   }
   
   /**
@@ -239,59 +243,63 @@ public class GitService
     
     GitLocation gitLocation = new GitLocation(uri, branch, configProperties.getProperty("git.ref.sha"));
     GitService cloned = initializeRepo(gitLocation, warDir, "git-checkout");
-    
-    String renderedContentDir = initializeSnapshotDirectory(warDir,
-        configProperties, "com.meltmedia.cadmium.lastUpdated", "git-checkout", "renderedContent"); 
-    
-    boolean hasExisting = configProperties.containsKey("com.meltmedia.cadmium.lastUpdated") && renderedContentDir != null && renderedContentDir.equals(configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
-    if(renderedContentDir != null) {
-      configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
-    }
-    configProperties.setProperty("branch", cloned.getBranchName());
-    configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
-    configProperties.setProperty("repo", cloned.getRemoteRepository());
-    
-    if(renderedContentDir != null) {
-      String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
-      if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
-        try {
-          configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
-        } catch(Exception e) {
-          log.warn("Failed to read source file {}", sourceFilePath);
+    try {
+      String renderedContentDir = initializeSnapshotDirectory(warDir,
+          configProperties, "com.meltmedia.cadmium.lastUpdated", "git-checkout", "renderedContent");
+
+      boolean hasExisting = configProperties.containsKey("com.meltmedia.cadmium.lastUpdated") && renderedContentDir != null && renderedContentDir.equals(configProperties.getProperty("com.meltmedia.cadmium.lastUpdated"));
+      if(renderedContentDir != null) {
+        configProperties.setProperty("com.meltmedia.cadmium.lastUpdated", renderedContentDir);
+      }
+      configProperties.setProperty("branch", cloned.getBranchName());
+      configProperties.setProperty("git.ref.sha", cloned.getCurrentRevision());
+      configProperties.setProperty("repo", cloned.getRemoteRepository());
+
+      if(renderedContentDir != null) {
+        String sourceFilePath = renderedContentDir + File.separator + "MET-INF" + File.separator + "source";
+        if(sourceFilePath != null && FileSystemManager.canRead(sourceFilePath)) {
+          try {
+            configProperties.setProperty("source", FileSystemManager.getFileContents(sourceFilePath));
+          } catch(Exception e) {
+            log.warn("Failed to read source file {}", sourceFilePath);
+          }
+        } else if(!configProperties.containsKey("source")){
+          configProperties.setProperty("source", "{}");
         }
       } else if(!configProperties.containsKey("source")){
         configProperties.setProperty("source", "{}");
       }
-    } else if(!configProperties.containsKey("source")){
-      configProperties.setProperty("source", "{}");
-    }
-    
-    configManager.persistDefaultProperties();
 
-    ExecutorService pool = null;
-    if(historyManager == null) {
-      pool = Executors.newSingleThreadExecutor();
-      historyManager = new HistoryManager(warDir, pool);
-    }
-    
-    try{
-      if(historyManager != null && !hasExisting) {
-        historyManager.logEvent(EntryType.CONTENT,
-            new GitLocation(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision()),
-            "AUTO",
-            renderedContentDir,
-            "",
-            "Initial content pull.",
-            true,
-            true);
+      configManager.persistDefaultProperties();
+
+      ExecutorService pool = null;
+      if(historyManager == null) {
+        pool = Executors.newSingleThreadExecutor();
+        historyManager = new HistoryManager(warDir, pool);
       }
-    } finally {
-      if(pool != null) {
-        pool.shutdownNow();
+
+      try{
+        if(historyManager != null && !hasExisting) {
+          historyManager.logEvent(EntryType.CONTENT,
+              new GitLocation(cloned.getRemoteRepository(), cloned.getBranchName(), cloned.getCurrentRevision()),
+              "AUTO",
+              renderedContentDir,
+              "",
+              "Initial content pull.",
+              true,
+              true);
+        }
+      } finally {
+        if(pool != null) {
+          pool.shutdownNow();
+        }
       }
+
+      return cloned;
+    } catch(Throwable e) {
+      cloned.close();
+      throw new Exception(e);
     }
-    
-    return cloned;
   }
 
   private static String initializeSnapshotDirectory(String warDir,
@@ -344,12 +352,16 @@ public class GitService
     if(gitDir == null) {
       log.info("Cloning remote git repository to " + checkoutDir);
       cloned = cloneRepo(gitLocation.getRepository(), new File(warDir, checkoutDir).getAbsolutePath());
-      
-      log.info("Switching to branch {}", gitLocation.getBranch());
-      cloned.switchBranch(gitLocation.getBranch());
-      
-      if(StringUtils.isNotBlank(gitLocation.getRevision())) {
-        cloned.resetToRev(gitLocation.getRevision());
+      try {
+        log.info("Switching to branch {}", gitLocation.getBranch());
+        cloned.switchBranch(gitLocation.getBranch());
+
+        if(StringUtils.isNotBlank(gitLocation.getRevision())) {
+          cloned.resetToRev(gitLocation.getRevision());
+        }
+      } catch(Throwable t) {
+        cloned.close();
+        throw new Exception(t);
       }
     } else if(cloned == null){
       cloned = createGitService(gitDir);
@@ -382,9 +394,10 @@ public class GitService
   	String repoPath = dir + "/" + site;
   	log.debug("Repository Path :" + repoPath);
   	Repository repo = new FileRepository(repoPath + "/.git");
+    Git git = null;
   	try {
   		repo.create();
-  		Git git = new Git(repo);
+  		git = new Git(repo);
   		
   		File localGitRepo = new File(repoPath);
   		localGitRepo.mkdirs();
@@ -395,6 +408,9 @@ public class GitService
   		return new GitService(git);  		
   	} catch (IllegalStateException e) {
   		log.debug("Repo Already exists locally");
+      if(repo != null) {
+        repo.close();
+      }
   	}
 		return null;
   }

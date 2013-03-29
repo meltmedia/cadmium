@@ -15,11 +15,9 @@
  */
 package com.meltmedia.cadmium.core.github;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.meltmedia.cadmium.core.FileSystemManager;
 import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -34,9 +32,10 @@ import org.eclipse.jgit.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.meltmedia.cadmium.core.FileSystemManager;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class ApiClient {
   private static final Logger log = LoggerFactory.getLogger(ApiClient.class);
@@ -95,15 +94,18 @@ public class ApiClient {
       log.trace("Loggin in with post body [{}]", bodySt);
       StringEntity postEntity = new StringEntity(bodySt);
       post.setEntity(postEntity);
-      
-      HttpResponse response = client.execute(post);
-      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
-        Authorization auth = new Gson().fromJson(EntityUtils.toString(response.getEntity()), Authorization.class);
-        return auth;
-      } else {
-        String errResponse = EntityUtils.toString(response.getEntity());
-        log.warn("Github auth failed: {}", errResponse);
-        throw new Exception(errResponse);
+      try {
+        HttpResponse response = client.execute(post);
+        if(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+          Authorization auth = new Gson().fromJson(EntityUtils.toString(response.getEntity()), Authorization.class);
+          return auth;
+        } else {
+          String errResponse = EntityUtils.toString(response.getEntity());
+          log.warn("Github auth failed: {}", errResponse);
+          throw new Exception(errResponse);
+        }
+      } finally {
+        post.releaseConnection();
       }
     } else {
       throw new Exception("Request is rate limited.");
@@ -131,18 +133,23 @@ public class ApiClient {
       
       HttpGet get = new HttpGet("https://api.github.com/authorizations");
       setupBasicAuth(username, password, get);
-            
-      HttpResponse response = client.execute(get);
-      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-        List<Map<String, Object>> auths = new Gson().fromJson(EntityUtils.toString(response.getEntity()), new TypeToken<List<Map<String, Object>>>() {}.getType());
-        if(auths != null && auths.size() > 0) {
-          for(Map<String, Object> auth : auths) {
-            if(auth != null && auth.containsKey("id")) {
-              Double id = (Double)auth.get("id");
-              authIds.add(id.longValue());
+      try {
+        HttpResponse response = client.execute(get);
+        if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+          List<Map<String, Object>> auths = new Gson().fromJson(EntityUtils.toString(response.getEntity()), new TypeToken<List<Map<String, Object>>>() {}.getType());
+          if(auths != null && auths.size() > 0) {
+            for(Map<String, Object> auth : auths) {
+              if(auth != null && auth.containsKey("id")) {
+                Double id = (Double)auth.get("id");
+                authIds.add(id.longValue());
+              }
             }
           }
+        } else {
+          EntityUtils.consume(response.getEntity());
         }
+      } finally {
+        get.releaseConnection();
       }
     } else {
       throw new Exception("Request is rate limited.");
@@ -161,10 +168,14 @@ public class ApiClient {
       
       HttpDelete delete = new HttpDelete("https://api.github.com/authorizations/"+authId);
       setupBasicAuth(username, password, delete);
-      
-      HttpResponse response = client.execute(delete);
-      if(response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-        throw new Exception("Failed to deauthorize token "+token);
+      try {
+        HttpResponse response = client.execute(delete);
+        if(response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+          EntityUtils.consume(response.getEntity());
+          throw new Exception("Failed to deauthorize token "+token);
+        }
+      } finally {
+        delete.releaseConnection();
       }
     } else {
       throw new Exception("Request is rate limited.");
@@ -178,11 +189,18 @@ public class ApiClient {
       
       HttpGet get = new HttpGet("https://api.github.com/teams/"+teamId);
       addAuthHeader(get);
-      
-      HttpResponse response = client.execute(get);
-      
-      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-        return true;
+      HttpResponse response = null;
+      try {
+        response = client.execute(get);
+
+        if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+          return true;
+        }
+      } finally {
+        if(response != null) {
+          EntityUtils.consume(response.getEntity());
+        }
+        get.releaseConnection();
       }
     } else {
       throw new Exception("Request is rate limited.");
@@ -198,20 +216,26 @@ public class ApiClient {
       
       HttpGet get = new HttpGet("https://api.github.com/user");
       addAuthHeader(get);
-      
-      HttpResponse response = client.execute(get);
-      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-        String responseString = EntityUtils.toString(response.getEntity());
-        
-        Map<String, Object> responseObj = new Gson().fromJson(responseString, new TypeToken<Map<String, Object>>() {}.getType());
-        
-        if(responseObj.containsKey("login")) {
-          return (String) responseObj.get("login");
-        } else if(responseObj.containsKey("message")) {
-          throw new Exception((String) responseObj.get("message"));
+      try {
+        HttpResponse response = client.execute(get);
+        if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+          String responseString = EntityUtils.toString(response.getEntity());
+
+          Map<String, Object> responseObj = new Gson().fromJson(responseString, new TypeToken<Map<String, Object>>() {}.getType());
+
+          if(responseObj.containsKey("login")) {
+            return (String) responseObj.get("login");
+          } else if(responseObj.containsKey("message")) {
+            throw new Exception((String) responseObj.get("message"));
+          }
+        } else if(response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+          EntityUtils.consume(response.getEntity());
+          throw new Exception("Unauthorized");
+        } else {
+          EntityUtils.consume(response.getEntity());
         }
-      } else if(response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-        throw new Exception("Unauthorized");
+      } finally {
+        get.releaseConnection();
       }
     } else {
       throw new Exception("Request is rate limited.");
@@ -228,24 +252,31 @@ public class ApiClient {
     
     HttpGet get = new HttpGet("https://api.github.com/rate_limit");
     addAuthHeader(get, token);
-    
-    HttpResponse response = client.execute(get);
-    if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-      String responseString = EntityUtils.toString(response.getEntity());
-      
-      RateLimitResponse responseObj = new Gson().fromJson(responseString, new TypeToken<RateLimitResponse>() {}.getType());
-      if(responseObj.rate != null) {
-        if(responseObj.rate.remaining != null) { 
-          if(responseObj.rate.remaining < 100) {
-            log.warn("The remaining rate limit is {}", responseObj.rate.remaining);
-          } else {
-            log.trace("The remaining rate limit is {}", responseObj.rate.remaining);
+    HttpResponse response = null;
+    try {
+      response = client.execute(get);
+      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+        String responseString = EntityUtils.toString(response.getEntity());
+
+        RateLimitResponse responseObj = new Gson().fromJson(responseString, new TypeToken<RateLimitResponse>() {}.getType());
+        if(responseObj.rate != null) {
+          if(responseObj.rate.remaining != null) {
+            if(responseObj.rate.remaining < 100) {
+              log.warn("The remaining rate limit is {}", responseObj.rate.remaining);
+            } else {
+              log.trace("The remaining rate limit is {}", responseObj.rate.remaining);
+            }
+            return responseObj.rate.remaining;
           }
-          return responseObj.rate.remaining;
         }
+      } else if(response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED){
+        EntityUtils.consume(response.getEntity());
+        throw new Exception("Unauthorized!");
+      } else {
+        EntityUtils.consume(response.getEntity());
       }
-    } else if(response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED){
-      throw new Exception("Unauthorized!");
+    } finally {
+      get.releaseConnection();
     }
     return -1;
   }
@@ -264,15 +295,19 @@ public class ApiClient {
     String commentJsonString = new Gson().toJson(commentBody, Comment.class);
     log.trace("Setting a new comment [{}]", commentJsonString);
     post.setEntity(new StringEntity(commentJsonString));
+    try {
+      HttpResponse response = client.execute(post);
     
-    HttpResponse response = client.execute(post);
-    
-    if(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
-      String resp = EntityUtils.toString(response.getEntity());
-      IdExtractor id = new Gson().fromJson(resp, IdExtractor.class);
-      return id.id;
-    } else {
-      throw new Exception("Failed to create new comment of commit ["+orgRepo+":"+sha+"]: "+response.getStatusLine().toString());
+      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+        String resp = EntityUtils.toString(response.getEntity());
+        IdExtractor id = new Gson().fromJson(resp, IdExtractor.class);
+        return id.id;
+      } else {
+        EntityUtils.consume(response.getEntity());
+        throw new Exception("Failed to create new comment of commit ["+orgRepo+":"+sha+"]: "+response.getStatusLine().toString());
+      }
+    } finally {
+      post.releaseConnection();
     }
   }
 

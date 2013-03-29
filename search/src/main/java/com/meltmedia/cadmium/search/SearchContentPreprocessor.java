@@ -159,9 +159,14 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     }
     finally {
       IOUtils.closeQuietly(iwriter);
+      iwriter = null;
     }
     newStagedSearcher.indexReader = IndexReader.open(newStagedSearcher.directory);
+    SearchHolder oldStage = stagedSearch;
     stagedSearch = newStagedSearcher;
+    if(oldStage != null) {
+      oldStage.close();
+    }
   }
   
   void writeIndex( final IndexWriter indexWriter, File contentDir ) throws Exception {
@@ -174,24 +179,17 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
           
           // if we should not index this file, move on.
           if(!shouldIndex(jerry)) return;
-          Jerry removeScripts = jerry.$("script");
-          if(removeScripts.size() > 0) {
-            removeScripts.remove();
-          }
-          Jerry removals = jerry.$("[cadmium=\"no-index\"]");
-          if(removals.size() > 0) {
-          	log.info("Removing {} element[s]", removals.length());
-          	removals.remove();
-          } else {
-            log.info("No elements to remove");
-          }
-          
+
           String title = jerry.$("html > head > title").text();
 
-          removals = jerry.$("title,head");
-          if (removals.size() > 0) {
-            removals.remove();
+          Jerry removals = jerry.$("title,head,script,[cadmium=\"no-index\"]");
+          if(removals.size() > 0) {
+          	log.debug("Removing {} element[s]", removals.length());
+          	removals.remove();
+          } else {
+            log.debug("No elements to remove");
           }
+
           String textContent = jerry.$("body").text();
 
   	      Document doc = new Document();
