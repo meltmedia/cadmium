@@ -15,9 +15,11 @@
  */
 package com.meltmedia.cadmium.servlets;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import com.meltmedia.cadmium.core.SiteDownService;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -26,12 +28,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
-
-import com.meltmedia.cadmium.core.SiteDownService;
-
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 @Singleton
 public class MaintenanceFilter extends HttpFilter implements Filter {
@@ -107,15 +106,17 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
 		httpRes.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
 		httpRes.setContentType(MediaType.TEXT_HTML);
 		InputStream in = null;
+    InputStreamReader reader = null;
 		try {
 		  in = MaintenanceFilter.class.getResourceAsStream("/maintenance.html");
 		  if(in == null) {
 		    in = MaintenanceFilter.class.getResourceAsStream("./maintenance.html");
 		  }
-		  InputStreamReader reader = new InputStreamReader(in, "UTF-8");
+		  reader = new InputStreamReader(in, "UTF-8");
 		  IOUtils.copy(reader, httpRes.getWriter()); 
 		}
 		finally {
+      IOUtils.closeQuietly(reader);
 		  IOUtils.closeQuietly(in);
 		  IOUtils.closeQuietly(httpRes.getWriter());
 		}

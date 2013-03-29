@@ -30,7 +30,6 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 
 /**
  * <p>Serves error content for calls to HttpServletResponse.sendError() methods and exceptions that are thrown during
@@ -170,7 +169,6 @@ public class ErrorPageFilter implements Filter {
         "/"+Integer.toString(sc).subSequence(0, 1)+"xx.html" };
             
       InputStream errorPageIn = null;
-      Reader errorPageReader = null;
       try {
         String path = request.getRequestURI();
         while(path != null && errorPageIn == null) {

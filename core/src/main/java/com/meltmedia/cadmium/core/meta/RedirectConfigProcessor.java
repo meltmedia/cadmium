@@ -18,11 +18,12 @@ package com.meltmedia.cadmium.core.meta;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.FileSystemManager;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
-import java.io.FileReader;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,50 +38,41 @@ public class RedirectConfigProcessor implements ConfigProcessor {
   
   @Override
   public void processFromDirectory(String metaDir) throws Exception {
-    synchronized(stagedRedirects) {
-      if(metaDir != null) {
-        String redirectFile = FileSystemManager.getFileIfCanRead(metaDir, CONFIG_FILE_NAME);
-        if(redirectFile != null) {
-          Gson gson = new Gson();
-          Collection<Redirect> redirs = null;
-          try {
-            redirs = gson.fromJson(new FileReader(redirectFile), new TypeToken<Collection<Redirect>>(){}.getType());
-          } catch(Exception e) {
-            log.error("Invalid "+CONFIG_FILE_NAME+"!", e);
-            throw e;
-          }
-          if(redirs != null && !redirs.isEmpty()) {
-            stagedRedirects.clear();
-            for(Redirect redir : redirs) {
-              stagedRedirects.add((Redirect)redir.clone());
-            }
-          } else {
-            stagedRedirects.clear();
-          }
-        } else {
-          stagedRedirects.clear();
+    List<Redirect> newStagedRedirects = new ArrayList<Redirect>();
+    if(metaDir != null) {
+      String redirectFile = FileSystemManager.getFileIfCanRead(metaDir, CONFIG_FILE_NAME);
+      if(redirectFile != null) {
+        Gson gson = new Gson();
+        Collection<Redirect> redirs = null;
+        try {
+          redirs = gson.fromJson(FileUtils.readFileToString(new File(redirectFile)), new TypeToken<Collection<Redirect>>(){}.getType());
+        } catch(Exception e) {
+          log.error("Invalid "+CONFIG_FILE_NAME+"!", e);
+          throw e;
         }
-      } else {
-        stagedRedirects.clear();
+        if(redirs != null && !redirs.isEmpty()) {
+          for(Redirect redir : redirs) {
+            newStagedRedirects.add((Redirect)redir.clone());
+          }
+        }
       }
     }
+    stagedRedirects = newStagedRedirects;
   }
 
   @Override
   public void makeLive() {
-    synchronized(stagedRedirects) {
-      log.debug("Promoting {} staged redirects, replacing {} old live redirects", stagedRedirects.size(), liveRedirects.size());
-      liveRedirects.clear();
-      liveRedirects.addAll(stagedRedirects);
-    }
+    log.trace("Promoting {} staged redirects, replacing {} old live redirects", stagedRedirects.size(), liveRedirects.size());
+    liveRedirects = stagedRedirects;
   }
   
   public Redirect requestMatches(String pathInfo, String queryString) {
     Redirect matched = null;
+    List<Redirect> workingRedirects = liveRedirects;
     log.trace("Checking pathInfo {}, and queryString {}", pathInfo, queryString);
-    if(liveRedirects != null && !liveRedirects.isEmpty()) {
+    if(workingRedirects != null && !workingRedirects.isEmpty()) {
       if(queryString != null && queryString.length() > 0) {
-        for(Redirect redir : liveRedirects) {
+        for(Redirect redir : workingRedirects) {
           if(redir.matches(pathInfo+"?"+queryString)) {
             matched = (Redirect)redir.clone();
             break;
@@ -88,7 +80,7 @@ public class RedirectConfigProcessor implements ConfigProcessor {
         }
       }
       if(matched == null) {
-        for(Redirect redir : liveRedirects) {
+        for(Redirect redir : workingRedirects) {
           if(redir.matches(pathInfo)) {
             matched = (Redirect)redir.clone();
             break;
