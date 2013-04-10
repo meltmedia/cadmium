@@ -52,6 +52,7 @@ import com.meltmedia.cadmium.servlets.shiro.WebEnvironment;
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.web.env.EnvironmentLoader;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.eclipse.jgit.util.StringUtils;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
@@ -66,6 +67,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import javax.servlet.Filter;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.ws.rs.Path;
@@ -281,7 +283,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         this.channelConfigUrl = fileUrl.toString();
       }
     }
-    
+
     Module modules[] = new Module[] {createServletModule(), createModule()};
     InternalInjectorCreator guiceCreator = new InternalInjectorCreator()
       .stage(Stage.DEVELOPMENT)
@@ -325,6 +327,9 @@ public class CadmiumListener extends GuiceServletContextListener {
     return new ServletModule() {
       @Override
       protected void configureServlets() {
+        Vfs.addDefaultURLTypes(new JBossVfsUrlType());
+        Reflections reflections = new Reflections("com.meltmedia.cadmium",
+            new TypeAnnotationsScanner());
         Map<String, String> maintParams = new HashMap<String, String>();
         maintParams.put("ignorePrefix", "/system");
         Map<String, String> aclParams = new HashMap<String, String>();
@@ -347,6 +352,22 @@ public class CadmiumListener extends GuiceServletContextListener {
         filter("/*").through(SecureRedirectFilter.class);
         filter("/api/*").through(ApiEndpointAccessFilter.class, aclParams);
 
+        try {
+          Set<Class<?>> discoveredFilters = reflections.getTypesAnnotatedWith(CadmiumFilter.class);
+          if(discoveredFilters != null) {
+            for(Class<?> filterClass : discoveredFilters) {
+              if( Filter.class.isAssignableFrom(filterClass)) {
+                CadmiumFilter annot = filterClass.getAnnotation(CadmiumFilter.class);
+                if(!StringUtils.isEmptyOrNull(annot.value())){
+                  log.debug("Adding Filter {} mapped with {}", filterClass.getName(), annot.value());
+                  filter(annot.value()).through(filterClass.asSubclass(Filter.class));
+                }
+              }
+            }
+          }
+        } catch(Exception e){
+          log.error("Failed to find servlet Filter implementations.", e);
+        }
       }
     };
   }
@@ -357,7 +378,6 @@ public class CadmiumListener extends GuiceServletContextListener {
       @Override
       protected void configure() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        
         Reflections reflections = new Reflections("com.meltmedia.cadmium", 
             new TypeAnnotationsScanner(), 
             new SubTypesScanner(),

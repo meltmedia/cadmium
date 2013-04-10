@@ -596,7 +596,7 @@ public class BasicFileServlet
       this.request = request;
       this.response = response;
       this.sendEntity = sendEntity;
-      this.path = request.getPathInfo();
+      this.path = request.getRequestURI();
     }
   }
   
