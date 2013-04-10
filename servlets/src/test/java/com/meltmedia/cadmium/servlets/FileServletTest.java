@@ -222,7 +222,7 @@ public class FileServletTest {
   public static HttpServletRequest mockGet( String pathInfo ) {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getMethod()).thenReturn(GET_METHOD);
-    when(request.getPathInfo()).thenReturn(pathInfo);
+    when(request.getRequestURI()).thenReturn(pathInfo);
     when(request.getDateHeader(anyString())).thenReturn(new Long(-1));
     when(request.getHeader(anyString())).thenReturn(null);
     return request;
@@ -231,7 +231,7 @@ public class FileServletTest {
   public static HttpServletRequest mockGetWithGzip( String pathInfo ) {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getMethod()).thenReturn(GET_METHOD);
-    when(request.getPathInfo()).thenReturn(pathInfo);
+    when(request.getRequestURI()).thenReturn(pathInfo);
     when(request.getDateHeader(anyString())).thenReturn(new Long(-1));
     when(request.getHeader(ACCEPT_ENCODING_HEADER)).thenReturn("gzip");
     return request;
@@ -240,7 +240,7 @@ public class FileServletTest {
   public static HttpServletRequest mockGetWithoutGzip( String pathInfo ) {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getMethod()).thenReturn(GET_METHOD);
-    when(request.getPathInfo()).thenReturn(pathInfo);
+    when(request.getRequestURI()).thenReturn(pathInfo);
     when(request.getDateHeader(anyString())).thenReturn(new Long(-1));
     when(request.getHeader(ACCEPT_ENCODING_HEADER)).thenReturn("gzip;q=0");
     return request;
