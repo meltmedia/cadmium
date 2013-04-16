@@ -84,7 +84,7 @@ public class PdfService {
       }
       
 		}
-		return Response.ok(response).header("Content-Disposition", "attachment; filename=" + fileName).build();
+		return Response.ok(response,"text/pdf").header("Content-Disposition", "attachment; filename=" + fileName).build();
 	}
 
 	private Pattern getOwnerPasswordPattern() {
