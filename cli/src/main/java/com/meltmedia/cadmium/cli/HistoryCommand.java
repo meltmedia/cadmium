@@ -89,7 +89,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
    */
   public static void displayHistory(List<HistoryEntry> history, boolean filter, Integer limitHistory) {
     if(history != null && history.size() > 0) {
-      System.console().format("%7s|%7s|%12s|%7s|%14s|%52s|%18s|%42s|%24s|%6s|%6s|%6s|%6s\n", "Index", "Type", "Date", "Time", "User", "Repository", "Branch", "Revision", "Time Live", "Maint", "Revert", "Done", "Fail");
+      System.out.format("%7s|%7s|%12s|%7s|%14s|%52s|%18s|%42s|%24s|%6s|%6s|%6s|%6s\n", "Index", "Type", "Date", "Time", "User", "Repository", "Branch", "Revision", "Time Live", "Maint", "Revert", "Done", "Fail");
       for(int i=0; i<218; i++) {
         System.out.print("-");
       }
@@ -99,7 +99,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
         if(!filter || entry.isRevertible()) {
           if(limitHistory == null || limitHistory-- > 0) {
             showing = true;
-            System.console().format("%7d|%7s|%4tm/%<2td/%<4tY|%<4tH:%<2tM|%14s|%52s|%18s|%42s|%24s|%6b|%6b|%6s|%6s\n",
+            System.out.format("%7d|%7s|%4tm/%<2td/%<4tY|%<4tH:%<2tM|%14s|%52s|%18s|%42s|%24s|%6b|%6b|%6s|%6s\n",
                 entry.getIndex(),
                 entry.getType(),
                 entry.getTimestamp(),

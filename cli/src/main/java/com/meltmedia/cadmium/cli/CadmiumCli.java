@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.git.GitService;
@@ -58,13 +59,13 @@ public class CadmiumCli {
 	 */
 	public static void main(String[] args) {
 		try {
-		  
-		  jCommander = new JCommander();
-		  
+		  MainParams mainParams = new MainParams();
+		  jCommander = new JCommander(mainParams);
+		  	  
 		  jCommander.setProgramName("cadmium");
 		  
-		  HelpCommand helpCommand = new HelpCommand();
-		  jCommander.addCommand("help", helpCommand);
+		  //HelpCommand helpCommand = new HelpCommand();
+		  //jCommander.addCommand("help", helpCommand);
       
       Map<String, CliCommand> commands = wireCommands(jCommander);
 		  try {
@@ -75,22 +76,22 @@ public class CadmiumCli {
 		  }
 		  
 		  String commandName = jCommander.getParsedCommand();
-		  if( commandName == null ) {
+		  if( commandName == null && !mainParams.help ) {
 		    System.out.println("Please use one of the following commands:");
 		    for(String command : jCommander.getCommands().keySet() ) {
 		      String desc = jCommander.getCommands().get(command).getObjects().get(0).getClass().getAnnotation(Parameters.class).commandDescription();
-		      System.console().format("   %16s    -%s\n", command, desc);
+		      System.out.format("   %16s    -%s\n", command, desc);
 		    }
 		  } 
-		  else if( commandName.equals("help") ) {
-			  if( helpCommand.subCommand == null || helpCommand.subCommand.size()==0 ) {
+		  else if( mainParams.help ) {
+			  if( commandName == null ) {
 				  jCommander.usage();
 				  return;
 			  }
 			  else {
-				 JCommander subCommander = jCommander.getCommands().get(helpCommand.subCommand.get(0));
+				 JCommander subCommander = jCommander.getCommands().get(commandName);
 				 if( subCommander == null ) {
-					 System.out.println("Unknown sub command "+helpCommand.subCommand);
+					 System.out.println("Unknown sub command "+commandName);
 					 return;
 				 }
 				 subCommander.usage();
@@ -148,13 +149,18 @@ public class CadmiumCli {
 	    }
 	  }
 	  if(token == null && !authCmd.isAuthQuiet()) {
-	    String username = System.console().readLine("Username [github]: ");
-	    String password = new String(System.console().readPassword("Password: "));
-	    List<String> scopes = new ArrayList<String>();
-	    scopes.add("repo");
-	    ApiClient.authorizeAndCreateTokenFile(username, password, scopes);
-	    
-	    token = ApiClient.getToken();
+	  	if(System.console() == null) {
+	  		System.err.println("Please reautenticate with github.");
+	  		System.exit(1);
+	  	} else {
+		    String username = System.console().readLine("Username [github]: ");
+		    String password = new String(System.console().readPassword("Password: "));
+		    List<String> scopes = new ArrayList<String>();
+		    scopes.add("repo");
+		    ApiClient.authorizeAndCreateTokenFile(username, password, scopes);
+		    
+		    token = ApiClient.getToken();
+		  }
 	  }
 	  
 	  if(token != null) {
@@ -191,4 +197,8 @@ public class CadmiumCli {
     return commands;
 	}
 
+	private static class MainParams {
+		@Parameter(names = {"--help", "-h", "help"},help = true)
+		boolean help;
+	}
 }

@@ -49,6 +49,11 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
 
   @Override
   public void execute() throws Exception {
+  	// TODO add param to provide selection in cli
+  	if(System.console() == null) {
+  		System.err.println("Unable to run with out a console");
+  		System.exit(1);
+  	}
     if(args == null || args.size() != 1) {
       System.err.println("Please specify the url to a deployer.");
       System.exit(1);
@@ -63,9 +68,9 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
     int selectedIndex = -1;
     while(selectedIndex < 0) {
       int index = 0;
-      System.console().format("%5s |  %s\n", "index", "Cadmium App");
+      System.out.format("%5s |  %s\n", "index", "Cadmium App");
       for(String app : deployed) {
-        System.console().format("%5d | \"%s\"\n", index++, app);
+        System.out.format("%5d | \"%s\"\n", index++, app);
       }
       
       System.out.println("Enter index or x to exit: ");
