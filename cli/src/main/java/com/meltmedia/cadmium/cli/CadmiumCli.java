@@ -59,13 +59,12 @@ public class CadmiumCli {
 	 */
 	public static void main(String[] args) {
 		try {
-		  MainParams mainParams = new MainParams();
-		  jCommander = new JCommander(mainParams);
+		  jCommander = new JCommander();
 		  	  
 		  jCommander.setProgramName("cadmium");
 		  
-		  //HelpCommand helpCommand = new HelpCommand();
-		  //jCommander.addCommand("help", helpCommand);
+		  HelpCommand helpCommand = new HelpCommand();
+		  jCommander.addCommand("help", helpCommand);
       
       Map<String, CliCommand> commands = wireCommands(jCommander);
 		  try {
@@ -76,20 +75,20 @@ public class CadmiumCli {
 		  }
 		  
 		  String commandName = jCommander.getParsedCommand();
-		  if( commandName == null && !mainParams.help ) {
+		  if( commandName == null ) {
 		    System.out.println("Please use one of the following commands:");
 		    for(String command : jCommander.getCommands().keySet() ) {
 		      String desc = jCommander.getCommands().get(command).getObjects().get(0).getClass().getAnnotation(Parameters.class).commandDescription();
 		      System.out.format("   %16s    -%s\n", command, desc);
 		    }
 		  } 
-		  else if( mainParams.help ) {
-			  if( commandName == null ) {
+		  else if( commandName.equals("help") ) {
+			  if( helpCommand.subCommand == null || helpCommand.subCommand.size()==0 ) {
 				  jCommander.usage();
 				  return;
 			  }
 			  else {
-				 JCommander subCommander = jCommander.getCommands().get(commandName);
+				 JCommander subCommander = jCommander.getCommands().get(helpCommand.subCommand.get(0));
 				 if( subCommander == null ) {
 					 System.out.println("Unknown sub command "+commandName);
 					 return;
@@ -195,10 +194,5 @@ public class CadmiumCli {
       jCommander.addCommand(command.getCommandName(), command);
     }
     return commands;
-	}
-
-	private static class MainParams {
-		@Parameter(names = {"--help", "-h", "help"},help = true)
-		boolean help;
 	}
 }
