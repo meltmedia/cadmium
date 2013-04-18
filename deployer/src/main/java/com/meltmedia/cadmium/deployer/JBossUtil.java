@@ -15,24 +15,19 @@
  */
 package com.meltmedia.cadmium.deployer;
 
+import org.apache.catalina.Host;
+import org.jboss.mx.util.MBeanServerLocator;
+import org.slf4j.Logger;
+
+import javax.management.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-
-import org.apache.catalina.Host;
-import org.jboss.mx.util.MBeanServerLocator;
-import org.slf4j.Logger;
 
 public class JBossUtil {
   public static final String JBOSS_SERVER_HOME_PROP = "jboss.server.home.dir";
@@ -46,6 +41,41 @@ public class JBossUtil {
 
       server.invoke(new ObjectName("jboss.web:type=Engine"), "addChild", new Object[] { host }, new String[] { "org.apache.catalina.Container" });
     }
+  }
+
+  public static boolean isWarDeployed(String warName, Logger log) throws Exception {
+    MBeanServer server = MBeanServerLocator.locateJBoss();
+    Set<ObjectInstance> foundInstances = server.queryMBeans (new ObjectName("jboss.deployment:type=Deployment,id=\"*"+warName+"*\""), null);
+    boolean found = false;
+    if(foundInstances != null && foundInstances.size() > 0) {
+      log.debug("MBean query returned: {} results.", foundInstances.size());
+      for(ObjectInstance instance : foundInstances) {
+        String simpleName = "" + server.getAttribute(instance.getObjectName(), "SimpleName");
+        log.debug("Checking {} is {}", simpleName, warName);
+        if(simpleName.equals(warName)) {
+          found = true;
+          String state = server.getAttribute(instance.getObjectName(), "State") + "";
+          log.debug("Deployment state {}", state);
+          if(state.equals("ERROR")) {
+            Object error = server.getAttribute(instance.getObjectName(), "Problem");
+            log.debug("Found problem: {}", error);
+            if(error instanceof Throwable) {
+              throw new Exception((Throwable)error);
+            } else {
+              throw new Exception(error.toString());
+            }
+          } else if(state.equals("DEPLOYED")) {
+            return true;
+          } else if(state.equals("UNDEPLOYED")) {
+            found = false;
+          }
+        }
+      }
+    }
+    if(!found) {
+      throw new NoDeploymentFoundException();
+    }
+    return false;
   }
   
   public static void undeploy(String warName, Logger log) {

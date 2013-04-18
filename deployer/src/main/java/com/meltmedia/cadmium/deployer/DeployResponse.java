@@ -13,13 +13,32 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.commands;
+package com.meltmedia.cadmium.deployer;
 
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
-import com.meltmedia.cadmium.core.messaging.Message;
+import com.meltmedia.cadmium.core.commands.AbstractMessageBean;
 
-public interface CommandResponse<B> {
-  public Message<B> getResponse(ChannelMember member);
-  public void reset(ChannelMember member);
-  public void resetAll();
+/**
+ * Holds the response created war name or exception.
+ */
+public class DeployResponse extends AbstractMessageBean {
+  private String warName;
+  private Throwable error;
+
+  public DeployResponse(){}
+
+  public String getWarName() {
+    return warName;
+  }
+
+  public void setWarName(String warName) {
+    this.warName = warName;
+  }
+
+  public Throwable getError() {
+    return error;
+  }
+
+  public void setError(Throwable error) {
+    this.error = error;
+  }
 }

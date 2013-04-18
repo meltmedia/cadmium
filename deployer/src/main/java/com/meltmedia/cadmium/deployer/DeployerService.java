@@ -15,33 +15,49 @@
  */
 package com.meltmedia.cadmium.deployer;
 
-import javax.inject.Inject;
-import javax.servlet.ServletContext;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-
-import org.eclipse.jgit.util.StringUtils;
-
+import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
+import com.meltmedia.cadmium.core.ClusterMembers;
 import com.meltmedia.cadmium.core.api.DeployRequest;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
+import org.eclipse.jgit.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.servlet.ServletContext;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.*;
 
 @CadmiumSystemEndpoint
 @Path("/deploy")
 public class DeployerService extends AuthorizationService {
+  private final Logger logger = LoggerFactory.getLogger(getClass());
   
   private String version = "LATEST";
 	
   @Inject
   protected MessageSender sender;
+
+  @Inject
+  protected DeployResponseCommandAction response;
+
+  @Inject
+  protected DeploymentCheckResponseCommandAction checkResponse;
+
+  @Inject
+  @ClusterMembers
+  protected List<ChannelMember> members;
+
+  @Inject
+  protected MembershipTracker membershipTracker;
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -78,7 +94,9 @@ public class DeployerService extends AuthorizationService {
     if( StringUtils.isEmptyOrNull(req.getBranch() ) ) {
       req.setBranch("master");
     }
-		
+
+
+    ChannelMember coordinator = membershipTracker.getCoordinator();
 	  com.meltmedia.cadmium.deployer.DeployRequest mRequest = new com.meltmedia.cadmium.deployer.DeployRequest();
 	  mRequest.setBranch(req.getBranch());
 	  mRequest.setRepo(req.getRepo());
@@ -89,9 +107,78 @@ public class DeployerService extends AuthorizationService {
 	  mRequest.setSecure(!req.isDisableSecurity());
 	  mRequest.setArtifact(artifact);
     Message<com.meltmedia.cadmium.deployer.DeployRequest> msg = new Message<com.meltmedia.cadmium.deployer.DeployRequest>(DeployCommandAction.DEPLOY_ACTION, mRequest);
+    response.reset(coordinator);
+    sender.sendMessage(msg, coordinator);
 
-    sender.sendMessage(msg, null);
+    int timeout = 4800;
+    while (timeout-- > 0) {
+      Thread.sleep(500l);
+      Message<DeployResponse> returnMsg = response.getResponse(coordinator);
+      if (returnMsg != null) {
+        if(returnMsg.getBody().getError() != null) {
+          throw new Exception(returnMsg.getBody().getError());
+        }
+        return returnMsg.getBody().getWarName();
+      }
+    }
+
     return "ok";
 	}
+
+  @GET
+  @Path("{warName}")
+  public Response deploymentState(@PathParam("warName") String warName) throws Exception {
+    DeploymentCheckRequest request = new DeploymentCheckRequest();
+    request.setWarName(warName);
+    Message<DeploymentCheckRequest> msg = new Message<DeploymentCheckRequest>(DeploymentCheckCommandAction.COMMAND_ACTION, request);
+    checkResponse.resetAll();
+    sender.sendMessage(msg, null);
+    Map<ChannelMember, DeploymentCheckResponse> responses = new HashMap<ChannelMember, DeploymentCheckResponse>();
+    int timeout = 240;
+    while(timeout-- > 0) {
+      Thread.sleep(500l);
+      boolean foundAll = true;
+      for(ChannelMember mem: members) {
+        Message<DeploymentCheckResponse> memResponse = checkResponse.getResponse(mem);
+        if(memResponse != null) {
+          responses.put(mem, memResponse.getBody());
+        } else {
+          foundAll = false;
+        }
+      }
+      if(foundAll) {
+        break;
+      }
+    }
+    if(responses.size() == members.size()) {
+      Set<ChannelMember> membersInError = new HashSet<ChannelMember>();
+      boolean combinedState = true;
+      boolean anyStarted = false;
+      for(ChannelMember mem : responses.keySet()) {
+        DeploymentCheckResponse response = responses.get(mem);
+        if(response.getError() != null) {
+          combinedState = false;
+          membersInError.add(mem);
+        } else {
+          combinedState = combinedState && response.isFinished();
+        }
+        if(response.isStarted()) {
+          anyStarted = true;
+        }
+      }
+      Map<String, Object> responseObj = new LinkedHashMap<String, Object>();
+      responseObj.put("finished", combinedState);
+      responseObj.put("started", anyStarted);
+      if(membersInError.size() > 0) {
+        Set<String> inError = new TreeSet<String>();
+        responseObj.put("errors", inError);
+        for(ChannelMember mem : membersInError) {
+          inError.add(mem.getAddress().toString() + (mem.isCoordinator()? ":coord" : ""));
+        }
+      }
+      return Response.ok(new Gson().toJson(responseObj)).build();
+    }
+    return Response.status(Response.Status.NOT_FOUND).build();
+  }
 }
 

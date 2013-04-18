@@ -13,13 +13,10 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.commands;
+package com.meltmedia.cadmium.deployer;
 
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
-import com.meltmedia.cadmium.core.messaging.Message;
-
-public interface CommandResponse<B> {
-  public Message<B> getResponse(ChannelMember member);
-  public void reset(ChannelMember member);
-  public void resetAll();
+/**
+ * Exception to show that no deployment has been found yet.
+ */
+public class NoDeploymentFoundException extends Exception {
 }

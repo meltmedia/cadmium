@@ -15,11 +15,11 @@
  */
 package com.meltmedia.cadmium.cli;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ws.rs.core.MediaType;
-
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.meltmedia.cadmium.core.api.UndeployRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
@@ -28,11 +28,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.meltmedia.cadmium.core.api.UndeployRequest;
+import javax.ws.rs.core.MediaType;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Displays a list of Cadmium wars deployed to a JBoss server with a Cadmium-Deployer war deployed and tells it to undeploy any of them.
@@ -165,6 +163,9 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
       } else {
         System.out.println("Undeployment of "+warName+" successful");
       }
+    } else {
+      System.err.println("Failed to undeploy "+warName);
+      System.err.println(resp.getStatusLine().getStatusCode()+": "+EntityUtils.toString(resp.getEntity()));
     }
   }
 

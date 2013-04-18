@@ -15,11 +15,11 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class AbstractCommandResponse<T> implements CommandResponse<T> {
   
@@ -38,6 +38,11 @@ public abstract class AbstractCommandResponse<T> implements CommandResponse<T> {
     if(responses.containsKey(member)) {
       responses.remove(member);
     }
+  }
+
+  @Override
+  public void resetAll() {
+    responses.clear();
   }
 
 }
