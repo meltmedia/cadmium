@@ -15,22 +15,23 @@
  */
 package com.meltmedia.cadmium.deployer;
 
-import static com.meltmedia.cadmium.core.util.WarUtils.updateWar;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.inject.Inject;
-
+import com.meltmedia.cadmium.core.CommandAction;
+import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.Message;
+import com.meltmedia.cadmium.core.messaging.MessageSender;
+import com.meltmedia.cadmium.maven.ArtifactResolver;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.CommandAction;
-import com.meltmedia.cadmium.core.CommandContext;
-import com.meltmedia.cadmium.maven.ArtifactResolver;
+import javax.inject.Inject;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.meltmedia.cadmium.core.util.WarUtils.updateWar;
 
 public class DeployCommandAction implements CommandAction<DeployRequest> {
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -41,6 +42,9 @@ public class DeployCommandAction implements CommandAction<DeployRequest> {
   
   @Inject
   protected ArtifactResolver artifactResolver;
+
+  @Inject
+  protected MessageSender sender;
 
   @Override
   public boolean execute(CommandContext<DeployRequest> ctx) throws Exception {
@@ -97,7 +101,15 @@ public class DeployCommandAction implements CommandAction<DeployRequest> {
 
     FileUtils.deleteQuietly(tmpZip);
 
+    FileUtils.touch(newWar);
+
     log.info("Waiting for jBoss to pick up new deployment.");
+
+    DeployResponse deployResponse = new DeployResponse();
+    deployResponse.setWarName(newWar.getName());
+
+    Message<DeployResponse> response = new Message<DeployResponse>(DeployResponseCommandAction.COMMAND_ACTION, deployResponse);
+    sender.sendMessage(response, new ChannelMember(ctx.getSource()));
     
     return true;
   }
@@ -105,6 +117,15 @@ public class DeployCommandAction implements CommandAction<DeployRequest> {
   @Override
   public void handleFailure(CommandContext<DeployRequest> ctx, Exception e) {
     log.error("Failed to deploy "+ctx.getMessage(), e);
+    DeployResponse deployResponse = new DeployResponse();
+    deployResponse.setError(e);
+
+    Message<DeployResponse> response = new Message<DeployResponse>(DeployResponseCommandAction.COMMAND_ACTION, deployResponse);
+    try {
+      sender.sendMessage(response, new ChannelMember(ctx.getSource()));
+    } catch(Exception e1){
+      log.error("Failed to send error response.", e1);
+    }
   }
 
 }

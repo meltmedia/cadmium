@@ -15,17 +15,20 @@
  */
 package com.meltmedia.cadmium.cli;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-
-import javax.ws.rs.core.MediaType;
-
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.meltmedia.cadmium.core.api.DeployRequest;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -33,11 +36,12 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.google.gson.Gson;
-import com.meltmedia.cadmium.core.api.DeployRequest;
-import com.meltmedia.cadmium.core.api.UpdateRequest;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This command is used to tell a Cadmium-Deployer instance to create and deploy a new Cadmium war.
@@ -64,6 +68,9 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
   
   @Parameter(names="--artifact", description="The maven coordinates to a cadmium war.", required=false)
   private String artifact;
+
+  @Parameter(names="--disable-security", hidden=true)
+  private boolean disableSecurity = false;
 	
 	@Parameter(description="<repo> <site>", required=true)
   private List<String> parameters;
@@ -101,7 +108,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 	  String url = removeSubDomain(site)+"system/deploy";
 	  System.out.println(url);
     log.debug("siteUrl + JERSEY_ENDPOINT = {}", url);
-
+    String warName = null;
 		try {
 	    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
 			
@@ -116,6 +123,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
       req.setConfigRepo(StringUtils.isBlank(configRepo) ? repo : configRepo);
 			req.setDomain(domain);
 			req.setArtifact(artifact);
+      req.setDisableSecurity(disableSecurity);
 		  
  		  post.setEntity(new StringEntity(new Gson().toJson(req), "UTF-8"));
 			
@@ -123,18 +131,45 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
   			HttpEntity entity = response.getEntity();
   			String resp = EntityUtils.toString(entity);
-  			if(resp.equalsIgnoreCase("ok")) {
-    			log.debug("entity content type: {}", entity.getContentType().getValue());
-    			System.out.println("Successfully deployed cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
-  			} else {
-  			  throw new Exception("");
-  			}
+        try {
+          post.releaseConnection();
+        } catch(Exception e) {
+          log.warn("Failed to release connection.", e);
+        }
+        if(!resp.equals("ok") && canCheckWar(resp, url, client)) {
+          System.out.println("Waiting for Jboss to deploy new war: "+resp);
+          warName = resp;
+          int secondsToWait = 120;
+          while(secondsToWait-- > 0) {
+            Thread.sleep(5000l);
+            if(checkWarDeployment(warName, url, client)) {
+              break;
+            }
+          }
+          if(secondsToWait < 0) {
+            System.err.println("Timeout: Deployment of cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
+            System.exit(1);
+          }
+        } else {
+          System.out.println("Deployer not compatible with deployment waiting.");
+        }
+        log.debug("entity content type: {}", entity.getContentType().getValue());
+        System.out.println("Successfully deployed cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
 			} else {
         throw new Exception("Bad response status: "+response.getStatusLine().toString());
 			}
 		} 
 		catch (Exception e) {
 			System.err.println("Failed to deploy cadmium application to [" + site + "], with repo [" + repo + "] and branch [" + branch + "]");
+      if(warName != null) {
+        try {
+          System.err.println("Attempting to undeploy partial deployment of "+warName+".");
+          UndeployCommand.undeploy(removeSubDomain(site), warName, token);
+          System.err.println("");
+        } catch(Exception e1){
+          System.err.println("Failed to undeploy partial deployment.");
+        }
+      }
 			System.exit(1);
 		}		
 
@@ -154,4 +189,71 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
   static String removeSubDomain(String url) {
     return url.replaceAll("\\A([^:]+://)[^\\.]+\\.(.*)\\Z", "$1$2");
   }
+
+  /**
+   * Checks via an http options request that the endpoint exists to check for deployment state.
+   * @param warName
+   * @param url
+   * @param client
+   * @return
+   */
+  public boolean canCheckWar(String warName, String url, DefaultHttpClient client) {
+    HttpOptions opt = new HttpOptions(url + "/" + warName);
+    try {
+      HttpResponse response = client.execute(opt);
+      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+        Header allowHeader[] = response.getHeaders("Allow");
+        for(Header allow : allowHeader) {
+          List<String> values = Arrays.asList(allow.getValue().toUpperCase().split(","));
+          if(values.contains("GET")) {
+            return true;
+          }
+        }
+      }
+      EntityUtils.consumeQuietly(response.getEntity());
+    } catch (Exception e) {
+      log.warn("Failed to check if endpoint exists.", e);
+    } finally {
+      opt.releaseConnection();
+    }
+    return false;
+  }
+
+  private boolean started = false;
+
+  public boolean checkWarDeployment(String warName, String url, DefaultHttpClient client) throws Exception {
+    HttpGet get= new HttpGet(url + "/" + warName);
+    try {
+      HttpResponse response = client.execute(get);
+      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+        Map<String, Object> responseObj = new Gson().fromJson(EntityUtils.toString(response.getEntity()), new TypeToken<Map<String,Object>>(){}.getType());
+        if(responseObj.get("errors") != null && responseObj.get("errors") instanceof List) {
+          List<String> errors = (List<String>)responseObj.get("errors");
+          System.err.println("The following nodes have failed:");
+          for(String node: errors) {
+            System.err.println("  "+node);
+          }
+          throw new Exception();
+        }
+        if(!started && (Boolean)responseObj.get("started")) {
+          started = true;
+          System.out.println("The server has began to deploy.");
+        } else if(started && !((Boolean)responseObj.get("started"))) {
+          System.err.println("The server has stopped deploying the new war.");
+          throw new Exception();
+        }
+        if((Boolean)responseObj.get("finished")) {
+          return true;
+        }
+      } else {
+        EntityUtils.consumeQuietly(response.getEntity());
+        System.err.println("Failed to wait for war to deploy.");
+        throw new Exception();
+      }
+    } finally {
+      get.releaseConnection();
+    }
+    return false;
+  }
+
 }
