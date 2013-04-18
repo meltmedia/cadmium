@@ -13,13 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.meltmedia.cadmium.core.commands;
+package com.meltmedia.cadmium.deployer;
 
-import com.meltmedia.cadmium.core.messaging.ChannelMember;
-import com.meltmedia.cadmium.core.messaging.Message;
+import com.meltmedia.cadmium.core.commands.AbstractMessageBean;
 
-public interface CommandResponse<B> {
-  public Message<B> getResponse(ChannelMember member);
-  public void reset(ChannelMember member);
-  public void resetAll();
+/**
+ * Request to check if a deployment has completed or failed.
+ */
+public class DeploymentCheckRequest extends AbstractMessageBean {
+  public String warName;
+
+  public DeploymentCheckRequest(){}
+
+  public String getWarName() {
+    return warName;
+  }
+
+  public void setWarName(String warName) {
+    this.warName = warName;
+  }
 }
