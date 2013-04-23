@@ -112,40 +112,51 @@ public class ErrorPageFilter implements Filter {
   @Override
   public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
       throws IOException, ServletException {
-    final HttpServletRequest  httpReq = (HttpServletRequest)req;
-    final HttpServletResponse httpRes = (HttpServletResponse)res;
-
-    if( ignorePath != null ) {
-      String contextPath = httpReq.getContextPath();
-      String uri = httpReq.getRequestURI();
-      if(contextPath != null && contextPath.trim().length() > 0 && uri.startsWith(contextPath)) {
-        uri = uri.substring(contextPath.length());
-      }
-      if( uri.startsWith(ignorePath) ) {
-        log.trace("Not handling errors for request server:{}, uri:{}", httpReq.getServerName(), uri);
-        chain.doFilter(req, res);
-        return;
-      }
-    }
-    
-    HttpServletResponse wrappedRes = new HttpServletResponseWrapper( httpRes ) {
-      @Override
-      public void sendError(int sc) throws IOException {
-        ErrorPageFilter.this.sendError(sc, null, httpReq, httpRes);
-      }
-
-      @Override
-      public void sendError(int sc, String msg) throws IOException {
-        ErrorPageFilter.this.sendError(sc, msg, httpReq, httpRes);
-      }
-    };
-    
     try {
-      chain.doFilter(httpReq, wrappedRes);
-    }
-    catch( Throwable e ) {
-      log.trace("Handling thrown Exception", e);
-      sendError(500, null, httpReq, httpRes);
+      final HttpServletRequest  httpReq = (HttpServletRequest)req;
+      final HttpServletResponse httpRes = (HttpServletResponse)res;
+
+      if( ignorePath != null ) {
+        String contextPath = httpReq.getContextPath();
+        String uri = httpReq.getRequestURI();
+        if(contextPath != null && contextPath.trim().length() > 0 && uri.startsWith(contextPath)) {
+          uri = uri.substring(contextPath.length());
+        }
+        if( uri.startsWith(ignorePath) ) {
+          log.trace("Not handling errors for request server:{}, uri:{}", httpReq.getServerName(), uri);
+          chain.doFilter(req, res);
+          return;
+        }
+      }
+
+      HttpServletResponse wrappedRes = new HttpServletResponseWrapper( httpRes ) {
+        @Override
+        public void sendError(int sc) throws IOException {
+          ErrorPageFilter.this.sendError(sc, null, httpReq, httpRes);
+        }
+
+        @Override
+        public void sendError(int sc, String msg) throws IOException {
+          ErrorPageFilter.this.sendError(sc, msg, httpReq, httpRes);
+        }
+      };
+
+      try {
+        chain.doFilter(httpReq, wrappedRes);
+      }
+      catch( Throwable e ) {
+        log.trace("Handling thrown Exception", e);
+        sendError(500, null, httpReq, httpRes);
+      }
+    } catch (IOException ioe) {
+      log.error("Failed in error filter.", ioe);
+      throw ioe;
+    } catch (ServletException se) {
+      log.error("Failed in error filter.", se);
+      throw se;
+    } catch (Throwable t) {
+      log.error("Failed in error filter.", t);
+      throw new ServletException(t);
     }
   }
   

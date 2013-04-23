@@ -15,24 +15,19 @@
  */
 package com.meltmedia.cadmium.servlets;
 
-import java.io.IOException;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.meltmedia.cadmium.core.meta.Redirect;
+import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.meta.Redirect;
-import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 @Singleton
 public class RedirectFilter implements Filter {
@@ -49,23 +44,47 @@ public class RedirectFilter implements Filter {
   @Override
   public void doFilter(ServletRequest req, ServletResponse resp,
       FilterChain chain) throws IOException, ServletException {
-    if(redirect != null && req instanceof HttpServletRequest && resp instanceof HttpServletResponse) {
-      HttpServletRequest request = (HttpServletRequest)req;
-      HttpServletResponse response = (HttpServletResponse)resp;
-      String path = request.getRequestURI();
-      String queryString = request.getQueryString();
-      log.trace("Checking for existing redirect [{}?{}]", path, queryString);
-      Redirect redir = redirect.requestMatches(path, queryString);
-      if(redir != null) {
-        String redirectTo = redir.getUrlSubstituted();
-        response.setHeader("Location", redirectTo);
-        response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-        return;
+    Redirect redir = null;
+    try {
+      if(redirect != null && req instanceof HttpServletRequest && resp instanceof HttpServletResponse) {
+        HttpServletRequest request = (HttpServletRequest)req;
+        HttpServletResponse response = (HttpServletResponse)resp;
+        String path = request.getRequestURI();
+        String queryString = request.getQueryString();
+        log.trace("Checking for existing redirect [{}?{}]", path, queryString);
+        redir = redirect.requestMatches(path, queryString);
+        if(redir != null) {
+          String redirectTo = redir.getUrlSubstituted();
+          response.setHeader("Location", redirectTo);
+          response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+          return;
+        }
+      } else {
+        log.trace("Redirect and/or req and resp are not http");
       }
-    } else {
-      log.trace("Redirect and/or req and resp are not http");
+      try {
+        chain.doFilter(req, resp);
+      } catch (IOException ioe) {
+        log.error("Failed down stream from redirect filter.", ioe);
+        throw ioe;
+      } catch (ServletException se) {
+        log.error("Failed down stream from redirect filter.", se);
+        throw se;
+      } catch (Throwable t) {
+        StringWriter str = new StringWriter();
+        t.printStackTrace(new PrintWriter(str));
+        log.error("Failed down stream from redirect filter: " + str.toString(), t);
+        ServletException se = new ServletException(t);
+        throw se;
+
+      }
+    } catch(Throwable t) {
+      StringWriter str = new StringWriter();
+      t.printStackTrace(new PrintWriter(str));
+      log.error("Failed in redirect filter: "+str.toString(), t);
+      ServletException se = new ServletException(t);
+      throw se;
     }
-    chain.doFilter(req, resp);
   }
 
   @Override

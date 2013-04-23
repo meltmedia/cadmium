@@ -15,11 +15,11 @@
  */
 package com.meltmedia.cadmium.core.meta;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Redirect implements Cloneable {
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -69,11 +69,15 @@ public class Redirect implements Cloneable {
     if(pathPattern != null) {
       log.trace("Using pattern to match {}", pathPattern.pattern());
       matcher = pathPattern.matcher(pathInfo);
-      boolean matched = matcher.matches();
-      if(!matched) {
-        matcher = null;
+      if(matcher != null) {
+        boolean matched = matcher.matches();
+        if(!matched) {
+          matcher = null;
+        }
+        return matched;
+      } else {
+        log.warn("Found null matcher [{}] on redir [{}].", pathInfo, path);
       }
-      return matched;
     } else if(pathInfo.equals(path)){
       log.trace("Path equals pathinfo {}", pathInfo);
       return true;
@@ -85,10 +89,8 @@ public class Redirect implements Cloneable {
   public Object clone() {
     Redirect cloneOf = new Redirect();
     cloneOf.url = url;
-    if(this.pathPattern == null) {
-      cloneOf.setPath(path);
-    } else {
-      cloneOf.path = path;
+    cloneOf.path = path;
+    if(this.pathPattern != null) {
       cloneOf.pathPattern = pathPattern;
     }
     cloneOf.matcher = matcher;
