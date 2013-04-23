@@ -69,20 +69,24 @@ public class RedirectConfigProcessor implements ConfigProcessor {
   public Redirect requestMatches(String pathInfo, String queryString) {
     Redirect matched = null;
     List<Redirect> workingRedirects = liveRedirects;
+    List<Redirect> clonedRedirects = new ArrayList<Redirect>();
+    for(Redirect redir : workingRedirects) {
+      clonedRedirects.add((Redirect)redir.clone());
+    }
     log.trace("Checking pathInfo {}, and queryString {}", pathInfo, queryString);
-    if(workingRedirects != null && !workingRedirects.isEmpty()) {
+    if(workingRedirects != null && !clonedRedirects.isEmpty()) {
       if(queryString != null && queryString.length() > 0) {
-        for(Redirect redir : workingRedirects) {
+        for(Redirect redir : clonedRedirects) {
           if(redir.matches(pathInfo+"?"+queryString)) {
-            matched = (Redirect)redir.clone();
+            matched = redir;
             break;
           }
         }
       }
       if(matched == null) {
-        for(Redirect redir : workingRedirects) {
+        for(Redirect redir : clonedRedirects) {
           if(redir.matches(pathInfo)) {
-            matched = (Redirect)redir.clone();
+            matched = redir;
             break;
           }
         }

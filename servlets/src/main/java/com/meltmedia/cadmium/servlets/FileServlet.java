@@ -15,24 +15,18 @@
  */
 package com.meltmedia.cadmium.servlets;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.meta.MimeTypeConfigProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import java.io.*;
+import java.util.Properties;
 
 @SuppressWarnings("serial")
 @Singleton
@@ -109,7 +103,7 @@ public class FileServlet extends BasicFileServlet implements ContentService {
 	 * @throws FileNotFoundException if the file could not be found.
 	 * @throws IOException if any other problem prevented the locating of the file.
 	 */
-	public File findFile( String path ) throws FileNotFoundException, IOException {
+	public File findFile( String path ) throws IOException {
 	  File base = new File(getBasePath());
 	  File pathFile = new File(base, "."+path);
 	  if( !pathFile.exists()) throw new FileNotFoundException("No file or directory at "+pathFile.getCanonicalPath());

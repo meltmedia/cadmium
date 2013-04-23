@@ -92,34 +92,45 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
 	@Override
 	public void doFilter(HttpServletRequest httpReq, HttpServletResponse httpRes, FilterChain chain)
 	throws IOException, ServletException {
-		String contextPath = httpReq.getContextPath();
-		String uri = httpReq.getRequestURI();
-		if(contextPath != null && contextPath.trim().length() > 0 && uri.startsWith(contextPath)) {
-			uri = uri.substring(contextPath.length());
-		}
-		if( !on || (ignorePath != null && uri.startsWith(ignorePath)) ) {
-      logger.trace("Serving request server:{}, uri:{}", httpReq.getServerName(), uri);
-			chain.doFilter(httpReq, httpRes);
-			return;
-		}
+    try {
+      String contextPath = httpReq.getContextPath();
+      String uri = httpReq.getRequestURI();
+      if(contextPath != null && contextPath.trim().length() > 0 && uri.startsWith(contextPath)) {
+        uri = uri.substring(contextPath.length());
+      }
+      if( !on || (ignorePath != null && uri.startsWith(ignorePath)) ) {
+        logger.trace("Serving request server:{}, uri:{}", httpReq.getServerName(), uri);
+        chain.doFilter(httpReq, httpRes);
+        return;
+      }
 
-		httpRes.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-		httpRes.setContentType(MediaType.TEXT_HTML);
-		InputStream in = null;
-    InputStreamReader reader = null;
-		try {
-		  in = MaintenanceFilter.class.getResourceAsStream("/maintenance.html");
-		  if(in == null) {
-		    in = MaintenanceFilter.class.getResourceAsStream("./maintenance.html");
-		  }
-		  reader = new InputStreamReader(in, "UTF-8");
-		  IOUtils.copy(reader, httpRes.getWriter()); 
-		}
-		finally {
-      IOUtils.closeQuietly(reader);
-		  IOUtils.closeQuietly(in);
-		  IOUtils.closeQuietly(httpRes.getWriter());
-		}
+      httpRes.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+      httpRes.setContentType(MediaType.TEXT_HTML);
+      InputStream in = null;
+      InputStreamReader reader = null;
+      try {
+        in = MaintenanceFilter.class.getResourceAsStream("/maintenance.html");
+        if(in == null) {
+          in = MaintenanceFilter.class.getResourceAsStream("./maintenance.html");
+        }
+        reader = new InputStreamReader(in, "UTF-8");
+        IOUtils.copy(reader, httpRes.getWriter());
+      }
+      finally {
+        IOUtils.closeQuietly(reader);
+        IOUtils.closeQuietly(in);
+        IOUtils.closeQuietly(httpRes.getWriter());
+      }
+    } catch (IOException ioe) {
+      logger.error("Failed in maint filter.", ioe);
+      throw ioe;
+    } catch (ServletException se) {
+      logger.error("Failed in maint filter.", se);
+      throw se;
+    } catch (Throwable t) {
+      logger.error("Failed in maint filter.", t);
+      throw new ServletException(t);
+    }
 	}
 
 	public void start()	{		
