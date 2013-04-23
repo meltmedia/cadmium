@@ -68,30 +68,41 @@ public class UserAgentAlternateContentFilter implements Filter {
 
   @Override
   public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
-    if(req instanceof HttpServletRequest){
-      HttpServletRequest request = (HttpServletRequest)req;
-      HttpServletResponse response = (HttpServletResponse)resp;
-      if(ALLOWED_METHODS.contains(request.getMethod().toUpperCase())) {
-        String requestUri = request.getRequestURI();
-        String userAgentHeader = request.getHeader("User-Agent");
-        if(!ignorePath(requestUri) && alternateContentConfig.hasConfig() && !StringUtils.isEmptyOrNull(userAgentHeader)) {
-          File contentDir = alternateContentConfig.getAlternateContentDirectory(userAgentHeader);
-          if(contentDir != null && contentDir.exists() && contentDir.isDirectory()) {
-            try {
-              logger.debug("ContentDir {}, Serving {}, servlet path {}, path info {}", new Object[]{contentDir, request.getRequestURI(), request.getServletPath(), request.getPathInfo()});
-              FileServlet fileServlet = new FileServlet();
-              fileServlet.init();
-              fileServlet.setBasePath(contentDir.getAbsoluteFile().getAbsolutePath());
-              fileServlet.service(request, response);
-              return;
-            } catch(Exception e) {
-              logger.error("Failed to process request: "+requestUri, e);
+    try {
+      if(req instanceof HttpServletRequest){
+        HttpServletRequest request = (HttpServletRequest)req;
+        HttpServletResponse response = (HttpServletResponse)resp;
+        if(ALLOWED_METHODS.contains(request.getMethod().toUpperCase())) {
+          String requestUri = request.getRequestURI();
+          String userAgentHeader = request.getHeader("User-Agent");
+          if(!ignorePath(requestUri) && alternateContentConfig.hasConfig() && !StringUtils.isEmptyOrNull(userAgentHeader)) {
+            File contentDir = alternateContentConfig.getAlternateContentDirectory(userAgentHeader);
+            if(contentDir != null && contentDir.exists() && contentDir.isDirectory()) {
+              try {
+                logger.debug("ContentDir {}, Serving {}, servlet path {}, path info {}", new Object[]{contentDir, request.getRequestURI(), request.getServletPath(), request.getPathInfo()});
+                FileServlet fileServlet = new FileServlet();
+                fileServlet.init();
+                fileServlet.setBasePath(contentDir.getAbsoluteFile().getAbsolutePath());
+                fileServlet.service(request, response);
+                return;
+              } catch(Exception e) {
+                logger.error("Failed to process request: "+requestUri, e);
+              }
             }
           }
         }
       }
+      chain.doFilter(req, resp);
+    } catch (IOException ioe) {
+      logger.error("Failed in user agent filter.", ioe);
+      throw ioe;
+    } catch (ServletException se) {
+      logger.error("Failed in user agent filter.", se);
+      throw se;
+    } catch (Throwable t) {
+      logger.error("Failed in user agent filter.", t);
+      throw new ServletException(t);
     }
-    chain.doFilter(req, resp);
   }
 
   @Override

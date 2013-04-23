@@ -15,21 +15,17 @@
  */
 package com.meltmedia.cadmium.servlets;
 
-import java.io.IOException;
-import java.net.URI;
-
-import javax.inject.Singleton;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.google.inject.Inject;
 import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Singleton;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URI;
 
 /**
  * This filter will redirect requests that do not match the security options for a given page.
@@ -39,6 +35,7 @@ import com.meltmedia.cadmium.core.meta.SslRedirectConfigProcessor;
  */
 @Singleton
 public class SecureRedirectFilter implements Filter {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject
   protected SslRedirectConfigProcessor redirect;
@@ -95,20 +92,21 @@ public class SecureRedirectFilter implements Filter {
   @Override
   public void doFilter(ServletRequest req, ServletResponse resp,
       FilterChain chain) throws IOException, ServletException {
-    if(redirect == null || !(req instanceof HttpServletRequest) || !(resp instanceof HttpServletResponse)) {
-      chain.doFilter(req, resp);
-      return;
-    }
+    try {
+      if(redirect == null || !(req instanceof HttpServletRequest) || !(resp instanceof HttpServletResponse)) {
+        chain.doFilter(req, resp);
+        return;
+      }
       HttpServletRequest request = (HttpServletRequest)req;
       HttpServletResponse response = (HttpServletResponse)resp;
       URI uri = URI.create(request.getRequestURL().toString());
-      
+
       // For now, ignore the Jersey endpoints at /system and /api.
       if( uri.getPath().matches("^/(?:system|api)(/.*)$") ) {
         chain.doFilter(request, response);
         return;
       }
-      
+
       try {
         if( !fileServlet.contentTypeOf(uri.getPath()).matches("\\Atext/html(;.*)?\\Z")) {
           chain.doFilter(request, response);
@@ -119,11 +117,11 @@ public class SecureRedirectFilter implements Filter {
         chain.doFilter(request, response);
         return;
       }
-      
+
       try {
         // determine the request security and what we expect.
         boolean shouldBeSecure = redirect.shouldBeSsl(uri.getPath());
-        
+
         // if we don't support the protocol or the security is correct, pass the request through.
         if( redirectStrategy.isSecure(request) == shouldBeSecure ) {
           chain.doFilter(request, response);
@@ -140,9 +138,19 @@ public class SecureRedirectFilter implements Filter {
       }
       catch( UnsupportedProtocolException upe ) {
         chain.doFilter(request, response);
-        return;        
+        return;
       }
+    } catch (IOException ioe) {
+      log.error("Failed in secure filter.", ioe);
+      throw ioe;
+    } catch (ServletException se) {
+      log.error("Failed in secure filter.", se);
+      throw se;
+    } catch (Throwable t) {
+      log.error("Failed in secure filter.", t);
+      throw new ServletException(t);
     }
+  }
 
   /**
    * NoOp.

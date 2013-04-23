@@ -15,31 +15,24 @@
  */
 package com.meltmedia.cadmium.servlets;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.regex.Pattern;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.google.gson.Gson;
+import com.meltmedia.cadmium.core.ApiEndpointAccessController;
+import com.meltmedia.cadmium.core.config.ConfigManager;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.meltmedia.cadmium.core.ApiEndpointAccessController;
-import com.meltmedia.cadmium.core.config.ConfigManager;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * Servlet filter to restrict access to certain paths managed by the {@link ApiEndpointAccessController}.
@@ -49,6 +42,7 @@ import com.meltmedia.cadmium.core.config.ConfigManager;
  */
 @Singleton
 public class ApiEndpointAccessFilter implements Filter {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   public static final String PERSISTED_STATE_CONFIG_KEY = "com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter.disabled.paths";
   
   @Inject
@@ -129,17 +123,28 @@ public class ApiEndpointAccessFilter implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
-    String pathRequested = ((HttpServletRequest)request).getRequestURI();
-    if(pathRequested.startsWith(prefix)) {
-      pathRequested = pathRequested.replaceFirst(Pattern.quote(prefix), "").replaceFirst("/$", "");
-      for(String disabled : controller.getDisabled()) {
-        if(disabled.equals(pathRequested)) {
-          ((HttpServletResponse)response).sendError(HttpStatus.SC_NOT_FOUND);
-          return;
-        } 
+    try {
+      String pathRequested = ((HttpServletRequest)request).getRequestURI();
+      if(pathRequested.startsWith(prefix)) {
+        pathRequested = pathRequested.replaceFirst(Pattern.quote(prefix), "").replaceFirst("/$", "");
+        for(String disabled : controller.getDisabled()) {
+          if(disabled.equals(pathRequested)) {
+            ((HttpServletResponse)response).sendError(HttpStatus.SC_NOT_FOUND);
+            return;
+          }
+        }
       }
+      chain.doFilter(request, response);
+    } catch (IOException ioe) {
+      log.error("Failed in api endpoint filter.", ioe);
+      throw ioe;
+    } catch (ServletException se) {
+      log.error("Failed in api endpoint filter.", se);
+      throw se;
+    } catch (Throwable t) {
+      log.error("Failed in api endpoint filter.", t);
+      throw new ServletException(t);
     }
-    chain.doFilter(request, response);
   }
 
   @Override
