@@ -79,7 +79,7 @@ public class SearchWithResultsTest {
   @SuppressWarnings("unchecked")
   @Test
   public void test() throws Exception {
-    Map<String, Object> allResults = service.search(query);
+    Map<String, Object> allResults = service.search(query,null);
     
     assertTrue("Should not be empty", !allResults.isEmpty());
     assertTrue("Should be set", allResults.containsKey("number-hits"));
