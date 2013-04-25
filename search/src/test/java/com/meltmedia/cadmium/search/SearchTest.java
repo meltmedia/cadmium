@@ -45,7 +45,7 @@ public class SearchTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testSearchNoResults() throws Exception {
-    Map<String, Object> results = service.search("bad_query");
+    Map<String, Object> results = service.search("bad_query",null);
     
     assertTrue("Should not be empty", !results.isEmpty());
     assertTrue("Should be set", results.containsKey("number-hits"));

@@ -105,7 +105,7 @@ public class SearchServiceTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testSearchWithResults() throws Exception {
-    Map<String, Object> results = service.search("good_query");
+    Map<String, Object> results = service.search("good_query",null);
     
     assertTrue("Should not be empty", !results.isEmpty());
     assertTrue("Should be set", results.containsKey("number-hits"));
@@ -125,7 +125,7 @@ public class SearchServiceTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testSearchWithoutResults() throws Exception {
-    Map<String, Object> results = service.search("bad_query");
+    Map<String, Object> results = service.search("bad_query",null);
     
     assertTrue("Should not be empty", !results.isEmpty());
     assertTrue("Should be set", results.containsKey("number-hits"));
