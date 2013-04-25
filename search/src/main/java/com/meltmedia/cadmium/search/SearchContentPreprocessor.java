@@ -195,7 +195,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   	      Document doc = new Document();
   	      doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
   	      doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
-  	      doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.NOT_ANALYZED));
+  	      doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.ANALYZED));
   	      indexWriter.addDocument(doc);
         } catch(Throwable t) {
           log.warn("Failed to index page ["+file+"]", t);

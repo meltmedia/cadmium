@@ -17,12 +17,18 @@ package com.meltmedia.cadmium.search;
 
 import com.google.inject.Inject;
 import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
@@ -53,27 +59,50 @@ public class SearchService
 
   @Inject
   private IndexSearcherProvider provider;
-  
-  @GET
+    
+	@GET
   @Produces("application/json")
-  public Map<String, Object> search(final @QueryParam("query") String query)
+  public Map<String, Object> search(@QueryParam("query") String query,@QueryParam("path") String path)
       throws Exception {
+    Map<String, Object> resultMap = new LinkedHashMap<String, Object>();
+    
+    // TODO build new query using path
+    resultMap = buildSearchResults(query, path);
+    
+    return resultMap;
+  }
+  
+  private Map<String,Object> buildSearchResults(final String query, final String path) throws Exception {
     logger.info("Running search for [{}]", query);
     final Map<String, Object> resultMap = new LinkedHashMap<String, Object>();
+    
     new SearchTemplate(provider) {
       public void doSearch(IndexSearcher index) throws IOException,
           ParseException {
         QueryParser parser = createParser(getAnalyzer());
+        
         resultMap.put("number-hits", 0);
+        
         List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
+        
         resultMap.put("results", resultList);
+        
         if (index != null && parser != null) {
           Query query1 = parser.parse(query);
+          if(StringUtils.isNotBlank(path)) {
+          	Query pathPrefix = new PrefixQuery(new Term("path", path));
+          	BooleanQuery boolQuery = new BooleanQuery();
+          	boolQuery.add(pathPrefix, Occur.MUST);
+          	boolQuery.add(query1, Occur.MUST);
+          	query1 = boolQuery;
+          }
           TopDocs results = index.search(query1, null, 100000);
           QueryScorer scorer = new QueryScorer(query1);
           Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), new SimpleHTMLEncoder(), scorer);
+    
           logger.info("", results.totalHits);
           resultMap.put("number-hits", results.totalHits);
+          
           for (ScoreDoc doc : results.scoreDocs) {
             Document document = index.doc(doc.doc);
             String content = document.get("content");
@@ -81,24 +110,31 @@ public class SearchService
 
             Map<String, Object> result = new LinkedHashMap<String, Object>();
             String excerpt = "";
+          
             try {
               excerpt = highlighter.getBestFragments(parser.getAnalyzer().tokenStream(null, new StringReader(content)), content, 3, "...");
               excerpt = fixExcerpt(excerpt);
+              
               result.put("excerpt", excerpt);
             } catch(Exception e) {
               logger.debug("Failed to get search excerpt from content.", e);
+              
               try {
                 excerpt = highlighter.getBestFragments(parser.getAnalyzer().tokenStream(null, new StringReader(title)), title, 1, "...");
                 excerpt = fixExcerpt(excerpt);
+                
                 result.put("excerpt", excerpt);
               } catch(Exception e1) {
                 logger.debug("Failed to get search excerpt from title.", e1);
+                
                 result.put("excerpt", "");
               }
             }
+            
             result.put("score", doc.score);
             result.put("title", title);
             result.put("path", document.get("path"));
+            
             resultList.add(result);
           }
         }
