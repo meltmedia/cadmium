@@ -16,6 +16,7 @@
 package com.meltmedia.cadmium.cli;
 
 import com.beust.jcommander.Parameters;
+import com.meltmedia.cadmium.core.github.ApiClient;
 
 /**
  * A Cadmium cli command that does nothing other then force the {@link CadmiumCli} instance to check and authorized the current user with a GitHub API token.
@@ -41,7 +42,10 @@ public class CheckGithubTokenCommand extends AbstractAuthorizedOnly implements
    */
   @Override
   public void execute() throws Exception {
+    ApiClient apiClient = new ApiClient(ApiClient.getToken(), false);
+    int rateRemain = apiClient.getRateLimitRemain();
     System.out.println("Your Github API token is valid.");
+    System.out.println(rateRemain+ " requests remaining.");
   }
 
 }

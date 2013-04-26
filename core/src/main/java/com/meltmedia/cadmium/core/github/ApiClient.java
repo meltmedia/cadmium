@@ -319,19 +319,19 @@ public class ApiClient {
     return orgs.toArray(new String[]{});
   }
 
-  public String[] getAuthorizedTeamsInOrg(String org) throws Exception {
+  public Integer[] getAuthorizedTeamsInOrg(String org) throws Exception {
     HttpClient client = new DefaultHttpClient();
 
     HttpGet get = new HttpGet("https://api.github.com/orgs/"+org+"/teams");
     addAuthHeader(get);
-    Set<String> teamIds = new TreeSet<String>();
+    Set<Integer> teamIds = new TreeSet<Integer>();
     try {
       HttpResponse response = client.execute(get);
       if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
         String responseStr = EntityUtils.toString(response.getEntity());
         List<Team> teams = new Gson().fromJson(responseStr, new TypeToken<List<Team>>(){}.getType());
         for(Team team : teams) {
-          teamIds.add(team.id.toString());
+          teamIds.add(team.id);
         }
       } else {
         EntityUtils.consumeQuietly(response.getEntity());
@@ -339,7 +339,7 @@ public class ApiClient {
     } finally {
       get.releaseConnection();
     }
-    return teamIds.toArray(new String[]{});
+    return teamIds.toArray(new Integer[]{});
   }
   
   public long commentOnCommit(String repoUri, String sha, String comment) throws Exception {

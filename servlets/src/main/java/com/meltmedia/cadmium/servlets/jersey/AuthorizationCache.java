@@ -17,7 +17,7 @@ public class AuthorizationCache {
   private final Logger logger = LoggerFactory.getLogger(getClass());
   private class Cache {
     Map<String, String> usernames = new HashMap<String, String>();
-    Map<String, String[]> teamIds = new HashMap<String, String[]>();
+    Map<String, Integer[]> teamIds = new HashMap<String, Integer[]>();
     Map<String, Boolean> authorizations = new HashMap<String, Boolean>();
   }
   private Cache currentCache;
@@ -38,10 +38,10 @@ public class AuthorizationCache {
     }
   }
 
-  public String[] getTeamIds(String token) throws Exception {
+  public Integer[] getTeamIds(String token) throws Exception {
     checkToken(token);
     Cache cache = currentCache;
-    String teamIdList[] = cache.teamIds.get(token);
+    Integer teamIdList[] = cache.teamIds.get(token);
     if(teamIdList == null) {
       teamIdList = fetchTeamIdsFromGithub(token);
       if(teamIdList != null) {
@@ -57,25 +57,26 @@ public class AuthorizationCache {
     return currentCache.usernames.get(token);
   }
 
-  @Scheduled(interval = 10, unit = TimeUnit.MINUTES)
+  @Scheduled(interval = 1, unit = TimeUnit.HOURS)
   public void clearCache() {
+    logger.debug("Resetting cache.");
     currentCache = new Cache();
   }
 
-  private String[] fetchTeamIdsFromGithub(String token) {
+  private Integer[] fetchTeamIdsFromGithub(String token) {
     try {
       ApiClient apiClient = new ApiClient(token, false);
       String orgs[] = apiClient.getAuthorizedOrgs();
-      Set<String> teams = new TreeSet<String>();
+      Set<Integer> teams = new TreeSet<Integer>();
       if(orgs != null) {
         for(String org: orgs) {
-          String teamsInOrg[] = apiClient.getAuthorizedTeamsInOrg(org);
+          Integer teamsInOrg[] = apiClient.getAuthorizedTeamsInOrg(org);
           if(teamsInOrg != null) {
             teams.addAll(Arrays.asList(teamsInOrg));
           }
         }
       }
-      return teams.toArray(new String[] {});
+      return teams.toArray(new Integer[] {});
     } catch (Exception e) {
       logger.warn("Failed to fetch team ids.", e);
     }

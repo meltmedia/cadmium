@@ -15,19 +15,17 @@
  */
 package com.meltmedia.cadmium.persistence;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Properties;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
+import com.google.inject.persist.PersistService;
+import com.meltmedia.cadmium.core.config.ConfigurationListener;
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.persist.PersistService;
-import com.meltmedia.cadmium.core.config.ConfigurationListener;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Listens for persistence configuration changes and manages the Jpa Service.
@@ -72,7 +70,7 @@ public class PersistenceConfigurationListener implements
           log.debug("Stopping jpa service...");
           jpaService.stop();
         } catch(Throwable t) {
-          log.debug("Jpa service has already been stopped.", t);
+          log.trace("Jpa service has already been stopped.", t);
         }
         log.debug("Setting override properties to new values.");
         jpaOverrideProperties.clear();

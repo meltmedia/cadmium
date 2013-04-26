@@ -15,6 +15,7 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
+import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.servlets.guice.CadmiumListener;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -48,7 +50,8 @@ public class AuthorizationService {
       apiCache.checkToken(authString);
       token = authString;
 
-      List<String> idList = Arrays.asList(apiCache.getTeamIds(authString));
+      List<Integer> idList = Arrays.asList(apiCache.getTeamIds(authString));
+      log.debug("Authorized teams for {}: {}", token, new Gson().toJson(idList));
       String authorizedTeams = getAuthorizedTeamsString();
       if(authorizedTeams == null) {
         openId = apiCache.getUserName(authString);
@@ -63,10 +66,10 @@ public class AuthorizationService {
     return false;
   }
   
-  private boolean isTeamMember(String ids, List<String> currentIds) throws Exception {
+  private boolean isTeamMember(String ids, List<Integer> currentIds) throws Exception {
     boolean inTeam = false;
-    String idList[] = ids.split(",");
-    for(String id : idList) {
+    Integer idList[] = splitAsIntegers(ids);
+    for(Integer id : idList) {
       if(inTeam = currentIds.contains(id)) {
         break;
       }
@@ -74,7 +77,7 @@ public class AuthorizationService {
     return inTeam;
   }
 
-  protected String[] getTeamIds() throws Exception {
+  protected Integer[] getTeamIds() throws Exception {
     return apiCache.getTeamIds(token);
   }
 
@@ -89,11 +92,20 @@ public class AuthorizationService {
 
     String defaultId = teamsProps.getProperty("default");
     String teamIdString = teamsProps.getProperty(env);
-    return teamIdString + (StringUtils.isNotBlank(defaultId) ? "," + defaultId : "");
+    return (teamIdString == null ? "" : teamIdString) + (StringUtils.isNotBlank(defaultId) ? (StringUtils.isNotBlank(teamIdString) ? "," : "") + defaultId : "");
   }
 
-  protected String[] getAuthorizedTeams() {
+  protected Integer[] getAuthorizedTeams() {
     String authTeams = getAuthorizedTeamsString();
-    return authTeams == null ? new String[]{} : authTeams.split(",");
+    return splitAsIntegers(authTeams);
+  }
+
+  private Integer[] splitAsIntegers(String authTeams) {
+    String teams[] = authTeams == null ? new String[]{} : authTeams.split(",");
+    List<Integer> teamIds = new ArrayList<Integer>();
+    for(String teamId: teams) {
+      teamIds.add(new Integer(teamId));
+    }
+    return teamIds.toArray(new Integer[]{});
   }
 }
