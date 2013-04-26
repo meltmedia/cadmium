@@ -15,22 +15,25 @@
  */
 package com.meltmedia.cadmium.servlets.jersey;
 
-import java.io.File;
-import java.util.Properties;
-
-import javax.inject.Inject;
-
+import com.meltmedia.cadmium.core.config.ConfigManager;
+import com.meltmedia.cadmium.servlets.guice.CadmiumListener;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.config.ConfigManager;
-import com.meltmedia.cadmium.core.github.ApiClient;
-import com.meltmedia.cadmium.servlets.guice.CadmiumListener;
+import javax.inject.Inject;
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 public class AuthorizationService {
   private final Logger log = LoggerFactory.getLogger(getClass());
   protected String openId;
-  protected ApiClient gitClient;
+  protected String token;
+
+  @Inject
+  protected AuthorizationCache apiCache;
   
   @Inject
   protected ConfigManager configManager;
@@ -41,28 +44,18 @@ public class AuthorizationService {
     }
     log.trace("Authenticating request through github api with token [{}]", authString);
     
-    Properties systemProperties = configManager.getSystemProperties();
-    
     try {
-      gitClient = new ApiClient(authString);
-          
-      String env = systemProperties.getProperty("com.meltmedia.cadmium.environment", "development");
-           
-      String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties", new File(configManager.getSystemProperties().getProperty(CadmiumListener.BASE_PATH_ENV), "team.properties").getAbsoluteFile().getAbsolutePath());
-      Properties teamsProps = configManager.getProperties(new File(teamsFile));
-      
-      log.trace("teamsProps: {}", teamsProps);
-           
-      String defaultId = teamsProps.getProperty("default");
-      String teamIdString = teamsProps.getProperty(env);
-      if(teamIdString == null && defaultId == null) {
-        openId = gitClient.getUserName();
+      apiCache.checkToken(authString);
+      token = authString;
+
+      List<String> idList = Arrays.asList(apiCache.getTeamIds(authString));
+      String authorizedTeams = getAuthorizedTeamsString();
+      if(authorizedTeams == null) {
+        openId = apiCache.getUserName(authString);
         return true;
-      } else if((teamIdString != null && isTeamMember(teamIdString)) || (defaultId != null && isTeamMember(defaultId))) {
-        openId = gitClient.getUserName();
+      } else if(isTeamMember(authorizedTeams, idList)) {
+        openId = apiCache.getUserName(authString);
         return true;
-      } else {
-        gitClient = null;
       }
     } catch (Exception e) {
       log.warn("Failed to authenticate: "+authString, e);
@@ -70,15 +63,37 @@ public class AuthorizationService {
     return false;
   }
   
-  private boolean isTeamMember(String ids) throws Exception {
+  private boolean isTeamMember(String ids, List<String> currentIds) throws Exception {
     boolean inTeam = false;
     String idList[] = ids.split(",");
     for(String id : idList) {
-      inTeam = gitClient.isTeamMember(id);
-      if(inTeam) {
+      if(inTeam = currentIds.contains(id)) {
         break;
       }
     }
     return inTeam;
+  }
+
+  protected String[] getTeamIds() throws Exception {
+    return apiCache.getTeamIds(token);
+  }
+
+  private String getAuthorizedTeamsString() {
+    Properties systemProperties = configManager.getSystemProperties();
+    String env = systemProperties.getProperty("com.meltmedia.cadmium.environment", "development");
+
+    String teamsFile = systemProperties.getProperty("com.meltmedia.cadmium.teams.properties", new File(configManager.getSystemProperties().getProperty(CadmiumListener.BASE_PATH_ENV), "team.properties").getAbsoluteFile().getAbsolutePath());
+    Properties teamsProps = configManager.getProperties(new File(teamsFile));
+
+    log.trace("teamsProps: {}", teamsProps);
+
+    String defaultId = teamsProps.getProperty("default");
+    String teamIdString = teamsProps.getProperty(env);
+    return teamIdString + (StringUtils.isNotBlank(defaultId) ? "," + defaultId : "");
+  }
+
+  protected String[] getAuthorizedTeams() {
+    String authTeams = getAuthorizedTeamsString();
+    return authTeams == null ? new String[]{} : authTeams.split(",");
   }
 }
