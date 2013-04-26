@@ -149,7 +149,7 @@ public class CadmiumCli {
 	  }
 	  if(token == null && !authCmd.isAuthQuiet()) {
 	  	if(System.console() == null) {
-	  		System.err.println("Please reautenticate with github.");
+	  		System.err.println("Please reauthenticate with github.");
 	  		System.exit(1);
 	  	} else {
 		    String username = System.console().readLine("Username [github]: ");
