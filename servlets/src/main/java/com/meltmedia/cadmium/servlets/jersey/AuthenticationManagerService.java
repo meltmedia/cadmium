@@ -139,5 +139,21 @@ public class AuthenticationManagerService extends AuthorizationService {
       log.error("Failed to update authentication.", e);
     }
   }
+
+  /**
+   * Get the list of github team ids that are allowed to access this instance.
+   * @param auth
+   * @return
+   * @throws Exception
+   */
+  @GET
+  @Path("teams")
+  public Response authorizedTeams(@HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
+    if(!this.isAuth(auth)) {
+      return Response.status(Status.FORBIDDEN).build();
+    }
+    Integer teams[] = getAuthorizedTeams();
+    return Response.ok(new Gson().toJson(teams), MediaType.APPLICATION_JSON).build();
+  }
   
 }
