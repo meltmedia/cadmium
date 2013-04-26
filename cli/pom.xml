@@ -46,23 +46,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>validate</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeTypes>war</includeTypes>
-              <stripVersion>true</stripVersion>
-              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-        <plugin>
           <groupId>org.reflections</groupId>
           <artifactId>reflections-maven</artifactId>
       </plugin>
@@ -75,14 +58,6 @@
       <artifactId>cadmium-core</artifactId>
     </dependency>
     
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>cadmium-war</artifactId>
-      <version>${project.version}</version>
-      <type>war</type>
-      <scope>provided</scope>
-    </dependency>
-  
     <dependency>
       <groupId>com.beust</groupId>
       <artifactId>jcommander</artifactId>
