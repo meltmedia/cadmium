@@ -15,22 +15,17 @@
  */
 package com.meltmedia.cadmium.servlets.guice;
 
-import java.util.Set;
-
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import com.meltmedia.cadmium.core.CadmiumModule;
+import com.meltmedia.cadmium.core.config.*;
+import com.meltmedia.cadmium.core.config.impl.YamlConfigurationParser;
+import com.meltmedia.cadmium.servlets.jersey.AuthorizationCache;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import com.meltmedia.cadmium.core.CadmiumModule;
-import com.meltmedia.cadmium.core.config.CadmiumConfig;
-import com.meltmedia.cadmium.core.config.ConfigurationClass;
-import com.meltmedia.cadmium.core.config.ConfigurationParser;
-import com.meltmedia.cadmium.core.config.ConfigurationParserClass;
-import com.meltmedia.cadmium.core.config.ConfigurationParserFactory;
-import com.meltmedia.cadmium.core.config.ConfigurationParserProvider;
-import com.meltmedia.cadmium.core.config.impl.YamlConfigurationParser;
+import java.util.Set;
 
 /**
  * Binds all {@link ConfigurationParser} related classes in Guice.
@@ -59,6 +54,8 @@ public class ConfigurationModule extends AbstractModule {
     bind(ConfigurationParser.class).toProvider(ConfigurationParserProvider.class);
     
     bind(ConfigurationParserFactory.class);
+
+    bind(AuthorizationCache.class);
   }
 
 }

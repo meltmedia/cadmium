@@ -18,6 +18,7 @@ package com.meltmedia.cadmium.core.github;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.FileSystemManager;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -33,19 +34,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ApiClient {
   private static final Logger log = LoggerFactory.getLogger(ApiClient.class);
   private String token;
+  private String username;
+
+  public ApiClient(String token, boolean check) throws Exception {
+    this.token = token;
+    if(check) {
+      checkAuth();
+    }
+  }
   
   public ApiClient(String token) throws Exception {
     this.token = token;
     
-    String username = getUserName();
-    if(username == null) {
+    checkAuth();
+  }
+
+  public void checkAuth() throws Exception {
+    username = getUserName();
+    if (username == null) {
       throw new Exception("Token has been revoked.");
     }
   }
@@ -209,6 +220,9 @@ public class ApiClient {
   }
   
   public String getUserName() throws Exception {
+    if(StringUtils.isNotBlank(username)) {
+      return username;
+    }
     int limitRemain = getRateLimitRemain();
     
     if(limitRemain > 0) {
@@ -224,7 +238,8 @@ public class ApiClient {
           Map<String, Object> responseObj = new Gson().fromJson(responseString, new TypeToken<Map<String, Object>>() {}.getType());
 
           if(responseObj.containsKey("login")) {
-            return (String) responseObj.get("login");
+            username = (String) responseObj.get("login");
+            return username;
           } else if(responseObj.containsKey("message")) {
             throw new Exception((String) responseObj.get("message"));
           }
@@ -279,6 +294,52 @@ public class ApiClient {
       get.releaseConnection();
     }
     return -1;
+  }
+
+  public String[] getAuthorizedOrgs() throws Exception {
+    HttpClient client = new DefaultHttpClient();
+
+    HttpGet get = new HttpGet("https://api.github.com/user/orgs");
+    addAuthHeader(get);
+    Set<String> orgs = new TreeSet<String>();
+    try {
+      HttpResponse response = client.execute(get);
+      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+        String responseStr = EntityUtils.toString(response.getEntity());
+        List<Org> retOrgs = new Gson().fromJson(responseStr, new TypeToken<List<Org>>(){}.getType());
+        for(Org org : retOrgs) {
+          orgs.add(org.login);
+        }
+      } else {
+        EntityUtils.consumeQuietly(response.getEntity());
+      }
+    } finally {
+      get.releaseConnection();
+    }
+    return orgs.toArray(new String[]{});
+  }
+
+  public Integer[] getAuthorizedTeamsInOrg(String org) throws Exception {
+    HttpClient client = new DefaultHttpClient();
+
+    HttpGet get = new HttpGet("https://api.github.com/orgs/"+org+"/teams");
+    addAuthHeader(get);
+    Set<Integer> teamIds = new TreeSet<Integer>();
+    try {
+      HttpResponse response = client.execute(get);
+      if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+        String responseStr = EntityUtils.toString(response.getEntity());
+        List<Team> teams = new Gson().fromJson(responseStr, new TypeToken<List<Team>>(){}.getType());
+        for(Team team : teams) {
+          teamIds.add(team.id);
+        }
+      } else {
+        EntityUtils.consumeQuietly(response.getEntity());
+      }
+    } finally {
+      get.releaseConnection();
+    }
+    return teamIds.toArray(new Integer[]{});
   }
   
   public long commentOnCommit(String repoUri, String sha, String comment) throws Exception {
@@ -385,6 +446,19 @@ public class ApiClient {
     public void setScopes(String[] scopes) {
       this.scopes = scopes;
     }
+  }
+
+  public static class Org {
+    Integer id;
+    String login;
+    String url;
+    String avatar_url;
+  }
+
+  public static class Team {
+    String url;
+    String name;
+    Integer id;
   }
   
 }
