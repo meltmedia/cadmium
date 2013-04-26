@@ -50,9 +50,9 @@ public class ListCommand extends AbstractAuthorizedOnly implements CliCommand {
         System.out.println("There are no cadmium wars currently deployed.");
         return;
       }
-      System.console().format("%s\n", "Cadmium App");
+      System.out.format("%s\n", "Cadmium App");
       for(String app : deployed) {
-        System.console().format("\"%s\"\n", app);
+        System.out.format("\"%s\"\n", app);
       }
     } catch(Throwable t){t.printStackTrace();}
   }

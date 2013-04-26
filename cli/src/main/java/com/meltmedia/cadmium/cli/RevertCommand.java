@@ -54,7 +54,7 @@ public class RevertCommand extends AbstractAuthorizedOnly implements CliCommand 
     
     List<HistoryEntry> history = HistoryCommand.getHistory(siteUrl, -1, false, token);
     HistoryEntry selectedEntry = null;
-    if(index == null && history != null && history.size() > 0) {
+    if(index == null && history != null && history.size() > 0 && System.console() != null) {
       HistoryCommand.displayHistory(history, true, 5);
       
       String response = null;
