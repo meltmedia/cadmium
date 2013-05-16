@@ -15,20 +15,18 @@
  */
 package com.meltmedia.cadmium.cli;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.meltmedia.cadmium.core.FileSystemManager;
+import jodd.jerry.Jerry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import jodd.lagarto.dom.jerry.Jerry;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.meltmedia.cadmium.core.FileSystemManager;
 
 /**
  * Parses all html files in a directory with a Jerry Library. This does not make any changes, it just tells if the files are parseable with Jerry. 
@@ -61,12 +59,22 @@ public class ValidateCommand implements CliCommand {
       System.out.println("Validating "+htmlFiles.size()+" files.");
     }
     boolean failed = false;
+    Jerry.JerryParser jerryParser = Jerry.jerry().enableHtmlMode();
+    jerryParser.getDOMBuilder().setCaseSensitive(false);
+    jerryParser.getDOMBuilder().setParseSpecialTagsAsCdata(true);
+    jerryParser.getDOMBuilder().setSelfCloseVoidTags(false);
+    jerryParser.getDOMBuilder().setConditionalCommentExpression(null);
+    jerryParser.getDOMBuilder().setEnableConditionalComments(false);
+    jerryParser.getDOMBuilder().setImpliedEndTags(false);
+    jerryParser.getDOMBuilder().setIgnoreComments(true);
+    jerryParser.getDOMBuilder().setCollectErrors(true);
+    jerryParser.getDOMBuilder().setCalculatePosition(true);
     for(File file : htmlFiles) {
       try {
         if(!quite) {
           System.out.print("  "+file + ": "); 
         }
-        Jerry.jerry().parse(FileSystemManager.getFileContents(file.getAbsolutePath()));
+        jerryParser.parse(FileSystemManager.getFileContents(file.getAbsolutePath()));
         if(!quite) {
           System.out.println(" passed");
         }

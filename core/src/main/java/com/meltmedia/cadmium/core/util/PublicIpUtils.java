@@ -15,14 +15,14 @@
  */
 package com.meltmedia.cadmium.core.util;
 
-import jodd.lagarto.dom.jerry.Jerry;
-
+import jodd.jerry.Jerry;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.util.EntityUtils;
+
 
 
 /**
@@ -36,6 +36,8 @@ import org.apache.http.util.EntityUtils;
 public final class PublicIpUtils {
   
   private PublicIpUtils(){}
+
+  private static Jerry.JerryParser jerryParser = null;
   
   /**
    * Looks up the external ip address of the machine that this vm is running on.
@@ -44,6 +46,16 @@ public final class PublicIpUtils {
    * @throws Exception
    */
   public static String lookup() throws Exception {
+    if(jerryParser == null) {
+      jerryParser = Jerry.jerry().enableHtmlMode();
+      jerryParser.getDOMBuilder().setCaseSensitive(false);
+      jerryParser.getDOMBuilder().setParseSpecialTagsAsCdata(true);
+      jerryParser.getDOMBuilder().setSelfCloseVoidTags(false);
+      jerryParser.getDOMBuilder().setConditionalCommentExpression(null);
+      jerryParser.getDOMBuilder().setEnableConditionalComments(false);
+      jerryParser.getDOMBuilder().setImpliedEndTags(false);
+      jerryParser.getDOMBuilder().setIgnoreComments(true);
+    }
     DefaultHttpClient client = new DefaultHttpClient();
     client.getParams().setParameter(
         CoreProtocolPNames.USER_AGENT, 
@@ -57,7 +69,7 @@ public final class PublicIpUtils {
       if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
         ipAddress = EntityUtils.toString(response.getEntity());
         try {
-          Jerry html = Jerry.jerry(ipAddress);
+          Jerry html = jerryParser.parse(ipAddress);
           Jerry ipNode = html.$("#greenip");
           if(ipNode.length() == 1) {
             ipAddress = ipNode.text();

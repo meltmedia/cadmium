@@ -107,7 +107,7 @@
 
     <dependency>
       <groupId>org.jodd</groupId>
-      <artifactId>jodd-wot</artifactId>
+      <artifactId>jodd-lagarto</artifactId>
     </dependency>
   </dependencies>
 

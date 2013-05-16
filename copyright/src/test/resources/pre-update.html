@@ -18,12 +18,26 @@
 <html>
   <head>
     <title>test copyright update</title>
+    <meta name="robots" content="noindex">
   </head>
+  <!--[if lte IE 7]>
+  <body class="ie7">
+  <![endif]-->
+  <!--[if IE 8]>
+  <body class="ie8">
+  <![endif]-->
+  <!--[if gte IE 9]>
+  <body class="ie9">
+  <![endif]-->
+  <!--[if !IE]><!-->
   <body>
+  <!--<![endif]-->
     <p>This is test content. <span data-cadmium="copyright">  2007 </span></p>
     <div data-cadmium="copyright">
       All of this content will be replaced.
     </div>
+    <br>
+    <input type="text" name="name" value="value">
     <p>
       This content has an arbitrary tag to be updated.
       
@@ -31,3 +45,4 @@
     </p>
   </body>
 </html>
+
