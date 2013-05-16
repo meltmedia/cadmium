@@ -246,7 +246,7 @@ public class BasicFileServlet
    * @return
    * @throws IOException 
    */
-  private boolean checkAccepts(FileRequestContext context) throws IOException {
+  protected boolean checkAccepts(FileRequestContext context) throws IOException {
     if (!canAccept(context.request.getHeader(ACCEPT_HEADER), false, context.contentType)) {
       notAcceptable(context);
       return true;
@@ -464,7 +464,7 @@ public class BasicFileServlet
         }
         if(qValue == 0 && matches) {
           return false;
-        } else {
+        } else if(matches){
           return true;
         }
       }
