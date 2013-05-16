@@ -35,8 +35,8 @@
       <artifactId>mockito-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>itext</groupId>
-      <artifactId>itext</artifactId>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>itextpdf</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>

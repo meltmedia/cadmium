@@ -372,9 +372,9 @@
       </dependency>
       
       <dependency>
-        <groupId>itext</groupId>
-        <artifactId>itext</artifactId>
-        <version>5.0.1</version>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>itextpdf</artifactId>
+        <version>5.4.1</version>
       </dependency>
       
     </dependencies>
