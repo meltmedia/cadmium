@@ -15,17 +15,24 @@
  */
 package com.meltmedia.cadmium.deployer;
 
-import java.io.File;
-
+import com.meltmedia.cadmium.core.CommandAction;
+import com.meltmedia.cadmium.core.CommandContext;
+import com.meltmedia.cadmium.core.SharedContentRoot;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.CommandAction;
-import com.meltmedia.cadmium.core.CommandContext;
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
 
 public class UndeployCommandAction implements CommandAction<UndeployRequest> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   public static String UNDEPLOY_ACTION = "UNDEPLOY";
+
+  @Inject
+  @SharedContentRoot
+  protected String contentRoot;
 
   @Override
   public String getName() { return UNDEPLOY_ACTION; }
@@ -43,12 +50,23 @@ public class UndeployCommandAction implements CommandAction<UndeployRequest> {
     }
     
     JBossUtil.undeploy(warName, log);
+
+    File contentDir = new File(contentRoot, warName);
+    if(contentDir.exists()) {
+      log.info("Deleting content directory: {}", contentDir.getAbsoluteFile().getAbsolutePath());
+      try {
+        FileUtils.deleteDirectory(contentDir);
+      } catch(IOException ioe) {
+        log.error("Failed to delete content directory for war "+warName, ioe);
+        return false;
+      }
+    }
     
     return true;
   }
 
   @Override
-  public void handleFailure(CommandContext<UndeployRequest> ctx, Exception e) {
+  public void handleFailure(CommandContext <UndeployRequest> ctx, Exception e) {
     e.printStackTrace();
   }
 
