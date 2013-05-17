@@ -15,11 +15,13 @@
  */
 package com.meltmedia.cadmium.copyright.service;
 
-import static org.junit.Assert.*;
-import java.io.File;
-
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+
+import java.io.File;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests that the {@link CopyrightResourceHandler} class updates an html file as expected.
@@ -41,7 +43,8 @@ public class CopyrightResourceHandlerTest {
     handler.handleFile(preUpdate);
     
     assertTrue("File size didn't change.", preUpdateSize != preUpdate.length());
-    assertEquals("File did't update as suspected.", FileUtils.readFileToString(preUpdate), FileUtils.readFileToString(postUpdate));
+    String postUpdateFile = FileUtils.readFileToString(postUpdate);
+    assertEquals("File didn't update as suspected.", FileUtils.readFileToString(preUpdate), postUpdateFile);
   }
 
 }

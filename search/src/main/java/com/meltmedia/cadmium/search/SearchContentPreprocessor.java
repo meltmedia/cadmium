@@ -17,7 +17,7 @@ package com.meltmedia.cadmium.search;
 
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import jodd.lagarto.dom.Node;
-import jodd.lagarto.dom.jerry.Jerry;
+import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -171,11 +171,24 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   
   void writeIndex( final IndexWriter indexWriter, File contentDir ) throws Exception {
     new ContentScanTemplate(HTML_FILE_FILTER) {
+
+      private Jerry.JerryParser jerryParser = null;
+
       @Override
       public void handleFile(File file) throws Exception {
         try {
+          if(jerryParser == null) {
+            jerryParser = Jerry.jerry().enableHtmlMode();
+            jerryParser.getDOMBuilder().setCaseSensitive(false);
+            jerryParser.getDOMBuilder().setParseSpecialTagsAsCdata(true);
+            jerryParser.getDOMBuilder().setSelfCloseVoidTags(false);
+            jerryParser.getDOMBuilder().setConditionalCommentExpression(null);
+            jerryParser.getDOMBuilder().setEnableConditionalComments(false);
+            jerryParser.getDOMBuilder().setImpliedEndTags(false);
+            jerryParser.getDOMBuilder().setIgnoreComments(true);
+          }
           String htmlContent = FileUtils.readFileToString(file, "UTF-8");
-          Jerry jerry = Jerry.jerry(htmlContent);
+          Jerry jerry = jerryParser.parse(htmlContent);
           
           // if we should not index this file, move on.
           if(!shouldIndex(jerry)) return;

@@ -15,14 +15,13 @@
  */
 package com.meltmedia.cadmium.copyright.service;
 
-import java.io.File;
-import java.util.Calendar;
-
-import jodd.lagarto.dom.jerry.Jerry;
-
+import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.Calendar;
 
 /**
  * {@link ResourceHandler} that updates all html elements that have 
@@ -35,6 +34,7 @@ public class CopyrightResourceHandler implements ResourceHandler {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	protected Integer year;
+  private Jerry.JerryParser jerryParser = null;
 	
 	/**
 	 * Initializes this instance with the current year.
@@ -49,10 +49,19 @@ public class CopyrightResourceHandler implements ResourceHandler {
 	 */
 	@Override
 	public void handleFile(File htmlFile) {
+    if(jerryParser == null){
+      jerryParser = Jerry.jerry().enableHtmlMode();
+      jerryParser.getDOMBuilder().setCaseSensitive(false);
+      jerryParser.getDOMBuilder().setParseSpecialTagsAsCdata(true);
+      jerryParser.getDOMBuilder().setSelfCloseVoidTags(false);
+      jerryParser.getDOMBuilder().setConditionalCommentExpression(null);
+      jerryParser.getDOMBuilder().setEnableConditionalComments(false);
+      jerryParser.getDOMBuilder().setImpliedEndTags(false);
+    }
 	  log.trace("Handling file {}", htmlFile);
 	  try {
 	    String fileContents = FileUtils.readFileToString(htmlFile);
-	    Jerry html = Jerry.jerry(fileContents);
+	    Jerry html = jerryParser.parse(fileContents);
 	    Jerry selector = html.$("[data-cadmium='copyright']");
 	    log.debug("Found {} copyright tags.", selector.length());
 	    if(selector.length() > 0) {
