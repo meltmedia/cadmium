@@ -271,8 +271,8 @@
       </dependency>
       <dependency>
         <groupId>org.jodd</groupId>
-        <artifactId>jodd-wot</artifactId>
-        <version>3.3.4</version>
+        <artifactId>jodd-lagarto</artifactId>
+        <version>3.4.4</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>

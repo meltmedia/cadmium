@@ -18,7 +18,7 @@ package com.meltmedia.cadmium.core.util;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.MavenVector;
 import com.meltmedia.cadmium.core.WarInfo;
-import jodd.lagarto.dom.jerry.Jerry;
+import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.util.StringUtils;
@@ -535,7 +535,7 @@ public class WarUtils {
       throws Exception {
     if(warHelper.fileExists("WEB-INF/jboss-web.xml")) {
       String jbossWeb = warHelper.fileToString("WEB-INF/jboss-web.xml");
-      Jerry jbossWebJerry = Jerry.jerry(jbossWeb);
+      Jerry jbossWebJerry = Jerry.jerry().enableXmlMode().parse(jbossWeb);
       info.setDomain(jbossWebJerry.$("jboss-web > virtual-host").text());
       info.setContext(jbossWebJerry.$("jboss-web > context-root").text());
     }
