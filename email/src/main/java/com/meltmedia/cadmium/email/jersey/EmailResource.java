@@ -151,7 +151,12 @@ public class EmailResource {
 					return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 				} catch (ValidationException e) {
 					log.info("ValidationException Caught");
-					log.info("First Error {}",e.getErrors()[0].getMessage());
+					if(e.getErrors()[0] != null) {
+						log.info("First Error {}",e.getErrors()[0].getMessage());
+					}
+					else{
+						log.info("No error messages were set for this Validation Exception.");
+					}
 					return Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
 				} catch (IOException e) {
 					return Response.status(Response.Status.BAD_REQUEST).entity("Unable to load Configuration").build();
