@@ -15,12 +15,11 @@
  */
 package com.meltmedia.cadmium.captcha;
 
-import javax.servlet.http.HttpServletRequest;
-
+import net.tanesha.recaptcha.ReCaptchaImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.tanesha.recaptcha.ReCaptchaImpl;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Checks the validity of the incoming Http request with ReCaptcha.
@@ -29,8 +28,8 @@ import net.tanesha.recaptcha.ReCaptchaImpl;
  *
  */
 public final class CaptchaValidator {
-  private final String CHALLENGE_FIELD_NAME = "recaptcha_challenge_field";
-  private final String RESPONSE_FIELD_NAME = "recaptcha_response_field";
+  public static final String CHALLENGE_FIELD_NAME = "recaptcha_challenge_field";
+  public static final String RESPONSE_FIELD_NAME = "recaptcha_response_field";
   
   private final Logger log = LoggerFactory.getLogger(getClass());
   
