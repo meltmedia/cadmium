@@ -151,7 +151,7 @@ public class EmailResource {
 					return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 				} catch (ValidationException e) {
 					log.info("ValidationException Caught");
-					if(e.getErrors()[0] != null) {
+					if(e.getErrors() != null && e.getErrors()[0] != null) {
 						log.info("First Error {}",e.getErrors()[0].getMessage());
 					}
 					else{

@@ -268,6 +268,7 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
   }
   
   public boolean validateCaptcha(HttpServletRequest request, EmailComponentConfiguration compConfig) {
+  	log.info("EmailComponentConfiguration = {}", compConfig.toString());
     if(captchaValidator != null && compConfig != null && request != null && compConfig.getUseCaptcha() != null && compConfig.getUseCaptcha()) {
       return captchaValidator.isValid(request);
     }
