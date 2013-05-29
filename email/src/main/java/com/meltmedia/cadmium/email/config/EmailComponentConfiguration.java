@@ -52,7 +52,7 @@ public class EmailComponentConfiguration {
 		
 	public Set<Field> getFields() {
 		return fields;
-	}
+	}	
 
 	public void setFields(Set<Field> fields) {
 		this.fields = fields;
@@ -128,6 +128,14 @@ public class EmailComponentConfiguration {
 				return "";
 			}
 		}
+	}
+  
+  @Override
+	public String toString() {
+		return "EmailComponentConfiguration [fields=" + fields + ", fromAddress="
+				+ fromAddress + ", fromName=" + fromName + ", toAddress=" + toAddress
+				+ ", toName=" + toName + ", subject=" + subject + ", useCaptcha="
+				+ useCaptcha + "]";
 	}
 }
 

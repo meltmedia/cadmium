@@ -15,31 +15,8 @@
  */
 package com.meltmedia.cadmium.email.jersey;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-
-import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
-
+import com.meltmedia.cadmium.captcha.CaptchaRequest;
+import com.meltmedia.cadmium.captcha.CaptchaValidator;
 import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 import com.meltmedia.cadmium.core.ContentService;
 import com.meltmedia.cadmium.email.EmailException;
@@ -47,6 +24,20 @@ import com.meltmedia.cadmium.email.VelocityHtmlTextEmail;
 import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;
 import com.meltmedia.cadmium.email.config.EmailComponentConfiguration.Field;
 import com.meltmedia.cadmium.email.internal.EmailServiceImpl;
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import java.io.*;
 
 @CadmiumApiEndpoint
 @Path("/email")
@@ -70,7 +61,7 @@ public class EmailResource {
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   @Produces(MediaType.APPLICATION_JSON)
 	public Response emailThisPage(@Context HttpServletRequest request,
-			                          @FormParam(Constants.DIR) String dir, MultivaluedMap<String, String> formData) {
+			                          @FormParam(Constants.DIR) String dir, final MultivaluedMap<String, String> formData) {
 
   	log.info("Entering Email This Method");
   	VelocityHtmlTextEmail email = new VelocityHtmlTextEmail();
@@ -91,16 +82,29 @@ public class EmailResource {
 	  		
 		  	try { 
 		  		EmailComponentConfiguration config = yamlParser.loadAs(FileUtils.readFileToString(componentConfig), EmailComponentConfiguration.class);
-		  		
+          CaptchaRequest captcha = new CaptchaRequest(){
+
+            @Override
+            public String getRecaptcha_challenge_field() {
+              return formData.getFirst(CaptchaValidator.CHALLENGE_FIELD_NAME);
+            }
+
+            @Override
+            public String getRecaptcha_response_field() {
+              return formData.getFirst(CaptchaValidator.RESPONSE_FIELD_NAME);
+            }
+          };
 		  		//Check captcha if configured
-		  		if(!emailService.validateCaptcha(request, config)) {
-		  		  throw new ValidationException("Incorrect captcha response");
+		  		if(!emailService.validateCaptcha(request, captcha, config, log)) {
+		  		  throw new ValidationException("Incorrect captcha response", new ValidationError[]{new ValidationError("captcha", "Incorrect captcha response")});
 		  		}
 		  		
 					EmailFormValidator.validate(formData,config,contentService);
 			  	
 					email.addTo(getFieldValueWithOverride("toAddress", config.getToAddress(), formData));
-			  	email.setFrom(emailService.getFromAddress(config.getFromAddress())); 
+          String fromAddress = emailService.getFromAddress(config.getFromAddress());
+          log.info("Setting from address {}", fromAddress);
+			  	email.setFrom(fromAddress);
 			  	email.setSubject(getFieldValueWithOverride("subject", config.getSubject(), formData));
 					email.setProperty("subject", getFieldValueWithOverride("subject", config.getSubject(), formData));
 			  	// Set HTML Template
@@ -151,7 +155,12 @@ public class EmailResource {
 					return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 				} catch (ValidationException e) {
 					log.info("ValidationException Caught");
-					log.info("First Error {}",e.getErrors()[0].getMessage());
+					if(e.getErrors() != null && e.getErrors()[0] != null) {
+						log.info("First Error {}",e.getErrors()[0].getMessage());
+					}
+					else{
+						log.info("No error messages were set for this Validation Exception.");
+					}
 					return Response.status(Response.Status.BAD_REQUEST).entity(e.getErrors()).build();
 				} catch (IOException e) {
 					return Response.status(Response.Status.BAD_REQUEST).entity("Unable to load Configuration").build();
