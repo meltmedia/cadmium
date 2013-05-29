@@ -15,29 +15,22 @@
  */
 package com.meltmedia.cadmium.email.internal;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
-
-import javax.inject.Inject;
-import javax.mail.Session;
-import javax.servlet.http.HttpServletRequest;
-
+import com.meltmedia.cadmium.captcha.CaptchaRequest;
+import com.meltmedia.cadmium.captcha.CaptchaValidator;
+import com.meltmedia.cadmium.core.config.ConfigManager;
+import com.meltmedia.cadmium.core.config.ConfigurationListener;
+import com.meltmedia.cadmium.email.*;
+import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;
+import com.meltmedia.cadmium.email.config.EmailConfiguration;
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.captcha.CaptchaValidator;
-import com.meltmedia.cadmium.core.config.ConfigManager;
-import com.meltmedia.cadmium.core.config.ConfigurationListener;
-import com.meltmedia.cadmium.email.Email;
-import com.meltmedia.cadmium.email.EmailConnection;
-import com.meltmedia.cadmium.email.EmailConnectionImpl;
-import com.meltmedia.cadmium.email.EmailException;
-import com.meltmedia.cadmium.email.EmailService;
-import com.meltmedia.cadmium.email.MessageTransformer;
-import com.meltmedia.cadmium.email.SessionStrategy;
-import com.meltmedia.cadmium.email.config.EmailComponentConfiguration;
-import com.meltmedia.cadmium.email.config.EmailConfiguration;
+import javax.inject.Inject;
+import javax.mail.Session;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
 /**
  * Email service implementation based on the cadmium email
@@ -75,14 +68,16 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
    */
   public void configurationUpdated(Object emailConfig) {
       EmailConfiguration config = (EmailConfiguration) emailConfig;
-      if(config != null && config != this.config) {
+      if(config != null && (this.config == null || !config.equals(this.config))) {
         log.info("Updating configuration for email.");
         this.config = config;
       
         //Set the captcha validator up.
         if(!StringUtils.isEmptyOrNull(config.getCaptchaPrivateKey())) {
+          log.info("Setting up captcha validation: "+config.getCaptchaPrivateKey());
           captchaValidator = new CaptchaValidator(config.getCaptchaPrivateKey());
         } else {
+          log.info("Unsetting captcha validation.");
           captchaValidator = null;
         }
         // Need to get the Session Strategy and Transform class names out of the 
@@ -92,6 +87,7 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
           props.put("com.meltmedia.email.jndi",config.getJndiName());
           log.debug("Using jndiName: "+config.getJndiName());
         }
+        log.debug("Using {} as the default from address.", config.getDefaultFromAddress());
         if(StringUtils.isEmptyOrNull(config.getSessionStrategy())) {
           config.setSessionStrategy(null);
         }
@@ -256,6 +252,7 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
    */
   @Override
   public void configurationNotFound() {
+    log.warn("No email configuration found.");
     EmailConfiguration defaultConfiguration = new EmailConfiguration();
     defaultConfiguration.setMessageTransformer(DEFAULT_MESSAGE_TRANSFORMER);
     defaultConfiguration.setSessionStrategy(null);
@@ -267,10 +264,15 @@ public class EmailServiceImpl implements EmailService, ConfigurationListener<Ema
   	return StringUtils.isEmptyOrNull(fromAddress) ? config.getDefaultFromAddress() : fromAddress;
   }
   
-  public boolean validateCaptcha(HttpServletRequest request, EmailComponentConfiguration compConfig) {
+  public boolean validateCaptcha(HttpServletRequest request, CaptchaRequest captcha, EmailComponentConfiguration compConfig, Logger log) {
+  	log.info("EmailComponentConfiguration = {}", compConfig.toString());
     if(captchaValidator != null && compConfig != null && request != null && compConfig.getUseCaptcha() != null && compConfig.getUseCaptcha()) {
-      return captchaValidator.isValid(request);
+      return captchaValidator.isValid(request, captcha);
     }
     return true;
+  }
+
+  public boolean validateCaptcha(HttpServletRequest request, CaptchaRequest captcha, EmailComponentConfiguration compConfig) {
+    return validateCaptcha(request, captcha, compConfig, log);
   }
 }

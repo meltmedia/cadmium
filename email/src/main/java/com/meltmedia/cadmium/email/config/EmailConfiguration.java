@@ -68,4 +68,34 @@ public class EmailConfiguration {
   public void setCaptchaPrivateKey(String captchaPrivateKey) {
     this.captchaPrivateKey = captchaPrivateKey;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof EmailConfiguration)) return false;
+
+    EmailConfiguration that = (EmailConfiguration) o;
+
+    if (captchaPrivateKey != null ? !captchaPrivateKey.equals(that.captchaPrivateKey) : that.captchaPrivateKey != null)
+      return false;
+    if (defaultFromAddress != null ? !defaultFromAddress.equals(that.defaultFromAddress) : that.defaultFromAddress != null)
+      return false;
+    if (jndiName != null ? !jndiName.equals(that.jndiName) : that.jndiName != null) return false;
+    if (messageTransformer != null ? !messageTransformer.equals(that.messageTransformer) : that.messageTransformer != null)
+      return false;
+    if (sessionStrategy != null ? !sessionStrategy.equals(that.sessionStrategy) : that.sessionStrategy != null)
+      return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = defaultFromAddress != null ? defaultFromAddress.hashCode() : 0;
+    result = 31 * result + (jndiName != null ? jndiName.hashCode() : 0);
+    result = 31 * result + (messageTransformer != null ? messageTransformer.hashCode() : 0);
+    result = 31 * result + (sessionStrategy != null ? sessionStrategy.hashCode() : 0);
+    result = 31 * result + (captchaPrivateKey != null ? captchaPrivateKey.hashCode() : 0);
+    return result;
+  }
 }

@@ -15,9 +15,11 @@
  */
 package com.meltmedia.cadmium.captcha;
 
-import javax.servlet.http.HttpServletRequest;
-
 import net.tanesha.recaptcha.ReCaptchaImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Checks the validity of the incoming Http request with ReCaptcha.
@@ -26,8 +28,10 @@ import net.tanesha.recaptcha.ReCaptchaImpl;
  *
  */
 public final class CaptchaValidator {
-  private final String CHALLENGE_FIELD_NAME = "recaptcha_challenge_field";
-  private final String RESPONSE_FIELD_NAME = "recaptcha_response_field";
+  public static final String CHALLENGE_FIELD_NAME = "recaptcha_challenge_field";
+  public static final String RESPONSE_FIELD_NAME = "recaptcha_response_field";
+  
+  private final Logger log = LoggerFactory.getLogger(getClass());
   
   private ReCaptchaImpl reCaptcha;
   
@@ -48,7 +52,7 @@ public final class CaptchaValidator {
    */
   public boolean isValid(HttpServletRequest request) {
     String challenge = request.getParameter(CHALLENGE_FIELD_NAME);
-    String response = request.getParameter(RESPONSE_FIELD_NAME);
+    String response = request.getParameter(RESPONSE_FIELD_NAME);    
     return isValid(request, challenge, response);
   }
   
@@ -61,7 +65,7 @@ public final class CaptchaValidator {
    */
   public boolean isValid(HttpServletRequest request, CaptchaRequest captcha) {
     String challenge = captcha.getRecaptcha_challenge_field();
-    String response = captcha.getRecaptcha_response_field();
+    String response = captcha.getRecaptcha_response_field();    
     return isValid(request, challenge, response);
   }
    
@@ -75,6 +79,8 @@ public final class CaptchaValidator {
    */
   public boolean isValid(HttpServletRequest request, String challenge, String response) {
     String remoteAddr = request.getRemoteAddr();
+    log.info("Challenge Field Name = [{}]", challenge);
+    log.info("Response Field Name = [{}]", response);
     if(challenge != null && response != null && challenge.trim().length() > 0) {
       return reCaptcha.checkAnswer(remoteAddr, challenge, response).isValid();
     } else {
