@@ -21,9 +21,11 @@ import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -139,7 +141,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   private File dataDir;
   private SearchHolder liveSearch = null;
   private SearchHolder stagedSearch = null;
-  private static Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_36);
+  private static Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_43);
   private final ReentrantReadWriteLock locker = new ReentrantReadWriteLock();
   private final ReadLock readLock = locker.readLock();
   private final WriteLock writeLock = locker.writeLock();
@@ -153,7 +155,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     newStagedSearcher.directory = new NIOFSDirectory(indexDir);
     IndexWriter iwriter = null;
     try {
-      iwriter = new IndexWriter(newStagedSearcher.directory, new IndexWriterConfig(Version.LUCENE_36, analyzer).setRAMBufferSizeMB(5));
+      iwriter = new IndexWriter(newStagedSearcher.directory, new IndexWriterConfig(Version.LUCENE_43, analyzer).setRAMBufferSizeMB(5));
       iwriter.deleteAll();
       writeIndex(iwriter, dataDir);
     }
@@ -161,7 +163,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
       IOUtils.closeQuietly(iwriter);
       iwriter = null;
     }
-    newStagedSearcher.indexReader = IndexReader.open(newStagedSearcher.directory);
+    newStagedSearcher.indexReader = DirectoryReader.open(newStagedSearcher.directory);
     SearchHolder oldStage = stagedSearch;
     stagedSearch = newStagedSearcher;
     if(oldStage != null) {
@@ -206,9 +208,9 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
           String textContent = jerry.$("body").text();
 
   	      Document doc = new Document();
-  	      doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
-  	      doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
-  	      doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.ANALYZED));
+  	      doc.add(new TextField("title", title, Field.Store.YES));
+  	      doc.add(new TextField("content", textContent, Field.Store.YES));
+  	      doc.add(new TextField("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES));
   	      indexWriter.addDocument(doc);
         } catch(Throwable t) {
           log.warn("Failed to index page ["+file+"]", t);
@@ -272,7 +274,6 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     private IndexReader indexReader = null;
     private IndexSearcher indexSearcher = null;
     public void close() {
-      IOUtils.closeQuietly(indexSearcher);
       IOUtils.closeQuietly(indexReader);
       IOUtils.closeQuietly(directory);
     }

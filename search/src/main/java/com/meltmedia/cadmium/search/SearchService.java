@@ -22,9 +22,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryParser.MultiFieldQueryParser;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -158,7 +158,7 @@ public class SearchService
   }
   
   QueryParser createParser( Analyzer analyzer ) {
-    return new MultiFieldQueryParser(Version.LUCENE_36, new String[]{"title", "content"}, analyzer);
+    return new MultiFieldQueryParser(Version.LUCENE_43, new String[]{"title", "content"}, analyzer);
   }
   
   void setIndexSearchProvider(IndexSearcherProvider provider) {
