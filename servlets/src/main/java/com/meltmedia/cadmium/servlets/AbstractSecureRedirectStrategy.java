@@ -15,14 +15,15 @@
  */
 package com.meltmedia.cadmium.servlets;
 
+import org.apache.commons.lang3.StringUtils;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Provides an abstract base class for SecureRedirectStrategy implementations.
@@ -184,7 +185,13 @@ public abstract class AbstractSecureRedirectStrategy implements SecureRedirectSt
    * @throws URISyntaxException 
     */
   public static URI changeProtocolAndPort(String protocol, int port, HttpServletRequest request) throws URISyntaxException {
-    return changeProtocolAndPort(protocol, port, URI.create(request.getRequestURL().toString()));
+    return changeProtocolAndPort(
+        protocol,
+        port,
+        URI.create(
+            request.getRequestURL()
+                .append((StringUtils.isEmpty(request.getQueryString()) ? "" : "?" + request.getQueryString()))
+                .toString()));
   }
 
   /**
@@ -198,7 +205,7 @@ public abstract class AbstractSecureRedirectStrategy implements SecureRedirectSt
    * @throws URISyntaxException 
    */
   public static URI changeProtocolAndPort(String protocol, int port, URI template) throws URISyntaxException {
-    return new URI(protocol, template.getUserInfo(), template.getHost(), port, template.getPath(), template.getQuery(), template.getFragment());
+    return new URI(protocol, template.getUserInfo(), template.getHost(), port, template.getPath(), template.getQuery(), null);
   }
 
 }
