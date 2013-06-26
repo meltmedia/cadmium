@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -33,6 +34,7 @@ import static org.junit.Assert.*;
  * @author John McEntire
  *
  */
+@Ignore
 public class DelayedGitServiceInitializerTest {
 
   /**

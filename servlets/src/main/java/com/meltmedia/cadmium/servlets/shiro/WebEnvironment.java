@@ -15,14 +15,21 @@
  */
 package com.meltmedia.cadmium.servlets.shiro;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import org.apache.shiro.config.Ini;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.apache.shiro.util.CollectionUtils;
+import org.apache.shiro.web.config.IniFilterChainResolverFactory;
 import org.apache.shiro.web.env.IniWebEnvironment;
+import org.apache.shiro.web.filter.mgt.DefaultFilter;
+import org.apache.shiro.web.filter.mgt.FilterChainResolver;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.mgt.WebSecurityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Allows an existing Shiro IniWebEnvironment to be wrapped and added to runtime. 
@@ -33,8 +40,10 @@ import org.apache.shiro.web.mgt.WebSecurityManager;
  *
  */
 public class WebEnvironment extends IniWebEnvironment {
-  
+  private final Logger logger = LoggerFactory.getLogger(getClass());
+  public static final String TRUSTED_SECTION_NAME = "trusted-hosts";
   private PersistablePropertiesRealm persistablePropertiesRealm = new PersistablePropertiesRealm();
+  protected List<String> trustedHosts = new ArrayList<String>();
 
   @Override
   public void setWebSecurityManager(WebSecurityManager wsm) {
@@ -44,6 +53,37 @@ public class WebEnvironment extends IniWebEnvironment {
     baseRealms.add(persistablePropertiesRealm);
     wsm = new DefaultWebSecurityManager(baseRealms);
     super.setWebSecurityManager(wsm);
+  }
+
+  @Override
+  protected FilterChainResolver createFilterChainResolver() {
+    Ini.Section section = this.getIni().getSection(TRUSTED_SECTION_NAME);
+    trustedHosts = new ArrayList<String>();
+    if (!CollectionUtils.isEmpty(section)) {
+      logger.debug("Found " + TRUSTED_SECTION_NAME + " ini section in shiro.ini");
+      for (String key : section.keySet()) {
+        logger.debug("Adding " + section.get(key) + " to list of trusted ip addresses.");
+        trustedHosts.add(section.get(key).trim());
+      }
+    }
+    if(!CollectionUtils.isEmpty(trustedHosts)){
+      Ini.Section filterConfigs = getIni().getSection(IniFilterChainResolverFactory.FILTERS);
+      if(CollectionUtils.isEmpty(filterConfigs)) {
+        filterConfigs = getIni().addSection(IniFilterChainResolverFactory.FILTERS);
+      }
+      if(!filterConfigs.containsKey(DefaultFilter.authcBasic.name())) {
+        filterConfigs.put(DefaultFilter.authcBasic.name(), "com.meltmedia.cadmium.servlets.shiro.TrustedBasicHttpAuthenticationFilter");
+        String trustedHostStr = "";
+        for(String host : trustedHosts) {
+          if(trustedHostStr.length() > 0) {
+            trustedHostStr += ",";
+          }
+          trustedHostStr += host;
+        }
+        filterConfigs.put(DefaultFilter.authcBasic.name()+".trustedHosts", trustedHostStr);
+      }
+    }
+    return super.createFilterChainResolver();
   }
 
   /**
