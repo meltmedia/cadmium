@@ -15,25 +15,27 @@
  */
 package com.meltmedia.cadmium.core.commands;
 
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executors;
-
-import junit.framework.Assert;
-
-import org.jgroups.stack.IpAddress;
-import org.junit.Test;
-
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.history.loggly.Event;
+import com.meltmedia.cadmium.core.history.loggly.EventQueue;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.lifecycle.UpdateState;
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.DummyMessageSender;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
+import junit.framework.Assert;
+import org.jgroups.stack.IpAddress;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class MaintenanceCommandActionTest {
 
@@ -52,7 +54,9 @@ public class MaintenanceCommandActionTest {
     
     MaintenanceCommandAction maintCmd = new MaintenanceCommandAction();
     maintCmd.siteDownService = siteDownService;
-    maintCmd.manager = new HistoryManager(null, Executors.newSingleThreadExecutor());
+    EventQueue queue = mock(EventQueue.class);
+    doNothing().when(queue).log(any(Event.class));
+    maintCmd.manager = new HistoryManager(null, Executors.newSingleThreadExecutor(), queue);
     MaintenanceRequest request = new MaintenanceRequest();
     request.setState("on");
     request.setComment("comment");
@@ -64,6 +68,7 @@ public class MaintenanceCommandActionTest {
     ctx.getMessage().getBody().setState("off");
     assertTrue("Command failed", maintCmd.execute(ctx));
     Assert.assertEquals("Site Down is Off", false, siteDownService.isOn());
+    verify(queue, times(2)).log(any(Event.class));
    	
 	}
 	
