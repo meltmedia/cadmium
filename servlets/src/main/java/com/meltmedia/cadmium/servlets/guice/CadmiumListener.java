@@ -25,11 +25,14 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
 import com.meltmedia.cadmium.core.*;
+import com.meltmedia.cadmium.core.api.VHost;
 import com.meltmedia.cadmium.core.commands.*;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
 import com.meltmedia.cadmium.core.history.HistoryManager;
+import com.meltmedia.cadmium.core.history.loggly.Api;
+import com.meltmedia.cadmium.core.history.loggly.EventQueue;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
 import com.meltmedia.cadmium.core.messaging.*;
 import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
@@ -438,6 +441,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         // Bind channel name
         bind(String.class).annotatedWith(MessagingChannelName.class).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
+        bind(String.class).annotatedWith(VHost.class).toInstance(vHostName);
 
         bind(String.class).annotatedWith(ApplicationContentRoot.class).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
 
@@ -471,6 +475,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
 
         bind(SiteConfigProcessor.class);
+        bind(EventQueue.class);
+        bind(Api.class);
 
         Multibinder<ConfigProcessor> configProcessorBinder = Multibinder.newSetBinder(binder(), ConfigProcessor.class);
 

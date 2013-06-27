@@ -15,21 +15,22 @@
  */
 package com.meltmedia.cadmium.core.history;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.meltmedia.cadmium.core.commands.GitLocation;
+import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
+import com.meltmedia.cadmium.core.history.loggly.EventQueue;
+import org.apache.commons.io.IOUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-import org.apache.commons.io.IOUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.meltmedia.cadmium.core.commands.GitLocation;
-import com.meltmedia.cadmium.core.history.HistoryEntry.EntryType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class HistoryManagerTest {
   private static final String INIT_HISTORY_CONTENT = "[{\"timestamp\":\"May 29, 2012 2:10:32 PM\",\"repoUrl\":\"\",\"branch\":\"master\",\"revision\":\"initial\",\"timeLive\":1000,\"openId\":\"me\",\"servedDirectory\":\"./target/history-test\",\"revertible\":true,\"comment\":\"This is it\"}," +
@@ -61,7 +62,7 @@ public class HistoryManagerTest {
       }
     }
     
-    manager = new HistoryManager(testDirectory, Executors.newSingleThreadExecutor());
+    manager = new HistoryManager(testDirectory, Executors.newSingleThreadExecutor(), mock(EventQueue.class));
   }
   
   @After

@@ -15,19 +15,20 @@
  */
 package com.meltmedia.cadmium.core.git;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.util.Properties;
-
+import com.meltmedia.cadmium.core.config.ConfigManager;
+import com.meltmedia.cadmium.core.history.HistoryManager;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.meltmedia.cadmium.core.config.ConfigManager;
+import java.io.File;
+import java.util.Properties;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 
 public class GitServiceTest {
@@ -192,7 +193,7 @@ public class GitServiceTest {
   public void testInitializeContentDirectory() throws Exception {
     GitService cloned = null;
     try {
-      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", null, configManager);
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", mock(HistoryManager.class), configManager);
     } finally {
       if(cloned != null) {
         cloned.close();
@@ -201,7 +202,7 @@ public class GitServiceTest {
     assertTrue("Initialize method failed", cloned != null);
     cloned = null;
     try {
-      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", null, configManager);
+      cloned = GitService.initializeContentDirectory(localGitRepo.getAbsolutePath(), "master", new File(testDir, "content").getAbsolutePath(), "cadmium.war", mock(HistoryManager.class), configManager);
     } finally {
       if(cloned != null) {
         cloned.close();
