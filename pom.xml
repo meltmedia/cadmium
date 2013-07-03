@@ -305,6 +305,11 @@
         <version>${luceneVersion}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-suggest</artifactId>
+        <version>${luceneVersion}</version>
+      </dependency>            
+      <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-core</artifactId>
         <version>1.2.0</version>
@@ -399,6 +404,7 @@
     <module>captcha</module>
     <module>email</module>
     <module>search</module>
+    <module>search-suggest</module>
     <module>persistence</module>
     <module>copyright</module>
     <module>war</module>
@@ -414,7 +420,7 @@
     <mavenVersion>3.0.3</mavenVersion>
     <wagonVersion>1.0</wagonVersion>
     <hibernateVersion>4.1.7.Final</hibernateVersion>
-    <luceneVersion>4.3.0</luceneVersion>
+    <luceneVersion>4.3.1</luceneVersion>
   </properties>
 
   <build>

@@ -74,13 +74,14 @@ public class SearchWithResultsTest {
   public static void finishUp() throws Exception {
     preprocessor.finalize();
     FileSystemManager.deleteDeep(preprocessor.getIndexDir().getAbsolutePath());
+    System.out.println(preprocessor.getIndexDir().getAbsolutePath());
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void test() throws Exception {
     Map<String, Object> allResults = service.search(query,null);
-    
+       
     assertTrue("Should not be empty", !allResults.isEmpty());
     assertTrue("Should be set", allResults.containsKey("number-hits"));
     assertTrue("Should be integer", allResults.get("number-hits") instanceof Integer);

@@ -15,7 +15,9 @@
  */
 package com.meltmedia.cadmium.search;
 
+import com.google.inject.Inject;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
+
 import jodd.lagarto.dom.Node;
 import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
@@ -44,6 +46,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -51,6 +54,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 @Singleton
 public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
+  
+  @Inject(optional=true)
+  protected List<SearchPreprocessor> searchPreprocessors;
+  
   
   public static FileFilter HTML_FILE_FILTER = new FileFilter() {
     @Override
@@ -169,6 +176,8 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     if(oldStage != null) {
       oldStage.close();
     }
+    
+    processSearchPreprocessors(newStagedSearcher.indexReader, analyzer, "content");
   }
   
   void writeIndex( final IndexWriter indexWriter, File contentDir ) throws Exception {
@@ -225,7 +234,8 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   public synchronized void makeLive() {
     writeLock.lock();
     if( this.stagedSearch != null && this.stagedSearch.directory != null && this.stagedSearch.indexReader != null ) {
-      SearchHolder oldLive = liveSearch;
+    	makeLiveProcessSearchPreprocessors();
+    	SearchHolder oldLive = liveSearch;
       liveSearch = stagedSearch;
       IOUtils.closeQuietly(oldLive);
       stagedSearch = null;
@@ -307,6 +317,36 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
       }
     }
     return true;
+  }
+  
+  private void processSearchPreprocessors(IndexReader reader, Analyzer analyzer, String field) {
+  	
+  	if(searchPreprocessors != null) {  		
+  		for(SearchPreprocessor p : searchPreprocessors) {  			
+  			try {
+					p.process(reader, analyzer, field);
+				} 
+  			catch (Exception e) {
+					
+  				log.warn("Problem setting up search suggester preprocessor for field: {}", field);
+				}
+  		}
+  	}
+  }
+  
+  private void makeLiveProcessSearchPreprocessors() {
+  	  	
+  	if(searchPreprocessors != null) {  		
+  		for(SearchPreprocessor p : searchPreprocessors) {  			
+  			try {
+					p.makeLive();
+				} 
+  			catch (Exception e) {
+					
+  				log.warn("Problem making live the search preprocessor");
+				}
+  		}
+  	}
   }
 
 }
