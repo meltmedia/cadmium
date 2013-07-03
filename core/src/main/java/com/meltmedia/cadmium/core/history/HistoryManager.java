@@ -21,6 +21,8 @@ import com.google.gson.stream.JsonReader;
 import com.meltmedia.cadmium.core.ApplicationContentRoot;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.commands.GitLocation;
+import com.meltmedia.cadmium.core.history.loggly.Event;
+import com.meltmedia.cadmium.core.history.loggly.EventQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +45,9 @@ public class HistoryManager {
   
   @Inject
   private ExecutorService pool;
-  
+
+  @Inject
+  private EventQueue eventQueue;
   
   @Inject
   public HistoryManager(@ApplicationContentRoot String contentRoot) throws Exception {
@@ -55,6 +59,13 @@ public class HistoryManager {
   public HistoryManager(String contentRoot, ExecutorService pool) throws Exception {
     this.contentRoot = contentRoot;
     this.pool = pool;
+    readHistoryFile();
+  }
+
+  public HistoryManager(String contentRoot, ExecutorService pool, EventQueue queue) throws Exception {
+    this.contentRoot = contentRoot;
+    this.pool = pool;
+    this.eventQueue = queue;
     readHistoryFile();
   }
   
@@ -111,6 +122,10 @@ public class HistoryManager {
     log.info("Logging new {} History Event: repoUrl[{}], branch[{}], sha[{}], openId[{}], directory[{}], uuid[{}], revertible[{}], maint[{}], failed[{}], comment[{}]", new Object[] {type, repository, branch, revision, openId, directory, uuid, revertible, maint, failed, comment});
     
     history.add(0, newEntry);
+
+    if(newEntry.isFinished() || newEntry.isFailed()) {
+      eventQueue.log(new Event(newEntry));
+    }
     
     pool.execute(historyWriter);
   }
@@ -139,6 +154,7 @@ public class HistoryManager {
     for(HistoryEntry entry : history) {
       if(!entry.isFinished() && entry.getUuid() != null && entry.getUuid().equals(uuid) && entry.isRevertible()) {
         entry.setFinished(true);
+        eventQueue.log(new Event(entry));
         log.debug("Marked {} as finished.", entry);
         pool.execute(historyWriter);
         break;
