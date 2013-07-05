@@ -42,4 +42,12 @@ public class SuggestSearchPreprocessor implements SearchPreprocessor, SuggesterP
 		return liveSuggester;
 	}
 
+	public void setStagedSuggester(AnalyzingSuggester stagedSuggester) {
+		this.stagedSuggester = stagedSuggester;
+	}
+
+	public void setLiveSuggester(AnalyzingSuggester liveSuggester) {
+		this.liveSuggester = liveSuggester;
+	}
+
 }

@@ -19,7 +19,7 @@ import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 public class SearchSuggestService {
 
 	@Inject
-	protected SuggesterProvider preprocessor;
+	protected SuggesterProvider provider;
 	static final int MAX_RESULTS = 20; 
 	
 	@GET
@@ -28,10 +28,14 @@ public class SearchSuggestService {
       throws Exception {
 		
     Map<String, Object> resultMap = new LinkedHashMap<String, Object>();
-    List<LookupResult> results = preprocessor.getSuggester().lookup(query, false, maxResults == null? MAX_RESULTS : maxResults);
+    List<LookupResult> results = provider.getSuggester().lookup(query, false, maxResults == null? MAX_RESULTS : maxResults);
     resultMap.put(query, results);        
     
     return resultMap;
   }
 	
+	public void setProvider(SuggesterProvider provider) {
+		this.provider = provider;
+	}
+
 }

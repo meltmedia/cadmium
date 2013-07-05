@@ -319,7 +319,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     return true;
   }
   
-  private void processSearchPreprocessors(IndexReader reader, Analyzer analyzer, String field) {
+  protected void processSearchPreprocessors(IndexReader reader, Analyzer analyzer, String field) {
   	
   	if(searchPreprocessors != null) {  		
   		for(SearchPreprocessor p : searchPreprocessors) {  			
@@ -334,7 +334,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   	}
   }
   
-  private void makeLiveProcessSearchPreprocessors() {
+  protected void makeLiveProcessSearchPreprocessors() {
   	  	
   	if(searchPreprocessors != null) {  		
   		for(SearchPreprocessor p : searchPreprocessors) {  			
