@@ -15,31 +15,24 @@
  */
 package com.meltmedia.cadmium.core.config;
 
+import com.google.inject.Inject;
+import com.meltmedia.cadmium.core.config.impl.PropertiesReaderImpl;
+import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
+import com.meltmedia.cadmium.core.util.WarUtils;
+import org.eclipse.jgit.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Singleton;
+import javax.servlet.ServletContext;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
-
-import javax.inject.Singleton;
-import javax.servlet.ServletContext;
-
-import org.eclipse.jgit.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.inject.Inject;
-import com.meltmedia.cadmium.core.config.impl.PropertiesReaderImpl;
-import com.meltmedia.cadmium.core.config.impl.PropertiesWriterImpl;
-import com.meltmedia.cadmium.core.util.WarUtils;
 
 /**
  * This centralizes and manages how other classes read and write to properties files. 
@@ -210,7 +203,8 @@ public class ConfigManager implements Closeable {
     } 
     catch (Exception e) {
 
-      log.error("Problem gettign config data from directory: {}", directory);
+      log.error("Problem getting config data from directory: {}", directory);
+      log.error("And the Exception is: ", e);
     }
   }
 
