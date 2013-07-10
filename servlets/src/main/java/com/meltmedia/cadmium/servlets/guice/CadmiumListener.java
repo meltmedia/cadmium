@@ -475,8 +475,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
 
         bind(SiteConfigProcessor.class);
-        bind(EventQueue.class);
         bind(Api.class);
+        bind(EventQueue.class);
 
         Multibinder<ConfigProcessor> configProcessorBinder = Multibinder.newSetBinder(binder(), ConfigProcessor.class);
 
