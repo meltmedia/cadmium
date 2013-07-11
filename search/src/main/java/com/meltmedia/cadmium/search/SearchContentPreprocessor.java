@@ -46,7 +46,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -56,7 +56,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   @Inject(optional=true)
-  protected List<SearchPreprocessor> searchPreprocessors;
+  protected Set<SearchPreprocessor> searchPreprocessors;
   
   
   public static FileFilter HTML_FILE_FILTER = new FileFilter() {
@@ -176,7 +176,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     if(oldStage != null) {
       oldStage.close();
     }
-    
+    log.info("About to call processSearchPreprocessors()");
     processSearchPreprocessors(newStagedSearcher.indexReader, analyzer, "content");
   }
   
@@ -232,8 +232,10 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
 
   @Override
   public synchronized void makeLive() {
+  	log.info("About to call lock on writeLock");
     writeLock.lock();
     if( this.stagedSearch != null && this.stagedSearch.directory != null && this.stagedSearch.indexReader != null ) {
+    	log.info("About to call makeLiveProcessSearchPreprocessors()");
     	makeLiveProcessSearchPreprocessors();
     	SearchHolder oldLive = liveSearch;
       liveSearch = stagedSearch;
@@ -321,9 +323,12 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   
   protected void processSearchPreprocessors(IndexReader reader, Analyzer analyzer, String field) {
   	
+  	log.info("processing search preprocessors.");
+  	log.info("preprocessors to process: {}", searchPreprocessors);
   	if(searchPreprocessors != null) {  		
   		for(SearchPreprocessor p : searchPreprocessors) {  			
   			try {
+  				log.info("Processing: {}");
 					p.process(reader, analyzer, field);
 				} 
   			catch (Exception e) {
@@ -336,6 +341,8 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   
   protected void makeLiveProcessSearchPreprocessors() {
   	  	
+  	log.info("Making live search preprocessors.");
+  	log.info("preprocessors to process: {}", searchPreprocessors);
   	if(searchPreprocessors != null) {  		
   		for(SearchPreprocessor p : searchPreprocessors) {  			
   			try {

@@ -7,6 +7,8 @@ import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.suggest.analyzing.AnalyzingSuggester;
 import org.apache.lucene.search.suggest.analyzing.FuzzySuggester;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.meltmedia.cadmium.search.SearchPreprocessor;
 
@@ -19,6 +21,8 @@ import com.meltmedia.cadmium.search.SearchPreprocessor;
 @Singleton
 public class SuggestSearchPreprocessor implements SearchPreprocessor, SuggesterProvider {
 
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	
 	protected AnalyzingSuggester stagedSuggester;
 	protected AnalyzingSuggester liveSuggester;
 	
@@ -31,6 +35,7 @@ public class SuggestSearchPreprocessor implements SearchPreprocessor, SuggesterP
 	@Override
 	public void process(IndexReader reader, Analyzer analyzer, String field) throws Exception {
 		
+		logger.info("Pulling out suggested search terms.");
 		Dictionary dictionary = new LuceneDictionary(reader, field);		
 		AnalyzingSuggester suggester = new FuzzySuggester(analyzer); 
 		suggester.build(dictionary);
