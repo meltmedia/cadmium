@@ -28,6 +28,7 @@ public class SearchSuggestService {
 	@Inject
 	protected SuggesterProvider provider;
 	static final int MAX_RESULTS = 20; 
+	static final String RESULT_KEY = "terms";
 	
 	@GET
   @Produces("application/json")
@@ -41,7 +42,7 @@ public class SearchSuggestService {
     
     // Make the results more usable to consumer.
     Set<String> resultSet = new TreeSet<String>();
-    resultMap.put("terms", resultSet);
+    resultMap.put(RESULT_KEY, resultSet);
     
     if(results != null) {
     	for(LookupResult result : results) {    		    		
