@@ -37,7 +37,7 @@ public class SuggestSearchPreprocessor implements SearchPreprocessor, SuggesterP
 		
 		logger.info("Pulling out suggested search terms.");
 		Dictionary dictionary = new LuceneDictionary(reader, field);		
-		AnalyzingSuggester suggester = new FuzzySuggester(analyzer); 
+		AnalyzingSuggester suggester = new AnalyzingSuggester(analyzer); 
 		suggester.build(dictionary);
 		stagedSuggester = suggester;		            		
 	}
