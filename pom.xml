@@ -458,6 +458,21 @@
           </dependency>
         </dependencies>
       </plugin>
+       <plugin>
+          <groupId>com.meltmedia.coveralls</groupId>
+          <artifactId>coveralls-maven-plugin</artifactId>
+          <version>1.0.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>cobertura-maven-plugin</artifactId>
+          <version>2.5.2</version>
+          <configuration>
+            <aggregate>true</aggregate>
+            <format>xml</format>
+            <maxmem>256m</maxmem>
+          </configuration>
+      </plugin>
       </plugins>
     </pluginManagement>
     <extensions>
