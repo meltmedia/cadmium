@@ -12,6 +12,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -23,6 +26,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
 import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 
 /**
  * Simple Api to loggly that sends log events over https.
@@ -90,13 +97,13 @@ public class Api {
       }
       evt.setEnvironment(environment);
       evt.setDomain(vHostName);
-      HttpClient client = new DefaultHttpClient();
 
       HttpPost post = new HttpPost(LOGGLY_BASE_URL + inputKey.trim());
 
       post.setEntity(new StringEntity(GSON.toJson(evt), ContentType.APPLICATION_JSON));
 
       try {
+        HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
         HttpResponse response = client.execute(post);
         if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
           logger.info("Event sent to loggly {}", evt);
@@ -111,5 +118,13 @@ public class Api {
         post.releaseConnection();
       }
     }
+  }
+
+  protected static DefaultHttpClient setTrustAllSSLCerts(DefaultHttpClient client) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+    SSLSocketFactory acceptAll = new SSLSocketFactory(new TrustSelfSignedStrategy(), SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
+    client.getConnectionManager().getSchemeRegistry().register(new Scheme("https", 443, acceptAll));
+
+    return client;
   }
 }
