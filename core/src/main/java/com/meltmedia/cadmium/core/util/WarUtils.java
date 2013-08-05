@@ -35,6 +35,7 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -52,6 +53,8 @@ import java.util.zip.ZipOutputStream;
  *
  */
 public class WarUtils {
+
+  private static final String JBOSS_7_DEPLOY_DIR = "jboss.server.data.dir";
   
   /**
    * <p>This method updates a template war with the following settings.</p>
@@ -569,6 +572,8 @@ public class WarUtils {
      */
     public String fileToString(String file) throws Exception;
 
+    public String getWarName();
+
   }
 
   /**
@@ -600,8 +605,30 @@ public class WarUtils {
           if (warFile.exists() && !warFile.isDirectory()) {
             zippedWar = new ZipFile(warFile);
           }
+        } else if (webXml.getProtocol().equalsIgnoreCase("vfs") && System.getProperty(JBOSS_7_DEPLOY_DIR) != null) {
+          String path = urlString.substring("vfs:/".length());
+          String deployDir = System.getProperty(JBOSS_7_DEPLOY_DIR);
+          warFile = new File(deployDir, path);
+          if (warFile.exists() && !warFile.isDirectory()) {
+            zippedWar = new ZipFile(warFile);
+          } else {
+            URLConnection conn = webXml.openConnection();
+            Object vf = conn.getContent();
+            Method getPhysicalFile = vf.getClass().getMethod("getPhysicalFile");
+            if(getPhysicalFile != null && File.class.isAssignableFrom(getPhysicalFile.getReturnType())) {
+              File physicalFile = (File) getPhysicalFile.invoke(vf);
+              if(physicalFile != null) {
+                physicalFile = physicalFile.getAbsoluteFile();
+                physicalFile = physicalFile.getParentFile().getParentFile().getParentFile();
+                warFile = physicalFile;
+              }
+            }
+          }
         } else {
           throw new Exception("Unrecognized url protocol: "+webXml.toString());
+        }
+        if(warFile != null) {
+          warName = warFile.getName();
         }
       } else {
         throw new Exception("Failed to load cadmium war from class path.");
@@ -618,6 +645,7 @@ public class WarUtils {
   public static class FileBasedCadmiumWar implements CadmiumWar {
     protected File warFile;
     protected ZipFile zippedWar = null;
+    protected String warName = null;
 
     protected FileBasedCadmiumWar(){}
     
@@ -632,6 +660,10 @@ public class WarUtils {
         zippedWar = new ZipFile(warFile);
       } else if(!warFile.isDirectory()) {
         throw new Exception(warFile + " does not exist.");
+      }
+
+      if (warFile != null) {
+        warName = warFile.getName();
       }
     }
     
@@ -710,6 +742,11 @@ public class WarUtils {
     }
 
     @Override
+    public String getWarName() {
+      return warName;
+    }
+
+    @Override
     public void close() throws IOException {
       if(zippedWar != null) {
         zippedWar.close();
@@ -724,6 +761,29 @@ public class WarUtils {
    */
   public static String getWarName( ServletContext context ) {
     String[] pathSegments = context.getRealPath("/WEB-INF/web.xml").split("/");
-    return pathSegments[pathSegments.length - 3];
+    String warName = pathSegments[pathSegments.length - 3];
+    if(!warName.endsWith(".war")) {
+      URL webXml = WarUtils.class.getClassLoader().getResource("/cadmium-version.properties");
+      if(webXml != null) {
+
+        String urlString = webXml.toString().substring(0, webXml.toString().length() - "/WEB-INF/classes/cadmium-version.properties".length());
+        File warFile = null;
+        if (webXml.getProtocol().equalsIgnoreCase("file")) {
+          warFile = new File(urlString.substring(5));
+        } else if (webXml.getProtocol().equalsIgnoreCase("vfszip")) {
+          warFile = new File(urlString.substring(7));
+        } else if (webXml.getProtocol().equalsIgnoreCase("vfsfile")) {
+          warFile = new File(urlString.substring(8));
+        } else if (webXml.getProtocol().equalsIgnoreCase("vfs") && System.getProperty(JBOSS_7_DEPLOY_DIR) != null) {
+          String path = urlString.substring("vfs:/".length());
+          String deployDir = System.getProperty(JBOSS_7_DEPLOY_DIR);
+          warFile = new File(deployDir, path);
+        }
+        if(warFile != null) {
+          warName = warFile.getName();
+        }
+      }
+    }
+    return warName;
   }
 }

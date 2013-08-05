@@ -79,7 +79,7 @@ public class UserAgentAlternateContentFilter implements Filter {
             File contentDir = alternateContentConfig.getAlternateContentDirectory(userAgentHeader);
             if(contentDir != null && contentDir.exists() && contentDir.isDirectory()) {
               try {
-                logger.debug("ContentDir {}, Serving {}, servlet path {}, path info {}", new Object[]{contentDir, request.getRequestURI(), request.getServletPath(), request.getPathInfo()});
+                logger.trace("ContentDir {}, Serving {}, servlet path {}, path info {}", new Object[]{contentDir, request.getRequestURI(), request.getServletPath(), request.getPathInfo()});
                 FileServlet fileServlet = new FileServlet();
                 fileServlet.init();
                 fileServlet.setBasePath(contentDir.getAbsoluteFile().getAbsolutePath());
@@ -94,13 +94,13 @@ public class UserAgentAlternateContentFilter implements Filter {
       }
       chain.doFilter(req, resp);
     } catch (IOException ioe) {
-      logger.error("Failed in user agent filter.", ioe);
+      logger.trace("Failed in user agent filter.", ioe);
       throw ioe;
     } catch (ServletException se) {
-      logger.error("Failed in user agent filter.", se);
+      logger.trace("Failed in user agent filter.", se);
       throw se;
     } catch (Throwable t) {
-      logger.error("Failed in user agent filter.", t);
+      logger.trace("Failed in user agent filter.", t);
       throw new ServletException(t);
     }
   }

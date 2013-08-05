@@ -122,13 +122,13 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
         IOUtils.closeQuietly(httpRes.getWriter());
       }
     } catch (IOException ioe) {
-      logger.error("Failed in maint filter.", ioe);
+      logger.trace("Failed in maint filter.", ioe);
       throw ioe;
     } catch (ServletException se) {
-      logger.error("Failed in maint filter.", se);
+      logger.trace("Failed in maint filter.", se);
       throw se;
     } catch (Throwable t) {
-      logger.error("Failed in maint filter.", t);
+      logger.trace("Failed in maint filter.", t);
       throw new ServletException(t);
     }
 	}

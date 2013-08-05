@@ -43,10 +43,7 @@ import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.scheduler.SchedulerService;
-import com.meltmedia.cadmium.core.util.Jsr250Executor;
-import com.meltmedia.cadmium.core.util.Jsr250Utils;
-import com.meltmedia.cadmium.core.util.LogUtils;
-import com.meltmedia.cadmium.core.util.WarUtils;
+import com.meltmedia.cadmium.core.util.*;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
 import com.meltmedia.cadmium.servlets.*;
@@ -115,6 +112,8 @@ public class CadmiumListener extends GuiceServletContextListener {
   private ConfigManager configManager;
   private ScheduledThreadPoolExecutor executor;
   private Jsr250Executor jsr250Executor = null;
+  private boolean jboss = false;
+  private boolean oldJBoss = false;
 
   private String failOver;
 
@@ -186,7 +185,13 @@ public class CadmiumListener extends GuiceServletContextListener {
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     //Force the use of slf4j logger in all JBoss log uses in this wars context!!!
-    System.setProperty("org.jboss.logging.provider", "slf4j");
+    jboss = ContainerUtils.isJBoss();
+    if(jboss) {
+      oldJBoss = ContainerUtils.isOldJBoss();
+    }
+    if(oldJBoss) {
+      System.setProperty("org.jboss.logging.provider", "slf4j");
+    }
 
     failOver = servletContextEvent.getServletContext().getRealPath("/");
     MaintenanceFilter.siteDown.start();
@@ -195,7 +200,6 @@ public class CadmiumListener extends GuiceServletContextListener {
     configManager = new ConfigManager(context);
 
     Properties cadmiumProperties = configManager.getPropertiesByContext(context, "/WEB-INF/cadmium.properties");
-
 
     Properties configProperties = new Properties();
     configProperties = configManager.getSystemProperties();

@@ -136,13 +136,13 @@ public class ApiEndpointAccessFilter implements Filter {
       }
       chain.doFilter(request, response);
     } catch (IOException ioe) {
-      log.error("Failed in api endpoint filter.", ioe);
+      log.trace("Failed in api endpoint filter.", ioe);
       throw ioe;
     } catch (ServletException se) {
-      log.error("Failed in api endpoint filter.", se);
+      log.trace("Failed in api endpoint filter.", se);
       throw se;
     } catch (Throwable t) {
-      log.error("Failed in api endpoint filter.", t);
+      log.trace("Failed in api endpoint filter.", t);
       throw new ServletException(t);
     }
   }
