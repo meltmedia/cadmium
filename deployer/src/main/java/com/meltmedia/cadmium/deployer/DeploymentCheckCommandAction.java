@@ -36,6 +36,9 @@ public class DeploymentCheckCommandAction implements CommandAction<DeploymentChe
   @Inject
   private MessageSender sender;
 
+  @Inject
+  private IJBossUtil jbossUtil;
+
   @Override
   public String getName() {
     return COMMAND_ACTION;
@@ -49,7 +52,7 @@ public class DeploymentCheckCommandAction implements CommandAction<DeploymentChe
       DeploymentCheckResponse deploymentResponse = new DeploymentCheckResponse();
       deploymentResponse.setStarted(true);
       try {
-        boolean deployed = JBossUtil.isWarDeployed(warName, logger);
+        boolean deployed = jbossUtil.isWarDeployed(warName);
         logger.info("{} deployment state: {}", warName, deployed);
         deploymentResponse.setFinished(deployed);
       } catch(NoDeploymentFoundException e) {

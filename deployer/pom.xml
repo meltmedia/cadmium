@@ -16,23 +16,22 @@
   </properties>
   
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/java</directory>
-        <filtering>true</filtering>
-        <targetPath>../filtered-sources/java</targetPath>
-      </resource>
-    </resources>
-    <sourceDirectory>target/filtered-sources/java</sourceDirectory>
     <plugins>
-      <plugin>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>maven-jetty-plugin</artifactId>
-        <version>6.1.10</version>
-      </plugin>
       <plugin>
         <groupId>org.reflections</groupId>
         <artifactId>reflections-maven</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <overlays>
+            <overlay>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>cadmium-war</artifactId>
+            </overlay>
+          </overlays>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -48,11 +47,12 @@
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>
+      <scope>provided</scope>
     </dependency>
-    <dependency>
+    <!-- <dependency>
       <groupId>org.jgroups</groupId>
       <artifactId>jgroups</artifactId>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
@@ -61,21 +61,23 @@
     <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
       <artifactId>cadmium-servlets</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
       <artifactId>cadmium-core</artifactId>
+      <scope>provided</scope>
     </dependency>
-    <dependency>
+    <!-- <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
     </dependency>
     <dependency>
       <groupId>com.meltmedia.jgroups</groupId>
       <artifactId>jgroups-aws</artifactId>
-    </dependency>
+    </dependency> -->
 
-    <dependency>
+    <!-- <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
       <artifactId>cadmium-email</artifactId>
       <exclusions>
@@ -88,7 +90,7 @@
           <artifactId>xmlParserAPIs</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
+    </dependency> -->
     
     <dependency>
       <groupId>org.jboss.jbossas</groupId>
@@ -116,6 +118,17 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>cadmium-maven</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
     </dependency>
   </dependencies>
 </project>

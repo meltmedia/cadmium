@@ -15,18 +15,18 @@
  */
 package com.meltmedia.cadmium.deployer;
 
-import java.io.File;
-
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
-
 import com.google.inject.AbstractModule;
 import com.meltmedia.cadmium.core.CadmiumModule;
+import com.meltmedia.cadmium.deployer.jboss7.JBossAdminApi;
 import com.meltmedia.cadmium.maven.ArtifactResolver;
 import com.meltmedia.cadmium.servlets.guice.CadmiumListener;
+import org.apache.commons.io.FileUtils;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
 
 /**
  * A Guice module that binds an instance of ArtifactResolver from the maven project.
@@ -59,6 +59,8 @@ public class DeployerModule extends AbstractModule {
       String remoteMavenRepo = System.getProperty(MAVEN_REPOSITORY);
       ArtifactResolver resolver = new ArtifactResolver(remoteMavenRepo, appRoot.getAbsolutePath());
       bind(ArtifactResolver.class).toInstance(resolver);
+      bind(JBossAdminApi.class);
+      bind(IJBossUtil.class).to(JBossDelegator.class);
     } catch(Exception e) {
       logger.error("Failed to initialize maven artifact resolver.", e);
     }

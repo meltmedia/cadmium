@@ -401,6 +401,9 @@ public class CadmiumListener extends GuiceServletContextListener {
           }
         }
 
+        bind(Boolean.class).annotatedWith(ISJBoss.class).toInstance(jboss);
+        bind(Boolean.class).annotatedWith(ISOLDJBoss.class).toInstance(oldJBoss);
+
         bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
         bind(ApiEndpointAccessController.class).toInstance(ApiEndpointAccessFilter.controller);
 

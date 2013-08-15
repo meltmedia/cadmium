@@ -2,6 +2,10 @@ package com.meltmedia.cadmium.core.util;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NameClassPair;
+import javax.naming.NamingEnumeration;
 import java.lang.reflect.Method;
 import java.util.Hashtable;
 
@@ -18,12 +22,21 @@ public class ContainerUtils {
         String domains[] = server.getDomains();
         for(String domain : domains) {
           if(domain.startsWith("jboss.")) {
+            System.out.println("Running on JBoss AS");
             return true;
           }
         }
       }
     } catch(Throwable e) {
-      e.printStackTrace();
+      System.out.println("No JBoss AS MBean service found.");
+      try {
+        Context ctx = new InitialContext();
+        NamingEnumeration<NameClassPair> names = ctx.list("java:jboss/jaas");
+        boolean foundJBoss = names.hasMore();
+        return names.hasMore();
+      } catch (Exception e1) {
+        System.out.println("Not running on JBoss AS.");
+      }
     }
     return false;
   }
@@ -40,16 +53,18 @@ public class ContainerUtils {
         int versionMajor = new Integer(versionNumber.split("\\.")[0]);
         if(versionName.equalsIgnoreCase("EAP")) {
           if(versionMajor <= 5) {
+            System.out.println("Running on old JBoss");
             return true;
           }
         } else {
           if(versionMajor <= 6) {
+            System.out.println("Running on old JBoss");
             return true;
           }
         }
       }
     } catch(Throwable e) {
-      e.printStackTrace();
+      System.out.println("Not running on OLD JBoss AS.");
     }
     return false;
   }

@@ -24,6 +24,7 @@ import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.status.Status;
 import com.meltmedia.cadmium.status.StatusMember;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +34,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -259,7 +260,23 @@ public class StatusService extends AuthorizationService {
     returnObj.setConfigRepo(configRepo);
 		returnObj.setMaintPageState(maintStatus);
 		returnObj.setSource(source);
-		
+
+    InputStream in = null;
+    try {
+      in = getClass().getClassLoader().getResourceAsStream("cadmium-version.properties");
+      Properties props = new Properties();
+      props.load(in);
+      if(props.containsKey("version")) {
+        returnObj.setCadmiumVersion(props.getProperty("version"));
+      }
+    } catch(Throwable t) {
+      logger.debug("Failed to get cadmium version.", t);
+    } finally {
+      if(in != null) {
+        IOUtils.closeQuietly(in);
+      }
+    }
+
 		return returnObj;
 	}
 

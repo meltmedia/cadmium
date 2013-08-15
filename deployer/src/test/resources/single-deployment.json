@@ -1,0 +1,20 @@
+{
+    "outcome" : "success",
+    "result" : {
+        "content" : [{
+            "path" : "deployments/test.cadmium.localhost.war",
+            "relative-to" : "jboss.server.base.dir",
+            "archive" : true
+        }],
+        "enabled" : true,
+        "name" : "test.cadmium.localhost.war",
+        "persistent" : false,
+        "runtime-name" : "test.cadmium.localhost.war",
+        "subdeployment" : null,
+        "subsystem" : {"web" : {
+            "context-root" : "/",
+            "servlet" : null,
+            "virtual-host" : "test.cadmium.localhost"
+        }}
+    }
+}

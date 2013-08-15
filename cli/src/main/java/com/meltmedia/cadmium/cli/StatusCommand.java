@@ -15,10 +15,14 @@
  */
 package com.meltmedia.cadmium.cli;
 
-import java.util.List;
-
-import javax.ws.rs.core.MediaType;
-
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.meltmedia.cadmium.core.MavenVector;
+import com.meltmedia.cadmium.status.Status;
+import com.meltmedia.cadmium.status.StatusMember;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -28,13 +32,8 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.meltmedia.cadmium.core.MavenVector;
-import com.meltmedia.cadmium.status.Status;
-import com.meltmedia.cadmium.status.StatusMember;
+import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 /**
  * Displays the status information from a Cadmium site.
@@ -68,7 +67,7 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
       System.out.println();
       System.out.println("Current status for [" + siteUrl +"]"); 
       System.out.println("-----------------------------------------------------");
-      System.out.println(
+      System.out.print(
       		"Environment      => [" + statusObj.getEnvironment() + "]\n" +
       		"Repo URL         => [" + statusObj.getRepo() + "]\n" +
       		"Branch           => [" + statusObj.getBranch() + "]\n" +
@@ -77,7 +76,14 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
           "Config Branch    => [" + statusObj.getConfigBranch() + "]\n" +
           "Config Revision  => [" + statusObj.getConfigRevision() + "]\n" +
       		"Content Source   => [\n" + statusObj.getSource() + "]\n" +
-      		"Maint Page State => [" + statusObj.getMaintPageState() +"]\n");  
+      		"Maint Page State => [" + statusObj.getMaintPageState() +"]\n");
+      if(StringUtils.isNotBlank(statusObj.getCadmiumVersion())) {
+        System.out.println(
+          "Cadmium Version  => [" + statusObj.getCadmiumVersion() + "]\n"
+        );
+      } else {
+        System.out.println();
+      }
       
       System.out.println();
       System.out.println("Member States:\n");

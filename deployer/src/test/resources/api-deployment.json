@@ -1,0 +1,24 @@
+{
+    "outcome" : "success",
+    "result" : [{
+        "address" : [{
+            "deployment" : "test.cadmium.localhost.war"
+        }],
+        "outcome" : "success",
+        "result" : {
+            "content" : [{"hash" : {
+                "BYTES_VALUE" : "SbejgggTNOuHdke5k6EeKdB8Zfo="
+            }}],
+            "enabled" : true,
+            "name" : "test.cadmium.localhost.war",
+            "persistent" : true,
+            "runtime-name" : "test.cadmium.localhost.war",
+            "subdeployment" : null,
+            "subsystem" : {"web" : {
+                "context-root" : "/",
+                "servlet" : null,
+                "virtual-host" : "test.cadmium.localhost"
+            }}
+        }
+    }]
+}

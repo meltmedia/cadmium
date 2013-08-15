@@ -21,7 +21,6 @@ import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
 import com.meltmedia.cadmium.maven.ArtifactResolver;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +45,9 @@ public class DeployCommandAction implements CommandAction<DeployRequest> {
   @Inject
   protected MessageSender sender;
 
+  @Inject
+  protected IJBossUtil jbossUtil;
+
   @Override
   public boolean execute(CommandContext<DeployRequest> ctx) throws Exception {
     log.info("Beginning Deploy Command, started by {}", ctx.getSource());
@@ -63,7 +65,7 @@ public class DeployCommandAction implements CommandAction<DeployRequest> {
     
     log.info("Beginning war creation. {}", request);
 
-    JBossUtil.addVirtualHost(request.getDomain(), log);    
+    jbossUtil.addVirtualHost(request.getDomain());
     
     //setup war name and inset into list in initCommand
     List<String> newWarNames = new ArrayList<String>();
@@ -91,22 +93,12 @@ public class DeployCommandAction implements CommandAction<DeployRequest> {
     
     updateWar(null, artifactFile.getAbsolutePath(), newWarNames, request.getRepo(), request.getBranch(), request.getConfigRepo(), request.getConfigBranch(), request.getDomain(), request.getContext(), secure, log);
     
-    String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
-
-    log.info("Moving war {} into deployment directory {}", tmpFileName, deployPath);
-
-    File newWar = new File(deployPath, tmpFileName);
-
-    FileUtils.copyFile(tmpZip, newWar);
-
-    FileUtils.deleteQuietly(tmpZip);
-
-    FileUtils.touch(newWar);
+    jbossUtil.deployWar(tmpFileName, tmpZip);
 
     log.info("Waiting for jBoss to pick up new deployment.");
 
     DeployResponse deployResponse = new DeployResponse();
-    deployResponse.setWarName(newWar.getName());
+    deployResponse.setWarName(tmpFileName);
 
     Message<DeployResponse> response = new Message<DeployResponse>(DeployResponseCommandAction.COMMAND_ACTION, deployResponse);
     sender.sendMessage(response, new ChannelMember(ctx.getSource()));
