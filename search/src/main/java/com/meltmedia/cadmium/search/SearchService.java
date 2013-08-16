@@ -22,9 +22,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryParser.MultiFieldQueryParser;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -44,6 +44,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -56,18 +57,16 @@ import java.util.Map;
 public class SearchService
 {
   private final Logger logger = LoggerFactory.getLogger(getClass());
+  private static final String ALLOWED_CHARS_PATTERN = "((\\-)|(\\()|(\\))|(\\\\))";
 
   @Inject
-  private IndexSearcherProvider provider;
+  protected IndexSearcherProvider provider;
     
 	@GET
   @Produces("application/json")
   public Map<String, Object> search(@QueryParam("query") String query,@QueryParam("path") String path)
       throws Exception {
-    Map<String, Object> resultMap = new LinkedHashMap<String, Object>();
-    
-    // TODO build new query using path
-    resultMap = buildSearchResults(query, path);
+    Map<String, Object> resultMap = buildSearchResults(query, path);
     
     return resultMap;
   }
@@ -88,7 +87,8 @@ public class SearchService
         resultMap.put("results", resultList);
         
         if (index != null && parser != null) {
-          Query query1 = parser.parse(query);
+          String literalQuery = query.replaceAll(ALLOWED_CHARS_PATTERN, "\\\\$1");
+          Query query1 = parser.parse(literalQuery);
           if(StringUtils.isNotBlank(path)) {
           	Query pathPrefix = new PrefixQuery(new Term("path", path));
           	BooleanQuery boolQuery = new BooleanQuery();
@@ -100,7 +100,7 @@ public class SearchService
           QueryScorer scorer = new QueryScorer(query1);
           Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), new SimpleHTMLEncoder(), scorer);
     
-          logger.info("", results.totalHits);
+          logger.info("Search returned {} hits.", results.totalHits);
           resultMap.put("number-hits", results.totalHits);
           
           for (ScoreDoc doc : results.scoreDocs) {
@@ -158,7 +158,7 @@ public class SearchService
   }
   
   QueryParser createParser( Analyzer analyzer ) {
-    return new MultiFieldQueryParser(Version.LUCENE_36, new String[]{"title", "content"}, analyzer);
+    return new MultiFieldQueryParser(Version.LUCENE_43, new String[]{"title", "content"}, analyzer);
   }
   
   void setIndexSearchProvider(IndexSearcherProvider provider) {
