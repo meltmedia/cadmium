@@ -56,17 +56,17 @@ import java.util.Map;
 public class SearchService
 {
   private final Logger logger = LoggerFactory.getLogger(getClass());
+  private static final String LUCENE_CHARS_PATTERN = "((\\+)|(\\-)|(\\&)|(\\|)|(\\!)|(\\()|(\\))|(\\{)|(\\})|(\\[)|(\\])|(\\\")|(\\~)|(\\*)|(\\?)|(\\:)|(\\\\)|(\\^))";
 
   @Inject
-  private IndexSearcherProvider provider;
+  protected IndexSearcherProvider provider;
     
 	@GET
   @Produces("application/json")
   public Map<String, Object> search(@QueryParam("query") String query,@QueryParam("path") String path)
       throws Exception {
     Map<String, Object> resultMap = new LinkedHashMap<String, Object>();
-    
-    // TODO build new query using path
+
     resultMap = buildSearchResults(query, path);
     
     return resultMap;
@@ -88,7 +88,8 @@ public class SearchService
         resultMap.put("results", resultList);
         
         if (index != null && parser != null) {
-          Query query1 = parser.parse(query);
+          String literalQuery = query.replaceAll(LUCENE_CHARS_PATTERN, "\\\\$1");
+          Query query1 = parser.parse(literalQuery);
           if(StringUtils.isNotBlank(path)) {
           	Query pathPrefix = new PrefixQuery(new Term("path", path));
           	BooleanQuery boolQuery = new BooleanQuery();
@@ -100,7 +101,7 @@ public class SearchService
           QueryScorer scorer = new QueryScorer(query1);
           Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), new SimpleHTMLEncoder(), scorer);
     
-          logger.info("", results.totalHits);
+          logger.info("Search returned {} hits.", results.totalHits);
           resultMap.put("number-hits", results.totalHits);
           
           for (ScoreDoc doc : results.scoreDocs) {
