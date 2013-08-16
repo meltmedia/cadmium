@@ -57,7 +57,7 @@ import java.util.Map;
 public class SearchService
 {
   private final Logger logger = LoggerFactory.getLogger(getClass());
-  private static final String LUCENE_CHARS_PATTERN = "((\\+)|(\\-)|(\\&)|(\\|)|(\\!)|(\\()|(\\))|(\\{)|(\\})|(\\[)|(\\])|(\\\")|(\\~)|(\\*)|(\\?)|(\\:)|(\\\\)|(\\^))";
+  private static final String ALLOWED_CHARS_PATTERN = "((\\-)|(\\()|(\\))|(\\\\))";
 
   @Inject
   protected IndexSearcherProvider provider;
@@ -66,9 +66,7 @@ public class SearchService
   @Produces("application/json")
   public Map<String, Object> search(@QueryParam("query") String query,@QueryParam("path") String path)
       throws Exception {
-    Map<String, Object> resultMap = new LinkedHashMap<String, Object>();
-
-    resultMap = buildSearchResults(query, path);
+    Map<String, Object> resultMap = buildSearchResults(query, path);
     
     return resultMap;
   }
@@ -89,7 +87,7 @@ public class SearchService
         resultMap.put("results", resultList);
         
         if (index != null && parser != null) {
-          String literalQuery = query.replaceAll(LUCENE_CHARS_PATTERN, "\\\\$1");
+          String literalQuery = query.replaceAll(ALLOWED_CHARS_PATTERN, "\\\\$1");
           Query query1 = parser.parse(literalQuery);
           if(StringUtils.isNotBlank(path)) {
           	Query pathPrefix = new PrefixQuery(new Term("path", path));

@@ -17,13 +17,11 @@ package com.meltmedia.cadmium.search;
 
 import com.google.inject.Inject;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
-
-import jodd.lagarto.dom.Node;
 import jodd.jerry.Jerry;
+import jodd.lagarto.dom.Node;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
@@ -148,7 +146,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   private File dataDir;
   private SearchHolder liveSearch = null;
   private SearchHolder stagedSearch = null;
-  private static Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_43);
+  private static Analyzer analyzer = new CadmiumAnalyzer(Version.LUCENE_43);
   private final ReentrantReadWriteLock locker = new ReentrantReadWriteLock();
   private final ReadLock readLock = locker.readLock();
   private final WriteLock writeLock = locker.writeLock();

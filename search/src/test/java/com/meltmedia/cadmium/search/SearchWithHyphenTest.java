@@ -4,7 +4,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.*;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
@@ -43,23 +47,9 @@ public class SearchWithHyphenTest {
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
-        {"+"},
         {"-"},
-        {"&&"},
-        {"||"},
-        {"!"},
         {"("},
         {")"},
-        {"{"},
-        {"}"},
-        {"["},
-        {"]"},
-        {"^"},
-        {"\""},
-        {"~"},
-        {"*"},
-        {"?"},
-        {":"},
         {"\\"}
     });
   }
@@ -81,7 +71,10 @@ public class SearchWithHyphenTest {
 
   @Test
   public void runTest() throws Exception {
-    Map<String, Object> results =  service.search(termPrefix + delim + termSuffix, "/path/to");
+    Map<String, Object> results = service.search(termPrefix, "/path/to");
+    assertNotNull(delim, results);
+    assertEquals(delim, 2, results.get("number-hits"));
+    results =  service.search(termPrefix + delim + termSuffix, "/path/to");
     assertNotNull(delim, results);
     assertEquals(delim, 1, results.get("number-hits"));
     assertNotNull(delim, results.get("results"));
@@ -120,9 +113,9 @@ public class SearchWithHyphenTest {
     for(int i=0; i<content.length; i++) {
       String textContent = contentTmpl.replace("${term}", content[i]);
       Document doc = new Document();
-      doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
-      doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
-      doc.add(new Field("path", "/path/to/file"+i, Field.Store.YES, Field.Index.ANALYZED));
+      doc.add(new TextField("title", title, Field.Store.YES));
+      doc.add(new TextField("content", textContent, Field.Store.YES));
+      doc.add(new TextField("path", "/path/to/file"+i, Field.Store.YES));
       iwriter.addDocument(doc);
     }
   }
