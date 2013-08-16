@@ -2,7 +2,6 @@ package com.meltmedia.cadmium.search;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.*;
@@ -37,7 +36,7 @@ public class SearchWithHyphenTest {
 
   private IndexSearcherProvider provider;
 
-  private static final Analyzer analyzer = new WhitespaceAnalyzer(Version.LUCENE_36);
+  private static final Analyzer analyzer = new CadmiumAnalyzer(Version.LUCENE_43);
   private static final String termPrefix = "prefix";
   private static final String termSuffix = "suffix";
 
@@ -100,21 +99,14 @@ public class SearchWithHyphenTest {
     IndexWriter iwriter = null;
 
     try {
-      iwriter = new IndexWriter(indexDir, new IndexWriterConfig(Version.LUCENE_36, analyzer).setRAMBufferSizeMB(5));
+      iwriter = new IndexWriter(indexDir, new IndexWriterConfig(Version.LUCENE_43, analyzer).setRAMBufferSizeMB(5));
       iwriter.deleteAll();
       writeIndex(iwriter);
     } finally {
       IOUtils.closeQuietly(iwriter);
     }
 
-    reader = IndexReader.open(indexDir);
-
-    TermEnum terms = reader.terms();
-    System.err.println("Terms in the index.");
-    while(terms.next()) {
-      Term aTerm = terms.term();
-      System.err.println("  "+aTerm.text());
-    }
+    reader = DirectoryReader.open(indexDir);
 
     service = new SearchService();
     service.provider = provider;

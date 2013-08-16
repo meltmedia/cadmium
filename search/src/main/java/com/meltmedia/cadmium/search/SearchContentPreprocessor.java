@@ -15,15 +15,19 @@
  */
 package com.meltmedia.cadmium.search;
 
+import com.google.inject.Inject;
 import com.meltmedia.cadmium.core.meta.ConfigProcessor;
+
 import jodd.lagarto.dom.Node;
 import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -42,6 +46,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -49,6 +54,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 @Singleton
 public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearcherProvider, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
+  
+  @Inject(optional=true)
+  protected Set<SearchPreprocessor> searchPreprocessors;
+  
   
   public static FileFilter HTML_FILE_FILTER = new FileFilter() {
     @Override
@@ -139,7 +148,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
   private File dataDir;
   private SearchHolder liveSearch = null;
   private SearchHolder stagedSearch = null;
-  private static Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_36);
+  private static Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_43);
   private final ReentrantReadWriteLock locker = new ReentrantReadWriteLock();
   private final ReadLock readLock = locker.readLock();
   private final WriteLock writeLock = locker.writeLock();
@@ -153,7 +162,7 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     newStagedSearcher.directory = new NIOFSDirectory(indexDir);
     IndexWriter iwriter = null;
     try {
-      iwriter = new IndexWriter(newStagedSearcher.directory, new IndexWriterConfig(Version.LUCENE_36, analyzer).setRAMBufferSizeMB(5));
+      iwriter = new IndexWriter(newStagedSearcher.directory, new IndexWriterConfig(Version.LUCENE_43, analyzer).setRAMBufferSizeMB(5));
       iwriter.deleteAll();
       writeIndex(iwriter, dataDir);
     }
@@ -161,12 +170,14 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
       IOUtils.closeQuietly(iwriter);
       iwriter = null;
     }
-    newStagedSearcher.indexReader = IndexReader.open(newStagedSearcher.directory);
+    newStagedSearcher.indexReader = DirectoryReader.open(newStagedSearcher.directory);
     SearchHolder oldStage = stagedSearch;
     stagedSearch = newStagedSearcher;
     if(oldStage != null) {
       oldStage.close();
     }
+    log.info("About to call processSearchPreprocessors()");
+    processSearchPreprocessors(newStagedSearcher.indexReader, analyzer, "content");
   }
   
   void writeIndex( final IndexWriter indexWriter, File contentDir ) throws Exception {
@@ -206,9 +217,9 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
           String textContent = jerry.$("body").text();
 
   	      Document doc = new Document();
-  	      doc.add(new Field("title", title, Field.Store.YES, Field.Index.ANALYZED));
-  	      doc.add(new Field("content", textContent, Field.Store.YES, Field.Index.ANALYZED));
-  	      doc.add(new Field("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES, Field.Index.ANALYZED));
+  	      doc.add(new TextField("title", title, Field.Store.YES));
+  	      doc.add(new TextField("content", textContent, Field.Store.YES));
+  	      doc.add(new TextField("path", file.getPath().replaceFirst(dataDir.getPath(), ""), Field.Store.YES));
   	      indexWriter.addDocument(doc);
         } catch(Throwable t) {
           log.warn("Failed to index page ["+file+"]", t);
@@ -221,9 +232,12 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
 
   @Override
   public synchronized void makeLive() {
+  	log.info("About to call lock on writeLock");
     writeLock.lock();
     if( this.stagedSearch != null && this.stagedSearch.directory != null && this.stagedSearch.indexReader != null ) {
-      SearchHolder oldLive = liveSearch;
+    	log.info("About to call makeLiveProcessSearchPreprocessors()");
+    	makeLiveProcessSearchPreprocessors();
+    	SearchHolder oldLive = liveSearch;
       liveSearch = stagedSearch;
       IOUtils.closeQuietly(oldLive);
       stagedSearch = null;
@@ -272,7 +286,6 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
     private IndexReader indexReader = null;
     private IndexSearcher indexSearcher = null;
     public void close() {
-      IOUtils.closeQuietly(indexSearcher);
       IOUtils.closeQuietly(indexReader);
       IOUtils.closeQuietly(directory);
     }
@@ -306,6 +319,41 @@ public class SearchContentPreprocessor  implements ConfigProcessor, IndexSearche
       }
     }
     return true;
+  }
+  
+  protected void processSearchPreprocessors(IndexReader reader, Analyzer analyzer, String field) {
+  	
+  	log.info("processing search preprocessors.");
+  	log.info("preprocessors to process: {}", searchPreprocessors);
+  	if(searchPreprocessors != null) {  		
+  		for(SearchPreprocessor p : searchPreprocessors) {  			
+  			try {
+  				log.info("Processing: {}");
+					p.process(reader, analyzer, field);
+				} 
+  			catch (Exception e) {
+					
+  				log.warn("Problem setting up search suggester preprocessor for field: {}", field);
+				}
+  		}
+  	}
+  }
+  
+  protected void makeLiveProcessSearchPreprocessors() {
+  	  	
+  	log.info("Making live search preprocessors.");
+  	log.info("preprocessors to process: {}", searchPreprocessors);
+  	if(searchPreprocessors != null) {  		
+  		for(SearchPreprocessor p : searchPreprocessors) {  			
+  			try {
+					p.makeLive();
+				} 
+  			catch (Exception e) {
+					
+  				log.warn("Problem making live the search preprocessor");
+				}
+  		}
+  	}
   }
 
 }

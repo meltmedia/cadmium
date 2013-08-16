@@ -15,14 +15,7 @@
  */
 package com.meltmedia.cadmium.search;
 
-import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
+import com.meltmedia.cadmium.core.FileSystemManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,7 +23,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.meltmedia.cadmium.core.FileSystemManager;
+import java.util.*;
+
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class SearchWithResultsTest {
@@ -74,13 +69,14 @@ public class SearchWithResultsTest {
   public static void finishUp() throws Exception {
     preprocessor.finalize();
     FileSystemManager.deleteDeep(preprocessor.getIndexDir().getAbsolutePath());
+    System.out.println(preprocessor.getIndexDir().getAbsolutePath());
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void test() throws Exception {
     Map<String, Object> allResults = service.search(query,null);
-    
+       
     assertTrue("Should not be empty", !allResults.isEmpty());
     assertTrue("Should be set", allResults.containsKey("number-hits"));
     assertTrue("Should be integer", allResults.get("number-hits") instanceof Integer);
