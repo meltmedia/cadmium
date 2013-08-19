@@ -16,7 +16,9 @@
 package com.meltmedia.cadmium.deployer;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import com.meltmedia.cadmium.core.CadmiumModule;
+import com.meltmedia.cadmium.core.config.ConfigurationListener;
 import com.meltmedia.cadmium.deployer.jboss7.JBossAdminApi;
 import com.meltmedia.cadmium.maven.ArtifactResolver;
 import com.meltmedia.cadmium.servlets.guice.CadmiumListener;
@@ -60,6 +62,8 @@ public class DeployerModule extends AbstractModule {
       ArtifactResolver resolver = new ArtifactResolver(remoteMavenRepo, appRoot.getAbsolutePath());
       bind(ArtifactResolver.class).toInstance(resolver);
       bind(JBossAdminApi.class);
+      Multibinder<ConfigurationListener> listenerBinder = Multibinder.newSetBinder(binder(), ConfigurationListener.class);
+      listenerBinder.addBinding().to(JBossAdminApi.class);
       bind(IJBossUtil.class).to(JBossDelegator.class);
     } catch(Exception e) {
       logger.error("Failed to initialize maven artifact resolver.", e);
