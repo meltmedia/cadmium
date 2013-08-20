@@ -226,7 +226,7 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     return vHosts;
   }
 
-  public Boolean isWarDeployed(String warName) throws Exception {
+  public Boolean isWarDeployed(String warName) {
     Boolean isEnabled = null;
 
     //Build request
@@ -234,11 +234,14 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     request.put("operation", "read-resource");
     request.put("recursive", "true");
     request.put("address", Arrays.asList("deployment", warName));
+    try {
+      Map<String, Object> result = (Map<String, Object>) apiRequest(request);
 
-    Map<String, Object> result = (Map<String, Object>) apiRequest(request);
-
-    if (result != null) {
-      isEnabled = (Boolean) result.get("enabled");
+      if (result != null) {
+        isEnabled = (Boolean) result.get("enabled");
+      }
+    } catch (Exception e) {
+      isEnabled = false;
     }
 
     return isEnabled;

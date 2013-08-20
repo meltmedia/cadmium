@@ -2,6 +2,8 @@ package com.meltmedia.cadmium.deployer;
 
 import com.meltmedia.cadmium.core.ISJBoss;
 import com.meltmedia.cadmium.core.ISOLDJBoss;
+import com.meltmedia.cadmium.core.WarInfo;
+import com.meltmedia.cadmium.core.util.WarUtils;
 import com.meltmedia.cadmium.deployer.jboss7.JBossAdminApi;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -77,14 +79,25 @@ public class JBossDelegator implements IJBossUtil {
       if(isOldJBoss) {
         JBossUtil.undeploy(warName, logger);
       } else {
+        WarInfo info = null;
         try {
           File warFile = jboss7Api.getDeploymentLocation(warName);
+          info = WarUtils.getWarInfo(warFile);
           jboss7Api.undeploy(warName);
           if(!jboss7Api.isWarDeployed(warName) && warFile.exists()) {
             FileUtils.forceDelete(warFile);
           }
         } catch (Exception e){
           logger.error("Failed to undeploy: "+warName, e);
+        }
+        if(info != null) {
+          try {
+            jboss7Api.removeVHost(info.getDomain());
+          } catch (Throwable t) {
+            logger.error("Failed to remove vHost: " + info.getDomain(), t);
+          }
+        } else {
+          logger.warn("No war info found for war: "+warName);
         }
       }
     }

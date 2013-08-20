@@ -18,6 +18,7 @@ package com.meltmedia.cadmium.deployer;
 import com.meltmedia.cadmium.core.CommandAction;
 import com.meltmedia.cadmium.core.CommandContext;
 import com.meltmedia.cadmium.core.SharedContentRoot;
+import com.meltmedia.cadmium.core.util.WarUtils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,6 @@ public class UndeployCommandAction implements CommandAction<UndeployRequest> {
       log.info("Invalid undeployment request!");
       return false;
     }
-    
     jbossUtil.undeploy(warName);
 
     File contentDir = new File(contentRoot, warName);
