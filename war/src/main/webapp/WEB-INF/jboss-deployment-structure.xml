@@ -81,36 +81,36 @@
           <path name="com/sun/org/apache/xerces/internal/jaxp"/>
         </paths>
       </system>
-      <module name="javax.activation.api"/>
-      <module name="javax.annotation.api"/>
-      <module name="javax.ejb.api"/>
-      <module name="javax.el.api"/>
-      <module name="javax.enterprise.api"/>
-      <module name="javax.enterprise.deploy.api"/>
-      <module name="javax.inject.api"/>
-      <module name="javax.interceptor.api"/>
-      <module name="javax.jms.api"/>
-      <module name="javax.jws.api"/>
-      <module name="javax.mail.api"/>
-      <module name="javax.management.j2ee.api"/>
-      <module name="javax.resource.api"/>
-      <module name="javax.rmi.api"/>
-      <module name="javax.security.auth.message.api"/>
-      <module name="javax.security.jacc.api"/>
-      <module name="javax.servlet.api"/>
-      <module name="javax.servlet.jsp.api"/>
-      <module name="javax.transaction.api"/>
-      <module name="javax.validation.api"/>
-      <module name="javax.ws.rs.api"/>
-      <module name="javax.xml.bind.api"/>
-      <module name="javax.xml.registry.api"/>
-      <module name="javax.xml.soap.api"/>
-      <module name="javax.xml.ws.api"/>
-      <module name="org.dom4j"/>
-      <module name="org.jboss.as.naming"/>
+      <module name="javax.activation.api" export="false"/>
+      <module name="javax.annotation.api" export="false"/>
+      <module name="javax.ejb.api" export="false"/>
+      <module name="javax.el.api" export="false"/>
+      <module name="javax.enterprise.api" export="false"/>
+      <module name="javax.enterprise.deploy.api" export="false"/>
+      <module name="javax.inject.api" export="false"/>
+      <module name="javax.interceptor.api" export="false"/>
+      <module name="javax.jms.api" export="false"/>
+      <module name="javax.jws.api" export="false"/>
+      <module name="javax.mail.api" export="false"/>
+      <module name="javax.management.j2ee.api" export="false"/>
+      <module name="javax.resource.api" export="false"/>
+      <module name="javax.rmi.api" export="false"/>
+      <module name="javax.security.auth.message.api" export="false"/>
+      <module name="javax.security.jacc.api" export="false"/>
+      <module name="javax.servlet.api" export="false"/>
+      <module name="javax.servlet.jsp.api" export="false"/>
+      <module name="javax.transaction.api" export="false"/>
+      <module name="javax.validation.api" export="false"/>
+      <module name="javax.ws.rs.api" export="false"/>
+      <module name="javax.xml.bind.api" export="false"/>
+      <module name="javax.xml.registry.api" export="false"/>
+      <module name="javax.xml.soap.api" export="false"/>
+      <module name="javax.xml.ws.api" export="false"/>
+      <module name="org.dom4j" export="false"/>
+      <module name="org.jboss.as.naming" export="false"/>
 
       <!-- This one always goes last. -->
-      <module name="javax.api"/>
+      <module name="javax.api" export="false"/>
     </dependencies>
   </deployment>
 </jboss-deployment-structure>
