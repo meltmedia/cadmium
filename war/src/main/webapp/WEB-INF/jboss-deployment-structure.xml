@@ -26,6 +26,7 @@
       <subsystem name="cmp"/>
       <subsystem name="jaxr"/>
       <subsystem name="deployment-scanner" />
+      <subsystem name="bean-deployer"/>
     </exclude-subsystems>
     <exclusions>
       <module name="org.jboss.as.clustering.infinispan"/>
@@ -106,8 +107,8 @@
       <module name="javax.xml.registry.api" export="false"/>
       <module name="javax.xml.soap.api" export="false"/>
       <module name="javax.xml.ws.api" export="false"/>
-      <module name="org.dom4j" export="false"/>
-      <module name="org.jboss.as.naming" export="false"/>
+      <!-- module name="org.dom4j" export="false"/>
+      <module name="org.jboss.as.naming" export="false"/ -->
 
       <!-- This one always goes last. -->
       <module name="javax.api" export="false"/>

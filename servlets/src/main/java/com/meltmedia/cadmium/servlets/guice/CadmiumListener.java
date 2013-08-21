@@ -78,7 +78,9 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -179,6 +181,27 @@ public class CadmiumListener extends GuiceServletContextListener {
         log.warn("Throwable thrown while terminating thread pool executor.", t);
       }
     }
+    injector = null;
+    executor = null;
+    members.clear();
+    members = null;
+    configManager = null;
+    context = null;
+
+    try {
+      final Class<?> queueHolderClass =
+          Class.forName("com.google.inject.internal.util.$MapMaker$QueueHolder");
+      final Field queueField = queueHolderClass.getDeclaredField("queue");
+      // make MapMaker.QueueHolder.queue accessible
+      queueField.setAccessible(true);
+      // remove the final modifier from MapMaker.QueueHolder.queue
+      final Field modifiersField = Field.class.getDeclaredField("modifiers");
+      modifiersField.setAccessible(true);
+      modifiersField.setInt(queueField, queueField.getModifiers() & ~Modifier.FINAL);
+      // set it to null
+      queueField.set(null, null);
+    } catch(Throwable t) {}
+
     super.contextDestroyed(event);
   }
 
