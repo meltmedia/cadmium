@@ -98,7 +98,7 @@ public class ApiEndpointAccessFilter implements Filter, Closeable {
     @Inject
     public void setConfigManager(ConfigManager configManager) {
       this.configManager = configManager;
-      if(configManager != null) {
+      if(configManager != null || controller != null) {
         try {
           String pathsStr = configManager.getDefaultProperties().getProperty(PERSISTED_STATE_CONFIG_KEY, "[]");
           String paths[] = new Gson().fromJson(pathsStr, String[].class);
