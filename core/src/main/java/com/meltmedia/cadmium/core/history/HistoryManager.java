@@ -28,16 +28,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 @Singleton
-public class HistoryManager {
+public class HistoryManager implements Closeable {
   public static final String HISTORY_FILE_NAME = "history.json";
   private final Logger log = LoggerFactory.getLogger(getClass());
   private List<HistoryEntry> history = new ArrayList<HistoryEntry>();
@@ -226,5 +224,15 @@ public class HistoryManager {
   
   public List<HistoryEntry> getHistory() {
     return this.history;
+  }
+
+  @Override
+  public void close() throws IOException {
+    if(pool != null) {
+      try {
+        pool.shutdownNow();
+      } catch(Throwable t){}
+      pool = null;
+    }
   }
 }

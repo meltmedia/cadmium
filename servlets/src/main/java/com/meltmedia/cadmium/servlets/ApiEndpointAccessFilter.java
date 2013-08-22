@@ -98,13 +98,15 @@ public class ApiEndpointAccessFilter implements Filter, Closeable {
     @Inject
     public void setConfigManager(ConfigManager configManager) {
       this.configManager = configManager;
-      try {
-        String pathsStr = configManager.getDefaultProperties().getProperty(PERSISTED_STATE_CONFIG_KEY, "[]");
-        String paths[] = new Gson().fromJson(pathsStr, String[].class);
-        ((ApiEndpointAccessControllerImplementation)controller).paths.clear();
-        ((ApiEndpointAccessControllerImplementation)controller).paths.addAll(Arrays.asList(paths));
-      } catch(Exception e) {
-        log.warn("Failed to initialize state from persisted properties.", e);
+      if(configManager != null) {
+        try {
+          String pathsStr = configManager.getDefaultProperties().getProperty(PERSISTED_STATE_CONFIG_KEY, "[]");
+          String paths[] = new Gson().fromJson(pathsStr, String[].class);
+          ((ApiEndpointAccessControllerImplementation)controller).paths.clear();
+          ((ApiEndpointAccessControllerImplementation)controller).paths.addAll(Arrays.asList(paths));
+        } catch(Exception e) {
+          log.warn("Failed to initialize state from persisted properties.", e);
+        }
       }
     }
 

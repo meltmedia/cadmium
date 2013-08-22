@@ -170,6 +170,8 @@ public class CadmiumListener extends GuiceServletContextListener {
     if( executor != null ) {
       try {
         executor.shutdown();
+      } catch (Throwable t){}
+      try {
         if( !executor.awaitTermination(10, TimeUnit.SECONDS) ) {
           log.warn("Thread pool executor did not terminate after 10 seconds, forcing shutdown.");
           for( Runnable terminated : executor.shutdownNow() ) {
