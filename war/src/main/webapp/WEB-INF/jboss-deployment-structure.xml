@@ -73,6 +73,7 @@
       <module name="javax.persistence.api"/>
       <module name="javaee.api"/>
       <module name="javax.ejb.api"/>
+      <module name="com.google.guava"/>
     </exclusions>
     <dependencies>
       <system>

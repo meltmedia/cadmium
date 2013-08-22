@@ -39,12 +39,14 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class JGroupsMembershipTracker implements MembershipTracker, MembershipListener {
+public class JGroupsMembershipTracker implements MembershipTracker, MembershipListener, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());  
   
   protected MessageSender sender;
@@ -335,4 +337,15 @@ public class JGroupsMembershipTracker implements MembershipTracker, MembershipLi
     
   }
 
+  @Override
+  public void close() throws IOException {
+    this.channel = null;
+    try {
+      timer.purge();
+    } catch(Exception e){}
+    try {
+      timer.cancel();
+    } catch(Exception e){}
+    timer = null;
+  }
 }

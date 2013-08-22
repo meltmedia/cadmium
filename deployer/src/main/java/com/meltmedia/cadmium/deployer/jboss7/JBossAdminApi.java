@@ -27,7 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -67,7 +69,7 @@ import java.util.*;
  * @author jmcentire
  */
 @Singleton
-public class JBossAdminApi implements ConfigurationListener<JBossManagementConfiguration> {
+public class JBossAdminApi implements ConfigurationListener<JBossManagementConfiguration>, Closeable {
   protected Logger logger = LoggerFactory.getLogger(getClass());
   protected HttpClient client = null;
   protected static final String DATA_KEY = "jboss.server.deploy.dir";
@@ -420,5 +422,11 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     client = null;
     host = "localhost";
     port = 9990;
+  }
+
+  @Override
+  public void close() throws IOException {
+    client.getConnectionManager().shutdown();
+    client = null;
   }
 }

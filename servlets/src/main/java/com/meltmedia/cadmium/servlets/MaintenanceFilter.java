@@ -28,15 +28,21 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
 @Singleton
-public class MaintenanceFilter extends HttpFilter implements Filter {
+public class MaintenanceFilter extends HttpFilter implements Filter, Closeable {
   private final Logger logger = LoggerFactory.getLogger(getClass());
-  
-  final static class MaintSiteDownService implements SiteDownService
+
+  @Override
+  public void close() throws IOException {
+    siteDown = null;
+  }
+
+  final static class MaintSiteDownService implements SiteDownService, Closeable
   {
     
     protected MaintenanceFilter filter = null;
@@ -66,9 +72,14 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
     public synchronized boolean isOn() {
       return active;
     }
+
+    @Override
+    public void close() throws IOException {
+      filter = null;
+    }
   }
   
-  public static final SiteDownService siteDown = new MaintSiteDownService();
+  public static SiteDownService siteDown = new MaintSiteDownService();
 
 	public volatile boolean on = true;
 	private String ignorePath;
@@ -87,6 +98,7 @@ public class MaintenanceFilter extends HttpFilter implements Filter {
 	@Override
 	public void destroy() {
     ((MaintSiteDownService) siteDown).setMaintenanceFilter(null);
+    IOUtils.closeQuietly(this);
 	}
 
 	@Override

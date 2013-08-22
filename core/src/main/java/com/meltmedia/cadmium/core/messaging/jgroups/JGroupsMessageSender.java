@@ -15,18 +15,19 @@
  */
 package com.meltmedia.cadmium.core.messaging.jgroups;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.jgroups.JChannel;
-
 import com.meltmedia.cadmium.core.messaging.ChannelMember;
 import com.meltmedia.cadmium.core.messaging.Message;
 import com.meltmedia.cadmium.core.messaging.MessageConverter;
 import com.meltmedia.cadmium.core.messaging.MessageSender;
+import org.jgroups.JChannel;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.Closeable;
+import java.io.IOException;
 
 @Singleton
-public class JGroupsMessageSender implements MessageSender {
+public class JGroupsMessageSender implements MessageSender, Closeable {
   
   @Inject
   protected JChannel channel;
@@ -55,4 +56,8 @@ public class JGroupsMessageSender implements MessageSender {
     this.messageConverter = messageConverter;
   }
 
+  @Override
+  public void close() throws IOException {
+    channel = null;
+  }
 }

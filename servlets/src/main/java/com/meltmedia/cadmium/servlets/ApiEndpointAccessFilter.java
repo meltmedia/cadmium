@@ -18,6 +18,7 @@ package com.meltmedia.cadmium.servlets;
 import com.google.gson.Gson;
 import com.meltmedia.cadmium.core.ApiEndpointAccessController;
 import com.meltmedia.cadmium.core.config.ConfigManager;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ import javax.inject.Singleton;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
@@ -41,20 +43,25 @@ import java.util.regex.Pattern;
  *
  */
 @Singleton
-public class ApiEndpointAccessFilter implements Filter {
+public class ApiEndpointAccessFilter implements Filter, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
   public static final String PERSISTED_STATE_CONFIG_KEY = "com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter.disabled.paths";
   
   @Inject
   protected ConfigManager configManager;
-  
+
+  @Override
+  public void close() throws IOException {
+    ApiEndpointAccessFilter.controller = null;
+  }
+
   /**
    * The internal implementation of the {@link ApiEndpointAccessController} interface that is used by this class.
    * 
    * @author John McEntire
    *
    */
-  private static final class ApiEndpointAccessControllerImplementation implements ApiEndpointAccessController {
+  private static final class ApiEndpointAccessControllerImplementation implements ApiEndpointAccessController, Closeable {
     private final Logger log = LoggerFactory.getLogger(getClass());
     
     protected ConfigManager configManager;
@@ -100,13 +107,17 @@ public class ApiEndpointAccessFilter implements Filter {
         log.warn("Failed to initialize state from persisted properties.", e);
       }
     }
-    
+
+    @Override
+    public void close() throws IOException {
+      configManager = null;
+    }
   }
   
   /**
    * The instance of the ApiEndpointAccessController currently being used by this filter.
    */
-  public static final ApiEndpointAccessController controller = new ApiEndpointAccessControllerImplementation();
+  public static ApiEndpointAccessController controller = new ApiEndpointAccessControllerImplementation();
   
   private String prefix;
 
@@ -148,6 +159,8 @@ public class ApiEndpointAccessFilter implements Filter {
   }
 
   @Override
-  public void destroy() {}
+  public void destroy() {
+    IOUtils.closeQuietly(this);
+  }
 
 }
