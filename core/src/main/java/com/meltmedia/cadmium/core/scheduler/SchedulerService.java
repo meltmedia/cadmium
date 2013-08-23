@@ -99,7 +99,7 @@ public class SchedulerService implements Closeable {
   public void close() throws IOException {
     if(executor != null) {
       try {
-        executor.shutdown();
+        executor.shutdownNow();
       } catch(Throwable t) {}
       executor = null;
     }

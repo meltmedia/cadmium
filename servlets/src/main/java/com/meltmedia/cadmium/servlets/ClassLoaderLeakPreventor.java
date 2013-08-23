@@ -663,6 +663,7 @@ public class ClassLoaderLeakPreventor implements javax.servlet.ServletContextLis
       final Runnable runnable = (oracleTarget != null) ?
           (Runnable) getFieldValue(oracleTarget, thread) : // Sun/Oracle JRE  
           (Runnable) getFieldValue(ibmRunnable, thread);   // IBM JRE
+      error("Found thread: "+thread.getName());
 
       if (thread != Thread.currentThread() && // Ignore current thread
           (isThreadInWebApplication(thread) || isLoadedInWebApplication(runnable))) {
