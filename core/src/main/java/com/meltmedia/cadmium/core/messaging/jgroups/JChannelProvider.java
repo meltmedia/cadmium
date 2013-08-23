@@ -64,8 +64,11 @@ public class JChannelProvider implements Provider<JChannel>, Closeable {
   @Override
   public void close() throws IOException {
     if(channel != null) {
-      channel.disconnect();
-      channel.close();
+      try {
+        channel.close();
+      } catch(Throwable t){
+        log.error("Failed to close jgroups channel.", t);
+      }
       channel = null;
     }
   }
