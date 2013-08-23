@@ -58,6 +58,9 @@ import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
 import org.jgroups.Receiver;
 import org.reflections.Reflections;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.vfs.Vfs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -324,8 +327,8 @@ public class CadmiumListener extends GuiceServletContextListener {
       @Override
       protected void configureServlets() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
-            new TypeAnnotationsScanner());*/
+        Reflections reflections = new Reflections("com.meltmedia.cadmium",
+            new TypeAnnotationsScanner());
         Map<String, String> maintParams = new HashMap<String, String>();
         maintParams.put("ignorePrefix", "/system");
         Map<String, String> aclParams = new HashMap<String, String>();
@@ -374,10 +377,10 @@ public class CadmiumListener extends GuiceServletContextListener {
       @Override
       protected void configure() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
+        Reflections reflections = new Reflections("com.meltmedia.cadmium",
             new TypeAnnotationsScanner(), 
             new SubTypesScanner(),
-            new MethodAnnotationsScanner());*/
+            new MethodAnnotationsScanner());
         Properties configProperties = configManager.getDefaultProperties();
         
         org.apache.shiro.web.env.WebEnvironment shiroEnv = (org.apache.shiro.web.env.WebEnvironment) context.getAttribute(EnvironmentLoader.ENVIRONMENT_ATTRIBUTE_KEY);
