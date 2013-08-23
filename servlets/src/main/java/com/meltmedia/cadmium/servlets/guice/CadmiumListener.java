@@ -58,9 +58,6 @@ import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
 import org.jgroups.Receiver;
 import org.reflections.Reflections;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.vfs.Vfs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,9 +75,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -125,46 +120,16 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   @Override
   public void contextDestroyed(ServletContextEvent event) {
-    Set<Closeable> closed = new HashSet<Closeable>();
+    Set<Class<? extends Closeable>> closed = new HashSet<Class<? extends Closeable>>();
     Injector injector = this.injector;
     if( jsr250Executor != null ) {
       jsr250Executor.preDestroy();
       jsr250Executor = null;
     }
-    while(injector != null) {
-      for (Key<?> key : injector.getBindings().keySet()) {
-        try {
-          Object instance = injector.getInstance(key);
-
-          if(instance instanceof Closeable) {
-            try {
-              Closeable toClose = (Closeable) instance;
-              if(!closed.contains(toClose)) {
-                closed.add(toClose);
-                log.info("Closing instance of {}, key {}", instance.getClass().getName(), key);
-                IOUtils.closeQuietly(toClose);
-              }
-            } catch(Exception e){}
-          }
-        } catch(Throwable t) {}
-      }
-      injector = injector.getParent();
-    }
-    try {
-      Reflections reflections = new Reflections("com.meltmedia");
-      for(Class<? extends Closeable> toCloseClass : reflections.getSubTypesOf(Closeable.class)) {
-        try {
-          Closeable toClose = this.injector.getInstance(toCloseClass);
-          if(!closed.contains(toClose)) {
-            closed.add(toClose);
-            log.info("Closing instance of {}", toCloseClass.getName());
-            IOUtils.closeQuietly(toClose);
-          }
-        } catch(Throwable t) {}
-      }
-    } catch(Throwable t) {
-      log.warn("Failed to close down fully.", t);
-    }
+    Set<Object> singletons = Jsr250Utils.findInstancesInScopes(injector, Singleton.class);
+    Set<Object> otherSingletons = Jsr250Utils.findInstancesInScopes(injector, Scopes.SINGLETON);
+    closeAll(closed, singletons);
+    closeAll(closed, otherSingletons);
     closed.clear();
 
     if( executor != null ) {
@@ -190,21 +155,20 @@ public class CadmiumListener extends GuiceServletContextListener {
     configManager = null;
     context = null;
 
-    try {
-      final Class<?> queueHolderClass =
-          Class.forName("com.google.inject.internal.util.$MapMaker$QueueHolder");
-      final Field queueField = queueHolderClass.getDeclaredField("queue");
-      // make MapMaker.QueueHolder.queue accessible
-      queueField.setAccessible(true);
-      // remove the final modifier from MapMaker.QueueHolder.queue
-      final Field modifiersField = Field.class.getDeclaredField("modifiers");
-      modifiersField.setAccessible(true);
-      modifiersField.setInt(queueField, queueField.getModifiers() & ~Modifier.FINAL);
-      // set it to null
-      queueField.set(null, null);
-    } catch(Throwable t) {}
-
     super.contextDestroyed(event);
+  }
+
+  private void closeAll(Set<Class<? extends Closeable>> closed, Set<Object> singletons) {
+    for(Object singleton : singletons) {
+      if(singleton instanceof Closeable) {
+        Closeable toClose = (Closeable) singleton;
+        if(!closed.contains(toClose.getClass())) {
+          closed.add(toClose.getClass());
+          log.info("Closing instance of {}", toClose.getClass().getName());
+          IOUtils.closeQuietly(toClose);
+        }
+      }
+    }
   }
 
   @Override
@@ -360,8 +324,8 @@ public class CadmiumListener extends GuiceServletContextListener {
       @Override
       protected void configureServlets() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        Reflections reflections = new Reflections("com.meltmedia.cadmium",
-            new TypeAnnotationsScanner());
+        Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
+            new TypeAnnotationsScanner());*/
         Map<String, String> maintParams = new HashMap<String, String>();
         maintParams.put("ignorePrefix", "/system");
         Map<String, String> aclParams = new HashMap<String, String>();
@@ -410,10 +374,10 @@ public class CadmiumListener extends GuiceServletContextListener {
       @Override
       protected void configure() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        Reflections reflections = new Reflections("com.meltmedia.cadmium", 
+        Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
             new TypeAnnotationsScanner(), 
             new SubTypesScanner(),
-            new MethodAnnotationsScanner());
+            new MethodAnnotationsScanner());*/
         Properties configProperties = configManager.getDefaultProperties();
         
         org.apache.shiro.web.env.WebEnvironment shiroEnv = (org.apache.shiro.web.env.WebEnvironment) context.getAttribute(EnvironmentLoader.ENVIRONMENT_ATTRIBUTE_KEY);
