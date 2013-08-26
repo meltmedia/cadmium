@@ -52,35 +52,42 @@ if len(sys.argv) != 3:
   print "Please specify a \\"commit message\\" and a site url to deploy to.\\nUSAGE cadmium-deploy <message> <url>"
   sys.exit(1)
 
-subprocess.call(['git','fetch'])
-git_status = subprocess.check_output(['git','status','--short','--branch'])
-status_lines = re.split('\\n',git_status)
-num_lines = len(status_lines) - 1
-if num_lines > 0 and re.search(\"^##\", status_lines[0]):
-  num_lines = num_lines - 1
+bamboo_build = False
+return_code = subprocess.call(['git','fetch'])
+if return_code == 128:
+  bamboo_build = True
 
-for x in status_lines[:]:
-  if re.search(r\"^\\?\", x) or re.search(r\"^\\!\", x):
+if not bamboo_build:  
+  git_status = subprocess.check_output(['git','status','--short','--branch'])
+  status_lines = re.split('\\n',git_status)
+  num_lines = len(status_lines) - 1
+  if num_lines > 0 and re.search(\"^##\", status_lines[0]):
     num_lines = num_lines - 1
 
-pattern = re.compile(r\"^##.*\[((?:(?:ahead)|(?:behind)) \d+)\]$\")
-if pattern.search(status_lines[0]):
-  print \"Your local is out of sync with origin: [\" + pattern.match(status_lines[0]).group(1) + \"]\"
-  sys.exit(1)
+  for x in status_lines[:]:
+    if re.search(r\"^\\?\", x) or re.search(r\"^\\!\", x):
+      num_lines = num_lines - 1
 
-if num_lines > 0:
-  print \"Please commit and push your changes.\"
-  sys.exit(1)
+  pattern = re.compile(r\"^##.*\[((?:(?:ahead)|(?:behind)) \d+)\]$\")
+  if pattern.search(status_lines[0]):
+    print \"Your local is out of sync with origin: [\" + pattern.match(status_lines[0]).group(1) + \"]\"
+    sys.exit(1)
 
-print \"Attempting to update cadmium dependencies. If an update is available this may take a while.\"
+  if num_lines > 0:
+    print \"Please commit and push your changes.\"
+    sys.exit(1)
 
-subprocess.call(['mvn', '-q', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:LATEST:jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
+  print \"Attempting to update cadmium dependencies. If an update is available this may take a while.\"
+
+  subprocess.call(['mvn', '-q', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:LATEST:jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
 
 message = sys.argv[1]
 url = sys.argv[2]
 
 try:
-  source_repo_url = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url']).strip()
+  source_repo_url = "bamboo"
+  if not bamboo_build:
+    source_repo_url = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url']).strip()
   source_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
   source_branch = subprocess.check_output(['git', 'symbolic-ref', 'HEAD']).strip().split('/')
   if len(source_branch) > 1:
