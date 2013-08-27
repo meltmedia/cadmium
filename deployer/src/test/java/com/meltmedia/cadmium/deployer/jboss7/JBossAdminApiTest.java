@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.util.EntityUtils;
+import org.junit.After;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.jgroups.util.Util.assertTrue;
@@ -204,6 +206,42 @@ public class JBossAdminApiTest {
     api.logger = mock(Logger.class);
     String response = api.uploadWar("test.cadmium.localhost.war", new File("target/test-classes/manual-deployment/deployments/test.cadmium.localhost.war"));
     Assert.assertEquals(byteSValue, response);
+  }
+
+  @Test
+  public void testGetServerGroup() throws Exception {
+    System.setProperty("[Host", "true");
+    System.setProperty(JBossAdminApi.NODE_NAME_KEY, "masterCadmium:server-one");
+    System.setProperty(JBossAdminApi.SERVER_NAME_KEY, "server-one");
+    HttpClient client = getDefaultHttpClient(FileUtils.readFileToString(new File("target/test-classes/server-group-response.json")));
+    JBossAdminApi api = new JBossAdminApi("", "");
+    api.client = client;
+    api.logger = mock(Logger.class);
+    String group = api.getServerGroup();
+    Assert.assertEquals("main-server-group", group);
+    assertRequestEquals(new File("target/test-classes/server-group-request.json"));
+  }
+
+  @Test
+  public void testGetProfile() throws Exception {
+    System.setProperty("[Host", "true");
+    HttpClient client = getDefaultHttpClient(FileUtils.readFileToString(new File("target/test-classes/profile-response.json")));
+    JBossAdminApi api = new JBossAdminApi("", "");
+    api.client = client;
+    api.logger = mock(Logger.class);
+    String profile = api.getProfile("main-server-group");
+    Assert.assertEquals("default", profile);
+    assertRequestEquals(new File("target/test-classes/profile-request.json"));
+  }
+
+  @After
+  public void reset() {
+    Properties props = System.getProperties();
+    props.remove("[Host");
+    props.remove(JBossAdminApi.NODE_NAME_KEY);
+    props.remove(JBossAdminApi.SERVER_NAME_KEY);
+    props.remove("jboss.server.base.dir");
+    props.remove(JBossAdminApi.DATA_KEY);
   }
 
   private String jsonRequest = null;

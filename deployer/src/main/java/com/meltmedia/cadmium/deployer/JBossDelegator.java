@@ -3,6 +3,7 @@ package com.meltmedia.cadmium.deployer;
 import com.meltmedia.cadmium.core.ISJBoss;
 import com.meltmedia.cadmium.core.ISOLDJBoss;
 import com.meltmedia.cadmium.core.WarInfo;
+import com.meltmedia.cadmium.core.messaging.MembershipTracker;
 import com.meltmedia.cadmium.core.util.WarUtils;
 import com.meltmedia.cadmium.deployer.jboss7.JBossAdminApi;
 import org.apache.commons.io.FileUtils;
@@ -30,6 +31,9 @@ public class JBossDelegator implements IJBossUtil {
   protected JBossAdminApi jboss7Api;
 
   @Inject
+  protected MembershipTracker membershipTracker;
+
+  @Inject
   @ISJBoss
   protected Boolean isJBoss = true;
 
@@ -43,7 +47,7 @@ public class JBossDelegator implements IJBossUtil {
     if(isJBoss) {
       if(isOldJBoss) {
         JBossUtil.addVirtualHost(domain, logger);
-      } else if(!doesVHostExist(domain)){
+      } else if(isCoordinator() && !doesVHostExist(domain)){
         jboss7Api.addVHost(domain);
       }
     }
@@ -51,7 +55,7 @@ public class JBossDelegator implements IJBossUtil {
 
   @Override
   public void removeVirtualHost(String domain) throws Exception {
-    if(isJBoss && !isOldJBoss && doesVHostExist(domain)) {
+    if(isJBoss && !isOldJBoss && isCoordinator() && doesVHostExist(domain)) {
       jboss7Api.removeVHost(domain);
     }
   }
@@ -79,25 +83,27 @@ public class JBossDelegator implements IJBossUtil {
       if(isOldJBoss) {
         JBossUtil.undeploy(warName, logger);
       } else {
-        WarInfo info = null;
-        try {
-          File warFile = jboss7Api.getDeploymentLocation(warName);
-          info = WarUtils.getWarInfo(warFile);
-          jboss7Api.undeploy(warName);
-          if(!jboss7Api.isWarDeployed(warName) && warFile.exists()) {
-            FileUtils.forceDelete(warFile);
-          }
-        } catch (Exception e){
-          logger.error("Failed to undeploy: "+warName, e);
-        }
-        if(info != null) {
+        if(isCoordinator()) {
+          WarInfo info = null;
           try {
-            jboss7Api.removeVHost(info.getDomain());
-          } catch (Throwable t) {
-            logger.error("Failed to remove vHost: " + info.getDomain(), t);
+            File warFile = jboss7Api.getDeploymentLocation(warName);
+            info = WarUtils.getWarInfo(warFile);
+            jboss7Api.undeploy(warName);
+            if(!jboss7Api.isWarDeployed(warName) && warFile.exists()) {
+              FileUtils.forceDelete(warFile);
+            }
+          } catch (Exception e){
+            logger.error("Failed to undeploy: "+warName, e);
           }
-        } else {
-          logger.warn("No war info found for war: "+warName);
+          if(info != null) {
+            try {
+              jboss7Api.removeVHost(info.getDomain());
+            } catch (Throwable t) {
+              logger.error("Failed to remove vHost: " + info.getDomain(), t);
+            }
+          } else {
+            logger.warn("No war info found for war: "+warName);
+          }
         }
       }
     }
@@ -110,7 +116,7 @@ public class JBossDelegator implements IJBossUtil {
         return JBossUtil.listDeployedWars(logger);
       } else {
         try {
-        return jboss7Api.listDeployedCadmiumWars();
+          return jboss7Api.listDeployedCadmiumWars();
         } catch(Exception e) {
           logger.error("Failed to list cadmium wars deployed.", e);
         }
@@ -153,13 +159,19 @@ public class JBossDelegator implements IJBossUtil {
       if(isOldJBoss) {
         JBossUtil.deploy(warName, warFile, logger);
       } else {
-        String locationRef = jboss7Api.uploadWar(warName, warFile);
-        if(StringUtils.isNotBlank(locationRef)) {
-          jboss7Api.deploy(warName, locationRef);
-        } else {
-          throw new Exception("Failed to deploy war: "+warName);
+        if(isCoordinator()) {
+          String locationRef = jboss7Api.uploadWar(warName, warFile);
+          if(StringUtils.isNotBlank(locationRef)) {
+            jboss7Api.deploy(warName, locationRef);
+          } else {
+            throw new Exception("Failed to deploy war: "+warName);
+          }
         }
       }
     }
+  }
+
+  private boolean isCoordinator() {
+    return membershipTracker.getCoordinator().isMine();
   }
 }

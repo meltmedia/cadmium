@@ -73,8 +73,14 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
   protected Logger logger = LoggerFactory.getLogger(getClass());
   protected HttpClient client = null;
   protected static final String DATA_KEY = "jboss.server.deploy.dir";
+  protected static final String NODE_NAME_KEY = "jboss.node.name";
+  protected static final String SERVER_NAME_KEY = "jboss.server.name";
   protected String host = "localhost";
   protected Integer port = 9990;
+  protected String serverGroup = null;
+  protected String profile = null;
+  protected String serverName = null;
+  protected String hostName = null;
 
 
   public JBossAdminApi(String username, String password) {
@@ -118,16 +124,26 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     //Build request
     Map<String, Object> request = new LinkedHashMap<String, Object>();
     request.put("operation", "remove");
+    if(isDomainHost()) {
+      String serverGroup = getServerGroup();
+
+      request.put("address", Arrays.asList("server-group", serverGroup, "deployment", war));
+
+      apiRequest(request);
+    }
     request.put("address", Arrays.asList("deployment", war));
 
     apiRequest(request);
   }
 
   public void deploy(String war, String locationRef) throws Exception {
+    boolean domainMode = isDomainHost();
     //Build request
     Map<String, Object> request = new LinkedHashMap<String, Object>();
     request.put("operation", "add");
-    request.put("enabled", true);
+    if(!domainMode) {
+      request.put("enabled", true);
+    }
     request.put("runtime-name", war);
     Map<String, Object> content = new LinkedHashMap<String, Object>();
     Map<String, Object> byteValue = new LinkedHashMap<String, Object>();
@@ -137,6 +153,13 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     request.put("address", Arrays.asList("deployment", war));
 
     apiRequest(request);
+
+    if(domainMode) {
+      request.put("enabled", true);
+      request.put("address", Arrays.asList("server-group", getServerGroup(), "deployment", war));
+
+      apiRequest(request);
+    }
   }
 
   /*
@@ -182,7 +205,13 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     //Build request
     Map<String, Object> request = new LinkedHashMap<String, Object>();
     request.put("operation", "remove");
-    request.put("address", Arrays.asList("subsystem", "web", "virtual-server", vhost));
+    if (!isDomainHost()) {
+      request.put("address", Arrays.asList("subsystem", "web", "virtual-server", vhost));
+    } else {
+      String serverGroup = getServerGroup();
+      String profile = getProfile(serverGroup);
+      request.put("address", Arrays.asList("profile", profile, "subsystem", "web", "virtual-server", vhost));
+    }
 
     apiRequest(request);
   }
@@ -193,7 +222,13 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     request.put("operation", "add");
     request.put("name", vhost);
     request.put("enable-welcome-root", false);
-    request.put("address", Arrays.asList("subsystem", "web", "virtual-server", vhost));
+    if (!isDomainHost()) {
+      request.put("address", Arrays.asList("subsystem", "web", "virtual-server", vhost));
+    } else {
+      String serverGroup = getServerGroup();
+      String profile = getProfile(serverGroup);
+      request.put("address", Arrays.asList("profile", profile, "subsystem", "web", "virtual-server", vhost));
+    }
 
     apiRequest(request);
   }
@@ -205,7 +240,13 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     Map<String, Object> request = new LinkedHashMap<String, Object>();
     request.put("operation", "read-resource");
     request.put("recursive", "true");
-    request.put("address", Arrays.asList("subsystem", "web", "virtual-server", "*"));
+    if(!isDomainHost()) {
+      request.put("address", Arrays.asList("subsystem", "web", "virtual-server", "*"));
+    } else {
+      String serverGroup = getServerGroup();
+      String profile = getProfile(serverGroup);
+      request.put("address", Arrays.asList("profile", profile, "subsystem", "web", "virtual-server", "*"));
+    }
 
     List<Object> results = (List<Object>) apiRequest(request);
     if(results != null) {
@@ -235,7 +276,12 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     Map<String, Object> request = new LinkedHashMap<String, Object>();
     request.put("operation", "read-resource");
     request.put("recursive", "true");
-    request.put("address", Arrays.asList("deployment", warName));
+    if (!isDomainHost()) {
+      request.put("address", Arrays.asList("deployment", warName));
+    } else {
+      String serverGroup = getServerGroup();
+      request.put("address", Arrays.asList("server-group", serverGroup, "deployment", warName));
+    }
     try {
       Map<String, Object> result = (Map<String, Object>) apiRequest(request);
 
@@ -261,6 +307,7 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     Map<String, Object> result = (Map<String, Object>) apiRequest(request);
 
     if (result != null) {
+      logger.debug("Found {} content {}", warName, result.get("content"));
       warFile = getWarFile(result.get("content"));
     }
 
@@ -274,7 +321,12 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     Map<String, Object> request = new LinkedHashMap<String, Object>();
     request.put("operation", "read-resource");
     request.put("recursive", "true");
-    request.put("address", Arrays.asList("deployment", "*"));
+    if(!isDomainHost()) {
+      request.put("address", Arrays.asList("deployment", "*"));
+    } else {
+      String serverGroup = getServerGroup();
+      request.put("address", Arrays.asList("server-group", serverGroup, "deployment", "*"));
+    }
 
     List<Object> results = (List<Object>) apiRequest(request);
     if(results != null) {
@@ -286,10 +338,24 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
             if(deploymentObj instanceof Map) {
               Map<?, ?> deployment = (Map<?, ?>)deploymentObj;
               String name = (String)deployment.get("name");
-              Object content = deployment.get("content");
-              Boolean enabled = (Boolean)deployment.get("enabled");
-              if(enabled != null && enabled && name != null && isCadmiumWar(content, logger)) {
-                warList.add(name);
+              Boolean enabled = (Boolean) deployment.get("enabled");
+              if(enabled != null && enabled && name != null) {
+                if(!isDomainHost()) {
+                  Object content = deployment.get("content");
+                  if(isCadmiumWar(content, logger)) {
+                    warList.add(name);
+                  }
+                } else {
+                  logger.debug("Getting deployment for {}", name);
+                  try {
+                  File warFile = new File(name);
+                  if(warFile != null && isCadmiumWar(warFile)) {
+                    warList.add(name);
+                  }
+                  } catch(Exception e) {
+                    logger.warn("Failed to check if "+ name+" is a cadmium war.", e);
+                  }
+                }
               }
             }
           }
@@ -428,5 +494,58 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
   public void close() throws IOException {
     client.getConnectionManager().shutdown();
     client = null;
+  }
+
+  private boolean isDomainHost() {
+    return Boolean.parseBoolean(System.getProperty("[Host"));
+  }
+
+  protected String getServerGroup() {
+    if(isDomainHost()) {
+      if(serverGroup == null) {
+        String nodeName = System.getProperty(NODE_NAME_KEY);
+        if(StringUtils.isNotBlank(nodeName) && nodeName.contains(":")) {
+          String nodeNameParams[] = nodeName.split("\\:");
+          hostName = nodeNameParams[0];
+          serverName = System.getProperty(SERVER_NAME_KEY, nodeNameParams[1]);
+          //Build request
+          Map<String, Object> request = new LinkedHashMap<String, Object>();
+          request.put("operation", "read-resource");
+          request.put("address", Arrays.asList("host", hostName, "server-config", serverName));
+          try {
+            Object responseObj = apiRequest(request);
+            if(responseObj instanceof Map) {
+              Map<String, Object> response = (Map<String, Object>) responseObj;
+              serverGroup = (String) response.get("group");
+              logger.info("Server group: {}, Host: {}, Server: {}", new Object[] {serverGroup, hostName, serverName});
+            }
+          } catch (Throwable t) {
+            logger.warn("Failed to get server group name.", t);
+          }
+        }
+      }
+    }
+    return serverGroup;
+  }
+
+  protected String getProfile(String serverGroup) {
+    if(isDomainHost()) {
+      if(profile == null) {
+        Map<String, Object> request = new LinkedHashMap<String, Object>();
+        request.put("operation", "read-resource");
+        request.put("address", Arrays.asList("server-group", serverGroup));
+        try {
+          Object responseObj = apiRequest(request);
+          if(responseObj instanceof Map) {
+            Map<String, Object> result = (Map<String, Object>) responseObj;
+            profile = (String) result.get("profile");
+            logger.info("Profile: {}", profile);
+          }
+        } catch(Throwable t) {
+          logger.warn("Failed to get server profile.", t);
+        }
+      }
+    }
+    return profile;
   }
 }

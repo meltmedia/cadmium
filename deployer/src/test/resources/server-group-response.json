@@ -1,0 +1,16 @@
+{
+    "outcome" : "success",
+    "result" : {
+        "auto-start" : true,
+        "cpu-affinity" : null,
+        "group" : "main-server-group",
+        "interface" : null,
+        "jvm" : null,
+        "name" : "server-one",
+        "path" : null,
+        "priority" : null,
+        "socket-binding-group" : null,
+        "socket-binding-port-offset" : 0,
+        "system-property" : {"com.meltmedia.cadmium.contentRoot" : null}
+    }
+}
