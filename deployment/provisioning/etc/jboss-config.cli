@@ -1,0 +1,33 @@
+if (result=="DOMAIN") of :read-attribute(name="launch-type")
+  /server-group=main-server-group/system-property=com.meltmedia.cadmium.environment:add(value="${cadmium.env.name}")
+  /server-group=main-server-group/system-property=com.meltmedia.cadmium.github.sshKey:add(value="/opt/cadmium/.ssh")
+  /server-group=main-server-group/system-property=com.meltmedia.cadmium.teams.properties:add(value="/opt/cadmium/teams.properties")
+  /server-group=main-server-group/system-property=com.meltmedia.cadmium.maven.repository:add(value="${maven.repo}")
+  /host=master/server-config=server-one/system-property=com.meltmedia.cadmium.contentRoot:add(value="/opt/cadmium/server-one")
+else
+  /system-property=com.meltmedia.cadmium.environment:add(value="${cadmium.env.name}")
+  /system-property=com.meltmedia.cadmium.github.sshKey:add(value="/opt/cadmium/.ssh")
+  /system-property=com.meltmedia.cadmium.teams.properties:add(value="/opt/cadmium/teams.properties")
+  /system-property=com.meltmedia.cadmium.maven.repository:add(value="${maven.repo}")
+  /system-property=com.meltmedia.cadmium.contentRoot:add(value="/opt/cadmium")
+end-if
+
+if (outcome=="success") of /host=master/server-config=server-three:read-resource
+  /host=master/server-config=server-three:stop()
+  /host=master/server-config=server-three:remove()
+end-if
+
+if (outcome=="success") of /host=master/server-config=server-two:read-resource
+  /host=master/server-config=server-two:stop()
+  /host=master/server-config=server-two:remove()
+end-if
+
+if (outcome=="success") of /server-group=main-server-group/jvm=default:read-resource
+  /server-group=main-server-group/jvm=default:write-attribute(name="heap-size",value="${jvm.heap}")
+  /server-group=main-server-group/jvm=default:write-attribute(name="max-heap-size",value="${jvm.heap}")
+  /server-group=main-server-group/jvm=default:write-attribute(name="max-permgen-size",value="${jvm.maxperm}")
+end-if
+
+if (outcome=="success") of /server-group=other-server-group:read-resource
+  /server-group=other-server-group:remove()
+end-if

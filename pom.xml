@@ -423,6 +423,7 @@
     <module>copyright</module>
     <module>war</module>
     <module>pdf-concatenate</module>
+    <module>deployment</module>
     <!-- <module>black-box-tests</module>-->
   </modules>
 

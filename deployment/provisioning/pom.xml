@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.meltmedia.cadmium</groupId>
+    <artifactId>cadmium-deployment-parent</artifactId>
+    <version>0.9.2-JBOSS7-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>cadmium-deployment</artifactId>
+  <packaging>pom</packaging>
+
+  <name>cadmium :: deployment :: Assembly</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>cadmium-deployer</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+  
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>filter-resources</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>target/filtered-resources</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>installer</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/descriptors/descriptor.xml</descriptor>
+              </descriptors>
+              <finalName>cadmium</finalName>
+              <tarLongFileMode>gnu</tarLongFileMode>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

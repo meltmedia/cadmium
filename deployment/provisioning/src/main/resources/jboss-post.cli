@@ -1,0 +1,25 @@
+if (outcome=="success") of /host=master/server-config=server-three:read-resource
+  /host=master/server-config=server-three:stop()
+  /host=master/server-config=server-three:remove()
+end-if
+
+if (outcome=="success") of /host=master/server-config=server-two:read-resource
+  /host=master/server-config=server-two:stop()
+  /host=master/server-config=server-two:remove()
+end-if
+
+if (outcome=="success") of /server-group=main-server-group:read-resource
+  /server-group=main-server-group:restart-servers()
+end-if
+
+if (result=="DOMAIN") of :read-attribute(name="launch-type")
+  /profile=full/subsystem=web/virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
+  /profile=default/subsystem=web/virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
+  /profile=full-ha/subsystem=web/virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
+  /profile=ha/subsystem=web/virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
+  deploy cadmium-deployer-${project.version}.war --all-server-groups
+else
+  /virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
+  deploy cadmium-deployer-${project.version}.war --disabled
+  /deployment=cadmium-deployer-${project.version}.war:enable
+end-if
