@@ -2,7 +2,7 @@
 <assembly>
   <id>installer</id> 
 
-  <baseDirectory>bin</baseDirectory>
+  <baseDirectory></baseDirectory>
 
   <formats>
     <format>tar.gz</format>
@@ -11,21 +11,34 @@
   <fileSets>
   	<fileSet>
   	  <directory>etc</directory>
-  	  <outputDirectory></outputDirectory>
+  	  <outputDirectory>bin</outputDirectory>
       <fileMode>0755</fileMode>
+      <directoryMode>0755</directoryMode>
   	</fileSet>
     <fileSet>
-      <directory>target/filtered-resources</directory>
-      <outputDirectory></outputDirectory>
-      <fileMode>0755</fileMode>
+      <directory>src/main/filtered-resources</directory>
+      <outputDirectory>bin</outputDirectory>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+      <filtered>true</filtered>
     </fileSet>
   </fileSets>
+  <files>
+    <file>
+      <source>target/shiro-hasher.jar</source>
+      <outputDirectory>bin</outputDirectory>
+      <fileMode>0644</fileMode>
+    </file>
+  </files>
   <dependencySets>
     <dependencySet>
       <includes>
         <include>*:war</include>
       </includes>
-  	  <outputDirectory></outputDirectory>
+  	  <outputDirectory>bin</outputDirectory>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+      <directoryMode>0644</directoryMode>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
     </dependencySet>
   </dependencySets>
 </assembly>

@@ -36,6 +36,7 @@ Vagrant.configure("2") do |config|
   # argument is a set of non-required options.
   config.vm.synced_folder "~/.m2/repository", "/opt/cadmium/maven"
   config.vm.synced_folder "deployment/provisioning/target", "/home/vagrant/installer"
+  config.vm.synced_folder "~/.ssh", "/home/vagrant/ssh"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -75,7 +76,7 @@ Vagrant.configure("2") do |config|
   #   puppet.manifest_file  = "base.pp"
   # end
 
-  config.vm.provision :shell, :inline => "tar xzf installer/cadmium-installer.tar.gz && bin/setup.sh http://nexus.meltdev.com/content/repositories/packages/jboss/jboss-eap/6.1.0/jboss-eap-6.1.0.zip"
+  config.vm.provision :shell, :inline => "tar xzf installer/cadmium-installer.tar.gz && bin/setup-vagrant.sh http://nexus.meltdev.com/content/repositories/packages/jboss/jboss-eap/6.1.0/jboss-eap-6.1.0.zip"
 
   # Enable provisioning with chef solo, specifying a cookbooks path, roles
   # path, and data_bags path (all relative to this Vagrantfile), and adding

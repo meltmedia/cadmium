@@ -7,7 +7,8 @@ JBOSS_FILENAME="${JBOSS_FILENAME%%\?*}"
 if [ ! -e "/opt/${JBOSS_FILENAME}" ] ; then
   echo "Downloading ${JBOSS_FILENAME}..."
   if type curl > /dev/null 2> /dev/null ; then
-    sudo curl "${JBOSS_URL}" --compressed -s > /opt/${JBOSS_FILENAME}
+    curl "${JBOSS_URL}" --compressed -s -O
+    sudo mv ${JBOSS_FILENAME} /opt/${JBOSS_FILENAME}
   elif type wget > /dev/null 2> /dev/null ; then
     wget "${JBOSS_URL}" -q
     sudo mv ${JBOSS_FILENAME} /opt

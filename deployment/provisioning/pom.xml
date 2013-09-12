@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>cadmium-deployment</artifactId>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
 
   <name>cadmium :: deployment :: Assembly</name>
 
@@ -21,15 +21,15 @@
       <type>war</type>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.shiro.tools</groupId>
+      <artifactId>shiro-tools-hasher</artifactId>
+      <version>1.2.1</version>
+      <type>jar</type>
+    </dependency>
   </dependencies>
   
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -63,6 +63,24 @@
               </descriptors>
               <finalName>cadmium</finalName>
               <tarLongFileMode>gnu</tarLongFileMode>
+            </configuration>
+          </execution>
+          <execution>
+            <id>shiro</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <archive>
+                <manifest>
+                  <mainClass>SimpleHasher</mainClass>
+                </manifest>
+              </archive>
+              <descriptors>
+                <descriptor>src/main/descriptors/jar.xml</descriptor>
+              </descriptors>
+              <finalName>shiro</finalName>
             </configuration>
           </execution>
         </executions>

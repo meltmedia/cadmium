@@ -140,11 +140,14 @@ if [ ! -e "/opt/cadmium" ]; then
   sudo mkdir -p /opt/cadmium
 fi 
 
-if [ ! -e "/opt/cadmium/team.properties" ]; then
-  sudo cp team.properties /opt/cadmium/team.properties
+if [ ! -e "/opt/cadmium/teams.properties" ]; then
+  sudo cp teams.properties /opt/cadmium/teams.properties
 fi
 
 if [ ! -e "/opt/cadmium/server-one/maven" ]; then
+  if [ ! -e "/opt/cadmium/server-one" ]; then
+    sudo mkdir -p /opt/cadmium/server-one
+  fi
   sudo ln -s /opt/cadmium/maven /opt/cadmium/server-one/maven
 fi
 

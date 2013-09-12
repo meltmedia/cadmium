@@ -13,15 +13,19 @@ set -e
 
 cd $( dirname "${BASH_SOURCE[0]}" )
 
-./install-java.sh
-
-./install-zip.sh
+./install-dependencies.sh
 
 ./download-jboss.sh "${JBOSS_URL}"
 
 ./install-jboss.sh "${JBOSS_DIST}"
 
+./setup-loggly.sh
+
+./install-shiro.sh
+
 ./install-apache.sh
+
+./install-keys.sh
 
 set +e
 echo "Done"

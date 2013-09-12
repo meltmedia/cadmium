@@ -17,9 +17,9 @@ if (result=="DOMAIN") of :read-attribute(name="launch-type")
   /profile=default/subsystem=web/virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
   /profile=full-ha/subsystem=web/virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
   /profile=ha/subsystem=web/virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
-  deploy cadmium-deployer-${project.version}.war --all-server-groups
+  deploy cadmium-deployer.war --all-server-groups
 else
   /virtual-server=cadmium.localhost:add(name=cadmium.localhost,enable-welcome-root=false)
-  deploy cadmium-deployer-${project.version}.war --disabled
-  /deployment=cadmium-deployer-${project.version}.war:enable
+  deploy cadmium-deployer.war --disabled
+  /deployment=cadmium-deployer.war:enable
 end-if
