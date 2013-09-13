@@ -76,6 +76,11 @@ if (grep "127.0.0.1" "/opt/${JBOSS_ROOT_DIR}/standalone/configuration/standalone
   sudo sed -i 's/127.0.0.1/0.0.0.0/g' "/opt/${JBOSS_ROOT_DIR}/standalone/configuration/standalone.xml"
 fi
 
+if (grep "profile=\"full\"" "/opt/${JBOSS_ROOT_DIR}/domain/configuration/domain.xml" > /dev/null 2> /dev/null); then
+  sudo sed -i 's/profile="full"/profile="default"/g' "/opt/${JBOSS_ROOT_DIR}/domain/configuration/domain.xml"
+  sudo sed -i 's_<socket-binding-group ref="full-sockets"/>_<socket-binding-group ref="standard-sockets"/>_g' "/opt/${JBOSS_ROOT_DIR}/domain/configuration/domain.xml"
+fi
+
 echo "Adding jboss admin user with password ${ADMIN_PASSWD}"
 sudo /opt/${JBOSS_ROOT_DIR}/bin/add-user.sh --silent admin "${ADMIN_PASSWD}" 2> /dev/null
 
@@ -125,7 +130,25 @@ fi
 
 set +e
 
+if [ ! -e "/opt/cadmium" ]; then
+  sudo mkdir -p /opt/cadmium
+fi 
+
+if [ ! -e "/opt/cadmium/teams.properties" ]; then
+  sudo cp teams.properties /opt/cadmium/teams.properties
+fi
+
+if [ ! -e "/opt/cadmium/server-one/maven" ] && [ -e "/opt/cadmium/maven" ] ; then
+  if [ ! -e "/opt/cadmium/server-one" ]; then
+    sudo mkdir -p /opt/cadmium/server-one
+  fi
+  sudo ln -s /opt/cadmium/maven /opt/cadmium/server-one/maven
+fi
+
+sudo chown -R jboss:jboss /opt/cadmium
+
 sudo chown -R jboss:jboss /opt/${JBOSS_ROOT_DIR}
+
 service jboss status > /dev/null 2> /dev/null
 if [ "$?" -eq 3 ]; then
   sudo service jboss start
@@ -136,31 +159,16 @@ elif [ "$?" -eq 1 ]; then
   fi
 fi
 
-if [ ! -e "/opt/cadmium" ]; then
-  sudo mkdir -p /opt/cadmium
-fi 
-
-if [ ! -e "/opt/cadmium/teams.properties" ]; then
-  sudo cp teams.properties /opt/cadmium/teams.properties
-fi
-
-if [ ! -e "/opt/cadmium/server-one/maven" ]; then
-  if [ ! -e "/opt/cadmium/server-one" ]; then
-    sudo mkdir -p /opt/cadmium/server-one
-  fi
-  sudo ln -s /opt/cadmium/maven /opt/cadmium/server-one/maven
-fi
-
-sudo chown -R jboss:jboss /opt/cadmium
-
 # Configuring jboss
 if [ -e "/opt/${JBOSS_ROOT_DIR}/bin/jboss-cli.sh" ]; then
+  sleep 30
   /opt/${JBOSS_ROOT_DIR}/bin/jboss-cli.sh -c --user=admin --password="${ADMIN_PASSWD}" --file=jboss-config.cli --properties=jboss.properties
-  sleep 5
+  sleep 30
   /opt/${JBOSS_ROOT_DIR}/bin/jboss-cli.sh -c --user=admin --password="${ADMIN_PASSWD}" --file=jboss-post.cli --properties=jboss.properties
 elif [ -e "/opt/${JBOSS_ROOT_DIR}/bin/jboss-admin.sh" ]; then
+  sleep 30
   /opt/${JBOSS_ROOT_DIR}/bin/jboss-admin.sh -c --user=admin --password="${ADMIN_PASSWD}" --file=jboss-config.cli --properties=jboss.properties
-  sleep 5
+  sleep 30
   /opt/${JBOSS_ROOT_DIR}/bin/jboss-admin.sh -c --user=admin --password="${ADMIN_PASSWD}" --file=jboss-post.cli --properties=jboss.properties
 else
   echo "No admin cli script found."

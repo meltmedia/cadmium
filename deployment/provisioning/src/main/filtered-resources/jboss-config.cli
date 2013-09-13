@@ -24,7 +24,7 @@ end-if
 
 if (outcome=="success") of /server-group=main-server-group/jvm=default:read-resource
   /server-group=main-server-group/jvm=default:write-attribute(name="heap-size",value="${jvm.heap}")
-  /server-group=main-server-group/jvm=default:write-attribute(name="max-heap-size",value="${jvm.heap}")
+  /server-group=main-server-group/jvm=default:write-attribute(name="max-heap-size",value="${jvm.maxheap}")
   /server-group=main-server-group/jvm=default:write-attribute(name="max-permgen-size",value="${jvm.maxperm}")
 end-if
 
