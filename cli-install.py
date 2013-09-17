@@ -18,14 +18,14 @@
 import os, os.path, sys, stat, shutil, string, urllib, xml.etree.ElementTree, subprocess
 from termios import tcflush, TCIOFLUSH
 
-cadmium_sh = """#! /bin/sh
+cadmium_sh = """#! /bin/bash
 newest_jar=~/.cadmium/cadmium-cli.jar
 if [ -d ~/.m2/repository/com/meltmedia/cadmium/cadmium-cli ]; then
 
   version_list=`ls ~/.m2/repository/com/meltmedia/cadmium/cadmium-cli`
   for version in $version_list; do
 
-    if [ "$version" == "maven-metadata-local.xml" ]; then
+    if [[ "$version" == "maven-metadata-local.xml" ]]; then
       continue
     fi  
     current_file=~/.m2/repository/com/meltmedia/cadmium/cadmium-cli/$version/cadmium-cli-$version.jar
