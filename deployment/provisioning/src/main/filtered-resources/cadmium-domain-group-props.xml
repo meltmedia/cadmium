@@ -1,0 +1,6 @@
+            <system-properties> 
+                <property name="com.meltmedia.cadmium.github.sshKey" value="/opt/cadmium/ssh" boot-time="true"/> 
+                <property name="com.meltmedia.cadmium.environment" value="ENVIRONMENT_NAME" boot-time="true"/> 
+                <property name="com.meltmedia.cadmium.teams.properties" value="/opt/cadmium/teams.properties" boot-time="true"/> 
+                <property name="com.meltmedia.cadmium.maven.repository" value="MAVEN_REPOSITORY" boot-time="true"/> 
+            </system-properties> 

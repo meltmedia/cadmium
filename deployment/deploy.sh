@@ -13,11 +13,19 @@ function read_var {
   fi
 }
 
+if [ "X${SSH_USER}" == "X" ]; then
+  SSH_USER=ubuntu
+fi
+
 if [ "X$1" == "X" ]; then
   print_usage 1
 fi
 
 URL=$1
+
+if (grep "$URL" ~/.ssh/known_hosts > /dev/null 2> /dev/null); then
+  sed -i.bak "/^$URL/d" ~/.ssh/known_hosts
+fi
 
 SSH_KEY=-1
 
@@ -32,10 +40,10 @@ fi
 cd $( dirname "${BASH_SOURCE[0]}" )
 
 SCRIPT_DIR=$(pwd)
-SSH_OPT=
 if [[ "$SSH_KEY" != "-1" ]]; then
-  SSH_OPT="-i ${SSH_KEY} "
+  SSH_OPT="-i ${SSH_KEY} ${SSH_OPT}"
 fi
+
 SSH_CMD="ssh ${SSH_OPT}"
 SCP_CMD="scp ${SSH_OPT}"
 MVN_REPO="http://repo1.maven.org/maven2/"
@@ -72,11 +80,11 @@ if (mvn clean install); then
   MVN_REPO=${READ_VAR}
 
   ( cat <<EOF
-cadmium.env.name=${ENVIRONMENT}
-jvm.heap=${HEAP_MIN}
-jvm.maxheap=${HEAP_MAX}
-jvm.maxperm=${PERMGEN}
-maven.repo=${MVN_REPO}
+ENVIRONMENT_NAME=${ENVIRONMENT}
+MIN_HEAP_SIZE=${HEAP_MIN}
+MAX_HEAP=${HEAP_MAX}
+PERM_SIZE=${PERMGEN}
+MAVEN_REPOSITORY=${MVN_REPO}
 EOF
   ) > target/jboss.properties
   
@@ -103,10 +111,11 @@ EOF
     pushd target
 
     read -s -p "Enter passphrase: " PASSPHRASE
+    echo ""
     echo "Generating key..."
     openssl genrsa -des3 -out server.key -passout pass:$PASSPHRASE 2048
     echo "Create CSR..."
-    openssl req -new -key server.key -out server.csr -passin pass:$PASSPHRASE
+    openssl req -new -key server.key -out server.csr -passin pass:$PASSPHRASE -subj "/CN=$URL"
     cp server.key server.key.org
     echo "Remove password from key..."
     openssl rsa -in server.key.org -out server.key -passin pass:$PASSPHRASE
@@ -114,38 +123,38 @@ EOF
     openssl x509 -req -days 1000 -in server.csr -signkey server.key -out server.crt
  
     cp ../provisioning/src/main/filtered-resources/cadmium-apache2.cfg cadmium-apache2.cfg
-    sed -i -e "s/^#//g" cadmium-apache2.cfg
-    sed -i -e "s_SSLCertificateChainFile /etc/apache2/ssl/CA.crt_#SSLCertificateChainFile /etc/apache2/ssl/CA.crt_g" cadmium-apache2.cfg
-    sed -i -e "s/star_cadmium_com/server/g" cadmium-apache2.cfg
+    sed -i '' "s/^#//g" cadmium-apache2.cfg
+    sed -i '' "s_SSLCertificateChainFile /etc/apache2-ssl/CA.crt_#SSLCertificateChainFile /etc/apache2-ssl/CA.crt_g" cadmium-apache2.cfg
+    sed -i '' "s/star_cadmium_com/server/g" cadmium-apache2.cfg
 
     popd
   fi
 
   shopt -u nocasematch
 
-  $SCP_CMD provisioning/target/cadmium-installer.tar.gz ubuntu@$URL:
+  $SCP_CMD provisioning/target/cadmium-installer.tar.gz ${SSH_USER}@$URL:
 
-  $SSH_CMD ubuntu@$URL "tar xzf cadmium-installer.tar.gz"
+  $SSH_CMD ${SSH_USER}@$URL "tar xzf cadmium-installer.tar.gz"
 
-  if [ -e "~/.ssh/meltmedia_deploy" ] && [ -e "~/.ssh/meltmedia_deploy.pub" ]; then
-    $SCP_CMD ~/.ssh/meltmedia_deploy ubuntu@$URL:bin/key
-    $SCP_CMD ~/.ssh/meltmedia_deploy.pub ubuntu@$URL:bin/key.pub
+  if [ -e ~/.ssh/meltmedia_deploy ] && [ -e ~/.ssh/meltmedia_deploy.pub ]; then
+    cp ~/.ssh/meltmedia_deploy target/key
+    cp ~/.ssh/meltmedia_deploy.pub target/key.pub
   fi
 
-  $SCP_CMD target/* ubuntu@$URL:bin/
+  $SCP_CMD target/* ${SSH_USER}@$URL:bin/
 
-  if [ -e target/cadmin-apache2.cfg ]; then
+  if [ -e target/server.crt ]; then
     echo "Installing apache cert"
-    $SSH_CMD ubuntu@$URL <<EOF
+    $SSH_CMD ${SSH_USER}@$URL <<EOF
       cd bin
-      sudo mkdir -p /etc/apache2/ssl
-      sudo cp server.* /etc/apache2/ssl
-      sudo chmod 600 /etc/apache2/ssl/server.key*
-      sudo chown -R www-data /etc/apache2/ssl
+      sudo mkdir -p /etc/apache2-ssl
+      sudo cp server.* /etc/apache2-ssl
+      sudo chmod 600 /etc/apache2-ssl/server.key*
+      sudo chown -R www-data /etc/apache2-ssl
 EOF
   fi
 
-  $SSH_CMD -t ubuntu@$URL "bin/setup.sh ${JBOSS_URL}"
+  $SSH_CMD -t ${SSH_USER}@$URL "HOSTNAME=$URL USERNAME=${SSH_USER} bin/setup.sh ${JBOSS_URL}"
 else
   echo "Failed to build deployment assembly"
   exit 1

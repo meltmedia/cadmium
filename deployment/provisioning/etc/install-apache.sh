@@ -35,13 +35,17 @@ if [ ! -e "/etc/apache2/sites-enabled/000-cadmium" ]; then
   sudo ln -s /etc/apache2/sites-available/cadmium /etc/apache2/sites-enabled/000-cadmium
 fi
 
+if [ -e "/etc/apache2/sites-enabled/000-default" ]; then
+  sudo rm -f /etc/apache2/sites-enabled/000-default
+fi
+
 for MOD in ${APACHE2_MODS}; do
   link_if_exists "/etc/apache2/mods-available/${MOD}.load" "/etc/apache2/mods-enabled/${MOD}.load"
   LOADED=$?
   link_if_exists "/etc/apache2/mods-available/${MOD}.conf" "/etc/apache2/mods-enabled/${MOD}.conf"
   CONF=$?
   if [[ "$LOADED" == "0" || "$CONF" == "0" ]]; then
-  	echo "Enabled mod ${MOD}"
+  	echo "Enabling module ${MOD}."
   fi
 done
 echo "Reloading apache2 configuraion"

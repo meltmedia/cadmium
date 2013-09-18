@@ -37,6 +37,7 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder "~/.m2/repository", "/opt/cadmium/maven"
   config.vm.synced_folder "deployment/provisioning/target", "/home/vagrant/installer"
   config.vm.synced_folder "~/.ssh", "/home/vagrant/ssh"
+  config.vm.synced_folder "~/.cadmium", "/home/vagrant/.cadmium"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.

@@ -7,6 +7,7 @@ import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.config.ConfigurationListener;
 import com.meltmedia.cadmium.deployer.JBossUtil;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -81,6 +82,7 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
   protected String profile = null;
   protected String serverName = null;
   protected String hostName = null;
+  protected Boolean domainHost = null;
 
 
   public JBossAdminApi(String username, String password) {
@@ -485,19 +487,39 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
 
   @Override
   public void configurationNotFound() {
-    client = null;
+    IOUtils.closeQuietly(this);
     host = "localhost";
     port = 9990;
   }
 
   @Override
   public void close() throws IOException {
-    client.getConnectionManager().shutdown();
-    client = null;
+    if(client != null) {
+      client.getConnectionManager().shutdown();
+      client = null;
+    }
+    this.domainHost = null;
+    this.profile = null;
+    this.serverGroup = null;
+    this.serverName = null;
+    this.hostName = null;
   }
 
   private boolean isDomainHost() {
-    return Boolean.parseBoolean(System.getProperty("[Host"));
+    if(domainHost != null) {
+      return domainHost;
+    }
+    //Build request
+    Map<String, Object> request = new LinkedHashMap<String, Object>();
+    request.put("operation", "read-attribute");
+    request.put("name", "launch-type");
+
+    try {
+      domainHost = "DOMAIN".equals(apiRequest(request));
+      return domainHost;
+    } catch(Exception e) {
+      return false;
+    }
   }
 
   protected String getServerGroup() {
