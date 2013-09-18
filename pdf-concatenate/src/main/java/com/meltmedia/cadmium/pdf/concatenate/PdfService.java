@@ -15,11 +15,13 @@
  */
 package com.meltmedia.cadmium.pdf.concatenate;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URL;
-import java.util.LinkedList;
-import java.util.List;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfCopy;
+import com.itextpdf.text.pdf.PdfReader;
+import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -29,18 +31,13 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.pdf.PdfCopy;
-import com.itextpdf.text.pdf.PdfReader;
-import com.meltmedia.cadmium.core.CadmiumApiEndpoint;
 
 @CadmiumApiEndpoint
 @Path("/concatenate")
@@ -84,7 +81,7 @@ public class PdfService {
       }
       
 		}
-		return Response.ok(response,"text/pdf").header("Content-Disposition", "attachment; filename=" + fileName).build();
+		return Response.ok(response,"application/pdf").header("Content-Disposition", "attachment; filename=" + fileName).build();
 	}
 
 	private Pattern getOwnerPasswordPattern() {
