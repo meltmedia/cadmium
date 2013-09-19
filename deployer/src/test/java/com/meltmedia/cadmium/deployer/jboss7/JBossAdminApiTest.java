@@ -25,9 +25,9 @@ import static junit.framework.Assert.assertNotNull;
 import static org.jgroups.util.Util.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.*;
 
 /**
  * com.meltmedia.cadmium.deployer.jboss7.JBossAdminApiTest
@@ -215,6 +215,7 @@ public class JBossAdminApiTest {
     System.setProperty(JBossAdminApi.SERVER_NAME_KEY, "server-one");
     HttpClient client = getDefaultHttpClient(FileUtils.readFileToString(new File("target/test-classes/server-group-response.json")));
     JBossAdminApi api = new JBossAdminApi("", "");
+    api.domainHost = true;
     api.client = client;
     api.logger = mock(Logger.class);
     String group = api.getServerGroup();
@@ -227,6 +228,7 @@ public class JBossAdminApiTest {
     System.setProperty("[Host", "true");
     HttpClient client = getDefaultHttpClient(FileUtils.readFileToString(new File("target/test-classes/profile-response.json")));
     JBossAdminApi api = new JBossAdminApi("", "");
+    api.domainHost = true;
     api.client = client;
     api.logger = mock(Logger.class);
     String profile = api.getProfile("main-server-group");
