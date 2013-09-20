@@ -14,9 +14,10 @@ fi
 
 if !(type git > /dev/null 2> /dev/null); then
   sudo apt-get install -y git
-  git config --global user.name "${USERNAME}"
-  git config --global user.email "${USERNAME}.localhost"
 fi
+
+git config --global user.name "${USERNAME}"
+git config --global user.email "${USERNAME}.localhost"
 
 if [ ! -e ../deployer-config.git ]; then
   mkdir ../deployer-config.git
@@ -58,7 +59,7 @@ if [ -e cadmium-deployer.war ]; then
   popd
   
   mv cadmium-deployer.war cadmium-deployer.war.bak
-  cadmium init-war --existingWar cadmium-deployer.war.bak -C cfg-master -R $USER@$HOSTNAME:deployer-config.git cadmium-deployer.war
+  cadmium init-war --existingWar cadmium-deployer.war.bak -C cfg-master -R $USER@$HOSTNAME:deployer-config.git --domain cadmium.localhost cadmium-deployer.war
 
   chown $USERNAME cadmium-deployer.war*
 fi

@@ -9,3 +9,10 @@ if [ ! -e ~/.cadmium ]; then
   chmod +x cli-install.py
   ./cli-install.py
 fi
+
+if !(grep "/.cadmium/" .profile > /dev/null 2> /dev/null); then
+  ( cat <<EOF
+export PATH=$PATH:$HOME/.cadmium/bin
+EOF
+  ) >> .profile
+fi

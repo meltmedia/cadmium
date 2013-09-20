@@ -5,5 +5,8 @@
 if [ "X${SUDO_USER}" == "X" ]; then
   ./bin/setup.sh "$@"
 else
-  su -c "./bin/setup.sh $@" ${SUDO_USER}
+  cd ~${SUDO_USER}
+  export HOME=$(pwd)
+  sudo chown -R ${SUDO_USER}:${SUDO_USER} bin
+  sudo -u ${SUDO_USER} ./bin/setup.sh "$@"
 fi

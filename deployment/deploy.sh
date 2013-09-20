@@ -67,6 +67,9 @@ if (mvn clean install); then
     rm -rf target
   fi
   mkdir target
+  if [ -e ~/.cadmium_users ]; then
+    cp ~/.cadmium_users target/users
+  fi
   set -e
   read_var "Environment [cadmium-local]: " "cadmium-local"
   ENVIRONMENT=${READ_VAR}
