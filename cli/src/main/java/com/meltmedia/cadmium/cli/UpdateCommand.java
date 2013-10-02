@@ -56,9 +56,6 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 	@Parameter(names={"--branch", "-b"}, description="The branch that you are updating to", required=false)
 	private String branch;
-	
-	/*@Parameter(names={"--tag", "-t"}, description="The tag that you are updating to - should not be used with a branch or with a revision", required=false)
-	private String tag;*/
 
 	@Parameter(names={"--revision", "-r"}, description="The revision that you are updating to", required=false)
 	private String revision;
@@ -76,7 +73,6 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	public void execute() throws ClientProtocolException, IOException {
 	  
 		String siteUrl = getSecureBaseUrl(site.get(0));
-    //GitService gitValidation = null;
 		try {
 
       if(!isValidBranchName(branch, UpdateRequest.CONTENT_BRANCH_PREFIX)) {
@@ -90,20 +86,6 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 			boolean branchSame = false;
 			boolean revisionSame = false;
 			boolean forceUpdate = force;
-			//boolean isTagAlone = false;
-			
-			//if tag is NOT null and either the branch or the revision are NOT null, error out, else continue
-			/*if(tag != null && branch == null && revision == null) {
-				
-				log.debug("Tag was specified by itself.");
-				isTagAlone = true;
-			}
-			else if(tag != null) {	
-				
-				System.err.println("Tag was either specified with a branch or a revision.");
-				System.err.println("Please specify a tag without branch or revision.");
-				System.exit(1);
-			}*/
 			
 			String currentRepo = siteStatus.getRepo();
 			String currentRevision = siteStatus.getRevision();
@@ -136,52 +118,17 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 
 				System.out.println("The site [" + siteUrl  + "] is already on repo [" + repo + "] branch [" + branch + "] and revision [" + revision  + "].");
 			}
-			else {		
-			  /*if(repo != null) {
-			    siteStatus.setRepo(repo);
-			    siteStatus.setBranch(null);
-			    siteStatus.setRevision(null);
-			  }*/
-			  /*if(repo == null) {
-			    repo = siteStatus.getRepo();
-			  }*/
-				//gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
+			else {
 				String newBranch = null;
 				String rev = null;
-				//check to see if tag was specified without branch or revision
-				/*if(isTagAlone) {
-					if(gitValidation.isTag(tag)){
-					  newBranch = tag;
-  					log.debug("tag being added = {}", tag);
-					} else {
-					  System.err.println("The tag ["+tag+"] specified is not a tag.");
-            throw new Exception("");
-					}
-				}
-				else {*/
-				  /*if(branch == null || branch.length() == 0) {
-            gitValidation.switchBranch(siteStatus.getBranch());
-          }*/
-					if(branch != null) {
-						//if(gitValidation.isBranch(branch)) {
-						newBranch = branch;
-						//  gitValidation.switchBranch(branch);
-  				  log.debug("branch being added = {}", branch);
-						//} else {
-						//  System.err.println("The branch ["+branch+"] does not exist.");
-						//  throw new Exception("");
-						//}
-					}
-					
-					if(revision != null) {
-					  //if(gitValidation.checkRevision(revision)){
-					  rev = revision;
-  					log.debug("revision being added = {}", revision);
-					  //} else {
-					  //  System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
-            //  throw new Exception("");
-					  //}
-					//}
+        if(branch != null) {
+          newBranch = branch;
+          log.debug("branch being added = {}", branch);
+        }
+
+        if(revision != null) {
+          rev = revision;
+          log.debug("revision being added = {}", revision);
 				}
 				
 				if(sendUpdateMessage(siteUrl, repo, newBranch, rev, message, token)){
@@ -194,14 +141,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		catch (Exception e) {
 
 			System.err.println("Failed to updated site [" + siteUrl  + "] to repo [" + repo + "] branch [" + branch  + "] and revision [" + revision  + "].");
-		} /*finally {
-      if(gitValidation != null) {
-        try {
-          FileSystemManager.deleteDeep(gitValidation.getBaseDirectory());
-        } catch (Exception e) {
-        }
-      }
-		}*/
+		}
 
 	}
 

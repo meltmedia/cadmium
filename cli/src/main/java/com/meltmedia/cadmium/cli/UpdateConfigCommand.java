@@ -59,8 +59,6 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
   public void execute() throws ClientProtocolException, IOException {
 
     String siteUrl = getSecureBaseUrl(site.get(0));
-
-    //GitService gitValidation = null;
     try {
 
       if(!UpdateCommand.isValidBranchName(branch, UpdateRequest.CONFIG_BRANCH_PREFIX)) {
@@ -107,45 +105,19 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
 
         System.out.println("The config for site [" + siteUrl  + "] is already on repo [" + repo + "] branch [" + branch + "] and revision [" + revision  + "].");
       }
-      else {    
-        /*if(repo != null) {
-          siteStatus.setRepo(repo);
-          siteStatus.setBranch(null);
-          siteStatus.setRevision(null);
-        }*/
-        /*if(repo == null) {
-          repo = siteStatus.getRepo();
-          siteStatus.setRepo(siteStatus.getConfigRepo());
-          siteStatus.setBranch(siteStatus.getConfigBranch());
-          siteStatus.setRevision(siteStatus.getConfigRevision());
-        }*/
-        //gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
+      else {
         String newBranch = null;
         String rev = null;
 
-        /*if(branch == null || branch.length() == 0) {
-          gitValidation.switchBranch(siteStatus.getConfigBranch());
-        }*/
         if(branch != null) {
-          //if(gitValidation.isBranch(branch)) {
           newBranch = branch;
-          //  gitValidation.switchBranch(branch);
           log.debug("branch being added = {}", branch);
-          //} else {
-          //  System.err.println("The branch ["+branch+"] does not exist.");
-          //  throw new Exception("");
-          //}
         }
 
         if(revision != null) {
-          //if(gitValidation.checkRevision(revision)){
           rev = revision;
           log.debug("revision being added = {}", revision);
-          //} else {
-          //  System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
-          //  throw new Exception("");
-          //}
-        } 
+        }
 
         if(UpdateCommand.sendUpdateMessage(siteUrl, repo, newBranch, rev, message, token, UPDATE_CONFIG_ENDPOINT, UpdateRequest.CONFIG_BRANCH_PREFIX)){
           System.out.println("Update successful");
@@ -157,15 +129,7 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
     catch (Exception e) {
 
       System.err.println("Failed to updated site [" + siteUrl  + "] to repo [" + repo + "] branch [" + branch  + "] and revision [" + revision  + "].");
-    } /* finally {
-      if(gitValidation != null) {
-        try {
-          FileSystemManager.deleteDeep(gitValidation.getBaseDirectory());
-        } catch (Exception e) {
-        }
-      }
-    }*/
-
+    }
   }
 
   @Override
