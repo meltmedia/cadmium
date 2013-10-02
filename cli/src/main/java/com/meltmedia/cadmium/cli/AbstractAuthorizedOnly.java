@@ -15,6 +15,14 @@
  */
 package com.meltmedia.cadmium.cli;
 
+import org.apache.http.HttpMessage;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
@@ -24,14 +32,6 @@ import java.security.UnrecoverableKeyException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import org.apache.http.HttpMessage;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implements functionality to facilitate authentication to Cadmium rest endpoints.
@@ -109,6 +109,9 @@ public class AbstractAuthorizedOnly implements AuthorizedOnly {
    * @return The passed in siteUrl or the same url but converted to https.
    */
   protected String getSecureBaseUrl(String siteUrl) {
+    if(!siteUrl.startsWith("http://") && !siteUrl.startsWith("https://")) {
+      siteUrl = "http://" + siteUrl;
+    }
     Matcher urlMatcher = URL_PATTERN.matcher(siteUrl);
     if(urlMatcher.matches()) {
       logger.debug("Url matches [{}]", siteUrl);
