@@ -15,7 +15,14 @@
  */
 package com.meltmedia.cadmium.servlets.guice;
 
-import com.google.inject.*;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.Stage;
+import com.google.inject.TypeLiteral;
 import com.google.inject.grapher.GrapherModule;
 import com.google.inject.grapher.InjectorGrapher;
 import com.google.inject.grapher.graphviz.GraphvizModule;
@@ -24,9 +31,14 @@ import com.google.inject.internal.InternalInjectorCreator;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
-import com.meltmedia.cadmium.core.*;
 import com.meltmedia.cadmium.core.api.VHost;
-import com.meltmedia.cadmium.core.commands.*;
+import com.meltmedia.cadmium.core.commands.CommandBodyMapProvider;
+import com.meltmedia.cadmium.core.commands.CommandMapProvider;
+import com.meltmedia.cadmium.core.commands.CommandResponse;
+import com.meltmedia.cadmium.core.commands.HistoryResponse;
+import com.meltmedia.cadmium.core.commands.HistoryResponseCommandAction;
+import com.meltmedia.cadmium.core.commands.LoggerConfigResponse;
+import com.meltmedia.cadmium.core.commands.LoggerConfigResponseCommandAction;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
 import com.meltmedia.cadmium.core.git.GitService;
@@ -34,7 +46,13 @@ import com.meltmedia.cadmium.core.history.HistoryManager;
 import com.meltmedia.cadmium.core.history.loggly.Api;
 import com.meltmedia.cadmium.core.history.loggly.EventQueue;
 import com.meltmedia.cadmium.core.lifecycle.LifecycleService;
-import com.meltmedia.cadmium.core.messaging.*;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.MembershipTracker;
+import com.meltmedia.cadmium.core.messaging.MessageConverter;
+import com.meltmedia.cadmium.core.messaging.MessageReceiver;
+import com.meltmedia.cadmium.core.messaging.MessageSender;
+import com.meltmedia.cadmium.core.messaging.MessagingChannelName;
+import com.meltmedia.cadmium.core.messaging.MessagingConfigurationUrl;
 import com.meltmedia.cadmium.core.messaging.jgroups.JChannelProvider;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMembershipTracker;
 import com.meltmedia.cadmium.core.messaging.jgroups.JGroupsMessageSender;
@@ -43,10 +61,21 @@ import com.meltmedia.cadmium.core.meta.ConfigProcessor;
 import com.meltmedia.cadmium.core.meta.SiteConfigProcessor;
 import com.meltmedia.cadmium.core.reflections.JBossVfsUrlType;
 import com.meltmedia.cadmium.core.scheduler.SchedulerService;
-import com.meltmedia.cadmium.core.util.*;
+import com.meltmedia.cadmium.core.util.ContainerUtils;
+import com.meltmedia.cadmium.core.util.Jsr250Executor;
+import com.meltmedia.cadmium.core.util.Jsr250Utils;
+import com.meltmedia.cadmium.core.util.LogUtils;
+import com.meltmedia.cadmium.core.util.WarUtils;
 import com.meltmedia.cadmium.core.worker.ConfigCoordinatedWorkerImpl;
 import com.meltmedia.cadmium.core.worker.CoordinatedWorkerImpl;
-import com.meltmedia.cadmium.servlets.*;
+import com.meltmedia.cadmium.servlets.ApiEndpointAccessFilter;
+import com.meltmedia.cadmium.servlets.ErrorPageFilter;
+import com.meltmedia.cadmium.servlets.FileServlet;
+import com.meltmedia.cadmium.servlets.MaintenanceFilter;
+import com.meltmedia.cadmium.servlets.RedirectFilter;
+import com.meltmedia.cadmium.servlets.SecureRedirectFilter;
+import com.meltmedia.cadmium.servlets.SecureRedirectStrategy;
+import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
 import com.meltmedia.cadmium.servlets.shiro.PersistablePropertiesRealm;
 import com.meltmedia.cadmium.servlets.shiro.WebEnvironment;
 import org.apache.commons.io.IOUtils;
@@ -74,12 +103,30 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Builds the context with the Guice framework. To see how this works, go to:
@@ -118,6 +165,8 @@ public class CadmiumListener extends GuiceServletContextListener {
 
   private Injector injector = null;
 
+  private Reflections reflections;
+
   @Override
   public void contextDestroyed(ServletContextEvent event) {
     Set<Class<? extends Closeable>> closed = new HashSet<Class<? extends Closeable>>();
@@ -154,6 +203,7 @@ public class CadmiumListener extends GuiceServletContextListener {
     members = null;
     configManager = null;
     context = null;
+    reflections = null;
 
     super.contextDestroyed(event);
   }
@@ -279,7 +329,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         this.channelConfigUrl = fileUrl.toString();
       }
     }
-
+    reflections = Reflections.collect();
     Module modules[] = new Module[] {createServletModule(), createModule()};
     InternalInjectorCreator guiceCreator = new InternalInjectorCreator()
       .stage(Stage.DEVELOPMENT)
@@ -324,7 +374,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       @Override
       protected void configureServlets() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
+        /*Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
             new TypeAnnotationsScanner());*/
         Map<String, String> maintParams = new HashMap<String, String>();
         maintParams.put("ignorePrefix", "/system");
@@ -332,7 +382,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         maintParams.put("jersey-prefix", "/api/");
 
         Map<String, String> fileParams = new HashMap<String, String>();
-        fileParams.put("basePath", FileSystemManager.exists(contentDir) ? contentDir : failOver);
+        fileParams.put("basePath", com.meltmedia.cadmium.core.FileSystemManager.exists(contentDir) ? contentDir : failOver);
 
         // hook Jackson into Jersey as the POJO <-> JSON mapper
         bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
@@ -349,11 +399,11 @@ public class CadmiumListener extends GuiceServletContextListener {
         filter("/api/*").through(ApiEndpointAccessFilter.class, aclParams);
 
         try {
-          Set<Class<?>> discoveredFilters = reflections.getTypesAnnotatedWith(CadmiumFilter.class);
+          Set<Class<?>> discoveredFilters = reflections.getTypesAnnotatedWith(com.meltmedia.cadmium.core.CadmiumFilter.class);
           if(discoveredFilters != null) {
             for(Class<?> filterClass : discoveredFilters) {
               if( Filter.class.isAssignableFrom(filterClass)) {
-                CadmiumFilter annot = filterClass.getAnnotation(CadmiumFilter.class);
+                com.meltmedia.cadmium.core.CadmiumFilter annot = filterClass.getAnnotation(com.meltmedia.cadmium.core.CadmiumFilter.class);
                 if(!StringUtils.isEmptyOrNull(annot.value())){
                   log.debug("Adding Filter {} mapped with {}", filterClass.getName(), annot.value());
                   filter(annot.value()).through(filterClass.asSubclass(Filter.class));
@@ -374,7 +424,7 @@ public class CadmiumListener extends GuiceServletContextListener {
       @Override
       protected void configure() {
         Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
+        /*Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
             new TypeAnnotationsScanner(), 
             new SubTypesScanner(),
             new MethodAnnotationsScanner());*/
@@ -390,48 +440,48 @@ public class CadmiumListener extends GuiceServletContextListener {
           }
         }
 
-        bind(Boolean.class).annotatedWith(ISJBoss.class).toInstance(jboss);
-        bind(Boolean.class).annotatedWith(ISOLDJBoss.class).toInstance(oldJBoss);
+        bind(Boolean.class).annotatedWith(com.meltmedia.cadmium.core.ISJBoss.class).toInstance(jboss);
+        bind(Boolean.class).annotatedWith(com.meltmedia.cadmium.core.ISOLDJBoss.class).toInstance(oldJBoss);
 
-        bind(SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
-        bind(ApiEndpointAccessController.class).toInstance(ApiEndpointAccessFilter.controller);
+        bind(com.meltmedia.cadmium.core.SiteDownService.class).toInstance(MaintenanceFilter.siteDown);
+        bind(com.meltmedia.cadmium.core.ApiEndpointAccessController.class).toInstance(ApiEndpointAccessFilter.controller);
 
         bind(ScheduledExecutorService.class).toInstance(executor);
         bind(ExecutorService.class).toInstance(executor);
         bind(Executor.class).toInstance(executor);
 
         bind(FileServlet.class).in(Scopes.SINGLETON);
-        bind(ContentService.class).to(FileServlet.class);
+        bind(com.meltmedia.cadmium.core.ContentService.class).to(FileServlet.class);
 
         bind(MessageConverter.class);
         bind(MessageSender.class).to(JGroupsMessageSender.class);
 
-        bind(DelayedGitServiceInitializer.class).annotatedWith(ContentGitService.class).toInstance(new DelayedGitServiceInitializer());
-        bind(DelayedGitServiceInitializer.class).annotatedWith(ConfigurationGitService.class).toInstance(new DelayedGitServiceInitializer());
+        bind(DelayedGitServiceInitializer.class).annotatedWith(com.meltmedia.cadmium.core.ContentGitService.class).toInstance(new DelayedGitServiceInitializer());
+        bind(DelayedGitServiceInitializer.class).annotatedWith(com.meltmedia.cadmium.core.ConfigurationGitService.class).toInstance(new DelayedGitServiceInitializer());
 
         members = Collections.synchronizedList(new ArrayList<ChannelMember>());
         bind(new TypeLiteral<List<ChannelMember>>() {
-        }).annotatedWith(ClusterMembers.class).toInstance(members);
-        Multibinder<CommandAction<?>> commandActionBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<CommandAction<?>>(){});
+        }).annotatedWith(com.meltmedia.cadmium.core.ClusterMembers.class).toInstance(members);
+        Multibinder<com.meltmedia.cadmium.core.CommandAction<?>> commandActionBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<com.meltmedia.cadmium.core.CommandAction<?>>(){});
 
         @SuppressWarnings("rawtypes")
-        Set<Class<? extends CommandAction>> commandActionSet = 
-        reflections.getSubTypesOf(CommandAction.class);
+        Set<Class<? extends com.meltmedia.cadmium.core.CommandAction>> commandActionSet =
+        reflections.getSubTypesOf(com.meltmedia.cadmium.core.CommandAction.class);
         log.debug("Found {} CommandAction classes.", commandActionSet.size());
 
-        for( @SuppressWarnings("rawtypes") Class<? extends CommandAction> commandActionClass : commandActionSet ) {
-          commandActionBinder.addBinding().to((Class<? extends CommandAction<?>>)commandActionClass);
+        for( @SuppressWarnings("rawtypes") Class<? extends com.meltmedia.cadmium.core.CommandAction> commandActionClass : commandActionSet ) {
+          commandActionBinder.addBinding().to((Class<? extends com.meltmedia.cadmium.core.CommandAction<?>>)commandActionClass);
         }
 
         bind(new TypeLiteral<CommandResponse<HistoryResponse>>(){}).to(HistoryResponseCommandAction.class).in(Scopes.SINGLETON);
         bind(new TypeLiteral<CommandResponse<LoggerConfigResponse>>(){}).to(LoggerConfigResponseCommandAction.class).in(Scopes.SINGLETON);
 
-        bind(new TypeLiteral<Map<String, CommandAction<?>>>() {}).annotatedWith(CommandMap.class).toProvider(CommandMapProvider.class);
-        bind(new TypeLiteral<Map<String, Class<?>>>(){}).annotatedWith(CommandBodyMap.class).toProvider(CommandBodyMapProvider.class);
+        bind(new TypeLiteral<Map<String, com.meltmedia.cadmium.core.CommandAction<?>>>() {}).annotatedWith(com.meltmedia.cadmium.core.CommandMap.class).toProvider(CommandMapProvider.class);
+        bind(new TypeLiteral<Map<String, Class<?>>>(){}).annotatedWith(com.meltmedia.cadmium.core.CommandBodyMap.class).toProvider(CommandBodyMapProvider.class);
 
-        bind(String.class).annotatedWith(ContentDirectory.class).toInstance(contentDir);
-        bind(String.class).annotatedWith(SharedContentRoot.class).toInstance(sharedContentRoot.getAbsolutePath());
-        bind(String.class).annotatedWith(CurrentWarName.class).toInstance(warName);
+        bind(String.class).annotatedWith(com.meltmedia.cadmium.core.ContentDirectory.class).toInstance(contentDir);
+        bind(String.class).annotatedWith(com.meltmedia.cadmium.core.SharedContentRoot.class).toInstance(sharedContentRoot.getAbsolutePath());
+        bind(String.class).annotatedWith(com.meltmedia.cadmium.core.CurrentWarName.class).toInstance(warName);
 
         String environment = configProperties.getProperty("com.meltmedia.cadmium.environment", "development");
 
@@ -439,7 +489,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(String.class).annotatedWith(MessagingChannelName.class).toInstance("CadmiumChannel-v2.0-"+vHostName+"-"+environment);
         bind(String.class).annotatedWith(VHost.class).toInstance(vHostName);
 
-        bind(String.class).annotatedWith(ApplicationContentRoot.class).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
+        bind(String.class).annotatedWith(com.meltmedia.cadmium.core.ApplicationContentRoot.class).toInstance(applicationContentRoot.getAbsoluteFile().getAbsolutePath());
 
         bind(HistoryManager.class);
 
@@ -467,8 +517,8 @@ public class CadmiumListener extends GuiceServletContextListener {
         bind(MessageListener.class).to(MessageReceiver.class);
 
         bind(LifecycleService.class);
-        bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ContentWorker.class).to(CoordinatedWorkerImpl.class);
-        bind(new TypeLiteral<CoordinatedWorker<ContentUpdateRequest>>(){}).annotatedWith(ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
+        bind(new TypeLiteral<com.meltmedia.cadmium.core.CoordinatedWorker<com.meltmedia.cadmium.core.commands.ContentUpdateRequest>>(){}).annotatedWith(com.meltmedia.cadmium.core.ContentWorker.class).to(CoordinatedWorkerImpl.class);
+        bind(new TypeLiteral<com.meltmedia.cadmium.core.CoordinatedWorker<com.meltmedia.cadmium.core.commands.ContentUpdateRequest>>(){}).annotatedWith(com.meltmedia.cadmium.core.ConfigurationWorker.class).to(ConfigCoordinatedWorkerImpl.class);
 
         bind(SiteConfigProcessor.class);
         bind(Api.class);
@@ -488,7 +538,7 @@ public class CadmiumListener extends GuiceServletContextListener {
 
         bind(Receiver.class).to(MultiClassReceiver.class).asEagerSingleton();
 
-        Set<Class<?>> modules = reflections.getTypesAnnotatedWith(CadmiumModule.class);
+        Set<Class<?>> modules = reflections.getTypesAnnotatedWith(com.meltmedia.cadmium.core.CadmiumModule.class);
         log.debug("Found {} Module classes.", modules.size());
         for(Class<?> module : modules) {
           if(Module.class.isAssignableFrom(module)) {	  	
@@ -502,6 +552,10 @@ public class CadmiumListener extends GuiceServletContextListener {
             }  	
           }	  	
         }
+
+        //Discover configuration classes.
+        install(new ConfigurationModule(reflections));
+
         // Bind Jersey Endpoints
         Set<Class<? extends Object>> jerseySet = 
             reflections.getTypesAnnotatedWith(Path.class);

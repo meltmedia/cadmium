@@ -17,8 +17,10 @@ package com.meltmedia.cadmium.servlets.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import com.meltmedia.cadmium.core.CadmiumModule;
-import com.meltmedia.cadmium.core.config.*;
+import com.meltmedia.cadmium.core.config.CadmiumConfig;
+import com.meltmedia.cadmium.core.config.ConfigurationClass;
+import com.meltmedia.cadmium.core.config.ConfigurationParser;
+import com.meltmedia.cadmium.core.config.ConfigurationParserClass;
 import com.meltmedia.cadmium.core.config.impl.YamlConfigurationParser;
 import com.meltmedia.cadmium.servlets.jersey.AuthorizationCache;
 import org.reflections.Reflections;
@@ -28,20 +30,24 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 
 /**
- * Binds all {@link ConfigurationParser} related classes in Guice.
+ * Binds all {@link  ConfigurationParser} related classes in Guice.
  * 
  * @author John McEntire
  *
  */
-@CadmiumModule
 public class ConfigurationModule extends AbstractModule {
   private final Logger log = LoggerFactory.getLogger(getClass());
+
+  private Reflections reflections;
+
+  public ConfigurationModule(Reflections reflections) {
+    this.reflections = reflections;
+  }
 
   @SuppressWarnings("rawtypes")
   @Override
   protected void configure() {
     Multibinder<Class> configurationClassBinder = Multibinder.newSetBinder(binder(), Class.class, ConfigurationClass.class);
-    Reflections reflections = new Reflections("com.meltmedia.cadmium");
     Set<Class<?>> configClasses = reflections.getTypesAnnotatedWith(CadmiumConfig.class);
     log.debug("Found {} configuration classes", configClasses.size());
     for(Class<?> configClass : configClasses) {
@@ -51,9 +57,9 @@ public class ConfigurationModule extends AbstractModule {
     
     bind(Class.class).annotatedWith(ConfigurationParserClass.class).toInstance(YamlConfigurationParser.class);
     
-    bind(ConfigurationParser.class).toProvider(ConfigurationParserProvider.class);
+    bind(com.meltmedia.cadmium.core.config.ConfigurationParser.class).toProvider(com.meltmedia.cadmium.core.config.ConfigurationParserProvider.class);
     
-    bind(ConfigurationParserFactory.class);
+    bind(com.meltmedia.cadmium.core.config.ConfigurationParserFactory.class);
 
     bind(AuthorizationCache.class);
   }
