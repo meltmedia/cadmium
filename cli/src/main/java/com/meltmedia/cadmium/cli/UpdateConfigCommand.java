@@ -15,19 +15,16 @@
  */
 package com.meltmedia.cadmium.cli;
 
-import java.io.IOException;
-import java.util.List;
-
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
+import com.meltmedia.cadmium.status.Status;
 import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.meltmedia.cadmium.core.FileSystemManager;
-import com.meltmedia.cadmium.core.api.UpdateRequest;
-import com.meltmedia.cadmium.core.git.GitService;
-import com.meltmedia.cadmium.status.Status;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Sends a raw update config command to a Cadmium site.
@@ -63,7 +60,7 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
 
     String siteUrl = getSecureBaseUrl(site.get(0));
 
-    GitService gitValidation = null;
+    //GitService gitValidation = null;
     try {
 
       if(!UpdateCommand.isValidBranchName(branch, UpdateRequest.CONFIG_BRANCH_PREFIX)) {
@@ -111,43 +108,43 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
         System.out.println("The config for site [" + siteUrl  + "] is already on repo [" + repo + "] branch [" + branch + "] and revision [" + revision  + "].");
       }
       else {    
-        if(repo != null) {
+        /*if(repo != null) {
           siteStatus.setRepo(repo);
           siteStatus.setBranch(null);
           siteStatus.setRevision(null);
-        }
-        if(repo == null) {
+        }*/
+        /*if(repo == null) {
           repo = siteStatus.getRepo();
           siteStatus.setRepo(siteStatus.getConfigRepo());
           siteStatus.setBranch(siteStatus.getConfigBranch());
           siteStatus.setRevision(siteStatus.getConfigRevision());
-        }
-        gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
+        }*/
+        //gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
         String newBranch = null;
         String rev = null;
 
-        if(branch == null || branch.length() == 0) {
+        /*if(branch == null || branch.length() == 0) {
           gitValidation.switchBranch(siteStatus.getConfigBranch());
-        }
+        }*/
         if(branch != null) {
-          if(gitValidation.isBranch(branch)) {
-            newBranch = branch;
-            gitValidation.switchBranch(branch);
-            log.debug("branch being added = {}", branch);
-          } else {
-            System.err.println("The branch ["+branch+"] does not exist.");
-            throw new Exception("");
-          }
+          //if(gitValidation.isBranch(branch)) {
+          newBranch = branch;
+          //  gitValidation.switchBranch(branch);
+          log.debug("branch being added = {}", branch);
+          //} else {
+          //  System.err.println("The branch ["+branch+"] does not exist.");
+          //  throw new Exception("");
+          //}
         }
 
         if(revision != null) {
-          if(gitValidation.checkRevision(revision)){
-            rev = revision;
-            log.debug("revision being added = {}", revision);
-          } else {  
-            System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
-            throw new Exception("");
-          }
+          //if(gitValidation.checkRevision(revision)){
+          rev = revision;
+          log.debug("revision being added = {}", revision);
+          //} else {
+          //  System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
+          //  throw new Exception("");
+          //}
         } 
 
         if(UpdateCommand.sendUpdateMessage(siteUrl, repo, newBranch, rev, message, token, UPDATE_CONFIG_ENDPOINT, UpdateRequest.CONFIG_BRANCH_PREFIX)){
@@ -160,14 +157,14 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
     catch (Exception e) {
 
       System.err.println("Failed to updated site [" + siteUrl  + "] to repo [" + repo + "] branch [" + branch  + "] and revision [" + revision  + "].");
-    } finally {
+    } /* finally {
       if(gitValidation != null) {
         try {
           FileSystemManager.deleteDeep(gitValidation.getBaseDirectory());
         } catch (Exception e) {
         }
       }
-    }
+    }*/
 
   }
 

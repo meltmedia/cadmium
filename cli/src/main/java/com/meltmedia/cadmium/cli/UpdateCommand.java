@@ -15,11 +15,12 @@
  */
 package com.meltmedia.cadmium.cli;
 
-import java.io.IOException;
-import java.util.List;
-
-import javax.ws.rs.core.MediaType;
-
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.google.gson.Gson;
+import com.meltmedia.cadmium.core.api.BasicApiResponse;
+import com.meltmedia.cadmium.core.api.UpdateRequest;
+import com.meltmedia.cadmium.status.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -32,14 +33,9 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.google.gson.Gson;
-import com.meltmedia.cadmium.core.FileSystemManager;
-import com.meltmedia.cadmium.core.api.BasicApiResponse;
-import com.meltmedia.cadmium.core.api.UpdateRequest;
-import com.meltmedia.cadmium.core.git.GitService;
-import com.meltmedia.cadmium.status.Status;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Sends a raw update command to a Cadmium site.
@@ -61,8 +57,8 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	@Parameter(names={"--branch", "-b"}, description="The branch that you are updating to", required=false)
 	private String branch;
 	
-	@Parameter(names={"--tag", "-t"}, description="The tag that you are updating to - should not be used with a branch or with a revision", required=false)
-	private String tag;
+	/*@Parameter(names={"--tag", "-t"}, description="The tag that you are updating to - should not be used with a branch or with a revision", required=false)
+	private String tag;*/
 
 	@Parameter(names={"--revision", "-r"}, description="The revision that you are updating to", required=false)
 	private String revision;
@@ -80,7 +76,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	public void execute() throws ClientProtocolException, IOException {
 	  
 		String siteUrl = getSecureBaseUrl(site.get(0));
-    GitService gitValidation = null;
+    //GitService gitValidation = null;
 		try {
 
       if(!isValidBranchName(branch, UpdateRequest.CONTENT_BRANCH_PREFIX)) {
@@ -94,10 +90,10 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 			boolean branchSame = false;
 			boolean revisionSame = false;
 			boolean forceUpdate = force;
-			boolean isTagAlone = false;
+			//boolean isTagAlone = false;
 			
 			//if tag is NOT null and either the branch or the revision are NOT null, error out, else continue
-			if(tag != null && branch == null && revision == null) {
+			/*if(tag != null && branch == null && revision == null) {
 				
 				log.debug("Tag was specified by itself.");
 				isTagAlone = true;
@@ -107,7 +103,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 				System.err.println("Tag was either specified with a branch or a revision.");
 				System.err.println("Please specify a tag without branch or revision.");
 				System.exit(1);
-			}
+			}*/
 			
 			String currentRepo = siteStatus.getRepo();
 			String currentRevision = siteStatus.getRevision();
@@ -141,19 +137,19 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 				System.out.println("The site [" + siteUrl  + "] is already on repo [" + repo + "] branch [" + branch + "] and revision [" + revision  + "].");
 			}
 			else {		
-			  if(repo != null) {
+			  /*if(repo != null) {
 			    siteStatus.setRepo(repo);
 			    siteStatus.setBranch(null);
 			    siteStatus.setRevision(null);
-			  }
-			  if(repo == null) {
+			  }*/
+			  /*if(repo == null) {
 			    repo = siteStatus.getRepo();
-			  }
-				gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
+			  }*/
+				//gitValidation = CloneCommand.cloneSiteRepo(siteStatus);
 				String newBranch = null;
 				String rev = null;
 				//check to see if tag was specified without branch or revision
-				if(isTagAlone) {
+				/*if(isTagAlone) {
 					if(gitValidation.isTag(tag)){
 					  newBranch = tag;
   					log.debug("tag being added = {}", tag);
@@ -162,30 +158,30 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
             throw new Exception("");
 					}
 				}
-				else {
-				  if(branch == null || branch.length() == 0) {
+				else {*/
+				  /*if(branch == null || branch.length() == 0) {
             gitValidation.switchBranch(siteStatus.getBranch());
-          }
+          }*/
 					if(branch != null) {
-						if(gitValidation.isBranch(branch)) {
-						  newBranch = branch;
-						  gitValidation.switchBranch(branch);
-  						log.debug("branch being added = {}", branch);
-						} else {
-						  System.err.println("The branch ["+branch+"] does not exist.");
-						  throw new Exception("");
-						}
+						//if(gitValidation.isBranch(branch)) {
+						newBranch = branch;
+						//  gitValidation.switchBranch(branch);
+  				  log.debug("branch being added = {}", branch);
+						//} else {
+						//  System.err.println("The branch ["+branch+"] does not exist.");
+						//  throw new Exception("");
+						//}
 					}
 					
 					if(revision != null) {
-					  if(gitValidation.checkRevision(revision)){
-					    rev = revision;
-  						log.debug("revision being added = {}", revision);
-					  } else {  
-					    System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
-              throw new Exception("");
-					  }
-					}					
+					  //if(gitValidation.checkRevision(revision)){
+					  rev = revision;
+  					log.debug("revision being added = {}", revision);
+					  //} else {
+					  //  System.err.println("Revision ["+revision+"] does not exist on the branch ["+gitValidation.getBranchName()+"]");
+            //  throw new Exception("");
+					  //}
+					//}
 				}
 				
 				if(sendUpdateMessage(siteUrl, repo, newBranch, rev, message, token)){
@@ -197,15 +193,15 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 		} 
 		catch (Exception e) {
 
-			System.err.println("Failed to updated site [" + siteUrl  + "] to repo [" + repo + "] branch [" + branch  + "] and revision [" + revision  + "], or tag [" + tag + "].");
-		} finally {
+			System.err.println("Failed to updated site [" + siteUrl  + "] to repo [" + repo + "] branch [" + branch  + "] and revision [" + revision  + "].");
+		} /*finally {
       if(gitValidation != null) {
         try {
           FileSystemManager.deleteDeep(gitValidation.getBaseDirectory());
         } catch (Exception e) {
         }
       }
-		}
+		}*/
 
 	}
 
