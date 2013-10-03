@@ -31,7 +31,11 @@ import javax.inject.Singleton;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * JBoss 7 rest management API client.
@@ -271,7 +275,9 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
     return vHosts;
   }
 
-  public Boolean isWarDeployed(String warName) {
+  public Boolean isWarDeployed(String warName) throws com.meltmedia.cadmium.deployer.NoDeploymentFoundException
+
+  {
     Boolean isEnabled = null;
 
     //Build request
@@ -291,7 +297,7 @@ public class JBossAdminApi implements ConfigurationListener<JBossManagementConfi
         isEnabled = (Boolean) result.get("enabled");
       }
     } catch (Exception e) {
-      isEnabled = false;
+      throw new com.meltmedia.cadmium.deployer.NoDeploymentFoundException();
     }
 
     return isEnabled;
