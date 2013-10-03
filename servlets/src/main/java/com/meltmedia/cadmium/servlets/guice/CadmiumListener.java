@@ -329,6 +329,7 @@ public class CadmiumListener extends GuiceServletContextListener {
         this.channelConfigUrl = fileUrl.toString();
       }
     }
+    Vfs.addDefaultURLTypes(new JBossVfsUrlType());
     reflections = Reflections.collect();
     Module modules[] = new Module[] {createServletModule(), createModule()};
     InternalInjectorCreator guiceCreator = new InternalInjectorCreator()
@@ -373,9 +374,6 @@ public class CadmiumListener extends GuiceServletContextListener {
     return new ServletModule() {
       @Override
       protected void configureServlets() {
-        Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        /*Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
-            new TypeAnnotationsScanner());*/
         Map<String, String> maintParams = new HashMap<String, String>();
         maintParams.put("ignorePrefix", "/system");
         Map<String, String> aclParams = new HashMap<String, String>();
@@ -423,11 +421,6 @@ public class CadmiumListener extends GuiceServletContextListener {
       @SuppressWarnings("unchecked")
       @Override
       protected void configure() {
-        Vfs.addDefaultURLTypes(new JBossVfsUrlType());
-        /*Reflections reflections = Reflections.collect();/*new Reflections("com.meltmedia.cadmium",
-            new TypeAnnotationsScanner(), 
-            new SubTypesScanner(),
-            new MethodAnnotationsScanner());*/
         Properties configProperties = configManager.getDefaultProperties();
         
         org.apache.shiro.web.env.WebEnvironment shiroEnv = (org.apache.shiro.web.env.WebEnvironment) context.getAttribute(EnvironmentLoader.ENVIRONMENT_ATTRIBUTE_KEY);
