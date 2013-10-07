@@ -30,6 +30,10 @@ cd $( dirname "${BASH_SOURCE[0]}" )
 
 ./install-jboss.sh "${JBOSS_DIST}" "init-jboss.sh"
 
+./install-modules.sh
+
+./install-configuration-repo.sh
+
 ./setup-loggly.sh
 
 ./install-shiro.sh

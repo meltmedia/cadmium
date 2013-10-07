@@ -12,13 +12,6 @@ if [ -e key.pub ]; then
   fi
 fi
 
-if !(type git > /dev/null 2> /dev/null); then
-  sudo apt-get install -y git
-fi
-
-git config --global user.name "${USERNAME}"
-git config --global user.email "${USERNAME}.localhost"
-
 if [ ! -e ../deployer-config.git ]; then
   mkdir ../deployer-config.git
   pushd ../deployer-config.git
