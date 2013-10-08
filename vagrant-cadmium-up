@@ -179,3 +179,7 @@ fi
 cadmium init-war ${INIT_WAR_CMD}
 
 vagrant up
+
+if [ -e out ]; then
+  cadmium commit -m "Committing content..." out http://cadmium.localhost
+fi
