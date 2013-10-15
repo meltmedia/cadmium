@@ -48,5 +48,5 @@ for MOD in ${APACHE2_MODS}; do
   	echo "Enabling module ${MOD}."
   fi
 done
-echo "Reloading apache2 configuraion"
+echo "Reloading apache2 configuration"
 sudo service apache2 reload

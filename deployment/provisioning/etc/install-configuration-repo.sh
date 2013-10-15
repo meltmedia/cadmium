@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-if [ -e config ]; then
+if [ -e config ] || [ -e content ]; then
   CONFIG_DIR="$(pwd)/config"
+  CONTENT_DIR="$(pwd)/content"
   USER_HOME=$(eval echo ~${USERNAME})
   mkdir -p "${USER_HOME}/git-repo.git"
   
@@ -21,13 +22,20 @@ if [ -e config ]; then
   git push -u origin master
 
   git checkout -b cfg-master
-  cp -r ${CONFIG_DIR}/* .
-  git add -A
-  git commit -m "Initial configuration"
+  if [ -e ${CONFIG_DIR} ]; then
+    cp -r ${CONFIG_DIR}/* .
+    git add -A
+    git commit -m "Initial configuration"
+  fi
   git push -u origin cfg-master
 
   git checkout master
   git checkout -b cd-master
+  if [ -e ${CONTENT_DIR} ]; then
+    cp -r ${CONTENT_DIR}/* .
+    git add -A
+    git commit -m "Initial content"
+  fi
   git push -u origin cd-master
 
   popd > /dev/null 2> /dev/null
