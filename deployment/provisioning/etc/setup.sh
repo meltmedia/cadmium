@@ -26,6 +26,13 @@ cd $( dirname "${BASH_SOURCE[0]}" )
 
 ./install-dependencies.sh
 
+if [ -e pre-provision ]; then
+  SCRIPTS=$(ls pre-provision)
+  for SCRIPT in $SCRIPTS; do
+    . pre-provision/$SCRIPT
+  done
+fi
+
 ./download-jboss.sh "${JBOSS_URL}"
 
 ./install-jboss.sh "${JBOSS_DIST}" "init-jboss.sh"
@@ -51,6 +58,13 @@ cd $( dirname "${BASH_SOURCE[0]}" )
 ./start-jboss.sh
 
 ./deploy-war.sh
+
+if [ -e post-provision ]; then
+  SCRIPTS=$(ls post-provision)
+  for SCRIPT in $SCRIPTS; do
+    . post-provision/$SCRIPT
+  done
+fi
 
 set +e
 echo "Done"

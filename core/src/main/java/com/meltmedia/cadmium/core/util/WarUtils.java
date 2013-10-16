@@ -21,7 +21,6 @@ import com.meltmedia.cadmium.core.WarInfo;
 import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jgit.util.StringUtils;
 import org.slf4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -31,15 +30,31 @@ import org.w3c.dom.NodeList;
 import javax.servlet.ServletContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -463,16 +478,18 @@ public class WarUtils {
     Properties cadmiumProps = new Properties();
     cadmiumProps.load(inZip.getInputStream(cadmiumPropertiesEntry));
 
-    if (repoUri != null) {
+    if (org.apache.commons.lang3.StringUtils.isNotBlank(repoUri)) {
       cadmiumProps.setProperty("com.meltmedia.cadmium.git.uri", repoUri);
     }
     if (branch != null) {
       cadmiumProps.setProperty("com.meltmedia.cadmium.branch", branch);
     }
 
-    if (!StringUtils.isEmptyOrNull(configRepoUri) && !configRepoUri.equals(repoUri)) {
+    if (org.apache.commons.lang3.StringUtils.isNotBlank(configRepoUri) && !org.apache.commons.lang3.StringUtils.equals(configRepoUri, cadmiumProps.getProperty("com.meltmedia.cadmium.git.uri"))) {
       cadmiumProps.setProperty("com.meltmedia.cadmium.config.git.uri", configRepoUri);
-    } 
+    } else if(org.apache.commons.lang3.StringUtils.equals(configRepoUri, cadmiumProps.getProperty("com.meltmedia.cadmium.git.uri"))) {
+      cadmiumProps.remove("com.meltmedia.cadmium.config.git.uri");
+    }
     if (configBranch != null) {
       cadmiumProps.setProperty("com.meltmedia.cadmium.config.branch", configBranch);
     }
