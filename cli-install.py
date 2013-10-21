@@ -42,44 +42,63 @@ java -jar $newest_jar "$@"
 """
 
 cadmium_commit = """#! /usr/bin/env python
-import os, os.path, sys, subprocess, shutil, re
+import os
+import sys
+import subprocess
+import shutil
+import re
+import argparse
+
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument("message", help="Message for deployment history")
+arg_parser.add_argument("url", help="URL to deploy to")
+arg_parser.add_argument("-d", "--directory", help="Overrides the directory to deploy [Default out]")
+arg_parser.add_argument("-i", "--no_generate", help="Don't generate content just deploy", action="store_true")
+
+args = arg_parser.parse_args()
 
 if not os.path.exists(os.path.expanduser('~/.cadmium/bin/cadmium')):
   print "Please run `cli-install.py` before running `cake deploy`"
   sys.exit(1)
 
-if len(sys.argv) != 3:
-  print "Please specify a \\"commit message\\" and a site url to deploy to.\\nUSAGE cadmium-deploy <message> <url>"
+out_dir='out'
+if args.directory:
+  out_dir=args.directory
+
+if args.no_generate and not os.path.exists(out_dir):
+  print "No directory named [" + out_dir + "] exits! Please create one."
   sys.exit(1)
 
 bamboo_build = False
-return_code = subprocess.call(['git','fetch'])
+return_code = subprocess.call(['git', 'fetch'])
 if return_code == 128:
   bamboo_build = True
 
-if not bamboo_build:  
-  git_status = subprocess.check_output(['git','status','--short','--branch'])
-  status_lines = re.split('\\n',git_status)
+if not bamboo_build:
+  git_status = subprocess.check_output(['git', 'status', '--short', '--branch'])
+  status_lines = re.split('\\n', git_status)
   num_lines = len(status_lines) - 1
-  if num_lines > 0 and re.search(\"^##\", status_lines[0]):
+  if num_lines > 0 and re.search("^##", status_lines[0]):
     num_lines = num_lines - 1
 
   for x in status_lines[:]:
-    if re.search(r\"^\\?\", x) or re.search(r\"^\\!\", x):
+    if re.search(r"^\\?", x) or re.search(r"^\\!", x):
       num_lines = num_lines - 1
 
-  pattern = re.compile(r\"^##.*\[((?:(?:ahead)|(?:behind)) \d+)\]$\")
+  pattern = re.compile(r"^##.*\\[((?:(?:ahead)|(?:behind)) \\d+)\\]$")
   if pattern.search(status_lines[0]):
-    print \"Your local is out of sync with origin: [\" + pattern.match(status_lines[0]).group(1) + \"]\"
+    print "Your local is out of sync with origin: [" + pattern.match(status_lines[0]).group(1) + "]"
     sys.exit(1)
 
   if num_lines > 0:
-    print \"Please commit and push your changes.\"
+    print "Please commit and push your changes."
     sys.exit(1)
 
-  print \"Attempting to update cadmium dependencies. If an update is available this may take a while.\"
+  print "Attempting to update cadmium dependencies. If an update is available this may take a while."
 
-  subprocess.call(['mvn', '-q', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get', '-Dartifact=com.meltmedia.cadmium:cadmium-cli:LATEST:jar', '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
+  subprocess.call(['mvn', '-q', 'org.apache.maven.plugins:maven-dependency-plugin:2.4:get',
+                   '-Dartifact=com.meltmedia.cadmium:cadmium-cli:LATEST:jar',
+                   '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
 
 message = sys.argv[1]
 url = sys.argv[2]
@@ -92,45 +111,45 @@ try:
   source_branch = subprocess.check_output(['git', 'symbolic-ref', 'HEAD']).strip().split('/')
   if len(source_branch) > 1:
     source_branch = source_branch[len(source_branch) - 1]
-  
+
   source = "{\\"repo\\":\\""+source_repo_url+"\\",\\"sha\\":\\""+source_sha+"\\",\\"branch\\":\\""+source_branch+"\\"}"
 
-  if os.path.exists('out'):
-    shutil.move('out', 'out-old')
+  if not args.no_generate:
+    if os.path.exists(out_dir):
+      shutil.move(out_dir, out_dir+'-old')
+    status = subprocess.call(['./node_modules/.bin/docpad', 'generate', '--env=production'])
+    if status != 0:
+      sys.exit(1)
 
-  status = subprocess.call(['./node_modules/.bin/docpad', 'generate', '--env=production'])
-  if status != 0:
-    sys.exit(1)
+  if not os.path.exists(out_dir+'/META-INF'):
+    os.mkdir(out_dir+'/META-INF')
 
-  if not os.path.exists('out/META-INF'):
-    os.mkdir('out/META-INF')
+  if os.path.exists(out_dir+'/META-INF/source'):
+    os.remove(out_dir+'/META-INF/source')
 
-  if os.path.exists('out/META-INF/source'):
-    os.remove('out/META-INF/source')
-
-  fd = open('out/META-INF/source', 'w')
+  fd = open(out_dir+'/META-INF/source', 'w')
   try:
     fd.write(source)
     fd.flush()
   finally:
     fd.close()
 
-  status = subprocess.call(['cadmium', 'validate', 'out'])
+  status = subprocess.call(['cadmium', 'validate', out_dir])
   if status != 0:
     sys.exit(1)
 
-  status = subprocess.call(['cadmium', 'commit', '--quiet-auth', '-m', '"'+message+'"', 'out', url])
+  status = subprocess.call(['cadmium', 'commit', '--quiet-auth', '-m', '"'+message+'"', out_dir, url])
   if status != 0:
     sys.exit(1)
 
 except subprocess.CalledProcessError:
   print "Please run this command from within a git repository."
 finally:
-  if os.path.exists('out-old'):
-    if os.path.exists('out'):
-      shutil.rmtree('out')
-    shutil.move('out-old', 'out')
-
+  if not args.no_generate:
+    if os.path.exists(out_dir+'-old'):
+      if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+      shutil.move(out_dir+'-old', out_dir)
 """
 
 user_dir = os.path.expanduser('~/.cadmium')
