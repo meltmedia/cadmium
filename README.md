@@ -3,6 +3,19 @@ Cadmium - Getting Started Guide
 
 This site is staticly generated using DocPad and deployed into a Cadmium instance.
 
+Make sure you are on node `v0.8.25`. This is a requirement for the project, due to the older version of DocPad that it runs.
+If you are on different version, [nvm](https://github.com/creationix/nvm) helps with managing different versions of node.
+
+```
+nvm install 0.8.25
+```
+
+If you already have 0.8.25 installed:
+
+```
+nvm use 0.8.25
+```
+
 ## Usage
 
 - `cake prepare`: To prepare the site to run for the first time 
