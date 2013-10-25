@@ -100,8 +100,8 @@ if not bamboo_build:
                    '-Dartifact=com.meltmedia.cadmium:cadmium-cli:LATEST:jar',
                    '-Ddest=' + os.path.expanduser('~/.cadmium/cadmium-cli.jar'), '-Dtransitive=false'])
 
-message = sys.argv[1]
-url = sys.argv[2]
+message = args.message
+url = args.url
 
 try:
   source_repo_url = "bamboo"
