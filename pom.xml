@@ -78,6 +78,12 @@
         <artifactId>cadmium-copyright</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.meltmedia.cadmium</groupId>
+        <artifactId>cadmium-executable-war</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
 
       <dependency>
         <groupId>org.eclipse.jgit</groupId>
@@ -421,6 +427,33 @@
         <version>2.1.7.GA</version>
         <scope>provided</scope>
       </dependency>
+
+      <!-- Jetty -->
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>9.0.6.v20130930</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-webapp</artifactId>
+        <version>9.0.6.v20130930</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-jndi</artifactId>
+        <version>9.0.6.v20130930</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-plus</artifactId>
+        <version>9.0.6.v20130930</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-dbcp</groupId>
+        <artifactId>commons-dbcp</artifactId>
+        <version>1.4</version>
+      </dependency>
       
     </dependencies>
   </dependencyManagement>
@@ -437,6 +470,7 @@
     <module>search-suggest</module>
     <module>persistence</module>
     <module>copyright</module>
+    <module>executable-war</module>
     <module>war</module>
     <module>pdf-concatenate</module>
     <module>deployment</module>
