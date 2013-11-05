@@ -432,22 +432,22 @@
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
-        <version>9.0.6.v20130930</version>
+        <version>8.1.13.v20130916</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-webapp</artifactId>
-        <version>9.0.6.v20130930</version>
+        <version>8.1.13.v20130916</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-jndi</artifactId>
-        <version>9.0.6.v20130930</version>
+        <version>8.1.13.v20130916</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-plus</artifactId>
-        <version>9.0.6.v20130930</version>
+        <version>8.1.13.v20130916</version>
       </dependency>
       <dependency>
         <groupId>commons-dbcp</groupId>
