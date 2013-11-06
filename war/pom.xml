@@ -41,8 +41,9 @@
             </goals>
             <configuration>
               <includeScope>provided</includeScope>
-              <includeGroupIds>com.meltmedia.cadmium</includeGroupIds>
-              <includeArtifactIds>cadmium-executable-war</includeArtifactIds>
+              <excludeGroupIds>stax</excludeGroupIds>
+              <excludeArtifactIds>stax-api,cadmium-core</excludeArtifactIds>
+              <excludes>META-INF/*.SF,META-INF/*.DSA,META-INF/*.RSA</excludes>
               <outputDirectory>${project.build.directory}/${project.build.finalName}</outputDirectory>
               <includes>**/*</includes>
             </configuration>
@@ -140,22 +141,32 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-webapp</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-jndi</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-plus</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-util</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
+      <scope>provided</scope>
     </dependency>
- </dependencies>
+  </dependencies>
 </project>
