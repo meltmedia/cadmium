@@ -42,7 +42,7 @@
             <configuration>
               <includeScope>provided</includeScope>
               <excludeGroupIds>stax</excludeGroupIds>
-              <excludeArtifactIds>stax-api,cadmium-core</excludeArtifactIds>
+              <excludeArtifactIds>stax-api,cadmium-core,xml-apis,jaxb-impl,jaxb-api,activation,java-mail-glassfish</excludeArtifactIds>
               <excludes>META-INF/*.SF,META-INF/*.DSA,META-INF/*.RSA</excludes>
               <outputDirectory>${project.build.directory}/${project.build.finalName}</outputDirectory>
               <includes>**/*</includes>
@@ -136,36 +136,6 @@
     <dependency>
       <groupId>com.meltmedia.cadmium</groupId>
       <artifactId>cadmium-executable-war</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-webapp</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-jndi</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-plus</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-util</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-dbcp</groupId>
-      <artifactId>commons-dbcp</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>
