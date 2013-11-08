@@ -15,29 +15,28 @@
  */
 package com.meltmedia.cadmium.persistence;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Properties;
-
-import javax.inject.Inject;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.persistence.EntityManagerFactory;
-
-import org.hsqldb.jdbc.JDBCDataSource;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.persist.PersistService;
+import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.reflections.Reflections;
+
+import javax.inject.Inject;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.persistence.EntityManagerFactory;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Properties;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * Test for JPA Persistence in Guice module.
@@ -56,6 +55,7 @@ public class CadmiumPersistenceProviderTest {
    */
   @BeforeClass
   public static void setUpClass() throws Exception {
+    CadmiumPersistenceProvider.reflections = new Reflections("com.meltmedia.cadmium");
     // Create initial context
     System.setProperty(Context.INITIAL_CONTEXT_FACTORY,
         "org.apache.naming.java.javaURLContextFactory");

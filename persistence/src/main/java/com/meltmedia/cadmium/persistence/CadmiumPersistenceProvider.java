@@ -15,13 +15,10 @@
  */
 package com.meltmedia.cadmium.persistence;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import org.hibernate.ejb.HibernatePersistence;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManagerFactory;
@@ -33,11 +30,13 @@ import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.persistence.spi.ProviderUtil;
 import javax.sql.DataSource;
-
-import org.hibernate.ejb.HibernatePersistence;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * This is a thin wrapper around org.hibernate.ejb.HibernatePersistence 
@@ -58,14 +57,21 @@ public class CadmiumPersistenceProvider implements PersistenceProvider {
    * The list of entity classes that were dynamically found using Reflections.
    */
   protected List<String> entityClassNames = null;
+
+  protected static Reflections reflections = null;
   
   /**
    * Find all entity classes with Reflections.
    */
   public CadmiumPersistenceProvider() {
     List<String> eClassNames = new ArrayList<String>();
-    
-    Reflections reflections = new Reflections("com.meltmedia.cadmium");
+    Reflections reflections = null;
+    if(this.reflections == null) {
+      reflections = Reflections.collect();
+    } else {
+      reflections = this.reflections;
+    }
+
     Set<Class<?>> entities = reflections.getTypesAnnotatedWith(Entity.class);
     if(entities != null) {
       for(Class<?> entity : entities) {

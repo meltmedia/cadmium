@@ -433,6 +433,8 @@ public class CadmiumListener extends GuiceServletContextListener {
           }
         }
 
+        bind(Reflections.class).toInstance(reflections);
+
         bind(Boolean.class).annotatedWith(com.meltmedia.cadmium.core.ISJBoss.class).toInstance(jboss);
         bind(Boolean.class).annotatedWith(com.meltmedia.cadmium.core.ISOLDJBoss.class).toInstance(oldJBoss);
 
