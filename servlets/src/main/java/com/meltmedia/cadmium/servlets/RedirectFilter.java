@@ -17,6 +17,8 @@ package com.meltmedia.cadmium.servlets;
 
 import com.meltmedia.cadmium.core.meta.Redirect;
 import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +57,14 @@ public class RedirectFilter implements Filter {
         redir = redirect.requestMatches(path, queryString);
         if(redir != null) {
           String redirectTo = redir.getUrlSubstituted();
+          if(StringUtils.isNotBlank(queryString) && !redirectTo.contains("?")) {
+          	
+          	redirectTo += "?" + queryString;
+          	log.debug("adding query string to redirect path: {}", redirectTo);
+          }
           response.setHeader("Location", redirectTo);
           response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+          log.debug("Location response header: {}", redirectTo);
           return;
         }
       } else {
