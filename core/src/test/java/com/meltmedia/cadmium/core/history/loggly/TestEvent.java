@@ -11,7 +11,9 @@ public class TestEvent extends Event {
   private String field2;
   private String type;
 
-  public TestEvent() {}
+  public TestEvent() {
+    super();
+  }
 
   public String getField1() {
     return field1;
