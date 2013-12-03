@@ -1,12 +1,17 @@
 package com.meltmedia.cadmium.servlets.jersey;
 
+import com.meltmedia.cadmium.core.AuthorizationApi;
 import com.meltmedia.cadmium.core.Scheduled;
-import com.meltmedia.cadmium.core.github.ApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -14,19 +19,20 @@ import java.util.concurrent.TimeUnit;
  */
 @Singleton
 public class AuthorizationCache {
-  private final Logger logger = LoggerFactory.getLogger(getClass());
-  private class Cache {
+  protected Logger logger = LoggerFactory.getLogger(getClass());
+  protected static class Cache {
     Map<String, String> usernames = new HashMap<String, String>();
     Map<String, Integer[]> teamIds = new HashMap<String, Integer[]>();
     Map<String, Boolean> authorizations = new HashMap<String, Boolean>();
   }
-  private Cache currentCache;
+  protected Cache currentCache;
+
+  @Inject
+  protected ApiService apiService;
 
   public void checkToken(String token) throws Exception {
     Cache cache = currentCache;
-    if(cache.authorizations.containsKey(token) && !cache.authorizations.get(token)) {
-      throw new Exception("Token has been revoked.");
-    } else if(!cache.authorizations.containsKey(token)){
+    if(!cache.authorizations.containsKey(token) || !cache.authorizations.get(token)){
       String username = fetchUsernameFromGithub(token);
       if(username == null) {
         cache.authorizations.put(token, false);
@@ -65,7 +71,7 @@ public class AuthorizationCache {
 
   private Integer[] fetchTeamIdsFromGithub(String token) {
     try {
-      ApiClient apiClient = new ApiClient(token, false);
+      AuthorizationApi apiClient = apiService.getAuthorizationApi(token);
       String orgs[] = apiClient.getAuthorizedOrgs();
       Set<Integer> teams = new TreeSet<Integer>();
       if(orgs != null) {
@@ -85,7 +91,7 @@ public class AuthorizationCache {
 
   private String fetchUsernameFromGithub(String token) {
     try {
-      ApiClient apiClient = new ApiClient(token, false);
+      AuthorizationApi apiClient = apiService.getAuthorizationApi(token);
       return apiClient.getUserName();
     } catch(Exception e) {
       logger.warn("Failed to get user name.", e);

@@ -17,6 +17,7 @@ package com.meltmedia.cadmium.core.github;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.meltmedia.cadmium.core.AuthorizationApi;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpMessage;
@@ -34,9 +35,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
-public class ApiClient {
+public class ApiClient implements AuthorizationApi {
   private static final Logger log = LoggerFactory.getLogger(ApiClient.class);
   private String token;
   private String username;
@@ -241,13 +246,17 @@ public class ApiClient {
             username = (String) responseObj.get("login");
             return username;
           } else if(responseObj.containsKey("message")) {
+            log.warn("Github user service returned message: {}, {}", responseObj.get("message"), token);
             throw new Exception((String) responseObj.get("message"));
           }
         } else if(response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
           EntityUtils.consume(response.getEntity());
+          log.warn("Github get user service returned unauthorized. {}", token);
           throw new Exception("Unauthorized");
         } else {
           EntityUtils.consume(response.getEntity());
+          log.warn("Github get user service returned with a status of {}, {}", response.getStatusLine().getStatusCode(), token);
+          throw new Exception("Request to github user service failed");
         }
       } finally {
         get.releaseConnection();
@@ -286,9 +295,12 @@ public class ApiClient {
         }
       } else if(response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED){
         EntityUtils.consume(response.getEntity());
+        log.warn("Github rate limit service returned unauthorized. {}", token);
         throw new Exception("Unauthorized!");
       } else {
         EntityUtils.consume(response.getEntity());
+        log.warn("Github rate limit service returned with a status of {}, {}", response.getStatusLine().getStatusCode(), token);
+        throw new Exception("Request to github rate limit service failed");
       }
     } finally {
       get.releaseConnection();
@@ -312,6 +324,8 @@ public class ApiClient {
         }
       } else {
         EntityUtils.consumeQuietly(response.getEntity());
+        log.warn("Github get authorized orgs service returned with a status of {}, {}", response.getStatusLine().getStatusCode(), token);
+        throw new Exception("Request to github authorized orgs service failed");
       }
     } finally {
       get.releaseConnection();
@@ -335,6 +349,8 @@ public class ApiClient {
         }
       } else {
         EntityUtils.consumeQuietly(response.getEntity());
+        log.warn("Github get authorized teams service returned with a status of {}, {}", response.getStatusLine().getStatusCode(), token);
+        throw new Exception("Request to github authorized teams service failed");
       }
     } finally {
       get.releaseConnection();
