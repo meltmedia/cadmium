@@ -22,7 +22,9 @@ import com.meltmedia.cadmium.core.config.ConfigurationClass;
 import com.meltmedia.cadmium.core.config.ConfigurationParser;
 import com.meltmedia.cadmium.core.config.ConfigurationParserClass;
 import com.meltmedia.cadmium.core.config.impl.YamlConfigurationParser;
+import com.meltmedia.cadmium.servlets.jersey.ApiService;
 import com.meltmedia.cadmium.servlets.jersey.AuthorizationCache;
+import com.meltmedia.cadmium.servlets.jersey.github.GithubApiService;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +62,8 @@ public class ConfigurationModule extends AbstractModule {
     bind(com.meltmedia.cadmium.core.config.ConfigurationParser.class).toProvider(com.meltmedia.cadmium.core.config.ConfigurationParserProvider.class);
     
     bind(com.meltmedia.cadmium.core.config.ConfigurationParserFactory.class);
+
+    bind(ApiService.class).to(GithubApiService.class);
 
     bind(AuthorizationCache.class);
   }
