@@ -18,9 +18,12 @@ package com.meltmedia.cadmium.core.util;
 import jodd.jerry.Jerry;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 
@@ -56,10 +59,10 @@ public final class PublicIpUtils {
       jerryParser.getDOMBuilder().setImpliedEndTags(false);
       jerryParser.getDOMBuilder().setIgnoreComments(true);
     }
-    DefaultHttpClient client = new DefaultHttpClient();
-    client.getParams().setParameter(
-        CoreProtocolPNames.USER_AGENT, 
-        "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0");
+    HttpClient client = HttpClients.custom()
+        .setDefaultSocketConfig(SocketConfig.custom().setSoReuseAddress(true).build())
+        .setUserAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0")
+        .build();
     HttpGet get = new HttpGet("http://www.whatismyip.com/");
     
     HttpResponse response = null;
@@ -84,6 +87,17 @@ public final class PublicIpUtils {
       }
     } finally {
       get.releaseConnection();
+      if(response != null) {
+        try {
+          ((CloseableHttpResponse)response).close();
+        } catch(Throwable t){}
+      }
+      if (client != null) {
+        try {
+          ((CloseableHttpClient) client).close();
+        } catch (Throwable t) {
+        }
+      }
     }
     return ipAddress;
   }

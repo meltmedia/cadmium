@@ -68,11 +68,11 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
       System.out.println("Current status for [" + siteUrl +"]"); 
       System.out.println("-----------------------------------------------------");
       System.out.print(
-      		"Environment      => [" + statusObj.getEnvironment() + "]\n" +
-      		"Repo URL         => [" + statusObj.getRepo() + "]\n" +
+      		"Environment      => [" + statusObj.getEnvironment() + "]\n" + ( StringUtils.isNotBlank(statusObj.getRepo()) ?
+      		"Repo URL         => [" + statusObj.getRepo() + "]\n" : "" ) +
       		"Branch           => [" + statusObj.getBranch() + "]\n" +
-      		"Revision         => [" + statusObj.getRevision() + "]\n" +
-          "Config Repo URL  => [" + statusObj.getConfigRepo() + "]\n" +
+      		"Revision         => [" + statusObj.getRevision() + "]\n" + ( StringUtils.isNotBlank(statusObj.getConfigRepo()) ?
+          "Config Repo URL  => [" + statusObj.getConfigRepo() + "]\n" : "" ) +
           "Config Branch    => [" + statusObj.getConfigBranch() + "]\n" +
           "Config Revision  => [" + statusObj.getConfigRevision() + "]\n" +
       		"Content Source   => [\n" + statusObj.getSource() + "]\n" +
@@ -84,39 +84,40 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
       } else {
         System.out.println();
       }
-      
-      System.out.println();
-      System.out.println("Member States:\n");
-      System.out.println("-----------------------------------------------------");
-      for(StatusMember member : members) {
-      	System.out.println(
-      	    "   External IP     : [" + member.getExternalIp() +"]\n" +
-      			"   Address         : [" + member.getAddress() + "]\n" +
-      			"   Is Coordinator? : [" + member.isCoordinator() + "]\n" +
-      			"   State           : [" + member.getState() + "]\n" +
-            "   Config State    : [" + member.getConfigState() + "]\n" +
-      			"   Is Me?          : [" + member.isMine() + "]");
-      	if(member.getWarInfo() != null) {
-        	System.out.println(
-              "   War File Name   : [" + member.getWarInfo().getWarName() + "]\n" +
-        			"   Domain          : [" + member.getWarInfo().getDomain() + "]\n" +
-              "   Context         : [" + member.getWarInfo().getContext() + "]\n" +
-        			"   Content Repo    : [" + member.getWarInfo().getRepo() + "]\n" +
-              "   Content Branch  : [" + member.getWarInfo().getContentBranch() + "]\n" +
-        			"   Config Repo     : [" + member.getWarInfo().getConfigRepo() + "]\n" +
-              "   Config Branch   : [" + member.getWarInfo().getConfigBranch() + "]"
-        	);
-        	if(member.getWarInfo().getArtifacts() != null) {
-        	  System.out.print("   Artifact        : [");
-        	  boolean first = true;
-        	  for(MavenVector mvn : member.getWarInfo().getArtifacts()) {
-        	    System.out.print((!first?", ":"") + mvn.getGroupId()+":"+mvn.getArtifactId()+":war:"+mvn.getVersion());
-        	    first = false;
-        	  }
-        	  System.out.println("]");
-        	}
-      	}
-      	System.out.println();
+      if(members != null) {
+        System.out.println();
+        System.out.println("Member States:\n");
+        System.out.println("-----------------------------------------------------");
+        for(StatusMember member : members) {
+          System.out.println(
+              "   External IP     : [" + member.getExternalIp() +"]\n" +
+              "   Address         : [" + member.getAddress() + "]\n" +
+              "   Is Coordinator? : [" + member.isCoordinator() + "]\n" +
+              "   State           : [" + member.getState() + "]\n" +
+              "   Config State    : [" + member.getConfigState() + "]\n" +
+              "   Is Me?          : [" + member.isMine() + "]");
+          if(member.getWarInfo() != null) {
+            System.out.println(
+                "   War File Name   : [" + member.getWarInfo().getWarName() + "]\n" +
+                "   Domain          : [" + member.getWarInfo().getDomain() + "]\n" +
+                "   Context         : [" + member.getWarInfo().getContext() + "]\n" +
+                "   Content Repo    : [" + member.getWarInfo().getRepo() + "]\n" +
+                "   Content Branch  : [" + member.getWarInfo().getContentBranch() + "]\n" +
+                "   Config Repo     : [" + member.getWarInfo().getConfigRepo() + "]\n" +
+                "   Config Branch   : [" + member.getWarInfo().getConfigBranch() + "]"
+            );
+            if(member.getWarInfo().getArtifacts() != null) {
+              System.out.print("   Artifact        : [");
+              boolean first = true;
+              for(MavenVector mvn : member.getWarInfo().getArtifacts()) {
+                System.out.print((!first?", ":"") + mvn.getGroupId()+":"+mvn.getArtifactId()+":war:"+mvn.getVersion());
+                first = false;
+              }
+              System.out.println("]");
+            }
+          }
+          System.out.println();
+        }
       }
 		} else {
 		  System.out.println("No status returned.");

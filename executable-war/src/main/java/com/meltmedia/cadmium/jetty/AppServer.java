@@ -43,7 +43,7 @@ public class AppServer {
     WarInfo info = WarUtils.getWarInfo(new File(warLocation));
     String contextPath = info != null && StringUtils.isNotBlank(info.getContext())
         ? info.getContext() : null;
-
+    System.out.println("Starting server on port "+port);
     Server server = new Server(port);
 
     setupJNDI(server);

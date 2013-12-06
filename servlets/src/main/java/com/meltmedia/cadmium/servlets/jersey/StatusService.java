@@ -120,12 +120,17 @@ public class StatusService extends AuthorizationService {
 	  }
 	  return builder.toString();
 	}
-	
-	@GET	
+
+	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Status status(@HeaderParam("Authorization") @DefaultValue("no token") String auth) throws Exception {
-	  if(!this.isAuth(auth)) {
-      throw new Exception("Unauthorized!");
+    boolean authorized = false;
+    try {
+      if(this.isAuth(auth)) {
+        authorized = true;
+      }
+    } catch(Throwable t) {
+      logger.warn("Authentication failed for status: "+auth, t);
     }
 		Status returnObj = new Status();
 		String rev = null;
@@ -200,30 +205,51 @@ public class StatusService extends AuthorizationService {
     logger.trace("Source [{}] is from [{}]", source, sourceFile);
 		
 		
-		
-		// Get cluster members' status
-		List<ChannelMember> members = lifecycleService.getPeirStates();
-		
-		if(members != null) {
-			
-			List<StatusMember> peers = new ArrayList<StatusMember>();
-			
-			for(ChannelMember member : members) {
-				
-			  StatusMember peer = new StatusMember();
-				peer.setAddress(member.getAddress().toString());
-				peer.setCoordinator(member.isCoordinator());
-				peer.setState(member.getState());
-				peer.setConfigState(member.getConfigState());
-				peer.setMine(member.isMine());
-				peer.setExternalIp(member.getExternalIp());
-				peer.setWarInfo(member.getWarInfo());
-				peers.add(peer);			
-				
-			}
-			
-			returnObj.setMembers(peers);
-		}
+		if(authorized) {
+      // Get cluster members' status
+      List<ChannelMember> members = lifecycleService.getPeirStates();
+
+      if(members != null) {
+
+        List<StatusMember> peers = new ArrayList<StatusMember>();
+
+        for(ChannelMember member : members) {
+
+          StatusMember peer = new StatusMember();
+          peer.setAddress(member.getAddress().toString());
+          peer.setCoordinator(member.isCoordinator());
+          peer.setState(member.getState());
+          peer.setConfigState(member.getConfigState());
+          peer.setMine(member.isMine());
+          peer.setExternalIp(member.getExternalIp());
+          peer.setWarInfo(member.getWarInfo());
+          peers.add(peer);
+
+        }
+
+        returnObj.setMembers(peers);
+      }
+      returnObj.setContentDir(contentDir);
+      returnObj.setConfigDir(configDir);
+      returnObj.setRepo(repo);
+      returnObj.setConfigRepo(configRepo);
+
+      InputStream in = null;
+      try {
+        in = getClass().getClassLoader().getResourceAsStream("cadmium-version.properties");
+        Properties props = new Properties();
+        props.load(in);
+        if (props.containsKey("version")) {
+          returnObj.setCadmiumVersion(props.getProperty("version"));
+        }
+      } catch (Throwable t) {
+        logger.debug("Failed to get cadmium version.", t);
+      } finally {
+        if (in != null) {
+          IOUtils.closeQuietly(in);
+        }
+      }
+    }
 		
 		// Get environment status 
 		String environFromConfig = System.getProperty("com.meltmedia.cadmium.environment");
@@ -250,32 +276,12 @@ public class StatusService extends AuthorizationService {
 		}
 		
 		returnObj.setGroupName(sender.getGroupName());
-		returnObj.setContentDir(contentDir);
-		returnObj.setConfigDir(configDir);
 		returnObj.setBranch(branch);
-		returnObj.setRevision(rev);		
-		returnObj.setRepo(repo);
+		returnObj.setRevision(rev);
     returnObj.setConfigBranch(configBranch);
-    returnObj.setConfigRevision(configRev);   
-    returnObj.setConfigRepo(configRepo);
+    returnObj.setConfigRevision(configRev);
 		returnObj.setMaintPageState(maintStatus);
 		returnObj.setSource(source);
-
-    InputStream in = null;
-    try {
-      in = getClass().getClassLoader().getResourceAsStream("cadmium-version.properties");
-      Properties props = new Properties();
-      props.load(in);
-      if(props.containsKey("version")) {
-        returnObj.setCadmiumVersion(props.getProperty("version"));
-      }
-    } catch(Throwable t) {
-      logger.debug("Failed to get cadmium version.", t);
-    } finally {
-      if(in != null) {
-        IOUtils.closeQuietly(in);
-      }
-    }
 
 		return returnObj;
 	}
