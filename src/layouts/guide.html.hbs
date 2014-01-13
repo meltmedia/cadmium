@@ -18,7 +18,29 @@
 
     <!-- JAVASCRIPT
     ================================================== -->
-    <!--<script type="text/javascript" charset="utf-8" data-requirecontext="_" data-requiremodule="jquery" src="/lib/jam/jquery/jquery.js"></script>-->
+    <!--<script type="text/javascript" charset="utf-8" data-requirecontext="_" data-requiremodule="jquery" src="/lib/jam/jquery/jquery.js"></script>--> 
+  <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+  <script type="text/javascript">
+
+ 
+
+    window.onload = $(function(){
+
+    var pathname = location.pathname;
+
+    //alert(pathname);
+
+    $('#nav ul li a').each(function() {
+      //alert($(this).attr('href'));      
+
+      if ($(this).attr('href') == pathname) {
+          $(this).addClass('active');
+      }
+    });
+});
+  
+
+</script>
 
     <!-- CSS
     ================================================== -->
@@ -26,7 +48,7 @@
     <link rel="stylesheet" href="css/global.css" />
     {{#each documents.css}}
       <link rel="stylesheet" href="{{contextRoot}}{{this}}" media="screen">
-    {{/each}}
+    {{/each}}   
 
   </head>
 

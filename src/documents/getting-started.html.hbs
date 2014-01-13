@@ -1,0 +1,130 @@
+---
+title: 'Getting Started'
+layout: 'guide'
+---
+
+<h1>Getting Started</h1>
+
+<h2>Prerequisites</h2>
+<ul class="outline">
+  <li>Java</li>
+  <li>github account</li>
+  <li>git CLI</li>
+  <li>python</li>  
+</ul>
+
+<h2>Install CLI</h2>
+<ul class="outline">
+  <li>python <(curl https://raw.github.com/meltmedia/cadmium/master/cli-install.py)</li>   
+</ul>
+
+<h2>Install JBOSS</h2>
+<ul class="outline">
+  <li>
+    Download and unzip preferred version of JBoss
+    <ul>
+      <li>Currently JBoss AS 5.1.0.GA, JBoss EAP 5.0.1, JBoss EAP 6.0.1, and JBoss AS 7.1.1 are known to work with cadmium
+      </li>
+      <li>
+          Download and unzip preferred version of JBoss
+          <ul>
+            <li>Basic cadmium wars should work on other versions of jboss and other java application servers with some exceptions:
+              <ul>
+                <li>The deployer war will not work.</li>
+                <li>The virtual host configuration in the cadmium war will not work.</li>
+              </ul>
+            </li>   
+          </ul>
+      </li>   
+    </ul>
+  </li>   
+  <li>
+    Setup system properties for cadmium. None of them are required but it is recommended that “com.meltmedia.cadmium.contentRoot” and “com.meltmedia.cadmium.environment” are set.
+    <ul>      
+    <br />
+      <li>
+        com.meltmedia.cadmium.contentRoot
+        <ul>      
+         <li>This will set the shared root for all cadmium data including static content and configurations. (Shared content root)</li>
+         <li>If the directory specified does not exist it will be created at runtime if possible.</li>
+         <li>Defaults to the attribute “javax.servlet.context.tempdir” in the ServletContext </li>
+        </ul>
+      </li> 
+      <li>
+        com.meltmedia.cadmium.github.sshKey
+        <ul>      
+         <li>This will override the directory that the github service uses to get the ssh key for pulling content and configurations.</li>
+         <li>The directory will not be created automatically.</li>
+         <li>Defaults to “.ssh” under the shared content root.</li>
+        </ul>
+      </li>  
+      <li>
+        com.meltmedia.cadmium.environment
+        <ul>      
+         <li>This sets the environment name for the cadmium instances. This is mainly use to separate environment clusters with jgroups.</li>
+         <li>This is also used in the team.properties file to determine which team ids to use in authentication on the system api.</li>
+         <li>Defaults to “development”</li>
+        </ul>
+      </li> 
+      <li>
+        com.meltmedia.cadmium.teams.properties
+        <ul>      
+         <li>This overrides the location to look for the “team.properties” file.</li>
+         <li>The “team.properties” file is a java properties file that contains the github team ids that have access to the system api endpoints.</li>
+         <li>Defaults to “team.properties” under the shared content root.</li>
+        </ul>
+      </li> 
+      <li>
+        com.meltmedia.cadmium.jgroups.channel.config
+        <ul>      
+         <li>This set a location to a JGoups config file that will override the default JGroups configuration.</li>
+         <li>There is no default value for this because the default JGroups configuration is bundled into the war.</li>
+        </ul>
+      </li> 
+    </ul>
+  </li>
+  <li>
+    Create shared content root for cadmium
+    <ul>                
+       <li>
+        Create ssh directory and place public and private keys that have access to cadmium app’s content repo in it
+          <ul>      
+           <li>By default the directory should be located in the configured shared content root and be named “.ssh”.</li>
+           </li>
+           <li>The keys must be named “meltmedia-gene-deploy” and “meltmedia-gene-deploy.pub”</li>
+          </ul>
+       </li>
+       <li>Create team.properties file</li>
+       <li>
+        If you want loggly logging create a “loggly.key” file
+          <ul>      
+           <li>The only thing in this file should be the GUID for the loggly input you wish to log to.</li>
+           <li>Only audit history events will be logged.</li>
+          </ul>
+       </li>             
+    </ul>
+  </li>
+  <li>Start JBOSS and deploy war</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

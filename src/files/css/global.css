@@ -161,6 +161,10 @@ Clearfix
   height: 0;
 }
 
+.outline ul li { list-style: circle; }
+.outline ul li li { list-style: square; }
+.outline ul li li li { list-style: disc; }
+
 /*-----------------------------------
 Media Queries
 ------------------------------------*/
