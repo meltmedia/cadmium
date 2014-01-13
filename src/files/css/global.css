@@ -93,12 +93,18 @@ nav {
   width: 30%;
 }
 
-nav ul {
+nav > ul {
   border-left: 2px solid #97bbc4;
   line-height: 18px;
   position: fixed;
   width: 20%;
   min-width: 100px;
+}
+
+nav > ul ul {
+  line-height: 18px;
+  width: 250px;
+  padding-left: 10px;
 }
 
 nav a {

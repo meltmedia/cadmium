@@ -30,13 +30,43 @@
 
     //alert(pathname);
 
-    $('#nav ul li a').each(function() {
+    $('#nav > ul li a').each(function() {
       //alert($(this).attr('href'));      
 
       if ($(this).attr('href') == pathname) {
           $(this).addClass('active');
       }
     });
+
+
+    // populate subNav items 
+    $('.navigatible h3').each(function() {
+      var $this = $(this);
+      var name = $this.text();
+      $this.before($('<a name="' + name + '" />'));
+
+      var navEl = $('nav > ul li a.active').parent();
+
+      if ($('ul', navEl).length == 0) {
+        navEl.append($('<ul><ul/>'));
+      }
+      var secondaryNav = $('ul', navEl);
+      var liEl = $('<li />');
+      secondaryNav.append(liEl)
+      var link = $('<a href="' + location.pathname + '#' + name + '" class="subnav-link">' + name + '</a>');
+      link.click(function () {
+        $('html, body').animate({
+          scrollTop: $('a[name="'+name+'"]').offset().top - 120
+        }, 100);
+        $('.subnav-link').removeClass('active');
+        $(this).addClass('active');
+      });
+      liEl.append(link);
+      //$('#subNav ul').append(
+       // $('<li>').append(
+         // $('<a>').attr('href','/cli#' + name))); 
+    });      
+
 });
   
 
