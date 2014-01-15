@@ -1,0 +1,373 @@
+---
+title: 'CLI'
+layout: 'guide'
+---
+
+<h1>Working with the CLI</h1>
+
+<h2>Commands</h2> 
+<br />
+
+<div class="navigatible" style="padding-left: 20px">
+<h3>cadmium</h3>
+<ul class="outline">
+  <li>Typing "cadmium" without any subcommands or options will simply list all subcommands along with a description of each. Any of them not listed here are deprecated.</li>  
+</ul>
+
+<h3>update</h3>
+<ul class="outline">
+  <li>Updates content to a different revision, branch and/or repo</li>
+  <li>
+    Usage
+    <ul>
+      <li>cadmium update [options] &lt;site&gt;</li>
+      <li>
+      	options:
+        <ul>
+          <li>--branch, -b
+          	<ul>
+          	  <li>The branch that you are updating to.</li>
+          	</ul>
+          </li>
+          <li>--force, -f
+          	<ul>
+          	  <li>Forces the update esp. when the site is already at the revision you wish to update it to.</li>
+          	</ul>
+          </li>
+          <li>--message, -m
+          	<ul>
+          	  <li>Required</li>
+          	  <li>The comment for the update that will be recorded in the history.</li>
+          	</ul>
+          </li>
+          <li>--repo
+          	<ul>
+          	  <li>A git repository ssh url to switch to.</li>
+          	</ul>
+          </li>
+          <li>--revision, -r
+          	<ul>
+          	  <li>A specific revision to switch to.</li>
+          	</ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+      	Example
+      	<ul>
+      	  <li>cadmium update -f -b cd-master site.cd.dev.com -m "adding content"</li>
+      	</ul>
+      </li>
+    </ul>
+  </li>  
+</ul>
+
+<h3>commit</h3>
+<ul class="outline">
+  <li>Commits content from a local source to the branch and repo that a site is serving then updates the site to serve it.</li>
+  <li>
+    Usage
+    <ul>
+      <li>cadmium commit [options] &lt;dir&gt; &lt;site&gt;</li>
+      <li>&lt;dir&gt; is a relative path to the static content to deploy to a cadmium site.</li>
+      <li>&lt;site&gt; is a domain of a cadmium site.</li>
+      <li>
+      	options:
+        <ul>          
+          <li>--message, -m
+          	<ul>
+          	  <li>Required</li>
+          	  <li>The comment for the commit that will be recorded in the history.</li>
+          	</ul>
+          </li>
+          <li>--repo
+          	<ul>
+          	  <li>A git repository ssh url to switch to.</li>
+          	</ul>
+          </li>
+          <li>--revision, -r
+          	<ul>
+          	  <li>A specific revision to switch to.</li>
+          	</ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+      	Example
+      	<ul>
+      	  <li>cadmium commit -m “Deploying new content” ./out/ www.site.com</li>
+      	</ul>
+      </li>
+    </ul>
+  </li>  
+</ul>
+
+<h3>clone</h3>
+<ul class="outline">
+  <li>Updates a target site to serve the same (repo, branch, revision) that the source site serves.</li>
+  <li>
+    Usage
+    <ul>
+      <li>cadmium clone [options] &lt;source-site&gt; &lt;target-site>&gt;</li>
+      <li>&lt;source-site&gt; is a domain of a cadmium site to pull state from.</li>
+      <li>&lt;target-site&gt; is a domain of a cadmium site to update state of.</li>
+      <li>
+      	options:
+        <ul>  
+          <li>--include-config, -c
+	      	<ul>
+	      	  <li>Clone configuration as well as content.</li>
+	      	</ul>
+	      </li>         
+          <li>--message, -m
+          	<ul>
+          	  <li>Required</li>
+          	  <li>The comment for the clone that will be recorded in the history.</li>
+          	</ul>
+          </li>                   
+        </ul>
+      </li>
+      <li>
+      	Example
+      	<ul>
+      	  <li>cadmium clone -m “Promoting from dev” dev.site.com qa.site.com</li>
+      	</ul>
+      </li>
+    </ul>
+  </li>  
+</ul>
+
+<h3>update-config</h3>
+<ul class="outline">
+  <li>Updates configuration to a different revision, branch and/or repo</li>
+  <li>
+    Usage
+    <ul>
+      <li>cadmium update-config [options] &lt;site&gt;</li>
+      <li>&lt;site&gt; is a domain of a cadmium site.</li>
+      <li>
+      	options:
+        <ul>  
+          <li>--branch, -b
+	      	<ul>
+	      	  <li>The branch that you are updating to.</li>
+	      	</ul>
+	      </li>      
+	      <li>--repo
+	      	<ul>
+	      	  <li>A git repository ssh url to switch to.</li>
+	      	</ul>
+	      </li>    
+	      <li>--branch, -b
+	      	<ul>
+	      	  <li>The branch that you are updating to.</li>
+	      	</ul>
+	      </li>    
+	      <li>--revision, -r
+	      	<ul>
+	      	  <li>A specific revision to switch to.</li>
+	      	</ul>
+	      </li>       
+          <li>--message, -m
+          	<ul>
+          	  <li>Required</li>
+          	  <li>The comment for the clone that will be recorded in the history.</li>
+          	</ul>
+          </li>                   
+        </ul>
+      </li>
+      <li>
+      	Example
+      	<ul>
+      	  <li>cadmium update-config -f -b cfg-master www.site.com -m "updating config"</li>
+      	</ul>
+      </li>
+    </ul>
+  </li>  
+</ul>
+
+<h3>history</h3>
+<ul class="outline">
+  <li>Displays history for a given cadmium site.</li>
+  <li>
+    Usage
+    <ul>
+      <li>cadmium history [options] &lt;site>&gt;</li>
+      <li>&lt;site&gt; is a domain of a cadmium site.</li>
+      <li>
+      	options:
+        <ul>  
+          <li>-n
+	      	<ul>
+	      	  <li>Limits the maximum number of the most recent history items displays.</li>
+	      	  <li>Default: 10</li>
+	      	</ul>
+	      </li> 
+	      <li>-r
+	      	<ul>
+	      	  <li>Filters out non revertible history items.</li>
+	      	</ul>
+	      </li>        
+          <li>--message, -m
+          	<ul>
+          	  <li>Required</li>
+          	  <li>The comment for the clone that will be recorded in the history.</li>
+          	</ul>
+          </li>                   
+        </ul>
+      </li>
+      <li>
+      	Example
+      	<ul>
+      	  <li>cadmium history -n 5 -r www.site.com</li>
+      	</ul>
+      </li>
+    </ul>
+  </li>  
+</ul>
+
+<h3>maint</h3>
+<ul class="outline">
+  <li>Displays history for a given cadmium site.</li>
+  <li>
+    Usage
+    <ul>
+      <li>cadmium maint [options] (on|off) &lt;site>&gt;</li>
+      <li>
+      	options:
+        <ul>  
+          <li>on
+	      	<ul>
+	      	  <li>turns on the maintenance page.</li>
+	      	</ul>
+	      </li> 
+	      <li>off
+	      	<ul>
+	      	  <li>turns off the maintenance page.</li>
+	      	</ul>
+	      </li>        
+	      <li>&lt;site&gt; is a domain of a cadmium site.</li>
+          <li>--message, -m
+          	<ul>
+          	  <li>Required</li>
+          	  <li>The comment for the clone that will be recorded in the history.</li>
+          	  <li>Default: toggling maintenance page</li>
+          	</ul>
+          </li>                   
+        </ul>
+      </li>
+      <li>
+      	Example
+      	<ul>
+      	  <li>cadmium maint on www.site.com -m “Turning on maintenance page”</li>
+      	</ul>
+      </li>
+    </ul>
+  </li>  
+</ul>
+
+<h3>war-info</h3>
+<ul class="outline">
+  <li>Inspects war cadmium configuration.</li>
+  <li>
+    Usage
+    <ul>
+      <li>cadmium war-info [options] &lt;warName&gt;</li>
+      <li>&lt;warName&gt; is the name of a deployed war, if a deployer is specified, or the relative path to a war to inspect.</li>
+      <li>
+      	options:
+        <ul>  
+          <li>--deployer-site, -s
+	      	<ul>
+	      	  <li>The domain of a deployer site that deployed the war you wish to inspect remotely.</li>
+	      	</ul>
+	      </li> 	                        
+        </ul>
+      </li>
+      <li>
+      	Examples
+      	<ul>
+      	  <li>cadmium war-info -s deployer.site.com www.site.com.war</li>
+      	  <li>cadmium war-info ./target/site.war</li>
+      	</ul>
+      </li>
+    </ul>
+  </li>  
+</ul>
+
+<h3>init-war</h3>
+<ul class="outline">
+  <li>Initializes a new cadmium war starting with an existing war. This command updates a wars configurations, so any option used to configure the war omitted will result in the existing setting to be kept.
+  </li>
+  <li>
+    Usage
+    <ul>
+      <li>cadmium init-war [options] &lt;new war name&gt;</li>
+      <li>&lt;new war name&gt; is a name to give the newly configured cadmium war. This can be a relative path.</li>
+      <li>
+        options:
+        <ul>  
+          <li>--branch, -b
+          <ul>
+            <li>Initial branch to serve content from.</li>
+          </ul>
+        </li> 
+        <li>-configuration-branch, -C
+          <ul>
+            <li>Initial branch to pull configuration from.</li>
+          </ul>
+        </li> 
+        <li>--configuration-repo, -R
+          <ul>
+            <li>ssh url to a git repository to use for configuration.cd</li>
+            <li>Only use if the configuration will be in a different repository as the static content.</li>
+          </ul>
+        </li> 
+        <li>--context
+          <ul>
+            <li>Sets the context root that this war will bind to.</li>
+            <li>Be careful with this as deploying a cadmium site to a non root path will break some if not all of cadmiums cli.</li>
+          </ul>
+        </li> 
+        <li>--domain
+          <ul>
+            <li>Sets the domain that this war will serve from.</li>
+          </ul>
+        </li> 
+        <li>--repo, -r
+          <ul>
+            <li>ssh url to a git repository to use for static content and configuration if a configuration repo is not specified.</li>
+          </ul>
+        </li> 
+        <li>--secure
+          <ul>
+            <li>Sets up war to be accessed with basic auth.</li>
+            <li>Must be specified with --secureContentRoot</li>
+          </ul>
+        </li> 
+        <li>--secureContentRoot
+          <ul>
+            <li>Sets the path to the shiro.ini file on the server that this war will be deployed to.</li>
+          </ul>
+        </li> 
+        <li>--existingWar
+          <ul>
+            <li>Required</li>
+            <li>A path to an existing cadmium war to update the configuration for.</li>
+          </ul>
+        </li> 
+
+        </ul>
+      </li>
+      <li>
+        Examples
+        <ul>
+          <li>cadmium init-war --existingWar site.war -b cd-master -C cfg-master --domain www.site.com -r git@github.com:org/site.git</li>
+        </ul>
+      </li>
+    </ul>
+  </li>  
+</ul>
+
+
+</div>
