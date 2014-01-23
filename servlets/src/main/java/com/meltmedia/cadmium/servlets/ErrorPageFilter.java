@@ -149,13 +149,13 @@ public class ErrorPageFilter implements Filter {
         sendError(500, null, httpReq, httpRes);
       }
     } catch (IOException ioe) {
-      log.error("Failed in error filter.", ioe);
+      log.trace("Failed in error filter.", ioe);
       throw ioe;
     } catch (ServletException se) {
-      log.error("Failed in error filter.", se);
+      log.trace("Failed in error filter.", se);
       throw se;
     } catch (Throwable t) {
-      log.error("Failed in error filter.", t);
+      log.trace("Failed in error filter.", t);
       throw new ServletException(t);
     }
   }
@@ -188,7 +188,7 @@ public class ErrorPageFilter implements Filter {
           }
 	        for (String fileName : fileNames) {
 	          if ((errorPageIn = contentService.getResourceAsStream(path + fileName)) != null) {
-              log.debug("Found error page for path {} at {}", path, path + fileName);
+              log.trace("Found error page for path {} at {}", path, path + fileName);
 	            break;
             }
 	        }
@@ -205,19 +205,19 @@ public class ErrorPageFilter implements Filter {
         if (errorPageIn == null) {
           for (String fileName : fileNames) {
             if((errorPageIn = ErrorPageFilter.class.getResourceAsStream(fileName)) != null) {
-              log.debug("Found error page at {}", fileName);
+              log.trace("Found error page at {}", fileName);
               break;
             }
             else
               if ((errorPageIn = ErrorPageFilter.class.getResourceAsStream("./"+fileName)) != null) {
-                log.debug("Found error page at {}", "./"+fileName);
+                log.trace("Found error page at {}", "./"+fileName);
                 break;
               }
           }
         }
         
         if( errorPageIn == null ) {
-          log.debug("No error page found.");
+          log.trace("No error page found.");
           if( message == null ) response.sendError(sc);
           else response.sendError(sc, message);
           return;

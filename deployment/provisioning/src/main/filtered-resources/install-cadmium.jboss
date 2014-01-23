@@ -1,0 +1,6 @@
+if (result=="DOMAIN") of :read-attribute(name="launch-type")
+  deploy cadmium-deployer.war --all-server-groups
+else
+  deploy cadmium-deployer.war --disabled
+  /deployment=cadmium-deployer.war:enable
+end-if

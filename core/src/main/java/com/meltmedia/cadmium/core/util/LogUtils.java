@@ -49,6 +49,7 @@ public class LogUtils {
 
   public static final String LOG_DIR_INIT_PARAM = "log-directory";
   public static final String JBOSS_LOG_DIR = "jboss.server.log.dir";
+  public static final String LOG_DIRECTORY_OVERRIDE = "log.directory.override";
   
   /**
    * @return An array of LoggerConfig Objects that represent all configured loggers.
@@ -117,7 +118,7 @@ public class LogUtils {
    */
   public static void configureLogback( ServletContext servletContext, File logDirFallback, String vHostName, Logger log ) throws FileNotFoundException, MalformedURLException, IOException {
     log.debug("Reconfiguring Logback!");
-    String systemLogDir = System.getProperty(JBOSS_LOG_DIR);
+    String systemLogDir = System.getProperty(LOG_DIRECTORY_OVERRIDE, System.getProperty(JBOSS_LOG_DIR));
     if (systemLogDir != null) {
       systemLogDir += "/" + vHostName;
     }

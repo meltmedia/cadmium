@@ -1,0 +1,47 @@
+{
+    "outcome" : "success",
+    "result" : [
+        {
+            "address" : [
+                {
+                    "subsystem" : "web"
+                },
+                {
+                    "virtual-server" : "default-host"
+                }
+            ],
+            "outcome" : "success",
+            "result" : {
+                "access-log" : null,
+                "alias" : ["localhost"],
+                "configuration" : null,
+                "default-web-module" : "ROOT.war",
+                "enable-welcome-root" : true,
+                "name" : "default-host",
+                "rewrite" : null,
+                "sso" : null
+            }
+        },
+        {
+            "address" : [
+                {
+                    "subsystem" : "web"
+                },
+                {
+                    "virtual-server" : "test.cadmium.localhost"
+                }
+            ],
+            "outcome" : "success",
+            "result" : {
+                "access-log" : null,
+                "alias" : null,
+                "configuration" : null,
+                "default-web-module" : "ROOT.war",
+                "enable-welcome-root" : false,
+                "name" : "test.cadmium.localhost",
+                "rewrite" : null,
+                "sso" : null
+            }
+        }
+    ]
+}

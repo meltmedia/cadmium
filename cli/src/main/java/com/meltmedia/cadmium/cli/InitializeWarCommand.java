@@ -15,14 +15,13 @@
  */
 package com.meltmedia.cadmium.cli;
 
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.api.UpdateRequest;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.List;
 
 import static com.meltmedia.cadmium.core.util.WarUtils.updateWar;
 
@@ -95,7 +94,7 @@ public class InitializeWarCommand implements CliCommand {
 	    if(!validRequest) {
 	      System.exit(1);
 	    }
-	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, StringUtils.isBlank(configRepoUri) || configRepoUri.equals(repoUri) ? repoUri : configRepoUri, configBranch, domain, context, secure, null);
+	    updateWar("cadmium-war.war", war, newWarNames, repoUri, branch, configRepoUri, configBranch, domain, context, secure, null);
 		} else {
 			System.err.println("ERROR: \""+war+"\" does not exist or cannot be read.");
 			System.exit(1);

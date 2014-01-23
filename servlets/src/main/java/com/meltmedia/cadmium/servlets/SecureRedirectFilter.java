@@ -141,13 +141,13 @@ public class SecureRedirectFilter implements Filter {
         return;
       }
     } catch (IOException ioe) {
-      log.error("Failed in secure filter.", ioe);
+      log.trace("Failed in secure filter.", ioe);
       throw ioe;
     } catch (ServletException se) {
-      log.error("Failed in secure filter.", se);
+      log.trace("Failed in secure filter.", se);
       throw se;
     } catch (Throwable t) {
-      log.error("Failed in secure filter.", t);
+      log.trace("Failed in secure filter.", t);
       throw new ServletException(t);
     }
   }

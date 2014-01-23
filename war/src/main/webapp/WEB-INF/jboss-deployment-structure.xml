@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.2">
+  <deployment>
+    <exclude-subsystems>
+      <subsystem name="resteasy"/>
+      <subsystem name="jaxrs"/>
+      <subsystem name="webservices"/>
+      <subsystem name="ejb3"/>
+      <subsystem name="ee"/>
+      <subsystem name="infinispan"/>
+      <subsystem name="jacorb"/>
+      <subsystem name="jaxr"/>
+      <subsystem name="jca"/>
+      <subsystem name="jdr"/>
+      <subsystem name="jpa"/>
+      <subsystem name="jsf"/>
+      <subsystem name="jsr77"/>
+      <subsystem name="messaging"/>
+      <subsystem name="jaxr"/>
+      <subsystem name="sar"/>
+      <subsystem name="security"/>
+      <subsystem name="threads"/>
+      <subsystem name="transactions"/>
+      <subsystem name="weld"/>
+      <subsystem name="logging"/>
+      <subsystem name="cmp"/>
+      <subsystem name="jaxr"/>
+      <subsystem name="deployment-scanner" />
+      <subsystem name="bean-deployer"/>
+    </exclude-subsystems>
+    <exclusions>
+      <module name="org.jboss.as.clustering.infinispan"/>
+      <module name="org.jboss.as.cmp"/>
+      <module name="org.jboss.as.connector"/>
+      <module name="org.jboss.as.deployment-scanner"/>
+      <module name="org.jboss.as.ejb3"/>
+      <module name="org.jboss.as.ee"/>
+      <module name="org.jboss.as.jacorb"/>
+      <module name="org.jboss.as.jaxr"/>
+      <module name="org.jboss.as.jaxrs"/>
+      <module name="org.jboss.as.jdr"/>
+      <module name="org.jboss.as.jmx"/>
+      <module name="org.jboss.as.jpa"/>
+      <module name="org.jboss.as.jpa.hibernate"/>
+      <module name="org.jboss.as.jpa.util"/>
+      <module name="org.jboss.as.jpa.spi"/>
+      <module name="org.jboss.as.jsf"/>
+      <module name="org.jboss.as.jsr77"/>
+      <module name="org.jboss.as.logging"/>
+      <module name="org.jboss.as.mail"/>
+      <module name="org.jboss.as.messaging"/>
+      <module name="org.jboss.as.pojo"/>
+      <module name="org.jboss.as.remoting"/>
+      <module name="org.jboss.as.sar"/>
+      <module name="org.jboss.as.security"/>
+      <module name="org.jboss.as.threads"/>
+      <module name="org.jboss.as.transactions"/>
+      <module name="org.jboss.as.webservices"/>
+      <module name="org.jboss.as.weld"/>
+      <module name="org.jboss.resteasy.resteasy-atom-provider"/>
+      <module name="org.jboss.resteasy.resteasy-cdi"/>
+      <module name="org.jboss.resteasy.resteasy-jaxrs"/>
+      <module name="org.jboss.resteasy.resteasy-jaxb-provider"/>
+      <module name="org.jboss.resteasy.resteasy-jackson-provider"/>
+      <module name="org.jboss.resteasy.resteasy-jsapi"/>
+      <module name="org.jboss.resteasy.resteasy-multipart-provider"/>
+      <module name="org.jboss.resteasy.async-http-servlet-30"/>
+      <module name="org.slf4j"/>
+      <module name="org.hibernate"/>
+      <module name="org.hibernate.envers"/>
+      <module name="org.hibernate.commons-annotations"/>
+      <module name="org.hibernate.validator"/>
+      <module name="javax.persistence.api"/>
+      <module name="javaee.api"/>
+      <module name="javax.ejb.api"/>
+      <module name="com.google.guava"/>
+    </exclusions>
+    <dependencies>
+      <system>
+        <paths>
+          <path name="com/sun/org/apache/xerces/internal/dom"/>
+          <path name="com/sun/org/apache/xerces/internal/xni"/>
+          <path name="com/sun/org/apache/xerces/internal/jaxp"/>
+        </paths>
+      </system>
+      <module name="javax.activation.api" export="false"/>
+      <module name="javax.annotation.api" export="false"/>
+      <module name="javax.ejb.api" export="false"/>
+      <module name="javax.el.api" export="false"/>
+      <module name="javax.enterprise.api" export="false"/>
+      <module name="javax.enterprise.deploy.api" export="false"/>
+      <module name="javax.inject.api" export="false"/>
+      <module name="javax.interceptor.api" export="false"/>
+      <module name="javax.jms.api" export="false"/>
+      <module name="javax.jws.api" export="false"/>
+      <module name="javax.mail.api" export="false"/>
+      <module name="javax.management.j2ee.api" export="false"/>
+      <module name="javax.resource.api" export="false"/>
+      <module name="javax.rmi.api" export="false"/>
+      <module name="javax.security.auth.message.api" export="false"/>
+      <module name="javax.security.jacc.api" export="false"/>
+      <module name="javax.servlet.api" export="false"/>
+      <module name="javax.servlet.jsp.api" export="false"/>
+      <module name="javax.transaction.api" export="false"/>
+      <module name="javax.validation.api" export="false"/>
+      <module name="javax.ws.rs.api" export="false"/>
+      <module name="javax.xml.bind.api" export="false"/>
+      <module name="javax.xml.registry.api" export="false"/>
+      <module name="javax.xml.soap.api" export="false"/>
+      <module name="javax.xml.ws.api" export="false"/>
+      <!-- module name="org.dom4j" export="false"/>
+      <module name="org.jboss.as.naming" export="false"/ -->
+
+      <!-- This one always goes last. -->
+      <module name="javax.api" export="false"/>
+    </dependencies>
+  </deployment>
+</jboss-deployment-structure>

@@ -21,23 +21,25 @@ import com.google.gson.stream.JsonReader;
 import com.meltmedia.cadmium.core.ApplicationContentRoot;
 import com.meltmedia.cadmium.core.FileSystemManager;
 import com.meltmedia.cadmium.core.commands.GitLocation;
-import com.meltmedia.cadmium.core.history.loggly.Event;
 import com.meltmedia.cadmium.core.history.loggly.EventQueue;
+import com.meltmedia.cadmium.core.history.loggly.HistoryEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 @Singleton
-public class HistoryManager {
+public class HistoryManager implements Closeable {
   public static final String HISTORY_FILE_NAME = "history.json";
   private final Logger log = LoggerFactory.getLogger(getClass());
   private List<HistoryEntry> history = new ArrayList<HistoryEntry>();
@@ -124,7 +126,7 @@ public class HistoryManager {
     history.add(0, newEntry);
 
     if(newEntry.isFinished() || newEntry.isFailed()) {
-      eventQueue.log(new Event(newEntry));
+      eventQueue.log(new HistoryEvent(newEntry));
     }
     
     pool.execute(historyWriter);
@@ -154,7 +156,7 @@ public class HistoryManager {
     for(HistoryEntry entry : history) {
       if(!entry.isFinished() && entry.getUuid() != null && entry.getUuid().equals(uuid) && entry.isRevertible()) {
         entry.setFinished(true);
-        eventQueue.log(new Event(entry));
+        eventQueue.log(new HistoryEvent(entry));
         log.debug("Marked {} as finished.", entry);
         pool.execute(historyWriter);
         break;
@@ -226,5 +228,15 @@ public class HistoryManager {
   
   public List<HistoryEntry> getHistory() {
     return this.history;
+  }
+
+  @Override
+  public void close() throws IOException {
+    if(pool != null) {
+      try {
+        pool.shutdownNow();
+      } catch(Throwable t){}
+      pool = null;
+    }
   }
 }

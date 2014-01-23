@@ -18,15 +18,17 @@ package com.meltmedia.cadmium.core.messaging.jgroups;
 import com.meltmedia.cadmium.core.ClusterMembers;
 import com.meltmedia.cadmium.core.ConfigurationGitService;
 import com.meltmedia.cadmium.core.ContentGitService;
-import com.meltmedia.cadmium.core.Scheduled;
 import com.meltmedia.cadmium.core.commands.ExternalIpMessage;
 import com.meltmedia.cadmium.core.commands.GitLocation;
 import com.meltmedia.cadmium.core.commands.SyncRequest;
 import com.meltmedia.cadmium.core.commands.WarInfoRequest;
 import com.meltmedia.cadmium.core.config.ConfigManager;
 import com.meltmedia.cadmium.core.git.DelayedGitServiceInitializer;
-import com.meltmedia.cadmium.core.messaging.*;
-import com.meltmedia.cadmium.core.util.PublicIpUtils;
+import com.meltmedia.cadmium.core.messaging.ChannelMember;
+import com.meltmedia.cadmium.core.messaging.MembershipTracker;
+import com.meltmedia.cadmium.core.messaging.Message;
+import com.meltmedia.cadmium.core.messaging.MessageSender;
+import com.meltmedia.cadmium.core.messaging.ProtocolMessage;
 import com.meltmedia.cadmium.core.util.WarUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jgroups.Address;
@@ -39,12 +41,17 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.Closeable;
 import java.io.File;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @Singleton
-public class JGroupsMembershipTracker implements MembershipTracker, MembershipListener {
+public class JGroupsMembershipTracker implements MembershipTracker, MembershipListener, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());  
   
   protected MessageSender sender;
@@ -69,17 +76,17 @@ public class JGroupsMembershipTracker implements MembershipTracker, MembershipLi
     this.configGitService = configGitService;
   }
   
-  @PostConstruct
-  @Scheduled(delay=2l, interval=3600l, unit=TimeUnit.MINUTES)
-  public void attainExternalIp() {
-    try {
-      log.debug("Updating my external ip address.");
-      String ip = PublicIpUtils.lookup();
-      sendIp(ip, null);
-    } catch(Throwable t) {
-      log.debug("Failed to lookup external ip address.", t);
-    }
-  }
+//  @PostConstruct
+//  @Scheduled(delay=2l, interval=3600l, unit=TimeUnit.MINUTES)
+//  public void attainExternalIp() {
+//    try {
+//      log.debug("Updating my external ip address.");
+//      String ip = PublicIpUtils.lookup();
+//      sendIp(ip, null);
+//    } catch(Throwable t) {
+//      log.debug("Failed to lookup external ip address.", t);
+//    }
+//  }
 
   private void sendIp(String ip, ChannelMember mem) throws Exception {
     if(StringUtils.isNotBlank(ip)){
@@ -335,4 +342,15 @@ public class JGroupsMembershipTracker implements MembershipTracker, MembershipLi
     
   }
 
+  @Override
+  public void close() throws IOException {
+    this.channel = null;
+    try {
+      timer.purge();
+    } catch(Exception e){}
+    try {
+      timer.cancel();
+    } catch(Exception e){}
+    timer = null;
+  }
 }

@@ -1,0 +1,18 @@
+{
+    "outcome" : "success",
+    "result" : {
+        "deployment-overlay" : null,
+        "management-subsystem-endpoint" : false,
+        "profile" : "default",
+        "socket-binding-group" : "standard-sockets",
+        "socket-binding-port-offset" : 0,
+        "deployment" : {"cadmium.localhost.war" : null},
+        "jvm" : {"default" : null},
+        "system-property" : {
+            "com.meltmedia.cadmium.github.sshKey" : null,
+            "com.meltmedia.cadmium.environment" : null,
+            "com.meltmedia.cadmium.teams.properties" : null,
+            "com.meltmedia.cadmium.maven.repository" : null
+        }
+    }
+}

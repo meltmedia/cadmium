@@ -1,0 +1,3 @@
+            <system-properties>
+                <property name="com.meltmedia.cadmium.contentRoot" value="/opt/cadmium/server-one" boot-time="true"/>
+            </system-properties>

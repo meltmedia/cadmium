@@ -87,6 +87,7 @@ public class RedirectConfigProcessor implements ConfigProcessor {
         for(Redirect redir : clonedRedirects) {
           if(redir.matches(pathInfo)) {
             matched = redir;
+            log.info("matched redirect: {}", matched);
             break;
           }
         }

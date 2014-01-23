@@ -15,21 +15,19 @@
  */
 package com.meltmedia.cadmium.servlets.guice;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.meltmedia.cadmium.core.worker.CheckConfigInitializedTask;
 import com.meltmedia.cadmium.core.worker.CheckInitializedTask;
 import com.meltmedia.cadmium.core.worker.ConfigInitializeTask;
 import com.meltmedia.cadmium.core.worker.InitializeTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Singleton
 public class Initializor implements Closeable {
@@ -48,7 +46,10 @@ public class Initializor implements Closeable {
 
   @Override
   public void close() throws IOException {
-    pool.shutdownNow();
+    try {
+      pool.shutdownNow();
+    } catch (Throwable t) {}
+    pool = null;
   }
   
 }

@@ -15,35 +15,33 @@
  */
 package com.meltmedia.cadmium.core.messaging.jgroups;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import org.jgroups.Address;
-import org.jgroups.JChannel;
-import org.jgroups.MembershipListener;
-import org.jgroups.Message;
-import org.jgroups.MessageListener;
-import org.jgroups.Receiver;
-import org.jgroups.View;
+import org.jgroups.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 @Singleton
-public class MultiClassReceiver implements Receiver, MessageListener, MembershipListener {
+public class MultiClassReceiver implements Receiver, MessageListener, MembershipListener, Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
   
   protected MessageListener messageListener;
   
   protected MembershipListener membershipListener;
+
+  protected JChannel channel;
   
   @Inject
   public MultiClassReceiver(MessageListener messageListener, MembershipListener membershipListener, JChannel channel) {
     this.messageListener = messageListener;
     this.membershipListener = membershipListener;
     channel.setReceiver(this);
+    this.channel = channel;
     log.debug("Initialized MultiClassReceiver...");
   }
 
@@ -84,4 +82,9 @@ public class MultiClassReceiver implements Receiver, MessageListener, Membership
     messageListener.setState(arg0);
   }
 
+  @Override
+  public void close() throws IOException {
+    channel.setReceiver(null);
+    channel = null;
+  }
 }

@@ -15,26 +15,24 @@
  */
 package com.meltmedia.cadmium.deployer;
 
-import java.util.Arrays;
-import java.util.List;
-
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
+import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
+import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.meltmedia.cadmium.core.CadmiumSystemEndpoint;
-import com.meltmedia.cadmium.servlets.jersey.AuthorizationService;
+import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.util.Arrays;
+import java.util.List;
 
 @CadmiumSystemEndpoint
 @Path("/deployment/list")
 public class ListCadmiumWarsService extends AuthorizationService {
   private final Logger logger = LoggerFactory.getLogger(getClass());
+
+  @Inject
+  private IJBossUtil jbossUtil;
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
@@ -42,7 +40,7 @@ public class ListCadmiumWarsService extends AuthorizationService {
     if(!this.isAuth(auth)) {
       throw new Exception("Unauthorized!");
     }
-    List<String> deployedWars = JBossUtil.listDeployedWars(logger);
+    List<String> deployedWars = jbossUtil.listDeployedWars();
     logger.debug("Jboss deployed cadmium wars: {}", Arrays.toString(deployedWars.toArray()));
     return deployedWars;
   }

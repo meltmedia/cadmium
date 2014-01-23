@@ -20,7 +20,24 @@
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
   <display-name>Cadmium</display-name>
-  
+
+  <context-param>
+    <param-name>resteasy.scan</param-name>
+    <param-value>false</param-value>
+  </context-param>
+  <context-param>
+    <param-name>resteasy.scan.resources</param-name>
+    <param-value>false</param-value>
+  </context-param>
+  <context-param>
+    <param-name>resteasy.scan.providers</param-name>
+    <param-value>false</param-value>
+  </context-param>
+  <context-param>
+    <param-name>resteasy.use.builtin.providers</param-name>
+    <param-value>false</param-value>
+  </context-param>
+
   <listener>
     <listener-class>com.meltmedia.cadmium.servlets.ClassLoaderLeakPreventor</listener-class>
   </listener>

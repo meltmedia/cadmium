@@ -1,0 +1,185 @@
+#!/bin/bash
+PROJECT_DIR=$(pwd)
+
+# Find the cadmium configuration file.
+while [ ! -e cadmium.config ]; do
+  if [ "$(pwd)" == "/" ]; then
+  	break
+  fi
+  cd ..
+done
+
+# Source in the cadmium.config file.
+if [ -e cadmium.config ]; then
+  source cadmium.config
+  PROJECT_DIR=$(pwd)
+else
+  cd $PROJECT_DIR
+fi
+
+set -e
+shopt -s nocasematch
+
+if [[ "$1" != "skip" ]]; then
+  if [ -e pom.xml ]; then
+    mvn clean install
+  elif [ -e deployment/pom.xml ]; then
+    pushd deployment > /dev/null 2> /dev/null
+    mvn clean install
+    popd > /dev/null 2> /dev/null
+  elif [ -e deployment/war/pom.xml ]; then
+    pushd deployment/war > /dev/null 2> /dev/null
+    mvn clean install
+    popd > /dev/null 2> /dev/null
+  fi
+fi
+shopt -u nocasematch
+
+echo -e "Project directory: ${PROJECT_DIR}\n"
+
+# Check if vagrant is even installed
+if !(type vagrant > /dev/null 2> /dev/null); then
+  echo -e "Vagrant is not installed!\nPlease install and run again."
+  exit 1
+fi
+
+# Check if vagrant is configured for this project
+if [ ! -e VagrantFile ]; then
+  echo -e "Vagrant is not setup for this project!\nPlease set one up before continuing."
+  exit 1
+fi
+
+if !(grep " cadmium.localhost" /etc/hosts > /dev/null 2> /dev/null); then
+  echo "Adding to hosts file"
+  if [ -e tmp-hosts.file ]; then
+    rm tmp-hosts.file
+  fi
+  cp /etc/hosts tmp-hosts.file
+  echo "127.0.0.1 cadmium.localhost" >> tmp-hosts.file
+  sudo cp tmp-hosts.file /etc/hosts
+  rm tmp-hosts.file
+fi
+
+if [ ! -e ~/.vagrant.d ]; then
+  echo -e "Vagrant is not installed!\nPlease install and run again."
+  exit 1
+fi
+
+touch ~/.ssh/config
+
+if !(grep "Host vagrant" ~/.ssh/config > /dev/null 2> /dev/null); then
+  echo "Adding ssh configuration"
+
+  (cat <<EOF
+
+Host vagrant
+HostName localhost
+Port 2222
+User vagrant
+IdentityFile ~/.vagrant.d/insecure_private_key
+UserKnownHostsFile /dev/null
+StrictHostKeyChecking no
+EOF
+  ) >> ~/.ssh/config
+fi
+
+# Check if cadmium is installed
+if !(type cadmium > /dev/null 2> /dev/null); then
+  echo -e "Cadmium CLI is not installed!\nPlease install and run again."
+  exit 1
+fi
+
+# Find all wars in project and allow user to select one to deploy
+WAR_SEARCH_PATH="."
+if [[ ! -z "${WAR_PATH}" ]]; then
+  WAR_SEARCH_PATH="${WAR_PATH}"
+fi
+WARS=$(find . -name "*.war" | sed "s_^\./__"  | grep -v "/test/" | grep -v "/test-classes/")
+WAR_LIST=""
+NUM_WARS=0
+# Filter war list
+for WAR in $WARS; do
+  if [[ "${WAR_SEARCH_PATH}" == "." ]] || [[ "$WAR" == ${WAR_SEARCH_PATH}/* ]]; then
+    if [[ ! -z "${WAR_LIST}" ]]; then
+      WAR_LIST="${WAR_LIST} "
+    fi
+    WAR_LIST="${WAR_LIST}$WAR"
+    let NUM_WARS=NUM_WARS+1
+  fi
+done
+
+WAR_TO_DEPLOY="NONE SELECTED"
+
+# If more then one war is found then allow user to select one
+if [ $NUM_WARS -gt 1 ]; then 
+  INDEX=0
+  echo "Select war to deploy:"
+  for WAR in $WAR_LIST; do
+    echo "$INDEX) $WAR"
+    let INDEX=INDEX+1
+  done
+  if [ $INDEX -eq 0 ]; then
+    echo "No wars found!"
+    exit 1
+  fi
+  INDEX_TO_DEPLOY=0
+  if [ $INDEX -gt 1 ]; then
+    echo -n "Index: "
+    read INDEX_TO_DEPLOY
+  fi
+  echo ""
+  INDEX=0
+  for WAR in $WARS; do
+    if [ "$INDEX" -eq "${INDEX_TO_DEPLOY}" ]; then
+      WAR_TO_DEPLOY="$WAR"
+      break
+    else
+      let INDEX=INDEX+1
+    fi
+  done
+elif [ $NUM_WARS -eq 1 ]; then
+  WAR_TO_DEPLOY=${WAR_LIST}
+else
+  echo "No wars found!"
+  exit 1
+fi
+
+if [[ "${WAR_TO_DEPLOY}" == "NONE SELECTED" ]]; then
+  exit
+fi
+
+echo "Configuring WAR: ${WAR_TO_DEPLOY}"
+
+if [ -e target ]; then
+  rm -rf target
+fi
+
+mkdir target
+cd target
+
+# Setup war for deployment
+INIT_WAR_CMD="--existingWar ${PROJECT_DIR}/${WAR_TO_DEPLOY} --domain cadmium.localhost cadmium.localhost.war"
+if [[ "X${CONTENT_BRANCH_NAME}" != "X" ]]; then
+  INIT_WAR_CMD="${INIT_WAR_CMD} -b ${CONTENT_BRANCH_NAME}"
+else 
+  INIT_WAR_CMD="${INIT_WAR_CMD} -b cd-master"
+fi
+if [[ "X${CONFIG_BRANCH_NAME}" != "X" ]]; then
+  INIT_WAR_CMD="${INIT_WAR_CMD} -C ${CONFIG_BRANCH_NAME}"
+else
+  INIT_WAR_CMD="${INIT_WAR_CMD} -C cfg-master"
+fi
+if [[ "X${GIT_REPO}" != "X" ]]; then
+  INIT_WAR_CMD="${INIT_WAR_CMD} -r ${GIT_REPO}"
+fi
+if [[ "X${CONFIG_GIT_REPO}" != "X" ]]; then
+  INIT_WAR_CMD="${INIT_WAR_CMD} -R ${CONFIG_GIT_REPO}" 
+fi
+
+cadmium init-war ${INIT_WAR_CMD}
+
+vagrant up
+
+if [ -e out ]; then
+  cadmium commit -m "Committing content..." out http://cadmium.localhost
+fi

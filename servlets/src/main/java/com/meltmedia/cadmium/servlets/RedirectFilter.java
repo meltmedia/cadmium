@@ -17,6 +17,8 @@ package com.meltmedia.cadmium.servlets;
 
 import com.meltmedia.cadmium.core.meta.Redirect;
 import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +57,14 @@ public class RedirectFilter implements Filter {
         redir = redirect.requestMatches(path, queryString);
         if(redir != null) {
           String redirectTo = redir.getUrlSubstituted();
+          if(StringUtils.isNotBlank(queryString) && !redirectTo.contains("?")) {
+          	
+          	redirectTo += "?" + queryString;
+          	log.debug("adding query string to redirect path: {}", redirectTo);
+          }
           response.setHeader("Location", redirectTo);
           response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+          log.debug("Location response header: {}", redirectTo);
           return;
         }
       } else {
@@ -65,15 +73,15 @@ public class RedirectFilter implements Filter {
       try {
         chain.doFilter(req, resp);
       } catch (IOException ioe) {
-        log.error("Failed down stream from redirect filter.", ioe);
+        log.trace("Failed down stream from redirect filter.", ioe);
         throw ioe;
       } catch (ServletException se) {
-        log.error("Failed down stream from redirect filter.", se);
+        log.trace("Failed down stream from redirect filter.", se);
         throw se;
       } catch (Throwable t) {
         StringWriter str = new StringWriter();
         t.printStackTrace(new PrintWriter(str));
-        log.error("Failed down stream from redirect filter: " + str.toString(), t);
+        log.trace("Failed down stream from redirect filter: " + str.toString(), t);
         ServletException se = new ServletException(t);
         throw se;
 
@@ -81,7 +89,7 @@ public class RedirectFilter implements Filter {
     } catch(Throwable t) {
       StringWriter str = new StringWriter();
       t.printStackTrace(new PrintWriter(str));
-      log.error("Failed in redirect filter: "+str.toString(), t);
+      log.debug("Failed in redirect filter: "+str.toString(), t);
       ServletException se = new ServletException(t);
       throw se;
     }

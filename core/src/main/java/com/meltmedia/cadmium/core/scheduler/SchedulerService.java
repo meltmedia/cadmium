@@ -15,20 +15,20 @@
  */
 package com.meltmedia.cadmium.core.scheduler;
 
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.inject.Binder;
+import com.google.inject.TypeLiteral;
+import com.meltmedia.cadmium.core.Scheduled;
+import org.reflections.Reflections;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import org.reflections.Reflections;
-
-import com.google.inject.Binder;
-import com.google.inject.TypeLiteral;
-import com.meltmedia.cadmium.core.Scheduled;
+import java.io.Closeable;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * This service schedules all @Scheduled classes and methods to run as they are Annotated.
@@ -37,7 +37,7 @@ import com.meltmedia.cadmium.core.Scheduled;
  *
  */
 @Singleton
-public class SchedulerService {
+public class SchedulerService implements Closeable {
   
   /**
    * The Executor that will run all {@link SchedulerTask} instances.
@@ -53,8 +53,6 @@ public class SchedulerService {
   
   /**
    * Schedules all tasks injected in by guice.
-   * 
-   * @param tasks
    */
   @PostConstruct
   public void setupScheduler() {
@@ -95,6 +93,19 @@ public class SchedulerService {
     
     binder.bind(new TypeLiteral<Set<SchedulerTask>>(){}).toInstance(tasks);
   }
-  
-  
+
+
+  @Override
+  public void close() throws IOException {
+    if(executor != null) {
+      try {
+        executor.shutdownNow();
+      } catch(Throwable t) {}
+      executor = null;
+    }
+    if(tasks != null) {
+      tasks.clear();
+      tasks = null;
+    }
+  }
 }

@@ -45,6 +45,7 @@ public class Status {
   private String configRepo;
   private String configBranch;
   private String configRevision;
+  private String cadmiumVersion;
 	
 	
 	public String getGroupName() {
@@ -144,5 +145,12 @@ public class Status {
   public void setConfigRevision(String configRevision) {
     this.configRevision = configRevision;
   }
-	
+
+  public String getCadmiumVersion() {
+    return cadmiumVersion;
+  }
+
+  public void setCadmiumVersion(String cadmiumVersion) {
+    this.cadmiumVersion = cadmiumVersion;
+  }
 }

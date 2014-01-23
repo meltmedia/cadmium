@@ -16,6 +16,7 @@
 package com.meltmedia.cadmium.deployer;
 
 import org.apache.catalina.Host;
+import org.apache.commons.io.FileUtils;
 import org.jboss.mx.util.MBeanServerLocator;
 import org.slf4j.Logger;
 
@@ -146,6 +147,20 @@ public class JBossUtil {
       }
     }
     return null;
+  }
+
+  public static void deploy(String warName, File warFile, Logger log) throws Exception {
+    String deployPath = System.getProperty("jboss.server.home.dir", "/opt/jboss/server/meltmedia") + "/deploy";
+
+    log.info("Moving war {} into deployment directory {}", warFile.getName(), deployPath);
+
+    File newWar = new File(deployPath, warName);
+
+    FileUtils.copyFile(warFile, newWar);
+
+    FileUtils.deleteQuietly(warFile);
+
+    FileUtils.touch(newWar);
   }
 
 }

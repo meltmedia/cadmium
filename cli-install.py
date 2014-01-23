@@ -211,6 +211,12 @@ if not os.path.exists(user_dir + '/bin/cli-install.py'):
   shutil.copy(sys.argv[0], user_dir + '/bin/cli-install.py')
   os.chmod(user_dir + '/bin/cli-install.py', 0755)
 
+exitCode = subprocess.call(['curl', 'https://raw.github.com/meltmedia/cadmium/jboss-7-updates/vagrant-cadmium-up', '-o', user_dir + '/bin/vagrant-cadmium-up'])
+if exitCode != 0:
+  print 'Failed to download vagrant-cadmium-up!'
+else:
+  os.chmod(user_dir + '/bin/vagrant-cadmium-up', 0755)
+
 has_path = False
 for item in path:
   if item == (user_dir + '/bin'):

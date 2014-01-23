@@ -23,6 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.sql.DataSource;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Properties;
@@ -53,6 +56,15 @@ public class PersistenceConfigurationListener implements
     if(!StringUtils.isEmptyOrNull(cfg.getJndiName())) {
       updatedProps.setProperty("javax.persistence.nonJtaDataSource", cfg.getJndiName());
       log.debug("JNDIName: "+cfg.getJndiName());
+      try {
+        Context ctx = new InitialContext();
+        DataSource ds = (DataSource)ctx.lookup(cfg.getJndiName());
+        if(ds == null) {
+          log.error("No datasource is bound to "+cfg.getJndiName());
+        }
+      } catch(Exception e) {
+        log.error("Failed to lookup jndi name: "+cfg.getJndiName(), e);
+      }
     }
     if(!StringUtils.isEmptyOrNull(cfg.getDatabaseDialect())) {
       updatedProps.setProperty("hibernate.dialect", cfg.getDatabaseDialect());

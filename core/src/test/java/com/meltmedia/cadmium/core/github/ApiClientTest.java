@@ -15,19 +15,19 @@
  */
 package com.meltmedia.cadmium.core.github;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.github.ApiClient.Authorization;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.meltmedia.cadmium.core.FileSystemManager;
-import com.meltmedia.cadmium.core.github.ApiClient.Authorization;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 public class ApiClientTest {
   private static String username;
@@ -104,7 +104,7 @@ public class ApiClientTest {
   
   @Test
   public void testGetRateLimitRemaining() throws Exception {
-    int limit = ApiClient.getRateLimitRemain(tokenAuth.getToken());
+    int limit = ApiClient.getRateLimitRemain(tokenAuth.getToken(), new DefaultHttpClient());
     
     assertTrue("Limit not greater than 0", limit > 0);
   }

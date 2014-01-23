@@ -4,7 +4,7 @@
   <parent>
     <artifactId>cadmium</artifactId>
     <groupId>com.meltmedia.cadmium</groupId>
-    <version>0.9.3-SNAPSHOT</version>
+    <version>0.9.3-JBOSS7-SNAPSHOT</version>
   </parent>
 
   <artifactId>cadmium-servlets</artifactId>
