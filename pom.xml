@@ -10,7 +10,7 @@
 
   <groupId>com.meltmedia.cadmium</groupId>
   <artifactId>cadmium</artifactId>
-  <version>0.9.3-JBOSS7-SNAPSHOT</version>
+  <version>0.10.0</version>
   <packaging>pom</packaging>
 
   <name>cadmium :: Parent POM</name>
