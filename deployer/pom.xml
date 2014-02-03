@@ -24,7 +24,13 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
+        <version>2.2</version>
         <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.meltmedia.cadmium.jetty.Launcher</mainClass>
+            </manifest>
+          </archive>
           <overlays>
             <overlay>
               <groupId>${project.groupId}</groupId>
