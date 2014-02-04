@@ -15,6 +15,7 @@
 
   <modules>
     <module>provisioning</module>
+    <module>chef</module>
   </modules>
 
 </project>
