@@ -2,6 +2,9 @@
 
 # Usage: ./deploy.sh [host]
 
+# Change to script directory
+cd $( dirname "${BASH_SOURCE[0]}" )
+
 host="$1"
 
 # The host key might change when we instantiate a new VM, so

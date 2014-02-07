@@ -1,15 +1,9 @@
 [submodule "apt"]
 	path = deployment/chef/src/main/resources/cookbooks/apt
 	url = git@github.com:opscode-cookbooks/apt.git
-[submodule "deployment/chef/src/main/resources/cookbooks/ark"]
-	path = deployment/chef/src/main/resources/cookbooks/ark
-	url = git@github.com:opscode-cookbooks/ark.git
 [submodule "deployment/chef/src/main/resources/cookbooks/java"]
 	path = deployment/chef/src/main/resources/cookbooks/java
 	url = git@github.com:opscode-cookbooks/java.git
 [submodule "deployment/chef/src/main/resources/cookbooks/maven"]
 	path = deployment/chef/src/main/resources/cookbooks/maven
 	url = git@github.com:opscode-cookbooks/maven.git
-[submodule "deployment/chef/src/main/resources/cookbooks/jboss5"]
-	path = deployment/chef/src/main/resources/cookbooks/jboss5
-	url = git@github.com:meltmedia/chef-jboss5.git

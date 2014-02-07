@@ -1,3 +1,16 @@
 {
-    "run_list": [ "recipe[cadmium::default]" ]
+    "run_list": [
+        "recipe[apt::default]", 
+        "recipe[cadmium::init]",
+        "recipe[cadmium::install_cli]",
+        "recipe[cadmium::ssh]",
+        "recipe[cadmium::build_war]",
+        "recipe[cadmium::deploy_jetty]"
+    ],
+    "cadmium": {
+    	"cadmium_user": "vagrant",
+    	"cadmium_group": "vagrant",
+        "cli_token_url": "https://cloudinit.meltdev.com/secure/keys/github.token",
+        "ssh_key_priv" : "https://cloudinit.meltdev.com/secure/keys/meltmedia-gene-deploy"
+    }
 }

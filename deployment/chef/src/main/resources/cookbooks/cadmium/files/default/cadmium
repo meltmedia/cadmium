@@ -1,0 +1,21 @@
+#! /bin/bash
+newest_jar=~/.cadmium/cadmium-cli.jar
+if [ -d ~/.m2/repository/com/meltmedia/cadmium/cadmium-cli ]; then
+
+  version_list=`ls ~/.m2/repository/com/meltmedia/cadmium/cadmium-cli`
+  for version in $version_list; do
+
+    if [[ "$version" == "maven-metadata-local.xml" ]]; then
+      continue
+    fi
+    current_file=~/.m2/repository/com/meltmedia/cadmium/cadmium-cli/$version/cadmium-cli-$version.jar
+    if [ -s $current_file ]; then
+      if [ $current_file -nt $newest_jar ]; then
+        newest_jar=$current_file
+      fi
+    fi
+
+  done
+
+fi
+java -jar $newest_jar "$@"

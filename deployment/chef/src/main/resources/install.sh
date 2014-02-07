@@ -2,20 +2,14 @@
 
 # This runs as root on the server
 
-chef_binary=/var/lib/gems/1.9.1/bin/chef-solo
+chef_binary=chef-solo
 
 set -e
 
 # Are we on a vanilla system?
-if ! test -f "$chef_binary"; then
-    export DEBIAN_FRONTEND=noninteractive
-    # Upgrade headlessly (this is only safe-ish on vanilla systems)
-    aptitude update 
-    apt-get -o Dpkg::Options::="--force-confnew" \
-        --force-yes -fuy dist-upgrade 
-    # Install Ruby and Chef
-    aptitude install -y ruby1.9.1 ruby1.9.1-dev make 
-    sudo gem1.9.1 install --no-rdoc --no-ri chef --version 0.10.0
+if ! (type "$chef_binary" > /dev/null 2> /dev/null); then
+	sudo apt-get install -y curl
+    curl -L https://www.opscode.com/chef/install.sh | sudo bash
 fi 
-
-"$chef_binary" -c solo.rb -j solo.json
+echo "Running chef-solo..."
+"$chef_binary" -c solo.rb -j solo.json # -W -l debug
