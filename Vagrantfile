@@ -74,7 +74,7 @@ Vagrant.configure("2") do |config|
   # end
 
   #config.vm.provision :shell, :inline => "tar xzf installer/cadmium-installer.tar.gz && bin/setup-vagrant.sh http://nexus.meltdev.com/content/repositories/packages/jboss/jboss-eap/6.1.0/jboss-eap-6.1.0.zip"
-  config.vm.provision :shell, :inline => "cp -r /vagrant/deployment/chef/target/filtered-resources chef && cd chef && bash install.sh"
+  config.vm.provision :shell, :inline => "cp -r /vagrant/deployment/chef/target/filtered-resources chef && cp /vagrant/war/target/cadmium-war-*.war chef/cadmium-war.war && bash chef/install.sh"
 
   # Enable provisioning with chef solo, specifying a cookbooks path, roles
   # path, and data_bags path (all relative to this Vagrantfile), and adding
