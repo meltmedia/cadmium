@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cadmium
-# Recipe:: install-cli
+# Recipe:: install_cli
 #
 # Copyright 2014, Meltmedia
 #
@@ -17,10 +17,15 @@
 # limitations under the License.
 #
 
-load_recipe "maven::default"
+include_recipe "maven::default"
 
 user = "#{node[:cadmium][:cadmium_user]}"
-home = Dir.home(user)
+
+if Dir.method_defined? :home
+  home = Dir.home(user)
+else 
+  home = "/home/#{user}"
+end
 
 if !File.exists?("#{home}/#{node[:cadmium][:cli_install_path]}")
   directory "#{home}/#{node[:cadmium][:cli_install_path]}" do

@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cadmium
-# Attributes:: deploy_jetty
+# Recipe:: deploy_jetty
 #
 # Copyright 2014, Meltmedia
 #
@@ -16,50 +16,92 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-unless node[:cadmium][:jetty_root].nil? || !File.exists("#{Chef::Config[:file_cache_path]}/#{node[:cadmium][:domain]}.war")
   
-  jettyAppPath = "#{node[:cadmium][:jetty_root]}/#{node[:cadmium][:domain]}"
+jettyAppPath = "#{node[:cadmium][:jetty_root]}/#{node[:cadmium][:domain]}"
 
-  if !Dir.exists?("#{jettyAppPath}")
+if !File.exists?("#{jettyAppPath}")
   
-  	directory "#{jettyAppPath}" do
+  directory "#{jettyAppPath}" do
     
-  	  owner "#{node[:cadmium][:system_user]}"
-  	  group "#{node[:cadmium][:system_group]}"
-  	  recursive true
-
-  	end
+    owner "#{node[:cadmium][:system_user]}"
+    group "#{node[:cadmium][:system_group]}"
+  	recursive true
 
   end
 
-  if !Dir.exists?("#{jettyAppPath}/bin")
+end
 
-  	directory "#{jettyAppPath}/bin" do
+if !File.exists?("#{jettyAppPath}/bin")
 
-  	  owner "#{node[:cadmium][:system_user]}"
-  	  group "#{node[:cadmium][:system_group]}"
+  directory "#{jettyAppPath}/bin" do
 
-  	end
-
-  end
-
-  remote_directory "#{jettyAppPath}/conf" do
-
-    source "conf"
-    files_owner "#{node[:cadmium][:system_user]}"
-    files_group "#{node[:cadmium][:system_group]}"
-    purge true
-    overwrite true
+    owner "#{node[:cadmium][:system_user]}"
+    group "#{node[:cadmium][:system_group]}"
 
   end
 
-  remote_file "#{jettyAppPath}/bin/#{node[:cadmium][:domain]}.war" do
-  	source "file://#{Chef::Config[:file_cache_path]}/#{node[:cadmium][:domain]}.war"
-  	owner "#{node[:cadmium][:system_user]}"
-  	group "#{node[:cadmium][:system_group]}"
+end
 
-  	action :create
+if !File.exists?("#{jettyAppPath}/log")
+
+  directory "#{jettyAppPath}/log" do
+
+    owner "#{node[:cadmium][:system_user]}"
+    group "#{node[:cadmium][:system_group]}"
+
   end
 
+end
+
+remote_directory "#{jettyAppPath}/conf" do
+
+  source "conf"
+  files_owner "#{node[:cadmium][:system_user]}"
+  files_group "#{node[:cadmium][:system_group]}"
+  purge true
+  overwrite true
+
+end
+
+remote_directory "#{jettyAppPath}/lib" do
+
+  source "lib"
+  files_owner "#{node[:cadmium][:system_user]}"
+  files_group "#{node[:cadmium][:system_group]}"
+  purge true
+  overwrite true
+
+end
+
+remote_file "#{jettyAppPath}/bin/#{node[:cadmium][:domain]}.war" do
+  source "file://#{Chef::Config[:file_cache_path]}/#{node[:cadmium][:domain]}.war"
+  owner "#{node[:cadmium][:system_user]}"
+  group "#{node[:cadmium][:system_group]}"
+
+  action :create
+end
+
+# setup jetty service
+
+template "/etc/init/#{node[:cadmium][:domain]}.conf" do
+  source "cadmium-jetty.conf.erb"
+  owner "root"
+  group "root"
+  mode 0644
+
+  variables({
+     :cwd => "#{jettyAppPath}",
+     :user => "#{node[:cadmium][:system_user]}",
+     :group => "#{node[:cadmium][:system_group]}",
+     :environment => "#{node[:cadmium][:environment]}",
+     :content_root => "#{node[:cadmium][:shared_content_root]}",
+     :war_name => "#{node[:cadmium][:domain]}.war"
+  })
+
+  action :create
+end
+
+service "#{node[:cadmium][:domain]}" do
+  provider Chef::Provider::Service::Upstart
+  action :start
 end

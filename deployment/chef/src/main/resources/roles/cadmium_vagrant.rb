@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cadmium
-# Recipe:: deploy_to_directory
+# Role:: cadmium_vagrant
 #
 # Copyright 2014, Meltmedia
 #
@@ -17,8 +17,21 @@
 # limitations under the License.
 #
 
-cadmium_init_war "#{Chef::Config[:file_cache_path]}" do
-    dest "#{deployDir}/#{node[:cadmium][:domain]}.war"
-    owner "#{node[:cadmium][:system_user]}"
-    group "#{node[:cadmium][:system_group]}"
-end
+name "cadmium_vagrant"
+description "Role to build a vagrant instance."
+run_list(%w{
+        recipe[apt::default]
+        recipe[java::default]
+        recipe[maven::default]
+        recipe[cadmium::init]
+        recipe[cadmium::install_cli]
+        recipe[cadmium::war]
+        recipe[cadmium::ssh]
+        recipe[cadmium::deploy_jetty]
+})
+default_attributes(
+	:cadmium => {
+		:cadmium_user  => "vagrant",
+		:cadmium_group => "vagrant"
+	}
+)

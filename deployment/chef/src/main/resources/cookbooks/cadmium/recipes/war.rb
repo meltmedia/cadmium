@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cadmium
-# Recipe:: deploy_to_directory
+# Recipe:: war
 #
 # Copyright 2014, Meltmedia
 #
@@ -18,7 +18,5 @@
 #
 
 cadmium_init_war "#{Chef::Config[:file_cache_path]}" do
-    dest "#{deployDir}/#{node[:cadmium][:domain]}.war"
-    owner "#{node[:cadmium][:system_user]}"
-    group "#{node[:cadmium][:system_group]}"
 end
+

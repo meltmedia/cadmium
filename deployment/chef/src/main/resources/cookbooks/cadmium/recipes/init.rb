@@ -18,7 +18,12 @@
 #
 
 user = "#{node[:cadmium][:cadmium_user]}"
-home = Dir.home(user)
+
+if Dir.method_defined? :home
+  home = Dir.home(user)
+else 
+  home = "/home/#{user}"
+end
 
 group "#{node[:cadmium][:system_group]}" do
   system true
@@ -35,12 +40,20 @@ user "#{node[:cadmium][:system_user]}" do
   action :create
 end
 
-if !Dir.exists?("#{node[:cadmium][:shared_content_root]}")
+if !File.exists?("#{node[:cadmium][:shared_content_root]}")
   directory "#{node[:cadmium][:shared_content_root]}" do
     owner "#{node[:cadmium][:system_user]}"
     group "#{node[:cadmium][:system_group]}"
     mode 0755
 
     action :create
+  end
+end
+
+if !node[:cadmium][:github_teams].nil?
+  template "#{node[:cadmium][:shared_content_root]}/team.properties" do
+    source "team.properties.erb"
+    owner "#{node[:cadmium][:system_user]}"
+    group "#{node[:cadmium][:system_group]}"
   end
 end

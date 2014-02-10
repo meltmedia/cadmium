@@ -23,7 +23,7 @@ unless node[:cadmium][:ssh_key_priv].nil?
   sshDir = "#{node[:cadmium][:shared_content_root]}/#{node[:cadmium][:ssh_dir]}"
   sshKey = "#{sshDir}/meltmedia-gene-deploy"
 
-  if !Dir.exists?("#{sshDir}")
+  if !File.exists?("#{sshDir}")
     directory "#{sshDir}" do
       owner "#{node[:cadmium][:system_user]}"
       group "#{node[:cadmium][:system_group]}"

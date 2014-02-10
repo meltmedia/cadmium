@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # This runs as root on the server
-
-chef_binary=chef-solo
+cd $( dirname "${BASH_SOURCE[0]}" )
+chef_binary=/usr/bin/chef-solo
 
 set -e
 
@@ -12,4 +12,4 @@ if ! (type "$chef_binary" > /dev/null 2> /dev/null); then
     curl -L https://www.opscode.com/chef/install.sh | sudo bash
 fi 
 echo "Running chef-solo..."
-"$chef_binary" -c solo.rb -j solo.json # -W -l debug
+"$chef_binary" -c solo.rb -j solo.json
