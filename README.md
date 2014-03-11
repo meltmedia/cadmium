@@ -15,4 +15,6 @@ This will build a vagrant instance with jboss 7, apache2, and a deployer deploye
 
 The jboss admin user is "admin" with a password of "p@$$w0rd".
 
+test
+
 
