@@ -15,13 +15,10 @@
  */
 package com.meltmedia.cadmium.cli;
 
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.util.List;
-
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -40,10 +37,12 @@ import org.apache.shiro.crypto.hash.format.HashFormat;
 import org.apache.shiro.crypto.hash.format.HashFormatFactory;
 import org.apache.shiro.util.ByteSource;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.util.List;
 
 /**
  * CLI command to manager site specific authentication.
@@ -161,7 +160,7 @@ public class AuthCommand extends AbstractAuthorizedOnly implements CliCommand {
     int byteSize = 128 / 8; 
     ByteSource salt = generator.nextBytes(byteSize);
     
-    SimpleHash hash = new SimpleHash("SHA-256", password, salt, 500000);
+    SimpleHash hash = new SimpleHash("SHA-256", password, salt, 10);
     
     HashFormat format = HASH_FORMAT_FACTORY.getInstance("shiro1");
     return format.format(hash);
