@@ -18,15 +18,14 @@
 #
 
 name "cadmium_vagrant"
-description "Role to build a vagrant instance."
+description "Role to build a jetty vagrant instance."
 run_list(%w{
         recipe[apt::default]
-        recipe[java::default]
-        recipe[maven::default]
+        recipe[cadmium::default]
         recipe[cadmium::init]
         recipe[cadmium::install_cli]
-        recipe[cadmium::war]
         recipe[cadmium::ssh]
+        recipe[cadmium::war]
         recipe[cadmium::deploy_jetty]
 })
 default_attributes(

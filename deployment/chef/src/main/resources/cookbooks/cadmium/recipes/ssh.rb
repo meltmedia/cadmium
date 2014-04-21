@@ -17,21 +17,21 @@
 # limitations under the License.
 #
 
-unless node[:cadmium][:ssh_key_priv].nil?
-  privUrl = "#{node[:cadmium][:ssh_key_priv]}"
+sshDir = "#{node[:cadmium][:shared_content_root]}/#{node[:cadmium][:ssh_dir]}"
+sshKey = "#{sshDir}/meltmedia-gene-deploy"
 
-  sshDir = "#{node[:cadmium][:shared_content_root]}/#{node[:cadmium][:ssh_dir]}"
-  sshKey = "#{sshDir}/meltmedia-gene-deploy"
+if !File.exists?("#{sshDir}")
+  directory "#{sshDir}" do
+    owner "#{node[:cadmium][:system_user]}"
+    group "#{node[:cadmium][:system_group]}"
+    mode 0755
 
-  if !File.exists?("#{sshDir}")
-    directory "#{sshDir}" do
-      owner "#{node[:cadmium][:system_user]}"
-      group "#{node[:cadmium][:system_group]}"
-      mode 0755
-
-      action :create
-    end
+    action :create
   end
+end
+
+if !node[:cadmium][:ssh_key_priv].nil?
+  privUrl = "#{node[:cadmium][:ssh_key_priv]}"
 
   remote_file "#{sshKey}" do
   	source "#{privUrl}"
@@ -41,5 +41,15 @@ unless node[:cadmium][:ssh_key_priv].nil?
     mode 0600
 
     action :create_if_missing
+  end
+
+elsif File.exists?("/home/cadmium/.ssh/id_rsa")
+  ruby_block "Moving vagrant ssh key" do
+    block do
+      require 'fileutils'
+      FileUtils.cp "/home/cadmium/.ssh/id_rsa", "#{sshKey}"
+      FileUtils.chmod 0600, "#{sshKey}"
+      FileUtils.chown "#{node[:cadmium][:system_user]}", "#{node[:cadmium][:system_group]}", "#{sshKey}"
+    end
   end
 end

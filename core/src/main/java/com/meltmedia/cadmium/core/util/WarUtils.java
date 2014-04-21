@@ -21,6 +21,7 @@ import com.meltmedia.cadmium.core.WarInfo;
 import jodd.jerry.Jerry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -70,7 +71,8 @@ import java.util.zip.ZipOutputStream;
 public class WarUtils {
 
   private static final String JBOSS_7_DEPLOY_DIR = "jboss.server.data.dir";
-  
+  private static final String JETTY_WAR_SYSTEM_PROPERTY = "jetty_war";
+
   /**
    * <p>This method updates a template war with the following settings.</p>
    * @param templateWar The name of the template war to pull from the classpath.
@@ -506,6 +508,9 @@ public class WarUtils {
   public static WarInfo getWarInfo(File war) throws Exception {
     WarInfo info = new WarInfo();
     info.setWarName(war.getName());
+    if(StringUtils.isNotBlank(System.getProperty(JETTY_WAR_SYSTEM_PROPERTY))) {
+      info.setWarName(System.getProperty(JETTY_WAR_SYSTEM_PROPERTY));
+    }
     CadmiumWar warHelper = null;
     try {
       if(war != null && war.exists()) {
@@ -777,6 +782,9 @@ public class WarUtils {
    * @return
    */
   public static String getWarName( ServletContext context ) {
+    if(StringUtils.isNotBlank(System.getProperty(JETTY_WAR_SYSTEM_PROPERTY))) {
+      return System.getProperty(JETTY_WAR_SYSTEM_PROPERTY);
+    }
     String[] pathSegments = context.getRealPath("/WEB-INF/web.xml").split("/");
     String warName = pathSegments[pathSegments.length - 3];
     if(!warName.endsWith(".war")) {

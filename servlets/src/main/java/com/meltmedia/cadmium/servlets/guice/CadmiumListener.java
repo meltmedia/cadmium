@@ -79,9 +79,9 @@ import com.meltmedia.cadmium.servlets.XForwardedSecureRedirectStrategy;
 import com.meltmedia.cadmium.servlets.shiro.PersistablePropertiesRealm;
 import com.meltmedia.cadmium.servlets.shiro.WebEnvironment;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.web.env.EnvironmentLoader;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
-import org.eclipse.jgit.util.StringUtils;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MessageListener;
@@ -402,7 +402,7 @@ public class CadmiumListener extends GuiceServletContextListener {
             for(Class<?> filterClass : discoveredFilters) {
               if( Filter.class.isAssignableFrom(filterClass)) {
                 com.meltmedia.cadmium.core.CadmiumFilter annot = filterClass.getAnnotation(com.meltmedia.cadmium.core.CadmiumFilter.class);
-                if(!StringUtils.isEmptyOrNull(annot.value())){
+                if(StringUtils.isNotBlank(annot.value())){
                   log.debug("Adding Filter {} mapped with {}", filterClass.getName(), annot.value());
                   filter(annot.value()).through(filterClass.asSubclass(Filter.class));
                 }

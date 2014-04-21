@@ -37,10 +37,12 @@ public class AppServer {
   public void runServer(String warLocation) throws Exception {
     URL war = new URL(warLocation);
     warLocation = war.getFile();
+    File warFile = new File(warLocation);
+    System.setProperty("jetty_war", warFile.getName());
     log("Loading war: "+warLocation);
     Integer port = new Integer(System.getProperty("port", "8080"));
 
-    WarInfo info = WarUtils.getWarInfo(new File(warLocation));
+    WarInfo info = WarUtils.getWarInfo(warFile);
     String contextPath = info != null && StringUtils.isNotBlank(info.getContext())
         ? info.getContext() : null;
     System.out.println("Starting server on port "+port);

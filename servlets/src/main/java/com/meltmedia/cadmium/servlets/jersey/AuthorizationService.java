@@ -53,7 +53,7 @@ public class AuthorizationService {
       List<Integer> idList = Arrays.asList(apiCache.getTeamIds(authString));
       log.debug("Authorized teams for {}: {}", token, new Gson().toJson(idList));
       String authorizedTeams = getAuthorizedTeamsString();
-      if(authorizedTeams == null) {
+      if(StringUtils.isBlank(authorizedTeams)) {
         openId = apiCache.getUserName(authString);
         return true;
       } else if(isTeamMember(authorizedTeams, idList)) {
@@ -104,7 +104,9 @@ public class AuthorizationService {
     String teams[] = authTeams == null ? new String[]{} : authTeams.split(",");
     List<Integer> teamIds = new ArrayList<Integer>();
     for(String teamId: teams) {
-      teamIds.add(new Integer(teamId));
+      if (StringUtils.isNotBlank(teamId)) {
+        teamIds.add(new Integer(teamId));
+      }
     }
     return teamIds.toArray(new Integer[]{});
   }

@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-actions :create
+actions :init, :fetch
 
 attribute :artifact_id,    :kind_of => String
 attribute :existing_war,   :kind_of => String
@@ -49,5 +49,5 @@ def initialize(*args)
   @war_name ||= "#{@domain}.war"
   @owner ||= node[:cadmium][:cadmium_user]
   @group ||= node[:cadmium][:cadmium_group]
-  @action = :create
+  @action = :init
 end

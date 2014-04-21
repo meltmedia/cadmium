@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
-  config.vm.network :forwarded_port, guest: 8080, host: 8080
+  config.vm.network :forwarded_port, guest: 8080, host: 8080, auto_correct: true
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -32,6 +32,7 @@ Vagrant.configure("2") do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   config.vm.synced_folder "~/.m2", "/home/vagrant/.m2"
+  config.vm.synced_folder "~/.m2", "/root/.m2"
   config.vm.synced_folder "~/.ssh", "/home/cadmium/.ssh"
   config.vm.synced_folder "~/.cadmium", "/home/vagrant/.cadmium"
 
@@ -44,7 +45,7 @@ Vagrant.configure("2") do |config|
   #   vb.gui = true
   #
   #   # Use VBoxManage to customize the VM. For example to change memory:
-    vb.customize ["modifyvm", :id, "--memory", "512"]
+    vb.customize ["modifyvm", :id, "--memory", "256"]
   end
   #
   # View the documentation for the provider you're using for more
@@ -74,19 +75,19 @@ Vagrant.configure("2") do |config|
   # end
 
   #config.vm.provision :shell, :inline => "tar xzf installer/cadmium-installer.tar.gz && bin/setup-vagrant.sh http://nexus.meltdev.com/content/repositories/packages/jboss/jboss-eap/6.1.0/jboss-eap-6.1.0.zip"
-  config.vm.provision :shell, :inline => "cp -r /vagrant/deployment/chef/target/filtered-resources chef && cp /vagrant/war/target/cadmium-war-*.war chef/cadmium-war.war && bash chef/install.sh"
+  #config.vm.provision :shell, :inline => "cp -r /vagrant/deployment/chef/target/filtered-resources chef && cp /vagrant/war/target/cadmium-war-*.war chef/cadmium-war.war && bash chef/install.sh"
 
   # Enable provisioning with chef solo, specifying a cookbooks path, roles
   # path, and data_bags path (all relative to this Vagrantfile), and adding
   # some recipes and/or roles.
   #
-  #config.vm.provision :chef_solo do |chef|
-  #  chef.provisioning_path = "/tmp/vagrant-chef-solo"
-  #  chef.file_cache_path = chef.provisioning_path
-  #  chef.cookbooks_path = "deployment/chef/target/filtered-resources/cookbooks"
-  #  chef.roles_path = "deployment/chef/target/filtered-resources/roles"
-  #  chef.add_role "cadmium_vagrant"
-  #end
+  config.vm.provision :chef_solo do |chef|
+    chef.provisioning_path = "/tmp/vagrant-chef-solo"
+    chef.file_cache_path = chef.provisioning_path
+    chef.cookbooks_path = "deployment/chef/target/filtered-resources/cookbooks"
+    chef.roles_path = "deployment/chef/target/filtered-resources/roles"
+    chef.add_role "cadmium_vagrant"
+  end
 
   # Enable provisioning with chef server, specifying the chef server URL,
   # and the path to the validation key (relative to this Vagrantfile).

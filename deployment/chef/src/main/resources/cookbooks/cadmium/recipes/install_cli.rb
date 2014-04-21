@@ -19,46 +19,27 @@
 
 include_recipe "maven::default"
 
-user = "#{node[:cadmium][:cadmium_user]}"
-
-if Dir.method_defined? :home
-  home = Dir.home(user)
-else 
-  home = "/home/#{user}"
+directory "#{node[:cadmium][:cli_install_path]}" do
+  owner "#{node[:cadmium][:system_user]}"
+  group "#{node[:cadmium][:system_group]}"
+  mode 0755
+  action :create
+  notifies :put, "maven[cadmium-cli]", :delayed
 end
 
-if !File.exists?("#{home}/#{node[:cadmium][:cli_install_path]}")
-  directory "#{home}/#{node[:cadmium][:cli_install_path]}" do
-  	owner "#{user}"
-  	group "#{node[:cadmium][:cadmium_group]}"
-  	mode 0755
-  	action :create
-  end
-end
-
-cookbook_file "cadmium" do
-  path "/bin/cadmium"
+template "/bin/cadmium" do
+  source "cadmium.erb"
+  mode 0755
   owner "root"
   group "root"
-  mode 0755
   action :create_if_missing
+  notifies :put, "maven[cadmium-cli]", :delayed
 end
 
-if !File.exists?("#{home}/#{node[:cadmium][:cli_install_path]}/cadmium-cli.jar")
-  maven "cadmium-cli" do
-  	group_id "com.meltmedia.cadmium"
-  	version "${project.version}"
-  	dest "#{home}/#{node[:cadmium][:cli_install_path]}"
-    owner "#{user}"
-  	action :put
-  end
-end
-
-remote_file "#{home}/#{node[:cadmium][:cli_install_path]}/github.token" do
-  source "#{node[:cadmium][:cli_token_url]}"
-  owner "#{user}"
-  group "#{node[:cadmium][:cadmium_group]}"
-  mode 0644
-  
-  action :create_if_missing
+maven "cadmium-cli" do
+  group_id "com.meltmedia.cadmium"
+  version "0.10.0"
+  dest "#{node[:cadmium][:cli_install_path]}"
+  owner "#{node[:cadmium][:system_user]}"
+  action :nothing
 end

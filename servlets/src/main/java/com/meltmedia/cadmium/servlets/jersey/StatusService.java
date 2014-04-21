@@ -167,9 +167,9 @@ public class StatusService extends AuthorizationService {
 		// Get cadmium project info (branch, repo and revision)
 		rev = configProperties.getProperty("git.ref.sha", rev);
 		branch = configProperties.getProperty("branch", 
-		    branch == null ? configProperties.getProperty("com.meltmedia.cadmium.branch") : branch);
+		branch == null ? configProperties.getProperty("com.meltmedia.cadmium.branch") : branch);
 		repo = configProperties.getProperty("repo", 
-		    repo == null ? configProperties.getProperty("com.meltmedia.cadmium.git.uri") : repo);
+		repo == null ? configProperties.getProperty("com.meltmedia.cadmium.git.uri") : repo);
 		
 		git = null;
     try {
@@ -190,9 +190,9 @@ public class StatusService extends AuthorizationService {
     // Get cadmium project info (branch, repo and revision)
     configRev = configProperties.getProperty("config.git.ref.sha", configRev);
     configBranch = configProperties.getProperty("config.branch", 
-        configBranch == null ? configProperties.getProperty("com.meltmedia.cadmium.config.branch") : configBranch);
-    configRepo = configProperties.getProperty("config.repo", 
-        configRepo == null ? configProperties.getProperty("com.meltmedia.cadmium.config.git.uri", repo) : configRepo);
+    configBranch == null ? configProperties.getProperty("com.meltmedia.cadmium.config.branch") : configBranch);
+    configRepo = configProperties.getProperty("config.repo",
+    configRepo == null ? configProperties.getProperty("com.meltmedia.cadmium.config.git.uri", repo) : configRepo);
 	
 		// Get source project info (branch, repo and revision)
 		String sourceFile = contentDir + File.separator + "META-INF" + File.separator + "source";

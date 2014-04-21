@@ -17,14 +17,6 @@
 # limitations under the License.
 #
 
-user = "#{node[:cadmium][:cadmium_user]}"
-
-if Dir.method_defined? :home
-  home = Dir.home(user)
-else 
-  home = "/home/#{user}"
-end
-
 group "#{node[:cadmium][:system_group]}" do
   system true
 
@@ -55,5 +47,7 @@ if !node[:cadmium][:github_teams].nil?
     source "team.properties.erb"
     owner "#{node[:cadmium][:system_user]}"
     group "#{node[:cadmium][:system_group]}"
+
+    mode 0644
   end
 end

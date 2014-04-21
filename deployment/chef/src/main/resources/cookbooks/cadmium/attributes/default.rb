@@ -17,9 +17,9 @@
 # limitations under the License.
 #
 
-default[:cadmium][:cli_install_path] = '.cadmium'
 default[:cadmium][:cli_token_url] = 'https://cloud-init.domain.com/secure/github.token'
 default[:cadmium][:shared_content_root] = '/opt/cadmium'
+default[:cadmium][:cli_install_path] = '/opt/cadmium/lib'
 default[:cadmium][:environment] = 'development'
 default[:cadmium][:ssh_dir] = '.ssh'
 default[:cadmium][:ssh_key_priv] = nil
@@ -32,11 +32,11 @@ default[:cadmium][:system_group] = 'cadmium'
 default[:cadmium][:war][:groupId] = 'com.meltmedia.cadmium'
 default[:cadmium][:war][:artifactId] = 'cadmium-war'
 default[:cadmium][:war][:version] = '${project.version}'
-default[:cadmium][:domain] = 'cadmium.localhost'
+default[:cadmium][:domain] = 'localhost'
 default[:cadmium][:content][:repo] = 'https://github.com/meltmedia/cadmium.git'
 default[:cadmium][:content][:branch] = 'manual'
 default[:cadmium][:config][:repo] = 'https://github.com/meltmedia/cadmium.git'
 default[:cadmium][:config][:branch] = 'config'
 
-default[:cadmium][:jetty_root] = '/opt/cadmium-jetty'
+default[:cadmium][:jetty_root] = '/opt/cadmium/jetty'
 default[:cadmium][:deploy_directory] = nil

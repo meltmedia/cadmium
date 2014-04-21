@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cadmium
-# Recipe:: war
+# Resource:: deploy_war
 #
 # Copyright 2014, Meltmedia
 #
@@ -17,16 +17,18 @@
 # limitations under the License.
 #
 
-log "Queuing war initialization:" do
-end
+actions :jetty
 
-# Fetch artifact from maven repository
-cadmium_init_war "#{node[:cadmium][:jetty_root]}/#{node[:cadmium][:domain]}" do
-	action :fetch
-end
+attribute :war_name,       :kind_of => String
+attribute :app_path,       :kind_of => String, :required => true
+attribute :owner,          :kind_of => String
+attribute :group,          :kind_of => String
 
-# Initialize war from chef cache directory.
-cadmium_init_war "#{node[:cadmium][:jetty_root]}/#{node[:cadmium][:domain]}" do
-	action :init
-end
+def initialize(*args)
+  super
+  @war_name ||= @name
+  @owner ||= "#{node[:cadmium][:system_user]}"
+  @group ||= "#{node[:cadmium][:system_group]}"
 
+  action = :jetty
+end
