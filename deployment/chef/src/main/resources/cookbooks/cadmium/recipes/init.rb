@@ -51,3 +51,41 @@ if !node[:cadmium][:github_teams].nil?
     mode 0644
   end
 end
+
+log "Installing apache2." do
+  notifies :install, "package[apache2]", :immediate
+  notifies :create, "directory[/etc/apache2/ssl]", :delayed
+  notifies :run, "bash[install-apache2]", :delayed
+  notifies :start, "service[apache2]", :delayed
+end
+
+package "apache2" do
+  action :nothing
+end
+
+directory "/etc/apache2/ssl" do
+  owner "www-data"
+  group "www-data"
+  mode "0755"
+  recursive true
+
+  action :nothing
+end
+
+bash "install-apache2" do
+  user "root"
+  code <<-EOH
+  a2dissite default
+  a2enmod proxy
+  a2enmod proxy_http
+  a2enmod headers
+  EOH
+
+  action :nothing
+end
+
+service "apache2" do
+
+  supports :restart => true, :reload => true, :status => true
+  action :nothing
+end

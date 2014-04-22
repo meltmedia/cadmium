@@ -9,4 +9,5 @@ exec java -server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true \
   -Djboss.server.log.dir=./log \
   -Dcom.meltmedia.cadmium.environment=<%= @environment %> \
   -Dcom.meltmedia.cadmium.contentRoot=<%= @content_root %> \
+  -Dport=<%= @port %> \
   -jar ./bin/<%= @war_name %>

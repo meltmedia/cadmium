@@ -1,0 +1,55 @@
+<VirtualHost _default_:80>
+  ServerAdmin webmaster@cadmium.com
+
+  ErrorLog /var/log/apache2/<%= @war_name %>-error.log
+  LogLevel warn
+  CustomLog /var/log/apache2/<%= @war_name %>-access.log combined
+
+  ProxyPreserveHost On
+
+  RequestHeader set X-Forwarded-Proto "http"
+  RequestHeader set X-Forwarded-Port  "<%= @http_port %>"
+
+
+  ProxyPass / http://127.0.0.1:<%= @port %>/
+  ProxyPassReverse / http://127.0.0.1:<%= @port %>/
+
+  <Proxy *>
+    AddDefaultCharset off
+    Order deny,allow
+    Allow from all
+  </Proxy>
+
+</VirtualHost>
+
+<IfModule mod_ssl.c>
+  <VirtualHost _default_:443> 
+    ServerAdmin webmaster@cadmium.com
+
+    ErrorLog /var/log/apache2/<%= @war_name %>-error.log
+    LogLevel warn
+    CustomLog /var/log/apache2/<%= @war_name %>-access.log combined
+
+    ProxyPreserveHost On
+
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port  "<%= @https_port %>"
+
+
+    ProxyPass / http://127.0.0.1:<%= @port %>/
+    ProxyPassReverse / http://127.0.0.1:<%= @port %>/
+
+    <Proxy *>
+      AddDefaultCharset off
+      Order deny,allow
+      Allow from all
+    </Proxy>
+
+    SSLEngine on
+    SSLCipherSuite HIGH:!aNULL:!MD5
+
+    SSLCertificateFile /etc/apache2/ssl/server.crt
+    SSLCertificateKeyFile /etc/apache2/ssl/server.key
+
+  </VirtualHost>
+</IfModule>

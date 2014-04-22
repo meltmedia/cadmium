@@ -33,6 +33,7 @@ default[:cadmium][:war][:groupId] = 'com.meltmedia.cadmium'
 default[:cadmium][:war][:artifactId] = 'cadmium-war'
 default[:cadmium][:war][:version] = '${project.version}'
 default[:cadmium][:domain] = 'localhost'
+default[:cadmium][:port] = '8080'
 default[:cadmium][:content][:repo] = 'https://github.com/meltmedia/cadmium.git'
 default[:cadmium][:content][:branch] = 'manual'
 default[:cadmium][:config][:repo] = 'https://github.com/meltmedia/cadmium.git'
@@ -40,3 +41,6 @@ default[:cadmium][:config][:branch] = 'config'
 
 default[:cadmium][:jetty_root] = '/opt/cadmium/jetty'
 default[:cadmium][:deploy_directory] = nil
+
+default[:cadmium][:external_http_port] = '80'
+default[:cadmium][:external_https_port] = '443'

@@ -23,12 +23,13 @@ attribute :war_name,       :kind_of => String
 attribute :app_path,       :kind_of => String, :required => true
 attribute :owner,          :kind_of => String
 attribute :group,          :kind_of => String
+attribute :port,           :kind_of => String
 
 def initialize(*args)
   super
   @war_name ||= @name
   @owner ||= "#{node[:cadmium][:system_user]}"
   @group ||= "#{node[:cadmium][:system_group]}"
-
+  @port  ||= "8080"
   action = :jetty
 end

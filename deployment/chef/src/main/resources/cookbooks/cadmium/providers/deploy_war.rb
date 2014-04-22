@@ -95,10 +95,12 @@ action :jetty do
       :group => "#{new_resource.group}",
       :environment => "#{node[:cadmium][:environment]}",
       :content_root => "#{node[:cadmium][:shared_content_root]}",
-      :war_name => "#{new_resource.war_name}"
+      :war_name => "#{new_resource.war_name}",
+      :port => "#{new_resource.port}"
     })
 
     notifies :start, "service[#{new_resource.war_name}]", :delayed
+    notifies :create, "template[/etc/apache2/sites-available/#{new_resource.war_name}.conf]", :delayed
 
     action :nothing
   end
@@ -107,6 +109,43 @@ action :jetty do
     provider Chef::Provider::Service::Upstart
     action :nothing
   end
+
+  template "/etc/apache2/sites-available/#{new_resource.war_name}.conf" do
+    source "apache-site.conf.erb"
+    owner "www-data"
+    group "www-data"
+    mode "0644"
+
+    variables({
+      :war_name => "#{new_resource.war_name}.conf",
+      :port => "#{new_resource.port}",
+      :http_port => "#{node[:cadmium][:external_http_port]}",
+      :https_port => "#{node[:cadmium][:external_https_port]}"
+    })
+
+    only_if { ::File.directory?("/etc/apache2") }
+
+    notifies :run, "bash[enable-site-#{new_resource.war_name}.conf]", :delayed
+
+    action :nothing
+  end
+
+  bash "enable-site-#{new_resource.war_name}.conf" do
+    user "root"
+    code <<-EOF
+    a2ensite #{new_resource.war_name}.conf
+    EOF
+
+    notifies :restart, "service[apache2]", :delayed
+
+    action :nothing
+  end
+
+service "apache2" do
+
+  supports :restart => true, :reload => true, :status => true
+  action :nothing
+end
   
   new_resource.updated_by_last_action(true)
 end

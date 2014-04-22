@@ -23,6 +23,7 @@ run_list(%w{
         recipe[apt::default]
         recipe[cadmium::default]
         recipe[cadmium::init]
+        recipe[cadmium::ssl]
         recipe[cadmium::install_cli]
         recipe[cadmium::ssh]
         recipe[cadmium::war]
@@ -31,6 +32,8 @@ run_list(%w{
 default_attributes(
 	:cadmium => {
 		:cadmium_user  => "vagrant",
-		:cadmium_group => "vagrant"
+		:cadmium_group => "vagrant",
+                :external_http_port => "8080",
+                :external_https_port => "8443"
 	}
 )

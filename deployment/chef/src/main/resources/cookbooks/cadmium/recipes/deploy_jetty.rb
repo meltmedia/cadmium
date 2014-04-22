@@ -16,11 +16,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-  
+
 jettyAppPath = "#{node[:cadmium][:jetty_root]}/#{node[:cadmium][:domain]}"
 
 cadmium_deploy_war "#{node[:cadmium][:domain]}.war" do
   app_path "#{node[:cadmium][:jetty_root]}/#{node[:cadmium][:domain]}"
+  port "#{node[:cadmium][:port]}"
 
   action :jetty
 end
