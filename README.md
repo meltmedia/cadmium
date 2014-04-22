@@ -11,8 +11,4 @@ Vagrant
 
 To run this project in a vagrant box first run "mvn clean install" then vagrant up.
 
-This will build a vagrant instance with jboss 7, apache2, and a deployer deployed in it.
-
-The jboss admin user is "admin" with a password of "p@$$w0rd".
-
-
+This will build a vagrant instance with apache2 and a self executable war in it.
