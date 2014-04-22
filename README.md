@@ -12,3 +12,5 @@ Vagrant
 To run this project in a vagrant box first run "mvn clean install" then vagrant up.
 
 This will build a vagrant instance with apache2 and a self executable war in it.
+
+[http://localhost:8080](http://localhost:8080/)
