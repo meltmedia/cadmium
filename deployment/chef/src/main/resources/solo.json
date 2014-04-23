@@ -1,5 +1,5 @@
 {
     "run_list": [
-        "role[cadmium_vagrant]"
+        "role[standalone]"
     ]
 }

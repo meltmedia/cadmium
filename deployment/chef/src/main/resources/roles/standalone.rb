@@ -21,11 +21,11 @@ name "standalone"
 description "Role to build a jetty instance."
 run_list(%w{
         recipe[apt::default]
-        recipe[java::default]
-        recipe[maven::default]
+        recipe[cadmium::default]
         recipe[cadmium::init]
+        recipe[cadmium::ssl]
         recipe[cadmium::install_cli]
-        recipe[cadmium::war]
         recipe[cadmium::ssh]
+        recipe[cadmium::war]
         recipe[cadmium::deploy_jetty]
 })
