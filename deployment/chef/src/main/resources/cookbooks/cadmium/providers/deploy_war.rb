@@ -17,6 +17,12 @@
 # limitations under the License.
 #
 
+action :dir do
+  moveWarIntoPlace(new_resource, "#{new_resource.app_path}")
+
+  new_resource.updated_by_last_action(true)
+end
+
 action :jetty do
 
   jettyAppPath = "#{new_resource.app_path}"
@@ -64,27 +70,17 @@ action :jetty do
 
   end
 
+  moveWarIntoPlace(new_resource, warFinalLocation)
+  
   log "Installing war #{new_resource.war_name}" do
-    notifies :create, "ruby_block[copy-war-#{new_resource.war_name}]", :delayed
-  end
-
-  ruby_block "copy-war-#{new_resource.war_name}" do
-    block do
-      require 'fileutils'
-      FileUtils.cp "#{Chef::Config[:file_cache_path]}/#{new_resource.war_name}", "#{warFinalLocation}"
-      FileUtils.chmod 0600, "#{warFinalLocation}"
-      FileUtils.chown "#{new_resource.owner}", "#{new_resource.group}", "#{warFinalLocation}"
-    end
-
     notifies :create, "template[/etc/init/#{new_resource.war_name}.conf]", :delayed
-
-    action :nothing
   end
 
   # setup jetty service
 
   template "/etc/init/#{new_resource.war_name}.conf" do
-    source "cadmium-jetty.conf.erb"
+    source "#{new_resource.template}"
+    cookbook "#{new_resource.cookbook}"
     owner "root"
     group "root"
     mode 0644
@@ -100,13 +96,35 @@ action :jetty do
     })
 
     notifies :start, "service[#{new_resource.war_name}]", :delayed
-    notifies :create, "template[/etc/apache2/sites-available/#{new_resource.war_name}.conf]", :delayed
 
     action :nothing
   end
 
   service "#{new_resource.war_name}" do
     provider Chef::Provider::Service::Upstart
+    action :nothing
+  end
+  
+  new_resource.updated_by_last_action(true)
+end
+
+# copies a pre-configured war into place.
+def moveWarIntoPlace(new_resource, warFinalLocation)
+
+  log "Installing war #{new_resource.war_name}" do
+    notifies :create, "ruby_block[copy-war-#{new_resource.war_name}]", :delayed
+  end
+
+  ruby_block "copy-war-#{new_resource.war_name}" do
+    block do
+      require 'fileutils'
+      FileUtils.cp "#{Chef::Config[:file_cache_path]}/#{new_resource.war_name}", "#{warFinalLocation}"
+      FileUtils.chmod 0600, "#{warFinalLocation}"
+      FileUtils.chown "#{new_resource.owner}", "#{new_resource.group}", "#{warFinalLocation}"
+    end
+
+    notifies :create, "template[/etc/apache2/sites-available/#{new_resource.war_name}.conf]", :delayed
+
     action :nothing
   end
 
@@ -141,11 +159,9 @@ action :jetty do
     action :nothing
   end
 
-service "apache2" do
+  service "apache2" do
 
-  supports :restart => true, :reload => true, :status => true
-  action :nothing
-end
-  
-  new_resource.updated_by_last_action(true)
+    supports :restart => true, :reload => true, :status => true
+    action :nothing
+  end
 end

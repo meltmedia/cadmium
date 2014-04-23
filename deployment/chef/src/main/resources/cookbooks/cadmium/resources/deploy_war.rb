@@ -17,10 +17,12 @@
 # limitations under the License.
 #
 
-actions :jetty
+actions :jetty, :dir
 
 attribute :war_name,       :kind_of => String
 attribute :app_path,       :kind_of => String, :required => true
+attribute :cookbook,       :kind_of => String
+attribute :template,       :kind_of => String
 attribute :owner,          :kind_of => String
 attribute :group,          :kind_of => String
 attribute :port,           :kind_of => String
@@ -31,5 +33,7 @@ def initialize(*args)
   @owner ||= "#{node[:cadmium][:system_user]}"
   @group ||= "#{node[:cadmium][:system_group]}"
   @port  ||= "8080"
+  @cookbook ||= "cadmium"
+  @template ||= "cadmium-jetty.conf.erb"
   action = :jetty
 end

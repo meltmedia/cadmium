@@ -15,7 +15,7 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder "~/.cadmium", "/home/vagrant/.cadmium"
 
   config.vm.provider :virtualbox do |vb|
-      vb.customize ["modifyvm", :id, "--memory", "128"]
+      vb.customize ["modifyvm", :id, "--memory", "512", "--cpus", "2"]
   end
 
   config.vm.provision :chef_solo do |chef|
