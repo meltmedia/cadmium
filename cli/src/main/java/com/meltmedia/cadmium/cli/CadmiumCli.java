@@ -156,7 +156,7 @@ public class CadmiumCli {
 		    String password = new String(System.console().readPassword("Password: "));
 		    List<String> scopes = new ArrayList<String>();
 		    scopes.add("repo");
-		    ApiClient.authorizeAndCreateTokenFile(username, password, scopes);
+		    ApiClient.authorizeAndCreateTokenFile(username, password, scopes, "Cadmium CLI");
 		    
 		    token = ApiClient.getToken();
 		  }

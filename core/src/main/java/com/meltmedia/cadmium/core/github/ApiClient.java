@@ -113,7 +113,7 @@ public class ApiClient implements AuthorizationApi {
     return client;
   }
   
-  public static Authorization authorize(String username, String password, List<String> scopes) throws Exception {
+  public static Authorization authorize(String username, String password, List<String> scopes, String note) throws Exception {
     HttpClient client = createStaticHttpClient();
     try {
       int limitRemain = getRateLimitRemain(null, client);
@@ -125,6 +125,7 @@ public class ApiClient implements AuthorizationApi {
         if(scopes != null) {
           body.scopes = scopes.toArray(new String[] {});
         }
+        body.note = note;
         String bodySt = new Gson().toJson(body, AuthBody.class);
         log.trace("Loggin in with post body [{}]", bodySt);
         StringEntity postEntity = new StringEntity(bodySt);
@@ -162,8 +163,8 @@ public class ApiClient implements AuthorizationApi {
     }
   }
   
-  public static void authorizeAndCreateTokenFile(String username, String password, List<String> scopes) throws Exception {
-    Authorization auth = authorize(username, password, scopes);
+  public static void authorizeAndCreateTokenFile(String username, String password, List<String> scopes, String note) throws Exception {
+    Authorization auth = authorize(username, password, scopes, note);
     if(auth != null && auth.getToken() != null) {
       String cadmiumToken = System.getProperty("user.home");
       if(cadmiumToken != null) {
@@ -576,6 +577,7 @@ public class ApiClient implements AuthorizationApi {
   private static class AuthBody {
     @SuppressWarnings("unused")
     String scopes[];
+    String note;
   }
   
   public static class Authorization {

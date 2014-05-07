@@ -57,7 +57,7 @@ public class ApiClientTest {
       List<String> scopes = new ArrayList<String>();
       scopes.add("repo");
       
-      tokenAuth = ApiClient.authorize(username, password, scopes);
+      tokenAuth = ApiClient.authorize(username, password, scopes, "Testing");
       
       assertTrue("Authorization failed.", tokenAuth != null);
       
