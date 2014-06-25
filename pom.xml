@@ -501,6 +501,7 @@
           <artifactId>maven-release-plugin</artifactId>
           <version>2.4.1</version>
           <configuration>
+            <suppressCommitBeforeTag>false</suppressCommitBeforeTag>
             <tagNameFormat>v@{project.version}</tagNameFormat>
           </configuration>
         </plugin>
