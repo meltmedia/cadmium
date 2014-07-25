@@ -38,6 +38,21 @@ module.exports = function(grunt) {
     }
   };
 
+  var readStream = function(stream, callback) {
+    var buffer = '';
+    stream.on('data', function(chunk) {
+      buffer += chunk;
+    });
+
+    stream.on('end', function() {
+      callback(buffer, null);
+    });
+
+    stream.on('error', function() {
+      callback(null, 'Failed to read response from server.');
+    });
+  };
+
   var getHomeDir = function() {
     return process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
   };
@@ -50,6 +65,10 @@ module.exports = function(grunt) {
         Authorization: $this.apiToken
       }
     };
+
+    if($this.options.ssl) {
+      reqOptions.rejectUnauthorized = false;
+    }
 
     if(method) {
       reqOptions.method = method;
@@ -95,7 +114,7 @@ module.exports = function(grunt) {
   // Fails build if repo has outstanding changes.
   Commit.prototype.checkDirty = function(callback) {
     if(this.hasRemote) {
-      exec('git status -s', {cwd: this.options.cwd}, function(error, stdout, stderr) {
+      exec('git status -s --untracked-files=no', {cwd: this.options.cwd}, function(error, stdout, stderr) {
         if(trim(stdout) !== '' || trim(stderr) !== '') {
           callback("Please commit or stash changes before deploying.");
           return;
@@ -202,14 +221,18 @@ module.exports = function(grunt) {
     var $this = this;
     this.http.request(makeRequestOptions(this, '/system/status'), function(res) {
       if(res.statusCode === 200) {
-        res.on('data', function(chunk) {
-          grunt.log.debug('Status returned: ' + chunk);
-          $this.status = JSON.parse(chunk);
-          var remoteName = /([^\/]+)\.git/.exec($this.status.repo)[1];
-          var cloneDir = path.join(os.tmpdir(), 'cloned-remotes', remoteName + '_' + $this.status.branch);
-          
-          $this.clonedRemoteDirectory = cloneDir;
-          callback();
+        readStream(res, function(data, error) {
+          if(error !== null) {
+            callback(error);
+          } else {
+            grunt.log.debug('Status returned: ' + data);
+            $this.status = JSON.parse(data);
+            var remoteName = /([^\/]+)\.git/.exec($this.status.repo)[1];
+            var cloneDir = path.join(os.tmpdir(), 'cloned-remotes', remoteName + '_' + $this.status.branch);
+            
+            $this.clonedRemoteDirectory = cloneDir;
+            callback();
+          }
         });
       } else {
         callback('Status returned ' + res.statusCode);
@@ -323,10 +346,14 @@ module.exports = function(grunt) {
     var $this = this;
     var req = this.http.request(makeRequestOptions(this, '/system/update', 'POST', true), function(res) {
       if(res.statusCode === 200) {
-        res.on('data', function(chunk) {
-          $this.update = JSON.parse(chunk);
-          grunt.log.ok('Updating content on ' + $this.options.site);
-          callback();
+        readStream(res, function(data, error) {
+          if(error !== null) {
+            callback(error);
+          } else {
+            $this.update = JSON.parse(data);
+            grunt.log.ok('Updating content on ' + $this.options.site);
+            callback();
+          }
         });
       } else {
         callback('Failed to send update message.');
@@ -346,13 +373,17 @@ module.exports = function(grunt) {
     if(typeof this.update.uuid === 'string') {
       this.http.request({hostname: this.options.site, path: '/system/history/' + this.update.uuid}, function(res) {
         if(res.statusCode === 200) {
-          res.on('data', function(chunk) {
-            if((chunk + '') === 'true') {
-              grunt.log.ok('Finished updating.');
+          readStream(res, function(data, error) {
+            if(error !== null) {
+              callback(error);
             } else {
-              $this.cmds.push('waitForDone');
+              if(data === 'true') {
+                grunt.log.ok('Finished updating.');
+              } else {
+                $this.cmds.push('waitForDone');
+              }
+              callback();
             }
-            callback();
           });
         } else {
           callback('Deployment failed!');
