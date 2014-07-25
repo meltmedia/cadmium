@@ -1,7 +1,7 @@
 {
   "name": "grunt-commit-plugin",
   "description": "Grunt plugin to deploy a cadmium site.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "homepage": "https://github.com/meltmedia/cadmium",
   "author": {
     "name": "John McEntire",
