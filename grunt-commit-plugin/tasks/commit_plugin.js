@@ -394,9 +394,9 @@ module.exports = function(grunt) {
   grunt.registerTask('cadmium_commit', 'Grunt plugin to deploy a cadmium site.', function() {
     // Require a site url in the configuration.
     var done = this.async();
-    grunt.config.requires('cadmium_commit.url');
+    grunt.config.requires('cadmium_commit.domain');
 
-    var siteUrl = grunt.config('cadmium_commit.url');
+    var siteUrl = grunt.config('cadmium_commit.domain');
     var outDir  = grunt.config('cadmium_commit.out');
     var message = grunt.config('cadmium_commit.message');
     var cwdVal = grunt.config('cadmium_commit.cwd');

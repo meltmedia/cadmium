@@ -50,7 +50,7 @@ module.exports = function(grunt) {
     },
 
     cadmium_commit: {
-      url: 'http://cadmium-test.com/',
+      domain: 'cadmium-test.com',
       outDir: 'out',
       cwd: 'target'
     },
