@@ -100,9 +100,10 @@ module.exports = function(grunt) {
   Commit.prototype.checkForGitRemote = function(callback) {
     var $this = this;
     exec('git fetch', {cwd: this.options.cwd, stdio: 'inherit'}, function (error) {
-      $this.hasRemote = true;
       if(error !== null) {
-        $this.hasRemote = error.code === 128;
+        $this.hasRemote = false;
+      } else {
+        $this.hasRemote = true;
       }
 
       grunt.log.ok('Has remote: ' + $this.hasRemote);
@@ -137,7 +138,8 @@ module.exports = function(grunt) {
           grunt.log.ok('Git Remote: ' + $this.remote);
           callback();
         } else {
-          callback('Unknown remote on git repository.')
+          $this.remote = 'bamboo';
+          callback('Unknown remote');
         }
       });
     } else {
