@@ -307,13 +307,11 @@ module.exports = function(grunt) {
   // Commit changes to content repo.
   Commit.prototype.commitChanges = function(callback) {
     exec('git commit -m "' + this.options.message + '"', {cwd: this.clonedRemoteDirectory}, function(error, stdout, stderr) {
-      if(error === null) {
-        callback();
-      } else {
+      if(error !== null) {
         grunt.log.warn('STDOUT: ' + stdout);
         grunt.log.warn('STDERR: ' + stderr);
-        callback('Failed to commit new content.');
       }
+      callback();
     });
   };
   
