@@ -371,7 +371,7 @@ module.exports = function(grunt) {
   Commit.prototype.waitForDone = function(callback) {
     var $this = this;
     if(typeof this.update.uuid === 'string') {
-      this.http.request({hostname: this.options.site, path: '/system/history/' + this.update.uuid}, function(res) {
+      this.http.request({hostname: this.options.site, path: '/system/history/' + this.update.uuid, rejectUnauthorized: false}, function(res) {
         if(res.statusCode === 200) {
           readStream(res, function(data, error) {
             if(error !== null) {
