@@ -16,7 +16,7 @@
 package com.meltmedia.cadmium.servlets;
 
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jgit.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -390,7 +390,7 @@ public class BasicFileServlet
   public static Pattern rangePattern = null;
   static {
     try {
-      etagPattern = Pattern.compile( "(W/)?\"((?:[^\"\\\\]*|\\\\.)*)\"\\s*(?:,\\s*)?.*");
+      etagPattern = Pattern.compile( "(W/)?\"((?:[^\"\\\\]|\\\\.)*)\"\\s*(?:,\\s*)?");
       unescapePattern = Pattern.compile("\\\\(.)");
       rangePattern = Pattern.compile("\\A\\s*bytes\\s*=\\s*(\\d*-\\d*(,\\d*-\\d*)*)\\s*\\Z");
     }
@@ -406,7 +406,7 @@ public class BasicFileServlet
    * @return false if the range pattern contains no satisfiable ranges.
    */
   public static boolean parseRanges(FileRequestContext context) {
-    if( !StringUtils.isEmptyOrNull(context.range) ) {
+    if( !StringUtils.isBlank(context.range) ) {
       Matcher rangeMatcher = rangePattern.matcher(context.range);
       if(rangeMatcher.matches()) {
         String ranges[] = rangeMatcher.group(1).split(",");
@@ -519,7 +519,10 @@ public class BasicFileServlet
       Matcher etagMatcher = etagPattern.matcher(value);
       while( etagMatcher.lookingAt() ) {
         etags.add(unescapePattern.matcher(etagMatcher.group(2)).replaceAll("$1"));
-        etagMatcher.region(etagMatcher.start()+etagMatcher.group().length(), etagMatcher.end());
+        etagMatcher.region(etagMatcher.start()+etagMatcher.group().length(), value.length());
+      }
+      if(!etagMatcher.hitEnd()) {
+        etags.clear();
       }
     }
     return etags;
