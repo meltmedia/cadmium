@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.meltmedia.cadmium</groupId>
     <artifactId>cadmium</artifactId>
-    <version>0.10.2</version>
+    <version>0.10.3-SNAPSHOT</version>
   </parent>
 
   <name>cadmium :: Maven</name>

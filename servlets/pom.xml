@@ -4,7 +4,7 @@
   <parent>
     <artifactId>cadmium</artifactId>
     <groupId>com.meltmedia.cadmium</groupId>
-    <version>0.10.2</version>
+    <version>0.10.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>cadmium-servlets</artifactId>
