@@ -39,10 +39,13 @@ import java.security.UnrecoverableKeyException;
 @Singleton
 public class Api {
   public static final String INPUT_KEY_FILE_NAME = "loggly.key";
-  public static final String LOGGLY_BASE_URL = "https://logs.loggly.com/inputs/";
+  public static final String LOGGLY_BASE_URL_OVERRIDE_KEY = "com.meltmedia.cadmium.loggly.base-url";
+  public static final String LOGGLY_CUSTOMER_TOKEN_OVERRIDE_KEY = "com.meltmedia.cadmium.loggly.client-token";
+  public static final String LOGGLY_BASE_URL = "https://logs-01.loggly.com/inputs/";
+
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
-  protected String inputKey;
+  protected String customerToken;
 
   @Inject
   @VHost
@@ -57,40 +60,54 @@ public class Api {
 
   @Inject
   public Api(@SharedContentRoot String sharedContentRoot) {
-    File logglyKeyFile = new File(sharedContentRoot, INPUT_KEY_FILE_NAME);
+    readInLogglyKey(sharedContentRoot, INPUT_KEY_FILE_NAME);
+
+    if(StringUtils.isEmpty(customerToken)) {
+      logger.info("Loggly is not configured. I will not log then.");
+    } else {
+      logger.info("Loggly is configured {}.", customerToken);
+    }
+  }
+
+  private void readInLogglyKey(String sharedContentRoot, String keyFileName) {
+    File logglyKeyFile = new File(sharedContentRoot, keyFileName);
     if(logglyKeyFile.exists() && logglyKeyFile.canRead()) {
       try {
-        inputKey = FileUtils.readFileToString(logglyKeyFile);
+        customerToken = FileUtils.readFileToString(logglyKeyFile);
       } catch(Throwable t) {
-        logger.warn("Failed to read in loggly input key from file. (" + INPUT_KEY_FILE_NAME + ")", t);
+        logger.warn("Failed to read in loggly input key from file. (" + keyFileName + ")", t);
       }
     }
 
-    if(StringUtils.isEmpty(inputKey)) {
+    if(StringUtils.isEmpty(customerToken)) {
       InputStream in = null;
       try {
-        in = getClass().getClassLoader().getResourceAsStream(INPUT_KEY_FILE_NAME);
+        in = getClass().getClassLoader().getResourceAsStream(keyFileName);
         if(in != null) {
-          inputKey = IOUtils.toString(in);
+          customerToken = IOUtils.toString(in);
         }
       } catch (Throwable t) {
-        logger.warn("Failed to load loggly input key from classpath. (" + INPUT_KEY_FILE_NAME + ")", t);
+        logger.warn("Failed to load loggly input key from classpath. (" + keyFileName + ")", t);
       } finally {
         if(in != null) {
           IOUtils.closeQuietly(in);
         }
       }
     }
+  }
 
-    if(StringUtils.isEmpty(inputKey)) {
-      logger.info("Loggly is not configured. I will not log then.");
-    } else {
-      logger.info("Loggly is configured {}.", inputKey);
-    }
+  private String getCustomerToken() {
+    return configManager
+        .getDefaultProperties()
+        .getProperty(LOGGLY_CUSTOMER_TOKEN_OVERRIDE_KEY, customerToken);
+  }
+
+  private String getLogglyUrl() {
+    return System.getProperty(LOGGLY_BASE_URL_OVERRIDE_KEY, LOGGLY_BASE_URL) + getCustomerToken();
   }
 
   public void sendEvent(Event evt) {
-    if(!StringUtils.isEmpty(inputKey)) {
+    if(!StringUtils.isEmpty(customerToken)) {
       logger.debug("Sending event {}", evt);
       if (StringUtils.isEmpty(environment)) {
         environment = configManager.getDefaultProperties().getProperty("com.meltmedia.cadmium.environment", "development");
@@ -98,7 +115,7 @@ public class Api {
       evt.setEnvironment(environment);
       evt.setDomain(vHostName);
 
-      HttpPost post = new HttpPost(LOGGLY_BASE_URL + inputKey.trim());
+      HttpPost post = new HttpPost(getLogglyUrl());
 
       post.setEntity(new StringEntity(GSON.toJson(evt), ContentType.APPLICATION_JSON));
 
