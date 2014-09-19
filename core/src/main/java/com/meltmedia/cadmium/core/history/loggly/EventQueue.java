@@ -38,7 +38,7 @@ public class EventQueue {
     }
   }
 
-  @Scheduled(delay = 5l, interval = 5l, unit = TimeUnit.MINUTES)
+  @Scheduled(delay = 1l, interval = 1l, unit = TimeUnit.MINUTES)
   public void dequeueLogs() {
     Event evt = null;
     logger.debug("Dequeueing Logs.");

@@ -63,9 +63,9 @@ public class Api {
     readInLogglyKey(sharedContentRoot, INPUT_KEY_FILE_NAME);
 
     if(StringUtils.isEmpty(customerToken)) {
-      logger.info("Loggly is not configured. I will not log then.");
+      logger.debug("Loggly is not configured. I will not log then.");
     } else {
-      logger.info("Loggly is configured {}.", customerToken);
+      logger.debug("Loggly is configured {}.", customerToken);
     }
   }
 
@@ -94,6 +94,10 @@ public class Api {
         }
       }
     }
+
+    if(StringUtils.isNotBlank(customerToken)) {
+      customerToken = customerToken.trim();
+    }
   }
 
   private String getCustomerToken() {
@@ -107,30 +111,31 @@ public class Api {
   }
 
   public void sendEvent(Event evt) {
+    if (StringUtils.isEmpty(environment)) {
+      environment = configManager.getDefaultProperties().getProperty("com.meltmedia.cadmium.environment", "development");
+    }
+    evt.setEnvironment(environment);
+    evt.setDomain(vHostName);
+    logger.info(GSON.toJson(evt));
     if(!StringUtils.isEmpty(customerToken)) {
       logger.debug("Sending event {}", evt);
-      if (StringUtils.isEmpty(environment)) {
-        environment = configManager.getDefaultProperties().getProperty("com.meltmedia.cadmium.environment", "development");
-      }
-      evt.setEnvironment(environment);
-      evt.setDomain(vHostName);
 
-      HttpPost post = new HttpPost(getLogglyUrl());
+      HttpPost post = new HttpPost(getLogglyUrl() + "/tag/" + evt.getTag());
 
-      post.setEntity(new StringEntity(GSON.toJson(evt), ContentType.APPLICATION_JSON));
+      post.setEntity(new StringEntity(GSON.toJson(evt), ContentType.TEXT_PLAIN));
 
       try {
         HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
         HttpResponse response = client.execute(post);
         if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-          logger.info("Event sent to loggly {}", evt);
+          logger.debug("Event sent to loggly {}", evt);
           EntityUtils.consumeQuietly(response.getEntity());
         } else {
           String respStr = EntityUtils.toString(response.getEntity());
           throw new Exception("Unexpected result["+response.getStatusLine().getStatusCode()+"]: "+respStr);
         }
       } catch (Throwable t) {
-        logger.error("Failed to send loggly event.", t);
+        logger.debug("Failed to send loggly event.", t);
       } finally {
         post.releaseConnection();
       }

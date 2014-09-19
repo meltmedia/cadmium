@@ -90,6 +90,10 @@ public class HistoryEvent extends Event {
     this.maintenance = maintenance;
   }
 
+  public String getTag() {
+    return getDomain();
+  }
+
   @Override
   public String toString() {
     return ToStringBuilder.reflectionToString(this);

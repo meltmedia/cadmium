@@ -16,14 +16,14 @@
 
 -->
 <config>
-<TCP loopback="true" log_discard_msgs="false" start_port="7800" end_port="0"></TCP>
-<MPING timeout="3000" num_initial_members="3" level="error"></MPING>
-<MERGE2 min_interval="5000" max_interval="10000"></MERGE2>
-<FD timeout="2500" max_tries="5"></FD>
-<VERIFY_SUSPECT timeout="1500"></VERIFY_SUSPECT>
-<pbcast.NAKACK retransmit_timeout="3000" use_mcast_xmit="false" log_not_found_msgs="false"
-               log_discard_msgs="false"></pbcast.NAKACK>
-<pbcast.STABLE desired_avg_gossip="20000"></pbcast.STABLE>
-<pbcast.GMS join_timeout="5000"
-            print_local_addr="false"></pbcast.GMS>
+  <TCP loopback="true" log_discard_msgs="false"></TCP>
+  <MPING timeout="3000" num_initial_members="3" level="error"></MPING>
+  <MERGE2 min_interval="5000" max_interval="10000"></MERGE2>
+  <FD timeout="2500" max_tries="5"></FD>
+  <VERIFY_SUSPECT timeout="1500"></VERIFY_SUSPECT>
+  <pbcast.NAKACK retransmit_timeout="3000" use_mcast_xmit="false" log_not_found_msgs="false"
+                 log_discard_msgs="false"></pbcast.NAKACK>
+  <pbcast.STABLE desired_avg_gossip="20000"></pbcast.STABLE>
+  <pbcast.GMS join_timeout="5000"
+              print_local_addr="false"></pbcast.GMS>
 </config>
