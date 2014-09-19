@@ -38,4 +38,8 @@ public class TestEvent extends Event {
   public void setType(String type) {
     this.type = type;
   }
+
+  public String getTag() {
+    return getDomain();
+  }
 }

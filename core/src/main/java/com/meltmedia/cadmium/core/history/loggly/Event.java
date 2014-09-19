@@ -46,6 +46,8 @@ public abstract class Event {
 
   public abstract String getType();
 
+  public abstract String getTag();
+
   @Override
   public String toString() {
     return ToStringBuilder.reflectionToString(this);
