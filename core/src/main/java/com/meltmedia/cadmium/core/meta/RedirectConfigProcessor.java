@@ -52,6 +52,7 @@ public class RedirectConfigProcessor implements ConfigProcessor {
         }
         if(redirs != null && !redirs.isEmpty()) {
           for(Redirect redir : redirs) {
+            redir.setPath(redir.getPath());
             newStagedRedirects.add((Redirect)redir.clone());
           }
         }

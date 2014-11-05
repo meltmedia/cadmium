@@ -61,7 +61,7 @@ public class Redirect implements Cloneable {
       pathPattern = Pattern.compile(path);
       log.trace("Parsed as pattern {}", path);
     } catch(Throwable t) {
-      log.trace("This is not a REGEX pattern", t);
+      log.warn("This is not a REGEX pattern", t);
     }
   }
   
