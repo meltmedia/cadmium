@@ -28,7 +28,6 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -200,7 +199,7 @@ public class UpdateCommand extends AbstractAuthorizedOnly implements CliCommand 
 	 * @throws Exception
 	 */
   public static boolean sendUpdateMessage(String site2, String repo, String branch, String revision, String comment, String token, String endpoint, String branchPrefix) throws Exception {
-    HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient client = httpClient();
     
     HttpPost post = new HttpPost(site2 + endpoint);
     addAuthHeader(token, post);

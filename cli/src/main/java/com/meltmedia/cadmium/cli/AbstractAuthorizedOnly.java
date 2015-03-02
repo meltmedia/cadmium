@@ -16,19 +16,18 @@
 package com.meltmedia.cadmium.cli;
 
 import org.apache.http.HttpMessage;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
+import org.apache.http.conn.ssl.SSLContexts;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -145,18 +144,20 @@ public class AbstractAuthorizedOnly implements AuthorizedOnly {
    * Sets the Commons HttpComponents to accept all SSL Certificates.
    * 
    * @throws Exception
-   * @return The reference passed in.
-   * @throws KeyStoreException 
-   * @throws NoSuchAlgorithmException 
-   * @throws UnrecoverableKeyException 
-   * @throws KeyManagementException 
+   * @return An instance of HttpClient that will accept all.
    */
-  protected static DefaultHttpClient setTrustAllSSLCerts(DefaultHttpClient client) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
-    SSLSocketFactory acceptAll = new SSLSocketFactory(new TrustSelfSignedStrategy(), SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-    
-    client.getConnectionManager().getSchemeRegistry().register(new Scheme("https", 443, acceptAll));
-    
-    return client;
+  protected static HttpClient httpClient() throws Exception {
+    return HttpClients.custom()
+        .setHostnameVerifier(new AllowAllHostnameVerifier())
+        .setSslcontext(SSLContexts.custom()
+            .loadTrustMaterial(null, new TrustStrategy() {
+              @Override
+              public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                return true;
+              }
+            })
+            .build())
+        .build();
   }
 
 }

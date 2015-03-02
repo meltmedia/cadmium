@@ -24,7 +24,6 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import com.beust.jcommander.Parameter;
@@ -89,7 +88,7 @@ public class ApiCommand extends AbstractAuthorizedOnly implements CliCommand {
    * @throws Exception
    */
   public static String[] sendRequest(String token, String site, OPERATION op, String path) throws Exception {
-    HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient client = httpClient();
     HttpUriRequest message = null;
     if(op == OPERATION.DISABLE) {
       message = new HttpPut(site + ENDPOINT + path);

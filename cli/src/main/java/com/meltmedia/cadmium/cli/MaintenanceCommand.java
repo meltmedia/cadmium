@@ -24,9 +24,9 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import com.beust.jcommander.Parameter;
@@ -59,7 +59,7 @@ public class MaintenanceCommand extends AbstractAuthorizedOnly implements CliCom
 
 	public void execute() throws ClientProtocolException, IOException, Exception {
 		
-		DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+		HttpClient client = httpClient();
 
 		if(paramList.size() == 2) {
 		  try {
