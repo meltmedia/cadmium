@@ -20,8 +20,8 @@ import java.util.List;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import com.beust.jcommander.Parameter;
@@ -100,7 +100,7 @@ public class WarInfoCommand extends AbstractAuthorizedOnly implements
    * @throws Exception
    */
   public static WarInfo getDeployedWarInfo(String url, String warName, String token) throws Exception {
-    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient client = httpClient();
     
     HttpGet get = new HttpGet(url + "/system/deployment/details/"+warName);
     addAuthHeader(token, get);

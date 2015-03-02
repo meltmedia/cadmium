@@ -27,7 +27,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +138,7 @@ public class StatusCommand extends AbstractAuthorizedOnly implements CliCommand 
    * @throws Exception
    */
   public static Status getSiteStatus(String site, String token) throws Exception {
-    HttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient client = httpClient();
     
     HttpGet get = new HttpGet(site + StatusCommand.JERSEY_ENDPOINT);
     addAuthHeader(token, get);

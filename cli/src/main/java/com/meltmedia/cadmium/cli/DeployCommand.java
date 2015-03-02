@@ -27,11 +27,11 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +110,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
     log.debug("siteUrl + JERSEY_ENDPOINT = {}", url);
     String warName = null;
 		try {
-	    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+	    HttpClient client = httpClient();
 			
 			HttpPost post = new HttpPost(url);
 			addAuthHeader(post);
@@ -197,7 +197,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
    * @param client
    * @return
    */
-  public boolean canCheckWar(String warName, String url, DefaultHttpClient client) {
+  public boolean canCheckWar(String warName, String url, HttpClient client) {
     HttpOptions opt = new HttpOptions(url + "/" + warName);
     try {
       HttpResponse response = client.execute(opt);
@@ -221,7 +221,7 @@ public class DeployCommand extends AbstractAuthorizedOnly implements CliCommand 
 
   private boolean started = false;
 
-  public boolean checkWarDeployment(String warName, String url, DefaultHttpClient client) throws Exception {
+  public boolean checkWarDeployment(String warName, String url, HttpClient client) throws Exception {
     HttpGet get= new HttpGet(url + "/" + warName);
     try {
       HttpResponse response = client.execute(get);

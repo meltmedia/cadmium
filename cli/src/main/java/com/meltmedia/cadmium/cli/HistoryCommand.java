@@ -31,7 +31,6 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import com.beust.jcommander.Parameter;
@@ -143,7 +142,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
       siteUri += "/" + since;
     }
     
-    HttpClient httpClient = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient httpClient = httpClient();
     HttpGet get = new HttpGet(siteUri);
     Long currentTime = System.currentTimeMillis();
     Long timeoutTime = currentTime + timeout;
@@ -196,7 +195,7 @@ public class HistoryCommand extends AbstractAuthorizedOnly implements CliCommand
     
     List<HistoryEntry> history = null;
     
-    HttpClient httpClient = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient httpClient = httpClient();
     HttpGet get = null;
     try {
       URIBuilder uriBuilder = new URIBuilder(siteUri);

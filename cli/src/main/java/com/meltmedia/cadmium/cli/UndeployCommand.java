@@ -22,10 +22,10 @@ import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.api.UndeployRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import javax.ws.rs.core.MediaType;
@@ -121,7 +121,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
    */
   public static List<String> getDeployed(String url, String token) throws Exception {
     List<String> deployed = new ArrayList<String> ();
-    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient client = httpClient();
     
     HttpGet get = new HttpGet(url + "/system/deployment/list");
     addAuthHeader(token, get);
@@ -148,7 +148,7 @@ public class UndeployCommand extends AbstractAuthorizedOnly implements
    * @throws Exception
    */
   public static void undeploy(String url, String warName, String token) throws Exception {
-    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient client = httpClient();
     
     HttpPost del = new HttpPost(url + "/system/undeploy");
     addAuthHeader(token, del);

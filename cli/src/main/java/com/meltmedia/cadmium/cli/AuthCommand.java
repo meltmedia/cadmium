@@ -23,12 +23,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
 import org.apache.shiro.crypto.hash.SimpleHash;
@@ -119,12 +119,10 @@ public class AuthCommand extends AbstractAuthorizedOnly implements CliCommand {
    * @throws ClientProtocolException
    */
   private void sendRequest(HttpUriRequest request, int expectedStatus)
-      throws KeyManagementException, UnrecoverableKeyException,
-      NoSuchAlgorithmException, KeyStoreException, IOException,
-      ClientProtocolException {
+      throws Exception {
     addAuthHeader(request);
     
-    DefaultHttpClient client = setTrustAllSSLCerts(new DefaultHttpClient());
+    HttpClient client = httpClient();
     
     HttpResponse response = client.execute(request);
     if(response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
