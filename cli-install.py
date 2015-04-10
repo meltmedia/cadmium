@@ -231,7 +231,7 @@ if not has_path:
   shell = os.environ["SHELL"]
   rc_file = shell_run_commands.get(shell)
   if rc_file is None:
-    sys.exit(' '.join(['Unknown shell', shell]))
+    sys.exit('Unknown shell {}'.format(shell))
   print 'Please run `. {}` before continuing!'.format(rc_file)
   has_path = (subprocess.call(['grep', '--silent', 'cadmium', os.path.expanduser(rc_file)]) == 0)
   if not has_path:
