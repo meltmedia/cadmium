@@ -44,7 +44,7 @@ if !(type vagrant > /dev/null 2> /dev/null); then
 fi
 
 # Check if vagrant is configured for this project
-if [ ! -e VagrantFile ]; then
+if [ ! -e Vagrantfile ]; then
   echo -e "Vagrant is not setup for this project!\nPlease set one up before continuing."
   exit 1
 fi
