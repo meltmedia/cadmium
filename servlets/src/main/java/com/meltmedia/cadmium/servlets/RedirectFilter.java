@@ -89,7 +89,7 @@ public class RedirectFilter implements Filter {
     } catch(Throwable t) {
       StringWriter str = new StringWriter();
       t.printStackTrace(new PrintWriter(str));
-      log.debug("Failed in redirect filter: "+str.toString(), t);
+      log.error("Failed in redirect filter: "+t.toString(), t);
       ServletException se = new ServletException(t);
       throw se;
     }
