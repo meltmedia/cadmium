@@ -46,8 +46,8 @@
         </executions>
       </plugin>
       <plugin>
-          <groupId>org.reflections</groupId>
-          <artifactId>reflections-maven</artifactId>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
