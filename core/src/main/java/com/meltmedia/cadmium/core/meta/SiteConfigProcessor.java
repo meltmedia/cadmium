@@ -49,13 +49,9 @@ public class SiteConfigProcessor {
             processor.processFromDirectory(metaDir);
           } catch(IOException e) {
             throw e;
-          } catch(Exception e){
-            log.error("Failed to process config", e);
-            failed = true;
+          } catch(Exception e) {
+            throw e;
           }
-        }
-        if(failed) {
-          throw new Exception("One or more configs failed! See log for details.");
         }
       } else {
         log.warn("No config processors exist in this context");
@@ -70,5 +66,4 @@ public class SiteConfigProcessor {
       }
     }
   }
-  
 }

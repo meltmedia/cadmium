@@ -63,7 +63,7 @@ public class UpdateFailedCommandAction implements CommandAction<ContentUpdateReq
             emptyStringIfNull(body.getOpenId()),
             "",
             body.getUuid(),
-            FAILED_LOG_MESSAGE,
+            body.getFailureReason(),
             false, false, true, true);
       }
     }
