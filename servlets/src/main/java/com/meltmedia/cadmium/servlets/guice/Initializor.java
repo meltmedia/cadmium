@@ -39,9 +39,9 @@ public class Initializor implements Closeable {
     log.debug("Submitting initialization tasks.");
     this.pool = Executors.newSingleThreadExecutor();
     
-    pool.submit(task2.setExecutor(pool).setFuture(pool.submit(task)));
-    
     pool.submit(task4.setExecutor(pool).setFuture(pool.submit(task3)));
+    
+    pool.submit(task2.setExecutor(pool).setFuture(pool.submit(task)));
   }
 
   @Override
