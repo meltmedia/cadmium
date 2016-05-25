@@ -32,16 +32,16 @@ import java.util.concurrent.Executors;
 @Singleton
 public class Initializor implements Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
-  private ExecutorService pool = null;
+  ExecutorService pool = null;
   
   @Inject
   public Initializor(InitializeTask task, CheckInitializedTask task2, ConfigInitializeTask task3, CheckConfigInitializedTask task4) {
     log.debug("Submitting initialization tasks.");
     this.pool = Executors.newSingleThreadExecutor();
     
-    pool.submit(task2.setExecutor(pool).setFuture(pool.submit(task)));
-    
     pool.submit(task4.setExecutor(pool).setFuture(pool.submit(task3)));
+    
+    pool.submit(task2.setExecutor(pool).setFuture(pool.submit(task)));
   }
 
   @Override
