@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 @Singleton
 public class Initializor implements Closeable {
   private final Logger log = LoggerFactory.getLogger(getClass());
-  private ExecutorService pool = null;
+  ExecutorService pool = null;
   
   @Inject
   public Initializor(InitializeTask task, CheckInitializedTask task2, ConfigInitializeTask task3, CheckConfigInitializedTask task4) {
