@@ -268,7 +268,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>1.9.0</version>
+        <version>1.10.19</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -461,6 +461,20 @@
         <version>1.4</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.powermock</groupId>
+        <artifactId>powermock-api-mockito</artifactId>
+        <version>${powermock.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.powermock</groupId>
+        <artifactId>powermock-module-junit4</artifactId>
+        <version>${powermock.version}</version>
+        <scope>test</scope>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
@@ -493,6 +507,7 @@
     <hibernateVersion>4.2.3.Final</hibernateVersion>
     <luceneVersion>4.3.1</luceneVersion>
     <reflections.version>0.9.10</reflections.version>
+    <powermock.version>1.6.5</powermock.version>
   </properties>
 
   <build>
