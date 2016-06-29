@@ -41,21 +41,10 @@ public class SiteConfigProcessor {
     String metaDir = new File(contentDirectory, "META-INF").getAbsoluteFile().getAbsolutePath();
     if(metaDir != null) {
       if(processors != null) {
-        boolean failed = false;
         log.info("Running {} processor[s] for {} directory", processors.size(), metaDir);
         for(ConfigProcessor processor : processors) {
-          try {
-            log.info("Running {}", processor.getClass().getName());
-            processor.processFromDirectory(metaDir);
-          } catch(IOException e) {
-            throw e;
-          } catch(Exception e){
-            log.error("Failed to process config", e);
-            failed = true;
-          }
-        }
-        if(failed) {
-          throw new Exception("One or more configs failed! See log for details.");
+          log.info("Running {}", processor.getClass().getName());
+          processor.processFromDirectory(metaDir);
         }
       } else {
         log.warn("No config processors exist in this context");
@@ -70,5 +59,4 @@ public class SiteConfigProcessor {
       }
     }
   }
-  
 }

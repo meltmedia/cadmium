@@ -128,7 +128,8 @@ public class UpdateConfigCommand extends AbstractAuthorizedOnly implements CliCo
     } 
     catch (Exception e) {
 
-      System.err.println("Failed to updated site [" + siteUrl  + "] to repo [" + repo + "] branch [" + branch  + "] and revision [" + revision  + "].");
+      System.err.println("Failed to updated site [" + siteUrl  + "] to repo [" + repo + "] branch [" + branch  + "] " +
+          "and revision [" + revision  + "]. "+e.getMessage());
     }
   }
 

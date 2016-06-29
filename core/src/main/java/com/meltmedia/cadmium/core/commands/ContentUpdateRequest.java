@@ -30,6 +30,7 @@ public class ContentUpdateRequest extends AbstractMessageBean {
   protected String uuid;
   protected String comment;
   protected boolean revertable;
+  protected String failureReason;
   
   public GitLocation getContentLocation() {
     return contentLocation;
@@ -67,6 +68,10 @@ public class ContentUpdateRequest extends AbstractMessageBean {
   public void setRevertable(boolean revertable) {
     this.revertable = revertable;
   }
-
-
+  public String getFailureReason() {
+    return failureReason;
+  }
+  public void setFailureReason(String failureReason) {
+    this.failureReason = failureReason;
+  }
 }

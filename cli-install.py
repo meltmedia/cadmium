@@ -211,7 +211,7 @@ if not os.path.exists(user_dir + '/bin/cli-install.py'):
   shutil.copy(sys.argv[0], user_dir + '/bin/cli-install.py')
   os.chmod(user_dir + '/bin/cli-install.py', 0755)
 
-exitCode = subprocess.call(['curl', 'https://raw2.github.com/meltmedia/cadmium/master/vagrant-cadmium-up', '-o', user_dir + '/bin/vagrant-cadmium-up'])
+exitCode = subprocess.call(['curl', '-L', 'https://raw.github.com/meltmedia/cadmium/master/vagrant-cadmium-up', '-o', user_dir + '/bin/vagrant-cadmium-up'])
 if exitCode != 0:
   print 'Failed to download vagrant-cadmium-up!'
 else:
@@ -224,10 +224,18 @@ for item in path:
     break
 
 if not has_path:
-  print "Please run `. ~/.profile` before continuing!"
-  has_path = (subprocess.call(['grep', '--silent', 'cadmium', os.path.expanduser('~/.profile')]) == 0)
+  shell_run_commands = {
+    '/bin/bash': '~/.profile',
+    '/bin/zsh': '~/.zshrc'
+  }
+  shell = os.environ["SHELL"]
+  rc_file = shell_run_commands.get(shell)
+  if rc_file is None:
+    sys.exit('Unknown shell {}'.format(shell))
+  print 'Please run `. {}` before continuing!'.format(rc_file)
+  has_path = (subprocess.call(['grep', '--silent', 'cadmium', os.path.expanduser(rc_file)]) == 0)
   if not has_path:
-    fd = open(os.path.expanduser('~/.profile'), 'a')
+    fd = open(os.path.expanduser(rc_file), 'a')
     try:
       fd.write('\nexport PATH="$PATH:'+user_dir+'/bin"\n')
       fd.flush()

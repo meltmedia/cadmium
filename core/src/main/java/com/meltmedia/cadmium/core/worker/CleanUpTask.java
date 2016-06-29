@@ -20,6 +20,9 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import com.meltmedia.cadmium.core.commands.UpdateFailedCommandAction;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +55,11 @@ public class CleanUpTask implements Callable<Boolean> {
           throw new Exception("Previous task failed");
         }
       } catch(Exception e) {
-        log.warn("Work failed!", e);
+        Throwable throwable = ExceptionUtils.getRootCause(e);
+        log.error("Work failed!", throwable);
+
+        String failureReason = StringUtils.isEmpty(throwable.getMessage()) ? UpdateFailedCommandAction.FAILED_LOG_MESSAGE : throwable.getMessage();
+        contentUpdateBody.setFailureReason(throwable.getClass().getSimpleName()+ ": " + failureReason);
         listener.workFailed(contentUpdateBody);
         return false;
       }
