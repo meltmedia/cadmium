@@ -322,6 +322,11 @@ public class BasicFileServlet
     
     context.range = context.request.getHeader(RANGE_HEADER);
     
+    /*
+      Tries to parse the If-Range header as a date. Will throw an
+      IllegalArgumentException if the value cannot be parsed as a
+      date.
+     */
     try {
       context.inRangeDate = context.request.getDateHeader(IF_RANGE_HEADER);
       if(context.inRangeDate != -1 && context.inRangeDate >= lastUpdated) {
@@ -331,7 +336,11 @@ public class BasicFileServlet
         }
       }
     } catch(IllegalArgumentException iae) {
-      logger.error("Invalid range serving request: "+context.path, iae);
+      /*
+        Will read the If-Range header as an ETag. We've
+        mostly seen weak ETags.
+      */
+      logger.debug("The If-Range header for " + context.path + " could not be parsed as a date. Parsing as an ETag.");
       context.inRangeETag = context.request.getHeader(IF_RANGE_HEADER);
       if(context.inRangeETag != null && validateStrong(context.inRangeETag, context.eTag ) ) {
         if(!parseRanges(context)){
