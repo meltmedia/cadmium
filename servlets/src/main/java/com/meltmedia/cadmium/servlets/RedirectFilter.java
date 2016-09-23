@@ -57,10 +57,14 @@ public class RedirectFilter implements Filter {
         redir = redirect.requestMatches(path, queryString);
         if(redir != null) {
           String redirectTo = redir.getUrlSubstituted();
-          if(StringUtils.isNotBlank(queryString) && !redirectTo.contains("?")) {
-          	
-          	redirectTo += "?" + queryString;
-          	log.debug("adding query string to redirect path: {}", redirectTo);
+          if(StringUtils.isNotBlank(queryString)) {
+            if(!redirectTo.contains("?")) {
+              redirectTo += "?" + queryString;
+              log.debug("adding query string to redirect path: {}", redirectTo);
+            } else {
+              redirectTo += "&" + queryString;
+              log.debug("adding query string: {} to redirect path: {}", queryString, redirectTo);
+            }
           }
           response.setHeader("Location", redirectTo);
           response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
