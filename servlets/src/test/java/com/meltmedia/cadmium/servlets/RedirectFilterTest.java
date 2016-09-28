@@ -34,6 +34,8 @@ public class RedirectFilterTest {
         when(response.getOutputStream()).thenReturn(out);
         FilterChain chain = mock(FilterChain.class);
 
+
+        //rinse & repeat this for each input/response pair
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURL().thenReturn(new StringBuffer(inputRequests[0])));
 
