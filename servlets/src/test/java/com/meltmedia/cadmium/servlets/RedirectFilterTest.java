@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.mockito.Mockito.mock;
@@ -29,17 +29,17 @@ public class RedirectFilterTest {
     @Test
     public void testDoFilter() throws Exception {
         RedirectFilter filter = new RedirectFilter();
-
         HttpServletResponse response = mock(HttpServletResponse.class);
         ServletOutputStream out = mock(ServletOutputStream.class);
         when(response.getOutputStream()).thenReturn(out);
         FilterChain chain = mock(FilterChain.class);
 
-        ServletRequest request; //add each inputRequest
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURL().thenReturn(new StringBuffer(inputRequests[0])));
 
         filter.doFilter(request, response,chain);
 
         verify(response).setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-        verify(response).setHeader("Location", expectedResponses);
+        verify(response).setHeader("Location", expectedResponses[0]);
     }
 }
