@@ -5,12 +5,8 @@ import com.meltmedia.cadmium.core.meta.RedirectConfigProcessor;
 import org.junit.Test;
 
 import javax.servlet.FilterChain;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -26,13 +22,14 @@ public class RedirectFilterTest {
         {"/anypath/*", "/redirected/regex/path"}
     };
 
-    private String[][] inputResponsePairs = new String[][] {
+    //Each array is broken into requestPath, requestQuery, expectedResponse
+    private String[][] testGroups = new String[][] {
         {"/path/to/redirected",null,"/redirected"},
         {"/path/to/redirected","params=true","/redirected?params=true"},
         {"/path/to/params",null,"/redirected/with?params=true"},
         {"/path/to/params","zero=100","/redirected/with?params=true&zero=100"},
-        {"/anypath/*",null,"/redirected/regex/path"},
-        {"/anypath/*","params=true","/redirected/regex/path?params=true"}
+        {"/anypath/anything",null,"/redirected/regex/path"},
+        {"/anypath/anything","params=true","/redirected/regex/path?params=true"}
     };
 
     @Test
@@ -45,16 +42,33 @@ public class RedirectFilterTest {
         Redirect redirect = mock(Redirect.class);
         filter.redirect = redirectConfigProcessor;
         when(filter.redirect.requestMatches(anyString(),anyString())).thenReturn(redirect);
-        when(redirect.getUrlSubstituted()).thenReturn(pathRedirectPairs[0][1]);
 
-        //rinse & repeat this for each input/response pair
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRequestURI()).thenReturn(inputResponsePairs[1][0]);//Gets path
-        when(request.getQueryString()).thenReturn(inputResponsePairs[1][1]);//Gets Query
 
-        filter.doFilter(request, response,chain);
 
-        verify(response).setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-        verify(response).setHeader("Location", inputResponsePairs[1][2]);
+        for(int i = 0; i < testGroups.length;i++){
+            String requestPath = testGroups[i][0];
+            String requestQuery = testGroups[i][1];
+            String expectedResponse = testGroups[i][2];
+
+            when(redirect.getUrlSubstituted()).thenReturn(getRedirectDestinationFromPath(requestPath));
+            when(request.getRequestURI()).thenReturn(requestPath);
+            when(request.getQueryString()).thenReturn(requestQuery);
+
+            filter.doFilter(request, response,chain);
+
+            verify(response).setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+            verify(response).setHeader("Location", expectedResponse);
+        }
+    }
+
+    private String getRedirectDestinationFromPath(String path){
+        for(int i = 0;i < pathRedirectPairs.length;i++){
+            if(pathRedirectPairs[i][0] == path){
+                return pathRedirectPairs[i][1];
+            }
+        }
+
+        return path;
     }
 }
