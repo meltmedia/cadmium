@@ -51,7 +51,7 @@ public class PropertiesWriterImpl implements PropertiesWriter {
       } 
       catch(Exception e) {
 
-        log.warn("Failed to persist vault properties file.", e);
+        log.warn("Failed to persist properties file.", e);
       } 
       finally {
         IOUtils.closeQuietly(out);
