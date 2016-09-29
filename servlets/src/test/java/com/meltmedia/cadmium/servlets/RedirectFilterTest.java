@@ -19,21 +19,34 @@ public class RedirectFilterTest {
     private String[][] pathRedirectPairs = new String[][] {
         {"/path/to/redirected","/redirected"},
         {"/path/to/params", "/redirected/with?params=true"},
-        {"/anypath/*", "/redirected/regex/path"}
     };
 
-    //Each array is broken into requestPath, requestQuery, expectedResponse
-    private String[][] testGroups = new String[][] {
-        {"/path/to/redirected",null,"/redirected"},
-        {"/path/to/redirected","params=true","/redirected?params=true"},
-        {"/path/to/params",null,"/redirected/with?params=true"},
-        {"/path/to/params","zero=100","/redirected/with?params=true&zero=100"},
-        {"/anypath/anything",null,"/redirected/regex/path"},
-        {"/anypath/anything","params=true","/redirected/regex/path?params=true"}
-    };
+    private String[] basicRedirectTest = {"/path/to/redirected",null,"/redirected"};
+    private String[] redirectWithSourceParamsTest = {"/path/to/redirected","params=true","/redirected?params=true"};
+    private String[] redirectWithTargetParamsTest = {"/path/to/params",null,"/redirected/with?params=true"};
+    private String[] redirectWithSourceAndTargetParamsTest = {"/path/to/params","zero=100","/redirected/with?params=true&zero=100"};
 
     @Test
-    public void testDoFilter() throws Exception {
+    public void testBasicRedirect() throws Exception {
+        runRedirectFilterTest(basicRedirectTest,basicRedirectTest[2]);
+    }
+
+    @Test
+    public void testRedirectWithSourceParams() throws Exception {
+        runRedirectFilterTest(redirectWithSourceParamsTest,redirectWithSourceParamsTest[2]);
+    }
+
+    @Test
+    public void testRedirectWithTargetParamsTest() throws Exception {
+        runRedirectFilterTest(redirectWithTargetParamsTest,redirectWithTargetParamsTest[2]);
+    }
+
+    @Test
+    public void testRedirectWithSourceAndTargetParamsTest() throws Exception {
+        runRedirectFilterTest(redirectWithSourceAndTargetParamsTest,redirectWithSourceAndTargetParamsTest[2]);
+    }
+
+    public void runRedirectFilterTest(String[] testParams, String expectedResult) throws Exception {
         RedirectFilter filter = new RedirectFilter();
         HttpServletResponse response = mock(HttpServletResponse.class);
 
@@ -45,26 +58,18 @@ public class RedirectFilterTest {
 
         HttpServletRequest request = mock(HttpServletRequest.class);
 
+        when(redirect.getUrlSubstituted()).thenReturn(getRedirectDestinationFromPath(testParams[0]));
+        when(request.getRequestURI()).thenReturn(testParams[0]);
+        when(request.getQueryString()).thenReturn(testParams[1]);
+        filter.doFilter(request, response,chain);
 
-        for(int i = 0; i < testGroups.length;i++){
-            String requestPath = testGroups[i][0];
-            String requestQuery = testGroups[i][1];
-            String expectedResponse = testGroups[i][2];
-
-            when(redirect.getUrlSubstituted()).thenReturn(getRedirectDestinationFromPath(requestPath));
-            when(request.getRequestURI()).thenReturn(requestPath);
-            when(request.getQueryString()).thenReturn(requestQuery);
-
-            filter.doFilter(request, response,chain);
-
-            verify(response).setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-            verify(response).setHeader("Location", expectedResponse);
-        }
+        verify(response).setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+        verify(response).setHeader("Location", expectedResult);
     }
 
     private String getRedirectDestinationFromPath(String path){
         for(int i = 0;i < pathRedirectPairs.length;i++){
-            if(pathRedirectPairs[i][0] == path){
+            if(pathRedirectPairs[i][0].equals(path)){
                 return pathRedirectPairs[i][1];
             }
         }
