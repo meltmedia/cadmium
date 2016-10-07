@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.meltmedia.cadmium</groupId>
     <artifactId>cadmium</artifactId>
-    <version>1.1.3-SNAPSHOT</version>
+    <version>1.1.3</version>
   </parent>
   <artifactId>cadmium-war</artifactId>
   <packaging>war</packaging>
