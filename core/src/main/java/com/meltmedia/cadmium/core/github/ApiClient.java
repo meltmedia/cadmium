@@ -39,11 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class ApiClient implements AuthorizationApi {
   private static final Logger log = LoggerFactory.getLogger(ApiClient.class);
@@ -126,6 +122,7 @@ public class ApiClient implements AuthorizationApi {
           body.scopes = scopes.toArray(new String[] {});
         }
         body.note = note;
+        body.fingerprint = UUID.randomUUID().toString();
         String bodySt = new Gson().toJson(body, AuthBody.class);
         log.trace("Loggin in with post body [{}]", bodySt);
         StringEntity postEntity = new StringEntity(bodySt);
@@ -578,6 +575,7 @@ public class ApiClient implements AuthorizationApi {
     @SuppressWarnings("unused")
     String scopes[];
     String note;
+    String fingerprint;
   }
   
   public static class Authorization {
