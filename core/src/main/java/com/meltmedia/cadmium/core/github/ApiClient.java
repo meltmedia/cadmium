@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.meltmedia.cadmium.core.AuthorizationApi;
 import com.meltmedia.cadmium.core.FileSystemManager;
+import com.meltmedia.cadmium.core.util.CadmiumHttpClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
@@ -28,10 +29,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.config.SocketConfig;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jgit.util.Base64;
 import org.slf4j.Logger;
@@ -94,23 +93,9 @@ public class ApiClient implements AuthorizationApi {
     }
     return cadmiumToken;
   }
-
-  protected HttpClient createHttpClient() {
-    HttpClient client = HttpClients.custom()
-        .setDefaultSocketConfig(SocketConfig.custom().setSoReuseAddress(true).build())
-        .build();
-    return client;
-  }
-
-  protected static HttpClient createStaticHttpClient() {
-    HttpClient client = HttpClients.custom()
-        .setDefaultSocketConfig(SocketConfig.custom().setSoReuseAddress(true).build())
-        .build();
-    return client;
-  }
   
   public static Authorization authorize(String username, String password, List<String> scopes, String note) throws Exception {
-    HttpClient client = createStaticHttpClient();
+    HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
     try {
       int limitRemain = getRateLimitRemain(null, client);
       if(limitRemain > 0) {
@@ -174,7 +159,7 @@ public class ApiClient implements AuthorizationApi {
   }
   
   public static List<Long> getAuthorizationIds(String username, String password) throws Exception {
-    HttpClient client = createStaticHttpClient();
+    HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
     List<Long> authIds = new ArrayList<Long>();
     try {
       int limitRemain = getRateLimitRemain(null, client);
@@ -228,7 +213,7 @@ public class ApiClient implements AuthorizationApi {
   public void deauthorizeToken(String username, String password, long authId) throws Exception {
     int limitRemain = getRateLimitRemain();
     if(limitRemain > 0) {
-      HttpClient client = createHttpClient();
+      HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
       
       HttpDelete delete = new HttpDelete("https://api.github.com/authorizations/"+authId);
       setupBasicAuth(username, password, delete);
@@ -262,7 +247,7 @@ public class ApiClient implements AuthorizationApi {
   public boolean isTeamMember(String teamId) throws Exception {
     int limitRemain = getRateLimitRemain();
     if(limitRemain > 0) {
-      HttpClient client = createHttpClient();
+      HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
       
       HttpGet get = new HttpGet("https://api.github.com/teams/"+teamId);
       addAuthHeader(get);
@@ -304,7 +289,7 @@ public class ApiClient implements AuthorizationApi {
     int limitRemain = getRateLimitRemain();
     
     if(limitRemain > 0) {
-      HttpClient client = createHttpClient();
+      HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
       
       HttpGet get = new HttpGet("https://api.github.com/user");
       addAuthHeader(get);
@@ -354,7 +339,7 @@ public class ApiClient implements AuthorizationApi {
   }
   
   public int getRateLimitRemain() throws Exception {
-    HttpClient client = createHttpClient();
+    HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
     try {
       return getRateLimitRemain(token, client);
     } finally {
@@ -410,7 +395,7 @@ public class ApiClient implements AuthorizationApi {
   }
 
   public String[] getAuthorizedOrgs() throws Exception {
-    HttpClient client = createHttpClient();
+    HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
 
     HttpGet get = new HttpGet("https://api.github.com/user/orgs");
     addAuthHeader(get);
@@ -447,7 +432,7 @@ public class ApiClient implements AuthorizationApi {
   }
 
   public Integer[] getAuthorizedTeamsInOrg(String org) throws Exception {
-    HttpClient client = createHttpClient();
+    HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
 
     HttpGet get = new HttpGet("https://api.github.com/orgs/"+org+"/teams");
     addAuthHeader(get);
@@ -487,7 +472,7 @@ public class ApiClient implements AuthorizationApi {
   public long commentOnCommit(String repoUri, String sha, String comment) throws Exception {
     String orgRepo = getOrgRepo(repoUri);
     
-    HttpClient client = createHttpClient();
+    HttpClient client = CadmiumHttpClientBuilder.getCadmiumHttpClient();
     
     HttpPost post = new HttpPost("https://api.github.com/repos/" + orgRepo + "/commits/" + sha + "/comments");
     addAuthHeader(post);
