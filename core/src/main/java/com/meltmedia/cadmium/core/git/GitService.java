@@ -27,13 +27,14 @@ import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.RefNotFoundException;
+import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTag;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepository;
+
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.TagOpt;
 import org.slf4j.Logger;
@@ -97,7 +98,7 @@ public class GitService
           && FileSystemManager.isDirector(repositoryDirectory) 
           && FileSystemManager.canRead(repositoryDirectory)
           && FileSystemManager.canWrite(repositoryDirectory)){
-        return new GitService(new FileRepository(repositoryDirectory));        
+        return new GitService(new FileRepository(repositoryDirectory));
       }
     }
     throw new Exception("Invalid git repo");
@@ -609,10 +610,10 @@ public class GitService
     } catch(Exception e) {
       log.debug("Fetch from origin failed.", e);
     }
-    List<RevTag> tags = git.tagList().call();
+    List<Ref> tags = git.tagList().call();
     if(tags != null && tags.size() > 0) {
-      for(RevTag tag : tags) {
-        if(tag.getTagName().equals(tagname)) {
+      for(Ref tag : tags) {
+        if(tag.getName().equals(tagname)) {
           throw new Exception("Tag already exists.");
         }
       }
@@ -621,7 +622,7 @@ public class GitService
     try{
       git.push().setPushTags().call();
     } catch(Exception e){
-      log.debug("Failed to push changes.", e);
+      log.error("Failed to push changes.", e);
     }
     return success;
   }
@@ -674,7 +675,7 @@ public class GitService
       } catch(Exception e) {
         log.warn("Invalid id: {}", repository.getFullBranch(), e);
       } finally {
-        revs.release();
+        revs.dispose();
       }
     }
     return repository.getBranch();
