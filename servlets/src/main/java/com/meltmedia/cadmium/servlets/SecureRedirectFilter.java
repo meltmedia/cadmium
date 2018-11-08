@@ -27,6 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 
+import static com.meltmedia.cadmium.servlets.InvalidURIException.getRequestInformationMessage;
+
 /**
  * This filter will redirect requests that do not match the security options for a given page.
  * 
@@ -99,6 +101,9 @@ public class SecureRedirectFilter implements Filter {
       }
       HttpServletRequest request = (HttpServletRequest)req;
       HttpServletResponse response = (HttpServletResponse)resp;
+      if(!isValidURI(request.getRequestURL().toString())) {
+        throw new InvalidURIException(getRequestInformationMessage("Request URL not valid.", request));
+      }
       URI uri = URI.create(request.getRequestURL().toString());
 
       // For now, ignore the Jersey endpoints at /system and /api.
@@ -146,9 +151,28 @@ public class SecureRedirectFilter implements Filter {
     } catch (ServletException se) {
       log.trace("Failed in secure filter.", se);
       throw se;
+    } catch (InvalidURIException iue) {
+      log.trace("Failed in secure filter.", iue);
+      throw new ServletException(iue);
     } catch (Throwable t) {
       log.trace("Failed in secure filter.", t);
       throw new ServletException(t);
+    }
+  }
+
+  /* Returns true if URI is valid */
+  public static boolean isValidURI(String uriString)
+  {
+    /* Try creating a valid URI */
+    try {
+      URI.create(uriString);
+      return true;
+    }
+
+    // If there was an Exception
+    // while creating URI object
+    catch (Exception e) {
+      return false;
     }
   }
 
