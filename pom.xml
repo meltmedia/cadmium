@@ -505,7 +505,7 @@
     <mavenVersion>3.0.3</mavenVersion>
     <wagonVersion>1.0</wagonVersion>
     <hibernateVersion>4.2.3.Final</hibernateVersion>
-    <luceneVersion>4.3.1</luceneVersion>
+    <luceneVersion>8.2.0</luceneVersion>
     <reflections.version>0.9.10</reflections.version>
     <powermock.version>1.6.5</powermock.version>
   </properties>
