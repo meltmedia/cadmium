@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "asyncblock": "^2.1.21",
-    "trim": "0.0.1"
+    "trim": "0.0.3"
   },
   "devDependencies": {
     "grunt": "~0.4.5",
